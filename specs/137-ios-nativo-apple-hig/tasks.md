@@ -20,6 +20,9 @@
 
 - [ ] **T005 (Issue #5) — Adequar Fluxos 04 e 05: Publicação e Minha Estante (29 telas Figma)**
   - Adequar `anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx` e `pedidos-recebidos.tsx`.
+  - Na #230, oferecer acesso aos Ajustes do iPhone quando câmera ou fotos forem bloqueadas, entrada manual de ISBN e ação Concluir no teclado numérico de ISBN e preço. Confirmar o salvamento de rascunho no iOS e preservar os diálogos destrutivos existentes de descarte e exclusão. Verificar os fluxos por testes locais. Eric fica responsável pelos testes em iPhone.
+  - Roteiro de homologação do Eric: bloquear câmera e Fotos, testar **Abrir Ajustes**, conceder acesso e repetir a captura e seleção. Buscar um ISBN digitado, fechar o teclado de preço com **Concluir**, cancelar e confirmar o salvamento do rascunho, retomá-lo pela estante e conferir o destaque de descarte e exclusão.
+  - Implementação local validada com `npm run typecheck` e `npm run test:coverage` (2.321 testes aprovados). A homologação em iPhone fica pendente com Eric.
 
 - [x] **T006 (Issue #6 / Issue #231) — Adequar Fluxos 06 e 08: Conversas, Negociação, Encontro e Compartilhamento (24 telas Figma)**
   - Adequar `conversas.tsx`, `conversa/[id].tsx`, `negociacao/[id].tsx`, `negociacao/[id]/encontro.tsx`, `negociacao/[id]/entrega.tsx` e `perfil/convidar.tsx`.
@@ -43,7 +46,7 @@
   - No iOS, o toque em mensagem abre a conversa; o de negociação mantém a rota do aviso, e um aviso remoto sem rota abre a central. Validar entrega única do toque em abertura a frio, cancelamento da escuta e limpeza do selo após ler todos.
   - Conferir o direito `aps-environment` gerado pelo plugin no Expo. Com uma chave APNs vinculada no EAS e uma versão assinada instalada, validar permissão, token, recebimento, selo e toque em primeiro plano e com o app fechado. A versão local deve passar pelos testes do serviço, do registro e do payload.
   - A introspecção local do Expo confirmou `aps-environment: development`. Para homologar, verificar a chave com `eas credentials -p ios`, instalar uma versão de desenvolvimento assinada ou TestFlight e disponibilizar a versão revisada de `enviar-push` no ambiente de teste. Gerar avisos com uma segunda conta, conferir a conversa, a negociação e a central ao tocar, e marcar todos como lidos para confirmar a limpeza do selo. O Expo Go pode executar a interface, mas a homologação de APNs depende da versão assinada do IpêBook.
-  - Implementação local aprovada em `npm run test:coverage` (2.319 testes), `npm run test:sql`, `npm run typecheck` e `deno check --cached-only supabase/functions/enviar-push/index.ts`. Credenciais APNs, implantação da função e recebimento no iPhone aguardam homologação.
+  - Implementação local aprovada em `npm run test:coverage` (2.319 testes), `npm run test:sql`, `npm run typecheck` e `deno check --cached-only supabase/functions/enviar-push/index.ts`. Credenciais APNs e implantação da função aguardam homologação. Eric fica responsável pelos testes em iPhone.
 
 - [ ] **T011 — Build iOS, `PrivacyInfo.xcprivacy` e TestFlight**
   - Configurar perfil iOS de build (`eas.json`), manifesto de privacidade da Apple e distribuição via TestFlight para testes da equipe em iPhone.

@@ -352,6 +352,7 @@ export default function EditListing({
                 onChangeText={actions.setPrice}
                 editable={!state.saving}
                 keyboardType="decimal-pad"
+                iosKeyboardDone
                 placeholder="Ex: 29,90"
                 helperText="Informe o valor em reais (R$)"
                 returnKeyType="done"

@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { ValidationError } from "@/model/errors";
+import { ImagePermissionDeniedError } from "@/model/errors";
 import type { IImagePickerService } from "@/model/services/iImagePickerService";
 import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
 import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
@@ -48,17 +48,21 @@ describe("useListingPhotoViewModel (Spec 092)", () => {
 
   it("mostra a mensagem de domínio ou uma genérica quando falha", async () => {
     const denied = await renderHook(
-      { pickSquareImage: jest.fn(), pickImage: jest.fn().mockRejectedValue(new ValidationError("Permita o acesso à câmera.")) },
+      { pickSquareImage: jest.fn(), pickImage: jest.fn().mockRejectedValue(new ImagePermissionDeniedError("Permita o acesso à câmera.")) },
       { uploadListingPhoto: jest.fn() },
     );
     await act(async () => { await denied.current[1].choose("camera"); });
     expect(denied.current[0].error).toBe("Permita o acesso à câmera.");
+    expect(denied.current[0].permissionDenied).toBe(true);
+    await act(async () => { denied.current[1].clearError(); });
+    expect(denied.current[0].permissionDenied).toBeUndefined();
     const network = await renderHook(
       { pickSquareImage: jest.fn(), pickImage: jest.fn().mockResolvedValue(image) },
       { uploadListingPhoto: jest.fn().mockRejectedValue(new Error("rede")) },
     );
     await act(async () => { await network.current[1].choose("library"); });
     expect(network.current[0].error).toBe("Não foi possível enviar a foto. Tente novamente.");
+    expect(network.current[0].permissionDenied).toBeUndefined();
   });
 
   it("ignora um segundo toque enquanto o seletor está aberto", async () => {

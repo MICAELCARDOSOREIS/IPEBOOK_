@@ -263,6 +263,7 @@ module.exports = {
   ScrollView,
   Modal,
   KeyboardAvoidingView,
+  InputAccessoryView: View,
   Pressable,
   ActivityIndicator,
   TextInput,

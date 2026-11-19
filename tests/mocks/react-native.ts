@@ -125,6 +125,7 @@ export const KeyboardAvoidingView = React.forwardRef<any, any>((props, ref) =>
   React.createElement("KeyboardAvoidingView", { ...props, ref }, props.children)
 );
 KeyboardAvoidingView.displayName = "KeyboardAvoidingView";
+export const InputAccessoryView = View;
 
 export const StyleSheet = {
   create: <T extends Record<string, any>>(styles: T): T => styles,

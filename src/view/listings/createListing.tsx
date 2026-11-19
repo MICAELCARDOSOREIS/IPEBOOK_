@@ -8,6 +8,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Dialog } from "@/view/components/Dialog";
 import { StepProgress } from "@/view/components/StepProgress";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
@@ -73,6 +74,7 @@ export default function CreateListing({
   const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
+  const [confirmSaveForLater, setConfirmSaveForLater] = useState(false);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
   const [basicsTouched, setBasicsTouched] = useState(false);
@@ -381,6 +383,7 @@ export default function CreateListing({
                 onRemovePhoto={actions.removePhoto}
                 uploading={photoState.uploading}
                 photoError={photoState.error}
+                photoPermissionDenied={photoState.permissionDenied}
                 onChoosePhoto={(slot, source, slotIndex) => {
                   void photoActions.choose(source).then((url) => {
                     if (!url) return;
@@ -559,7 +562,10 @@ export default function CreateListing({
                     label="Salvar rascunho"
                     accessibilityLabel="Salvar rascunho para depois"
                     disabled={state.loading}
-                    onPress={() => void handleSaveForLater()}
+                    onPress={() => {
+                      if (Platform.OS === "ios") setConfirmSaveForLater(true);
+                      else void handleSaveForLater();
+                    }}
                   />
                 </View>
               </View>
@@ -567,6 +573,20 @@ export default function CreateListing({
           </View>
         </SafeAreaView>
       )}
+      {confirmSaveForLater ? (
+        <Dialog
+          visible
+          title="Salvar para depois?"
+          message="Seu anúncio ficará em Rascunhos para você continuar quando quiser."
+          confirmLabel="Salvar rascunho"
+          cancelLabel="Continuar editando"
+          onConfirm={() => {
+            setConfirmSaveForLater(false);
+            void handleSaveForLater();
+          }}
+          onCancel={() => setConfirmSaveForLater(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -11,6 +11,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -24,6 +25,7 @@ export type CreateListingStep2Props = {
   onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => void;
   uploading?: boolean;
   photoError?: string | null;
+  photoPermissionDenied?: boolean;
 };
 
 export function CreateListingStep2({
@@ -37,6 +39,7 @@ export function CreateListingStep2({
   onChoosePhoto,
   uploading = false,
   photoError,
+  photoPermissionDenied,
 }: CreateListingStep2Props) {
   const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<{
@@ -100,6 +103,7 @@ export function CreateListingStep2({
       {photoError ? (
         <View style={styles.photoErrorBlock}>
           <InlineErrorCard message={photoError} />
+          {Platform.OS === "ios" && photoPermissionDenied ? <OpenAppSettingsButton /> : null}
           <Text style={styles.tipText}>
             Dá para publicar sem foto: enquanto não houver imagem, usamos uma capa ilustrativa do livro.
           </Text>

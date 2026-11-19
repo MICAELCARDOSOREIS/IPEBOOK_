@@ -5,3 +5,5 @@ export function createURL(path: string): string {
 export async function openURL(_url: string): Promise<true> {
   return true;
 }
+
+export async function openSettings(): Promise<void> {}

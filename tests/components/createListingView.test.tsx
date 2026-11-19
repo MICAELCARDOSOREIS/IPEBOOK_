@@ -1,7 +1,7 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { within } from "@testing-library/react-native";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Keyboard } from "react-native";
 import * as container from "@/di/container";
 import * as useIsWideWebModule from "@/view/useIsWideWeb";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
@@ -99,6 +99,25 @@ async function goToStep(screen: Awaited<ReturnType<typeof render>>, step: 2 | 3)
 }
 
 describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
+  it("permite buscar o ISBN digitado e concluir o teclado numérico no iOS", async () => {
+    const actions = mockViewModel({ ...filledState, isbn: "9788535914849" });
+    const dismiss = jest.spyOn(Keyboard, "dismiss");
+    try {
+      const screen = await renderScreen();
+      const isbn = screen.getByLabelText("ISBN (opcional)");
+      expect(isbn.props.keyboardType).toBe("number-pad");
+      expect(isbn.props.inputAccessoryViewID).toEqual(expect.any(String));
+      await act(async () => {
+        fireEvent.press(screen.getAllByRole("button", { name: "Concluir" })[0]);
+        fireEvent.press(screen.getByRole("button", { name: "Buscar pelo ISBN" }));
+      });
+      expect(dismiss).toHaveBeenCalledTimes(1);
+      expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
+    } finally {
+      dismiss.mockRestore();
+    }
+  });
+
   it("renderiza cabeçalho, indicador de etapa e campos do livro", async () => {
     mockViewModel(defaultState);
     const screen = await renderScreen();
@@ -517,6 +536,10 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
 
       await act(async () => {
         fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
+      });
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho" }));
       });
       expect(actions.saveForLater).toHaveBeenCalledTimes(1);
     } finally {

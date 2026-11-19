@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import * as Linking from "expo-linking";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 const mockRequestPermission = jest.fn().mockResolvedValue({ granted: true, status: "granted" });
@@ -70,6 +71,21 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
       fireEvent.press(screen.getByLabelText("Solicitar permissão de câmera"));
     });
     expect(mockRequestPermission).toHaveBeenCalled();
+  });
+
+  it("abre os Ajustes do iPhone se a câmera estiver bloqueada", async () => {
+    mockPermission = { granted: false, canAskAgain: false, status: "denied" };
+    const openSettings = jest.spyOn(Linking, "openSettings").mockResolvedValue();
+    try {
+      const screen = await render(<BarcodeScannerModal visible onClose={jest.fn()} onScan={jest.fn()} />);
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Abrir Ajustes" }));
+      });
+      expect(openSettings).toHaveBeenCalledTimes(1);
+      expect(mockRequestPermission).not.toHaveBeenCalled();
+    } finally {
+      openSettings.mockRestore();
+    }
   });
 
   it("chama onClose ao tocar em 'Digitar ISBN Manualmente' ou no botão fechar", async () => {
