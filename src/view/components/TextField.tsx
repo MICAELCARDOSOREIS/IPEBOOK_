@@ -89,7 +89,8 @@ export function TextField({
   const hasValue = value.length > 0;
   const floating = focused || hasValue;
   const accentColor = hasError ? colors.error : focused ? colors.action : colors.m3.onSurfaceVariant;
-  const borderColor = hasError ? colors.error : focused ? colors.action : colors.m3.outline;
+  const restingBorderColor = Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline;
+  const borderColor = hasError ? colors.error : focused ? colors.action : restingBorderColor;
 
   return (
     <View style={styles.field}>
@@ -213,9 +214,9 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: "transparent",
     },
     iosContainer: {
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.large,
       borderCurve: "continuous",
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: tokens.ios.cell,
     },
     containerMultiline: { minHeight: tokens.spacing[64] + tokens.spacing[32] },
     input: {

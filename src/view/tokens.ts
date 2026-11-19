@@ -136,6 +136,13 @@ export const glass = {
   stroke: "rgba(255, 255, 255, 0.75)",
 } as const;
 
+/** Tokens específicos de controles iOS 26 (Pranchas 09 e 10 do Figma `APP · 20 · iPhone · iOS 26`). */
+export const ios = {
+  cell: "#f7f3ec",
+  separator: "rgba(60, 50, 40, 0.16)",
+  destructiveFill: "#f9dedc",
+} as const;
+
 /** Mesma forma de `colors`, com folhas widened para `string` — permite que `colors` e `darkColors`
  * (valores hex diferentes) compartilhem um único tipo, consumido por `useTheme()`. */
 type WidenToString<T> = T extends string
@@ -395,6 +402,7 @@ export const shapeMorph = {
 export const tokens = {
   colors,
   glass,
+  ios,
   spacing,
   radius,
   accessibility,

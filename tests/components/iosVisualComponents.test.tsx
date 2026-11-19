@@ -1,11 +1,13 @@
 import { cleanup, render, waitFor } from "@testing-library/react-native";
 import { AccessibilityInfo, Platform, StyleSheet, Text } from "react-native";
 import { Chip } from "@/view/components/Chip";
+import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { TextField } from "@/view/components/TextField";
+import { TopAppBar } from "@/view/components/TopAppBar";
 import { colors, tokens } from "@/view/tokens";
 
 describe("Design System iPhone · botões, cards e formulários (Spec 137)", () => {
@@ -90,5 +92,38 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     expect(style.minHeight).toBe(44);
     expect(style.borderRadius).toBe(tokens.radius.full);
     expect(control.props.accessibilityState.checked).toBe(true);
+  });
+
+  it("aplica botão voltar Liquid Glass e título centralizado no TopAppBar em iOS", async () => {
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+    const screen = await render(<TopAppBar title="Entrar com e-mail" onBack={() => {}} />);
+    expect(screen.getByTestId("top-app-bar-back-blur")).toBeDefined();
+    const titleStyle = StyleSheet.flatten(screen.getByRole("header").props.style);
+    expect(titleStyle.textAlign).toBe("center");
+    expect(titleStyle.fontSize).toBe(17);
+
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    const androidScreen = await render(<TopAppBar title="Entrar com e-mail" onBack={() => {}} />);
+    expect(androidScreen.queryByTestId("top-app-bar-back-blur")).toBeNull();
+  });
+
+  it("usa Dialog Liquid Glass e botão destrutivo suave no iOS", async () => {
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+    const screen = await render(
+      <Dialog
+        visible
+        destructive
+        title="Excluir anúncio?"
+        message="Esta ação é definitiva."
+        confirmLabel="Excluir"
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("dialog-ios-blur")).toBeDefined();
+    const confirmStyle = StyleSheet.flatten(screen.getByLabelText("Excluir").props.style);
+    expect(confirmStyle.backgroundColor).toBe(tokens.ios.destructiveFill);
   });
 });

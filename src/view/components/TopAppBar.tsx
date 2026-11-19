@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { useCallback, useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +9,7 @@ import { type ColorPalette, tokens } from "@/view/tokens";
 import { topBarInset } from "@/view/topBarInset";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type TopAppBarProps = {
   title: string;
@@ -37,6 +39,8 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
   const guardedBack = useGuardedPress(handleBack);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const width = useHydratedWindowWidth();
   const wide = useIsWideWeb() && !floating;
@@ -67,20 +71,48 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
       </View>
     );
   }
+  const iosGlassBack = isIos && !reduceTransparency;
   return (
-    <View style={floating ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }] : [styles.bar, alignToContent]}>
+    <View
+      style={
+        floating
+          ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }]
+          : [styles.bar, isIos && styles.iosBar, alignToContent]
+      }
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Voltar"
         hitSlop={8}
         onPress={guardedBack}
-        style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+        style={({ pressed }) => [
+          styles.backButton,
+          isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
+          pressed && styles.backButtonPressed,
+        ]}
       >
+        {iosGlassBack ? (
+          <BlurView
+            testID="top-app-bar-back-blur"
+            intensity={24}
+            tint="light"
+            style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.full }]}
+          />
+        ) : null}
         <View style={styles.backIconWrapper}>
-          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+          <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
         </View>
       </Pressable>
-      <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>{title}</Text>
+      <Text
+        accessibilityRole="header"
+        accessibilityLabel={title}
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.3}
+        style={[styles.title, isIos && !floating && styles.iosTitle]}
+      >
+        {title}
+      </Text>
+      {isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
     </View>
   );
 }
@@ -95,6 +127,10 @@ function createStyles(colors: ColorPalette) {
       paddingRight: tokens.spacing[16],
       gap: tokens.spacing[12],
       backgroundColor: colors.surface,
+    },
+    iosBar: {
+      paddingHorizontal: tokens.spacing[16],
+      justifyContent: "space-between",
     },
     crumbBar: {
       height: tokens.spacing[48],
@@ -138,6 +174,25 @@ function createStyles(colors: ColorPalette) {
     backIconWrapper: {
       marginLeft: -2,
     },
+    iosBackGlass: {
+      overflow: "hidden",
+      backgroundColor: tokens.glass.fill,
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+    },
+    iosBackOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosRightSpacer: {
+      width: 44,
+      height: 44,
+    },
     backButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainerHigh,
@@ -148,6 +203,12 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       ...tokens.typography.titleBar,
       fontWeight: tokens.fontWeight.semiBold,
+    },
+    iosTitle: {
+      flex: 1,
+      textAlign: "center",
+      fontSize: 17,
+      lineHeight: 22,
     },
   });
 }
