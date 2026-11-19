@@ -10,6 +10,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issue #226 (`T001`) — `[iOS Nativo · Config] Configurar app.json, infoPlist (PT-BR), deep links e ADR de escopo iOS`
 
+- **Status:** **Configuração `app.json` entregue (`80bd12b` por `@Eric2025gh`) · Pendente apenas conferência em build/dispositivo iPhone**
 - **Responsável:** Eric Vinícius (`@Eric2025gh`)
 - **Labels:** `pessoa:eric`, `documentation`, `enhancement`
 - **Branch sugerida:** `feature/ios-config-app-json` (base: `develop`)
@@ -29,7 +30,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issue #227 (`T002`) — `[iOS Nativo · Design System] Base Liquid Glass e componentes Apple HIG (Safe Areas, Dock, TopAppBar, BottomSheet)`
 
-- **Status:** **Implementada (PRs `#239` e `#241` mergeados) · Pendente apenas conferência final com as pranchas `09` e `10` do Figma iOS 26**
+- **Status:** **Entregue (PRs `#239` e `#241` + alinhamento iOS 26 em `585ed3c` por `@clarinhamartins`) · Conferência visual com pranchas `09` e `10` na auditoria `#237`**
 - **Responsáveis:** Maria Clara (`@clarinhamartins`), Eric Vinícius (`@Eric2025gh`) · **Apoio:** Micael (`@MICAELCARDOSOREIS`)
 - **Labels:** `accessibility`, `enhancement`, `pessoa:micael`, `pessoa:maria-clara`, `pessoa:eric`
 - **Referências Figma (Pranchas iOS 26):**
@@ -44,6 +45,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issue #228 (`T003`) — `[iOS Nativo · Fluxo 01] Adequar telas de Acesso, Onboarding e Boas-vindas`
 
+- **Status:** **Alinhamento iOS 26 aplicado localmente (`15b87b8` por `@Eric2025gh`) · Pendente validação em iPhone real (Safe Area/teclado)**
 - **Responsável:** Eric Vinícius (`@Eric2025gh`)
 - **Labels:** `accessibility`, `enhancement`, `pessoa:eric`
 - **Rotas (`src/app/`):** `bem-vindo.tsx`, `entrar.tsx`, `criar-conta.tsx`, `esqueci-senha.tsx`, `redefinir-senha.tsx`, `auth/callback.tsx`
@@ -67,7 +69,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issue #229 (`T004`) — `[iOS Nativo · Descoberta e Livro] Adequar Catálogo, Busca, Favoritos, Alertas, Detalhe e Perfil Público`
 
-- **Status:** **Em revisão** (PR `#240` mergeado por `@clarinhamartins`, [ADR 0116](../../docs/adr/0116-padronizacao-apple-hig-descoberta-busca-ios.md); PR `#243` aberto para `alertas/[id]` e `alertas/[id]/editar`; pendente validação em iPhone e conferência contra os novos quadros do Figma)
+- **Status:** **Alinhamento iOS 26 concluído em código (PRs `#240`/`#243` + `324534d` por `@clarinhamartins`) · Pendente apenas validação em iPhone na auditoria `#237`**
 - **Responsáveis:** Maria Clara (`@clarinhamartins`) e Eric Vinícius (`@Eric2025gh`)
 - **Labels:** `accessibility`, `enhancement`, `pessoa:maria-clara`, `pessoa:eric`
 - **Rotas (`src/app/`):** `index.tsx`, `pesquisa.tsx`, `favoritos.tsx`, `alertas.tsx`, `alertas/[id].tsx`, `alertas/[id]/editar.tsx`, `livro/[id].tsx`, `perfil/[userId].tsx`
@@ -111,6 +113,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issue #232 (`T007`) — `[iOS Nativo · Perfil, Conta, Moderação e Estados] Adequar Perfil, Conta, Notificações, Ajuda, Moderação e Estados Globais`
 
+- **Status:** **Alinhamento visual iOS 26 aplicado localmente (`e6170f1` e `1c1bf18` por `@Eric2025gh`) · Pendente homologação em iPhone real**
 - **Responsável:** Eric Vinícius (`@Eric2025gh`)
 - **Labels:** `accessibility`, `enhancement`, `pessoa:eric`
 - **Rotas (`src/app/`):** `perfil.tsx`, `perfil/editar.tsx`, `perfil/avaliacoes.tsx`, `perfil/encontros.tsx`, `notificacoes.tsx`, `perfil/configuracoes.tsx`, `perfil/seguranca.tsx`, `perfil/bloqueados.tsx`, `excluir-conta.tsx`, `termos.tsx`, `ajuda.tsx`, `denunciar/[id].tsx`, `denunciar-pessoa/[userId].tsx`, `moderacao.tsx`, `sobre.tsx`, `beta.tsx`, `+not-found.tsx`
@@ -145,7 +148,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
 
 ## Issues #234 a #238 (`T009` a `T013`) — Auth Apple, Push APNs, Build/TestFlight, Auditoria Visual e QA Final
 
-- **#234 (`T009` — `@MICAELCARDOSOREIS` + `@Eric2025gh`):** Sign in with Apple (`expo-apple-authentication` + Supabase Auth) nas telas [02 · Entrar (`915:434`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-434&m=dev) e [03 · Criar conta (`916:119`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-119&m=dev).
+- **#234 (`T009` — `@MICAELCARDOSOREIS` + `@Eric2025gh`):** Sign in with Apple (`expo-apple-authentication` + Supabase Auth) nas telas [02 · Entrar (`915:434`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-434&m=dev) e [03 · Criar conta (`916:119`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-119&m=dev) — aguarda adição de dependência `expo-apple-authentication`, desenho no Figma e credenciais Service ID / provedor Apple no Apple Developer & Supabase Dashboard.
 - **#235 (`T010` — `@gomes738` + `@Eric2025gh`):** Implementação local entregue em `2a7a9d98`; pendente credenciais APNs, implantação de `enviar-push` e homologação em iPhone/TestFlight ([28 · Notificações `916:2169`](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2169&m=dev) e [`937:2386`](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2386&m=dev)).
 - **#236 (`T011` — `@Eric2025gh`):** Configurar build iOS (`eas.json`), `PrivacyInfo.xcprivacy` e TestFlight.
 - **#237 (`T012` — `@clarinhamartins` + `@Eric2025gh`):** Auditoria visual final lado a lado contra todos os quadros atualizados de [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md) (tema claro + Liquid Glass).
