@@ -44,6 +44,12 @@ describe("função enviar-push: lógica pura (Spec 096)", () => {
     expect(semRota.threadId).toBeUndefined();
   });
 
+  it("inclui a contagem no payload iOS, inclusive zero para limpar o selo", () => {
+    expect(buildPushMessage(aviso, "ExpoPushToken[x]", 3).badge).toBe(3);
+    expect(buildPushMessage(aviso, "ExpoPushToken[x]", 0).badge).toBe(0);
+    expect(buildPushMessage(aviso, "ExpoPushToken[x]")).not.toHaveProperty("badge");
+  });
+
   it("cada tipo cai no canal esperado (ADR 0075)", () => {
     expect(channelOf("request_received")).toBe("messages");
     expect(channelOf("request_accepted")).toBe("messages");

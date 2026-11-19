@@ -189,6 +189,32 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
       expect(aberturas).toEqual(["/negociacao/r2"]);
     });
 
+    it("no iOS abre a conversa uma vez e encaminha avisos sem rota para a central", async () => {
+      const previousPlatform = Platform.OS;
+      Platform.OS = "ios";
+      const aberturas: Array<string | null> = [];
+      const response = (id: string, type: string, url: string | null) => ({
+        notification: {
+          date: 1,
+          request: { identifier: id, content: { data: { notificationId: id, type, url } } },
+        },
+      });
+      const mensagem = response("n1", "new_message", "/negociacao/r1");
+      mockState.lastResponse = mensagem;
+      const cancelar = service.subscribeToOpened(({ url }) => aberturas.push(url));
+      try {
+        mockState.listener?.(mensagem);
+        await Promise.resolve();
+        mockState.listener?.(response("n2", "meeting_update", "/negociacao/r2"));
+        mockState.listener?.(response("n3", "system", null));
+        expect(aberturas).toEqual(["/conversa/r1", "/negociacao/r2", "/notificacoes"]);
+      } finally {
+        cancelar();
+        mockState.lastResponse = null;
+        Platform.OS = previousPlatform;
+      }
+    });
+
     it("agenda notificação local e cancela", async () => {
       const id = await service.scheduleLocalNotification({
         title: "Aviso",

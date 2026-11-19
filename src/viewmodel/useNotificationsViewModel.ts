@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
 import type { AppNotification } from "@/model/entities/notification";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
@@ -229,8 +230,9 @@ export function useNotificationsViewModel(
       void push.setBadgeCount(0);
       return;
     }
+    if (Platform.OS === "ios" && (loading || error)) return;
     void push.setBadgeCount(unreadCount);
-  }, [sessionUserId, unreadCount, push]);
+  }, [sessionUserId, unreadCount, push, loading, error]);
 
   return [
     {

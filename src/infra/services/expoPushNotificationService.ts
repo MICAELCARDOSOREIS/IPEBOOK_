@@ -169,16 +169,41 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   subscribeToOpened(listener: (target: { url: string | null }) => void): () => void {
     const Notifications = getNotificationsModule();
     if (!Notifications) return () => {};
+    const isIos = Platform.OS === "ios";
+    let active = true;
+    const handled = new Set<string>();
     const notify = (response: NotificationsType.NotificationResponse | null) => {
-      const url = response?.notification.request.content.data?.url;
-      listener({ url: typeof url === "string" ? url : null });
+      if (!active || !response) return;
+      const { request, date } = response.notification;
+      const data = request.content.data;
+      let url = typeof data?.url === "string" ? data.url : null;
+      if (isIos) {
+        if (request.identifier) {
+          const key = `${request.identifier}:${date}:${response.actionIdentifier}`;
+          if (handled.has(key)) return;
+          handled.add(key);
+        }
+        if (typeof data?.notificationId === "string") {
+          if (!url) url = "/notificacoes";
+          else if (data.type === "new_message") url = url.replace(/^\/negociacao\/(?=[A-Za-z0-9-]+$)/, "/conversa/");
+        }
+        try {
+          Notifications.clearLastNotificationResponse?.();
+        } catch {
+          // A resposta já foi consumida pela escuta atual.
+        }
+      }
+      listener({ url });
     };
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => notify(response));
     // App aberto pelo toque, estando fechado: a resposta já chegou antes do listener existir.
     void Notifications.getLastNotificationResponseAsync?.().then((response) => {
       if (response) notify(response);
     }).catch(() => {});
-    return () => subscription.remove();
+    return () => {
+      active = false;
+      subscription.remove();
+    };
   }
 
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
