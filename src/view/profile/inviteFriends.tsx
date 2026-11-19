@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -7,6 +7,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { makeInviteFriendsViewModel } from "@/di/container";
@@ -105,7 +106,6 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </View>
           ) : null}
 
-          {/* Um botão só: manda a imagem e o texto com o link juntos (Spec 092). */}
           <View style={styles.actions}>
             <FilledButton
               label="Compartilhar convite"
@@ -113,6 +113,9 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               loading={state.sharing}
               onPress={() => void actions.shareImage(captureInvite)}
             />
+            {Platform.OS === "ios" ? (
+              <OutlinedButton label="Copiar link" disabled={state.sharing} onPress={() => void actions.copyLink()} />
+            ) : null}
           </View>
           </View>
           </View>

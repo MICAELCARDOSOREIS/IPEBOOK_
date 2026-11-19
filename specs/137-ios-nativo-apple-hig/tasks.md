@@ -23,6 +23,8 @@
 
 - [ ] **T006 (Issue #6) — Adequar Fluxos 06 e 08: Conversas, Negociação, Encontro e Compartilhamento (24 telas Figma)**
   - Adequar `conversas.tsx`, `conversa/[id].tsx`, `negociacao/[id].tsx`, `negociacao/[id]/encontro.tsx`, `negociacao/[id]/entrega.tsx` e `perfil/convidar.tsx`.
+  - Na #231, validar no iPhone que o campo do chat acompanha o teclado e respeita a área segura com o teclado fechado, que a câmera do QR fica abaixo da área segura superior e que o convite abre a folha nativa e oferece cópia do link com confirmação.
+  - Ajuste do campo do chat e ação de copiar o link implementados. O leitor de QR já está dentro da área segura da tela de entrega. Validação automatizada com `npm run typecheck` e `npm run test:coverage` (2.316 testes aprovados). Pendente validar teclado, câmera e folha de compartilhamento no iPhone.
 
 - [ ] **T007 (Issue #7) — Adequar Fluxos 07, 09 e 10: Perfil, Conta, Ajuda, Moderação e Estados Globais (33 telas Figma)**
   - Adequar todas as rotas de `perfil/*`, `notificacoes.tsx`, `excluir-conta.tsx`, `termos.tsx`, `ajuda.tsx`, `denunciar*`, `moderacao.tsx`, `sobre.tsx`, `beta.tsx` e `+not-found.tsx`.

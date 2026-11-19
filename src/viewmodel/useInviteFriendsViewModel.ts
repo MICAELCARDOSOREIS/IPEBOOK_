@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, Share } from "react-native";
+import { Clipboard, Platform, Share } from "react-native";
 import * as Linking from "expo-linking";
 import { DomainError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
@@ -176,6 +176,9 @@ export function useInviteFriendsViewModel(
     try {
       if (Platform.OS === "web") {
         await navigator.clipboard.writeText(appUrl);
+        if (active.current) setState((prev) => ({ ...prev, linkCopied: true, shared: false, error: null }));
+      } else if (Platform.OS === "ios") {
+        Clipboard.setString(appUrl);
         if (active.current) setState((prev) => ({ ...prev, linkCopied: true, shared: false, error: null }));
       } else {
         // No aparelho não há área de transferência no fluxo: abre a folha de compartilhamento.

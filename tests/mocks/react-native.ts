@@ -209,6 +209,8 @@ export const Share = {
     Promise.resolve({ action: "sharedAction" }),
 };
 
+export const Clipboard = { setString: (_content: string) => undefined };
+
 class MockAnimatedValue {
   value: number;
   constructor(v: number) {
