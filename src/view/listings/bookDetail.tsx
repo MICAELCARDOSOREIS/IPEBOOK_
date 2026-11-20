@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,6 +34,7 @@ import { updateWebSocialMeta } from "@/view/webMeta";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { useOnRefocus } from "@/view/useRefocusKey";
 
@@ -88,8 +90,11 @@ export default function BookDetail({
   onNavigateToCategorySearch,
 }: BookDetailProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [authState] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBookDetailViewModel(bookId, sessionUserId);
@@ -391,8 +396,26 @@ export default function BookDetail({
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
+      {isIos && !wideWeb && scrolledPastHero && insets.top > 0 ? (
+        reduceTransparency ? (
+          <View pointerEvents="none" style={[styles.iosStatusBarShield, styles.iosStatusBarShieldOpaque, { height: insets.top }]} />
+        ) : (
+          <View pointerEvents="none" style={[styles.iosStatusBarShield, { height: insets.top }]}>
+            <BlurView intensity={44} tint="light" style={StyleSheet.absoluteFill} />
+          </View>
+        )
+      ) : null}
       <ScrollView
         {...standardVerticalScrollProps}
+        scrollEventThrottle={isIos && !wideWeb ? 16 : undefined}
+        onScroll={
+          isIos && !wideWeb
+            ? (e) => {
+                const passed = e.nativeEvent.contentOffset.y > 180;
+                if (passed !== scrolledPastHero) setScrolledPastHero(passed);
+              }
+            : undefined
+        }
         contentContainerStyle={[
           wideWeb ? styles.scrollContentWide : styles.scrollContent,
           {
@@ -713,6 +736,18 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     offscreen: { position: "absolute", left: -10000, top: 0 },
     page: { flex: 1, backgroundColor: colors.background },
+    iosStatusBarShield: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      backgroundColor: tokens.glass.fill,
+      overflow: "hidden",
+    },
+    iosStatusBarShieldOpaque: {
+      backgroundColor: colors.background,
+    },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, centralizado em WEB_MAX_WIDTH.
     scrollContentWide: {

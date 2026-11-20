@@ -80,29 +80,31 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
           : [styles.bar, isIos && styles.iosBar, alignToContent]
       }
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Voltar"
-        hitSlop={8}
-        onPress={guardedBack}
-        style={({ pressed }) => [
-          styles.backButton,
-          isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
-          pressed && styles.backButtonPressed,
-        ]}
-      >
-        {iosGlassBack ? (
-          <BlurView
-            testID="top-app-bar-back-blur"
-            intensity={24}
-            tint="light"
-            style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.full }]}
-          />
-        ) : null}
-        <View style={styles.backIconWrapper}>
-          <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
-        </View>
-      </Pressable>
+      <View style={isIos ? styles.iosBackShadow : undefined}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          hitSlop={8}
+          onPress={guardedBack}
+          style={({ pressed }) => [
+            styles.backButton,
+            isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
+            pressed && styles.backButtonPressed,
+          ]}
+        >
+          {iosGlassBack ? (
+            <BlurView
+              testID="top-app-bar-back-blur"
+              intensity={24}
+              tint="light"
+              style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.full }]}
+            />
+          ) : null}
+          <View style={styles.backIconWrapper}>
+            <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
+          </View>
+        </Pressable>
+      </View>
       <Text
         accessibilityRole="header"
         accessibilityLabel={title}
@@ -174,15 +176,17 @@ function createStyles(colors: ColorPalette) {
     backIconWrapper: {
       marginLeft: -2,
     },
-    iosBackGlass: {
-      overflow: "hidden",
-      backgroundColor: tokens.glass.fill,
-      borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+    iosBackShadow: {
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 6,
+      shadowOpacity: 0.14,
+      shadowRadius: 8,
+    },
+    iosBackGlass: {
+      overflow: "hidden",
+      backgroundColor: "rgba(255, 255, 255, 0.72)",
+      borderWidth: 1,
+      borderColor: "rgba(255, 255, 255, 0.9)",
     },
     iosBackOpaque: {
       backgroundColor: colors.m3.surfaceContainer,
