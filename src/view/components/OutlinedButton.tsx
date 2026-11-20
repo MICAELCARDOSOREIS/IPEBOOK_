@@ -69,7 +69,14 @@ export function OutlinedButton({
                 {icon}
               </View>
             ) : null}
-            <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              style={[styles.label, isDisabled && styles.labelDisabled]}
+            >
+              {label}
+            </Text>
           </View>
         )}
       </Pressable>
@@ -87,7 +94,7 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
-      paddingHorizontal: tokens.spacing[24],
+      paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[14] : tokens.spacing[24],
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     iosGlass: {

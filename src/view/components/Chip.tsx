@@ -65,13 +65,20 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
             <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
           </View>
         ) : null}
-        {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
+        {selected ? (
+          <AppIcon
+            name="check"
+            size={18}
+            color={tone?.text ?? (isIos ? colors.m3.onSurface : colors.nature.onFoliage)}
+          />
+        ) : null}
         {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
         <Text
           numberOfLines={1}
           style={[
             styles.label,
             selected && styles.labelSelected,
+            selected && !tone && isIos ? styles.iosLabelSelected : null,
             selected && tone ? { color: tone.text } : null,
             disabled && styles.labelDisabled,
           ]}
@@ -120,6 +127,11 @@ function createStyles(colors: ColorPalette) {
     iosSelected: {
       borderWidth: 1,
       borderColor: colors.m3.focusRing,
+      backgroundColor: colors.m3.primaryContainer,
+    },
+    iosLabelSelected: {
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.medium,
     },
     iosBlurClip: {
       ...StyleSheet.absoluteFill,
