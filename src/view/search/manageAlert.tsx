@@ -202,12 +202,14 @@ function createStyles(colors: ColorPalette) {
   statusCard: {
     backgroundColor: colors.m3.primaryContainer,
     borderRadius: Platform.OS === "ios" ? tokens.radius.card : tokens.radius.medium,
+    ...(Platform.OS === "ios" ? ({ borderCurve: "continuous" } as const) : {}),
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   statusCardPaused: {
     backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: Platform.OS === "ios" ? tokens.radius.card : tokens.radius.medium,
+    ...(Platform.OS === "ios" ? ({ borderCurve: "continuous" } as const) : {}),
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },

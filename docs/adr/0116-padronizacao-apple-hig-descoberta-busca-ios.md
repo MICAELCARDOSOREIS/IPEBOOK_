@@ -23,20 +23,20 @@ Adotar melhorias específicas e isoladas para iOS (`Platform.OS === 'ios'`) nos 
    - Disparo de `triggerHaptic("light")` ao limpar ou cancelar busca em `SearchField`, limpar filtros em `FilterSheet` e acionar ações de denúncia em `PublicProfile`.
 
 2. **Gestão e Edição de Alertas (`ManageAlert` e `EditAlert`):**
-   - Cantos contínuos refinados (`tokens.radius.lg`) nos cartões de status no iOS.
+   - Cantos contínuos refinados (`tokens.radius.card` de 16 pt com `borderCurve: "continuous"`) nos cartões de status no iOS.
    - Feedback tátil com `triggerHaptic("selection")` ao pausar/retomar alerta, abrir edição e alternar modalidades; `triggerHaptic("light")` ao cancelar ou abrir exclusão; `triggerHaptic("warning")` na confirmação de exclusão; e `triggerHaptic("success")`/`triggerHaptic("error")` na submissão de edições.
 
 3. **Barra de busca no padrão HIG (`SearchField`):**
    - Altura de 44 pt no iOS (`containerIos`), cantos arredondados contínuos de raio médio e botão lateral "Cancelar" acessível visível durante a interação.
 
-3. **Folhas inferiores e ordenação (`SortSheet` e `FilterSheet`):**
+4. **Folhas inferiores e ordenação (`SortSheet` e `FilterSheet`):**
    - Cantos superiores contínuos de 28 pt no iOS (`tokens.radius.xxl`), alinhamento visual do drag handle ao padrão Apple e padding inferior adaptável ao *Home Indicator* via `useSafeAreaInsets` (`Math.max(tokens.spacing[8], insets.bottom)`).
    - Suporte condicional à translucidez Liquid Glass quando a acessibilidade "Reduzir Transparência" estiver desativada.
 
-4. **Zona do Polegar (*Thumb Zone*) em Detalhes do Livro (`BookDetail`):**
+5. **Zona do Polegar (*Thumb Zone*) em Detalhes do Livro (`BookDetail`):**
    - Barra de ação inferior fixa ancorada com respiro seguro contra o *Home Indicator* e feedback tátil sutil ao iniciar solicitação ou proposta de troca.
 
-5. **Isolamento de Plataforma:**
+6. **Isolamento de Plataforma:**
    - Todo comportamento e estilo iOS é condicionado estritamente a `Platform.OS === 'ios'`. Android (M3) e Web mantêm integralmente sua implementação, contratos e estética anteriores.
 
 ## Consequências
