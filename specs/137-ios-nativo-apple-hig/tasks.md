@@ -43,11 +43,12 @@
   - Implementação local entregue em `2a7a9d98` (atualização de selo/badge, abertura de conversa/negociação/central ao tocar e pedido de permissão).
   - *Pendências para fechamento (`@Eric2025gh`):* vincular credenciais APNs (`eas credentials -p ios`), implantar versão revisada de `enviar-push` no Supabase e homologar em iPhone assinado / TestFlight (`28 · Notificações` `916:2169` e `937:2386`).
 
-- [ ] **T011 (Issue #236 — `@Eric2025gh`) — Build iOS, `PrivacyInfo.xcprivacy` e TestFlight**
-  - Configurar perfil iOS de build (`eas.json`), manifesto de privacidade da Apple e distribuição via TestFlight para testes da equipe em iPhone.
+- [ ] **T011 (Issue #236 — `@Eric2025gh`) — Build iOS, `PrivacyInfo.xcprivacy`, `NativeTabs` / `expo-glass-effect` e TestFlight**
+  - Adicionar perfis `ios` em `eas.json` (`development`, `preview`, `production`) compilados com **SDK iOS 26 (Xcode 26)**, `PrivacyInfo.xcprivacy` e distribuição via TestFlight/Dev Client.
+  - Avaliar adoção de `NativeTabs` (`expo-router/unstable-native-tabs`) nas 3 abas no iOS e `expo-glass-effect` (`GlassView`) para habilitar a refração física nativa do Liquid Glass (que não aparece apenas com `BlurView`).
 
 - [ ] **T012 (Issue #237 — `@Eric2025gh`) — Auditoria Visual Final × Figma (`APP · 20 · iPhone · iOS 26`)**
-  - Conferir lado a lado em iPhone tipografia, Liquid Glass, contrastes, listas agrupadas e estados vazios/carregamento/erro contra todos os quadros atualizados de [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md).
+  - Conferir lado a lado no iPhone/build iOS 26 tipografia, refração Liquid Glass da barra e botões, contrastes, listas agrupadas e estados vazios/carregamento/erro contra [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md), incluindo os ajustes validados em `6f13603`.
 
 - [ ] **T013 (Issue #238 — `@Eric2025gh`) — Verificação final, QA iOS e regressão zero em Android e Web**
-  - Validar em simulador/iPhone real (Safe Areas, teclado, *swipe back*, VoiceOver, Dynamic Type e Reduzir Transparência) e executar `npm run validate`.
+  - Validar todas as telas no iPhone físico/TestFlight e simulador (Safe Areas, Dynamic Island, teclado, *swipe back*, *Haptics*, `UISwitch`, VoiceOver, Dynamic Type e Reduzir Transparência) e executar `npm run validate`.
