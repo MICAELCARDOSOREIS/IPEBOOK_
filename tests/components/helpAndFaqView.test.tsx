@@ -1,5 +1,6 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
+import * as Linking from "expo-linking";
 import HelpAndFaq from "@/view/help/helpAndFaq";
 
 describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
@@ -53,6 +54,29 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
       fireEvent.press(segurancaFilter);
     });
     expect(screen.getByText("Posso levar acompanhante no encontro?")).toBeDefined();
+
+    const police = screen.getByRole("link", { name: "Polícia Civil do Piauí · Ligar 197" });
+    const emergency = screen.getByRole("link", { name: "Emergência policial · Ligar 190" });
+    expect(screen.getByRole("link", { name: "Consultar a Delegacia de Piripiri" })).toBeDefined();
+
+    const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(true);
+    try {
+      await act(async () => {
+        fireEvent.press(police);
+        fireEvent.press(emergency);
+      });
+      expect(openURL.mock.calls).toEqual([["tel:197"], ["tel:190"]]);
+    } finally {
+      openURL.mockRestore();
+    }
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Buscar dúvida"), "197");
+    });
+    expect(screen.getByRole("link", { name: "Polícia Civil do Piauí · Ligar 197" })).toBeDefined();
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Buscar dúvida"), "");
+    });
 
     const regrasFilter = screen.getByRole("button", { name: "Filtrar por Regras e Trocas" });
     await act(async () => {

@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import * as Linking from "expo-linking";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -48,6 +50,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<CategoryFilter>("todos");
   const [searchQuery, setSearchQuery] = useState("");
+  const [linkErrorItem, setLinkErrorItem] = useState<string | null>(null);
   // Web larga: coluna mais larga, com as respostas em duas colunas.
   const wide = useIsWideWeb();
   const columns = useWebColumns(2, 3);
@@ -73,8 +76,18 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
     const inQuestion = normalizeSearchText(item.question).includes(normalizedQuery);
     const inAnswer = normalizeSearchText(item.answer).includes(normalizedQuery);
-    return inQuestion || inAnswer;
+    const inLinks = item.links?.some(({ label }) => normalizeSearchText(label).includes(normalizedQuery));
+    return inQuestion || inAnswer || inLinks;
   });
+
+  const openContact = async (itemId: string, href: string) => {
+    setLinkErrorItem(null);
+    try {
+      await Linking.openURL(href);
+    } catch {
+      setLinkErrorItem(itemId);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.page}>
@@ -140,6 +153,18 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   <View key={item.id} style={[styles.faqCard, wide && (isOddLast ? styles.fullRow : columnWidth)]}>
                     <Text style={styles.question}>{item.question}</Text>
                     <Text style={styles.answer}>{item.answer}</Text>
+                    {item.links?.map(({ href, label }) => (
+                      <Pressable
+                        key={href}
+                        accessibilityRole="link"
+                        accessibilityLabel={label}
+                        {...(Platform.OS === "web" ? { href } : { onPress: () => void openContact(item.id, href) })}
+                        style={withPress(styles.contactLink)}
+                      >
+                        <Text style={styles.contactLabel}>{label}</Text>
+                      </Pressable>
+                    ))}
+                    {linkErrorItem === item.id ? <InlineErrorCard message="Não foi possível abrir este contato." /> : null}
                   </View>
                 );
               })
@@ -239,6 +264,16 @@ function createStyles(colors: ColorPalette) {
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
     gap: tokens.spacing[8],
+  },
+  contactLink: {
+    alignSelf: "flex-start",
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+  },
+  contactLabel: {
+    ...tokens.typography.labelLarge,
+    color: colors.action,
+    textDecorationLine: "underline",
   },
   question: {
     ...tokens.typography.titleMedium,
