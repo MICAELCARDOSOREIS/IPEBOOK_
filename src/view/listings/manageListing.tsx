@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
+import { PIRIPIRI_POLICE_CONTACT } from "@/model/helpContent";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
@@ -12,6 +13,7 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatPrice } from "@/view/formatPrice";
+import { HelpContactLinks } from "@/view/help/HelpContactLinks";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -432,6 +434,15 @@ export default function ManageListing({
 
         <View style={styles.actionGroup}>
           <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
+            Segurança em Piripiri
+          </Text>
+          <View style={styles.safetyCard}>
+            <HelpContactLinks links={PIRIPIRI_POLICE_CONTACT.links} horizontal={wide} />
+          </View>
+        </View>
+
+        <View style={styles.actionGroup}>
+          <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
             Exclusão
           </Text>
 
@@ -665,6 +676,14 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[4],
       marginTop: tokens.spacing[4],
       marginBottom: tokens.spacing[2],
+    },
+    safetyCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      borderRadius: tokens.radius.card,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[4],
     },
     actionCard: {
       flexDirection: "row",

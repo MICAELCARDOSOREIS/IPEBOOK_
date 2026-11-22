@@ -286,11 +286,15 @@ const CENARIOS = [
       await page.waitForText("Gerenciar anúncio");
       await page.waitFor(`(() => {
         const actions = ["Editar anúncio", "Ver anúncio como leitor", "Pausar anúncio", "Excluir anúncio"];
+        const contacts = ["tel:190", "tel:197", "https://portal.pi.gov.br/pc/delegacias-do-interior/"];
         return actions.every(label => {
           const button = document.querySelector('[aria-label="' + label + '"]');
           return button && button.getBoundingClientRect().bottom <= innerHeight;
+        }) && contacts.every(href => {
+          const link = document.querySelector('a[href="' + href + '"]');
+          return link && link.getBoundingClientRect().bottom <= innerHeight;
         });
-      })()`, { message: "ações de gerenciamento visíveis no desktop" });
+      })()`, { message: "ações de gerenciamento e contatos de segurança visíveis no desktop" });
       await assertSemOverflowHorizontal(page, "Gerenciar anúncio no desktop");
 
       await page.setViewport(320, 844, true);
@@ -298,8 +302,11 @@ const CENARIOS = [
         const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
         const heading = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')]
           .find(element => element.textContent === "Disponibilidade no catálogo");
-        return innerWidth === 320 && share && heading
-          && heading.getBoundingClientRect().top >= share.getBoundingClientRect().bottom;
+        const civil = document.querySelector('a[href="tel:197"]');
+        const removal = document.querySelector('[aria-label="Excluir anúncio"]');
+        return innerWidth === 320 && share && heading && civil && removal
+          && heading.getBoundingClientRect().top >= share.getBoundingClientRect().bottom
+          && civil.getBoundingClientRect().bottom <= removal.getBoundingClientRect().top;
       })()`, { message: "seções de gerenciamento empilhadas sem sobreposição a 320 px" });
       await assertSemOverflowHorizontal(page, "Gerenciar anúncio a 320 px");
 
