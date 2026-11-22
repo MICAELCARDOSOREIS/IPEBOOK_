@@ -273,7 +273,7 @@ export class ExpoPushNotificationService implements IPushNotificationService {
     }
 
     return this.scheduleLocalNotification({
-      title: "Lembrete de Encontro no Ponto Seguro",
+      title: "Lembrete de encontro",
       body: `Seu encontro para a entrega do livro "${params.bookTitle}" em ${params.locationName} acontecerá em breve!`,
       data: {
         meetingId: params.meetingId,

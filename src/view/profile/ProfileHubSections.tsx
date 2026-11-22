@@ -231,12 +231,12 @@ export function ProfileCommunityBadges({
         <View
           style={styles.badgeItem}
           accessibilityRole="text"
-          accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
+          accessibilityLabel={`Selo Ponto recomendado: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
         >
           <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
             <AppIcon name="checkCircle" size={20} color={colors.action} />
           </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
+          <Text style={styles.badgeTitle} numberOfLines={2}>Ponto recomendado</Text>
           <Text style={styles.badgeDesc} numberOfLines={2}>
             {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
           </Text>

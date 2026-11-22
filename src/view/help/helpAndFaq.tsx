@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
+import { HelpContactLinks } from "@/view/help/HelpContactLinks";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -73,7 +74,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
     const inQuestion = normalizeSearchText(item.question).includes(normalizedQuery);
     const inAnswer = normalizeSearchText(item.answer).includes(normalizedQuery);
-    return inQuestion || inAnswer;
+    const inLinks = item.links?.some(({ label }) => normalizeSearchText(label).includes(normalizedQuery));
+    return inQuestion || inAnswer || inLinks;
   });
 
   return (
@@ -140,6 +142,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   <View key={item.id} style={[styles.faqCard, wide && (isOddLast ? styles.fullRow : columnWidth)]}>
                     <Text style={styles.question}>{item.question}</Text>
                     <Text style={styles.answer}>{item.answer}</Text>
+                    {item.links ? <HelpContactLinks links={item.links} /> : null}
                   </View>
                 );
               })

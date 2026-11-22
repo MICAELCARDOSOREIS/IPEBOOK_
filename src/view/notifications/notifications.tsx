@@ -20,7 +20,9 @@ import {
 } from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
+import { notificationTimeLabel } from "@/viewmodel/notificationGrouping";
+import { meetingNotificationDisplay, notificationDateSections, notificationRows } from "@/viewmodel/meetingNotifications";
+import { formatMeetingWhen } from "@/view/meetingFormat";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -48,7 +50,7 @@ const TYPE_CONFIG: Record<
   safety_tip: { icon: "lock", tone: "neutral", label: "Segurança", actionHint: "Ler orientações" },
   system: { icon: "info", tone: "neutral", label: "Aviso", actionHint: "Saber mais" },
   search_alert_match: { icon: "search", tone: "donation", label: "Alerta", actionHint: "Explorar busca" },
-  meeting_update: { icon: "calendar", tone: "action", label: "Encontro", actionHint: "Ver ponto de troca" },
+  meeting_update: { icon: "calendar", tone: "action", label: "Encontro", actionHint: "Ver negociação" },
 };
 
 /**
@@ -66,7 +68,7 @@ export default function Notifications({
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
-  const [state, actions] = makeNotificationsViewModel(sessionUserId);
+  const [state, actions] = makeNotificationsViewModel(sessionUserId, true);
   const [prompt, promptActions] = makeNotificationsPromptViewModel();
   const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();
@@ -74,8 +76,35 @@ export default function Notifications({
   const wide = useIsWideWeb();
   const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
-  const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<"read" | "all" | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [expandedHistory, setExpandedHistory] = useState<ReadonlySet<string>>(() => new Set());
+  const sections = useMemo(
+    () => notificationDateSections(notificationRows(state.notifications, state.filter), expandedHistory),
+    [state.notifications, state.filter, expandedHistory],
+  );
+
+  const toggleHistory = (requestId: string) => {
+    setExpandedHistory((previous) => {
+      const next = new Set(previous);
+      if (next.has(requestId)) next.delete(requestId);
+      else next.add(requestId);
+      return next;
+    });
+  };
+
+  const deleteBatch = async () => {
+    if (!confirmDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await (confirmDelete === "read" ? actions.clearRead() : actions.clearAll());
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
+      setManageOpen(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -88,8 +117,6 @@ export default function Notifications({
 
   const showListChrome = !state.loading && !state.error && state.notifications.length > 0;
   const hasReadNotifications = state.notifications.some((n) => n.read);
-  const hasManagementActions =
-    state.unreadCount > 0 || hasReadNotifications || state.notifications.length > 0;
 
   const renderHeader = (showRefreshAction: boolean) => {
     if (!wide) {
@@ -202,184 +229,76 @@ export default function Notifications({
         ) : null}
 
         {showListChrome ? (
-          <View style={[styles.filterBar, wide && styles.filterBarWide]}>
-            {wide ? <Text style={styles.sidebarSectionLabel}>Filtrar</Text> : null}
-            <View accessibilityRole="tablist" style={[styles.filterTabs, wide && styles.filterTabsWide]}>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityLabel={`Todas (${state.notifications.length})`}
-                accessibilityState={{ selected: state.filter === "all" }}
-                onPress={() => actions.setFilter("all")}
-                style={withWebInteractive(
-                  [
-                    styles.filterChip,
-                    wide && styles.filterChipWide,
-                    state.filter === "all" && styles.filterChipActive,
-                  ],
-                  state.filter === "all" ? styles.filterChipActiveHover : styles.filterChipHover,
-                  colors.m3.focusRing,
-                )}
-              >
-                {wide ? (
-                  <>
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        state.filter === "all" && styles.filterChipTextActive,
-                      ]}
+          <View>
+            <View style={styles.filterBar}>
+              <View style={styles.filterTabs}>
+                {(["all", "unread"] as const).map((filter) => {
+                  const selected = state.filter === filter;
+                  const label = filter === "all" ? "Todas" : `Não lidas (${state.unreadCount})`;
+                  const accessibleLabel = filter === "all" ? `Todas (${state.notifications.length})` : label;
+                  return (
+                    <Pressable
+                      key={filter}
+                      accessibilityRole="button"
+                      accessibilityLabel={accessibleLabel}
+                      accessibilityState={{ selected }}
+                      aria-pressed={selected}
+                      onPress={() => actions.setFilter(filter)}
+                      style={withWebInteractive(
+                        [styles.filterChip, selected && styles.filterChipActive],
+                        selected ? styles.filterChipActiveHover : styles.filterChipHover,
+                        colors.m3.focusRing,
+                      )}
                     >
-                      Todas
-                    </Text>
-                    <View
-                      style={[
-                        styles.filterCountBadge,
-                        state.filter === "all" && styles.filterCountBadgeActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.filterCountBadgeText,
-                          state.filter === "all" && styles.filterCountBadgeTextActive,
-                        ]}
-                      >
-                        {state.notifications.length}
-                      </Text>
-                    </View>
-                  </>
-                ) : (
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      state.filter === "all" && styles.filterChipTextActive,
-                    ]}
+                      <Text style={[styles.filterChipText, selected && styles.filterChipTextActive]}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={[styles.actionButtonsRow, !wide && styles.actionButtonsRowNarrow]}>
+                {state.unreadCount > 0 ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Marcar todas como lidas"
+                    onPress={() => void actions.markAllAsRead()}
+                    style={withWebInteractive(
+                      [styles.actionBtn, styles.actionBtnPrimary], styles.actionBtnPrimaryHover, colors.m3.focusRing,
+                    )}
                   >
-                    Todas ({state.notifications.length})
-                  </Text>
-                )}
-              </Pressable>
-
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityLabel={`Não lidas (${state.unreadCount})`}
-                accessibilityState={{ selected: state.filter === "unread" }}
-                onPress={() => actions.setFilter("unread")}
-                style={withWebInteractive(
-                  [
-                    styles.filterChip,
-                    wide && styles.filterChipWide,
-                    state.filter === "unread" && styles.filterChipActive,
-                  ],
-                  state.filter === "unread" ? styles.filterChipActiveHover : styles.filterChipHover,
-                  colors.m3.focusRing,
-                )}
-              >
-                {wide ? (
-                  <>
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        state.filter === "unread" && styles.filterChipTextActive,
-                      ]}
-                    >
-                      Não lidas
-                    </Text>
-                    <View
-                      style={[
-                        styles.filterCountBadge,
-                        state.unreadCount > 0 && state.filter !== "unread" && styles.filterCountBadgeAlert,
-                        state.filter === "unread" && styles.filterCountBadgeActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.filterCountBadgeText,
-                          state.unreadCount > 0 &&
-                            state.filter !== "unread" &&
-                            styles.filterCountBadgeAlertText,
-                          state.filter === "unread" && styles.filterCountBadgeTextActive,
-                        ]}
-                      >
-                        {state.unreadCount}
-                      </Text>
-                    </View>
-                  </>
-                ) : (
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      state.filter === "unread" && styles.filterChipTextActive,
-                    ]}
-                  >
-                    Não lidas ({state.unreadCount})
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-
-            {hasManagementActions ? (
-              <>
-                {wide ? (
-                  <>
-                    <View style={styles.sidebarDivider} />
-                    <Text style={styles.sidebarSectionLabel}>Ações</Text>
-                  </>
+                    <AppIcon name="check" size={16} color={colors.action} />
+                    <Text style={styles.actionBtnText}>Marcar todas como lidas</Text>
+                  </Pressable>
                 ) : null}
-                <View style={[styles.actionButtonsRow, wide && styles.actionButtonsRowWide]}>
-                  {state.unreadCount > 0 ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Marcar todas como lidas"
-                      onPress={() => {
-                        void actions.markAllAsRead();
-                        setFeedbackMessage("Todas as notificações foram marcadas como lidas.");
-                      }}
-                      style={withWebInteractive(
-                        [styles.actionBtn, wide && styles.actionBtnWide, styles.actionBtnPrimary],
-                        styles.actionBtnPrimaryHover,
-                        colors.m3.focusRing,
-                      )}
-                    >
-                      <AppIcon name="check" size={16} color={colors.action} />
-                      <Text style={styles.actionBtnText}>Marcar todas como lidas</Text>
-                    </Pressable>
-                  ) : null}
-
-                  {hasReadNotifications ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Limpar notificações lidas"
-                      onPress={() => {
-                        void actions.clearRead();
-                        setFeedbackMessage("Notificações lidas foram removidas.");
-                      }}
-                      style={withWebInteractive(
-                        [styles.actionBtn, wide && styles.actionBtnWide],
-                        styles.actionBtnHover,
-                        colors.m3.focusRing,
-                      )}
-                    >
-                      <AppIcon name="checkCircle" size={15} color={colors.secondaryText} />
-                      <Text style={styles.actionBtnSecondaryText}>Limpar lidas</Text>
-                    </Pressable>
-                  ) : null}
-
-                  {state.notifications.length > 0 ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Limpar todas as notificações"
-                      onPress={() => setConfirmClearAllVisible(true)}
-                      style={withWebInteractive(
-                        [styles.actionBtn, wide && styles.actionBtnWide],
-                        styles.actionBtnDangerHover,
-                        colors.m3.focusRing,
-                      )}
-                    >
-                      <AppIcon name="delete" size={15} color={colors.error} />
-                      <Text style={styles.actionBtnDangerText}>Limpar tudo</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              </>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: manageOpen }}
+                  onPress={() => setManageOpen((open) => !open)}
+                  style={withWebInteractive(styles.actionBtn, styles.actionBtnHover, colors.m3.focusRing)}
+                >
+                  <AppIcon name="more" size={18} color={colors.secondaryText} />
+                  <Text style={styles.actionBtnSecondaryText}>Gerenciar notificações</Text>
+                </Pressable>
+              </View>
+            </View>
+            {manageOpen ? (
+              <View style={styles.managementActions}>
+                {hasReadNotifications ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setConfirmDelete("read")}
+                    style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
+                  >
+                    <Text style={styles.actionBtnDangerText}>Excluir notificações lidas</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setConfirmDelete("all")}
+                  style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
+                >
+                  <Text style={styles.actionBtnDangerText}>Excluir todas as notificações</Text>
+                </Pressable>
+              </View>
             ) : null}
           </View>
         ) : null}
@@ -400,7 +319,7 @@ export default function Notifications({
             ) : (
               <OfflineState onRetry={() => void actions.reload()} />
             )
-          ) : state.filteredNotifications.length === 0 ? (
+          ) : sections.length === 0 ? (
             <View
               style={[
                 styles.emptyState,
@@ -441,11 +360,8 @@ export default function Notifications({
             <SectionList
               testID="notifications-list"
               style={styles.flexOne}
-              sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
-                ...section,
-                data: [...section.data],
-              }))}
-              keyExtractor={(item) => item.id}
+              sections={sections}
+              keyExtractor={({ item }) => item.id}
               contentContainerStyle={[
                 styles.listContent,
                 { paddingBottom: scrollBottomPadding.withoutBottomBar },
@@ -459,156 +375,174 @@ export default function Notifications({
                   <Text accessibilityRole="header" style={styles.sectionHeader}>
                     {section.title}
                   </Text>
-                  <Text style={styles.sectionCountBadge}>{section.data.length}</Text>
                   <View style={styles.sectionHeaderLine} />
                 </View>
               )}
-              renderItem={({ item }) => {
+              renderItem={({ item: { item, requestId, history, historical } }) => {
                 const config = TYPE_CONFIG[item.type] ?? {
                   icon: "info",
                   tone: "neutral" as const,
                   label: "Aviso",
                   actionHint: "Ver detalhes",
                 };
-                const time = notificationTimeLabel(item.createdAt);
-                const destination = resolveNotificationRoute(item);
+                const meeting = requestId ? state.meetingsByRequest?.get(requestId) : undefined;
+                const current = historical ? undefined : meetingNotificationDisplay(meeting, sessionUserId);
+                const title = current?.title ?? item.title;
+                const message = current && meeting
+                  ? `${formatMeetingWhen(meeting.scheduledAt)} · ${meeting.pointName}`
+                  : historical ? item.message.replace(/\. Confirme na negociação\.$/, ".") : item.message;
+                const actionHint = historical ? "Ver negociação atual" : (current?.action ?? config.actionHint);
+                const time = historical ? new Date(item.createdAt).toLocaleDateString("pt-BR") : notificationTimeLabel(item.createdAt);
+                const destination = requestId ? `/conversa/${requestId}` : resolveNotificationRoute(item);
+                const historyOpen = Boolean(requestId && expandedHistory.has(requestId));
+                const historyUnread = history?.filter((notice) => !notice.read).length ?? 0;
 
                 return (
-                  <View style={[styles.card, !item.read && styles.cardUnread]}>
-                    {!item.read ? <View style={styles.unreadStripe} /> : null}
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.title}. ${item.message}`}
-                      onPress={() => {
-                        if (!item.read) {
-                          void actions.markAsRead(item.id);
-                        }
-                        if (destination) {
-                          guardedAction(destination);
-                        }
-                      }}
-                      style={withWebInteractive(
-                        [styles.cardBody, wide && styles.cardBodyWide],
-                        styles.cardBodyHover,
-                        colors.m3.focusRing,
-                      )}
-                    >
-                      <View style={[styles.cardHeader, wide && styles.cardHeaderWide]}>
-                        <IconBadge icon={config.icon} tone={config.tone} />
-                        <View style={styles.cardTitleContainer}>
-                          <View style={styles.titleRow}>
-                            <Text
-                              style={[
-                                styles.cardTitle,
-                                !item.read && styles.cardTitleUnread,
-                              ]}
-                              numberOfLines={2}
-                            >
-                              {item.title}
-                            </Text>
-                            {!item.read ? (
-                              <View style={styles.novaBadge}>
-                                <View style={styles.unreadDot} />
-                                <Text style={styles.novaBadgeText}>Nova</Text>
-                              </View>
-                            ) : null}
-                            {wide ? (
-                              <>
-                                <View style={styles.typeBadge}>
-                                  <Text style={styles.typeBadgeText}>{config.label}</Text>
-                                </View>
-                                {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
-                              </>
-                            ) : null}
-                          </View>
-                          {!wide ? (
-                            <View style={styles.metaRow}>
-                              <View style={styles.typeBadge}>
-                                <Text style={styles.typeBadgeText}>{config.label}</Text>
-                              </View>
-                              {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
-                            </View>
-                          ) : null}
-                          <Text style={styles.cardMessage}>{item.message}</Text>
-                          {!wide ? (
-                            <View style={[styles.cardFooter, !item.read && styles.cardFooterUnread]}>
-                              <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
-                                {config.actionHint}
-                              </Text>
-                              <AppIcon
-                                name="chevronRight"
-                                size={14}
-                                color={item.read ? colors.action : colors.m3.onSecondaryContainer}
-                              />
-                            </View>
-                          ) : null}
-                        </View>
-                      </View>
-
-                      {/* Rodapé do card: ação contextual rápida */}
-                      {wide ? (
-                        <View
-                          style={[
-                            styles.cardFooter,
-                            styles.cardFooterWide,
-                            !item.read && styles.cardFooterUnread,
-                          ]}
-                        >
-                          <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
-                            {config.actionHint}
-                          </Text>
-                          <AppIcon
-                            name="chevronRight"
-                            size={14}
-                            color={item.read ? colors.action : colors.m3.onSecondaryContainer}
-                          />
-                        </View>
-                      ) : null}
-                    </Pressable>
-
-                    <View style={styles.cardActions}>
-                      {!item.read ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel="Marcar como lida"
-                          testID={`mark-read-notif-${item.id}`}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          onPress={() => {
-                            void actions.markAsRead(item.id);
-                            setFeedbackMessage("Notificação marcada como lida.");
-                          }}
-                          style={withWebInteractive(
-                            styles.cardIconButton,
-                            styles.cardIconButtonPrimaryHover,
-                            colors.m3.focusRing,
-                          )}
-                        >
-                          <AppIcon name="check" size={16} color={colors.action} />
-                        </Pressable>
-                      ) : null}
-
+                  <View style={historical ? styles.historicalRow : undefined}>
+                    <View style={[styles.card, !item.read && styles.cardUnread]}>
+                      {!item.read ? <View style={styles.unreadStripe} /> : null}
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Excluir notificação"
-                        testID={`delete-notif-${item.id}`}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityLabel={`${title}. ${message}`}
+                        accessibilityHint={actionHint}
                         onPress={() => {
-                          void actions.deleteNotification(item.id);
-                          setFeedbackMessage("Notificação excluída.");
+                          if (!item.read) {
+                            void actions.markAsRead(item.id);
+                          }
+                          if (destination) {
+                            guardedAction(destination);
+                          }
                         }}
                         style={withWebInteractive(
-                          styles.cardIconButton,
-                          styles.cardIconButtonDangerHover,
+                          [styles.cardBody, wide && styles.cardBodyWide],
+                          styles.cardBodyHover,
                           colors.m3.focusRing,
                         )}
                       >
-                        <AppIcon
-                          name="delete"
-                          size={16}
-                          color={colors.secondaryText}
-                        />
+                        <View style={[styles.cardHeader, wide && styles.cardHeaderWide]}>
+                          <IconBadge icon={config.icon} tone={config.tone} />
+                          <View style={styles.cardTitleContainer}>
+                            <View style={styles.titleRow}>
+                              <Text
+                                style={[
+                                  styles.cardTitle,
+                                  !item.read && styles.cardTitleUnread,
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {title}
+                              </Text>
+                              {!item.read ? (
+                                <View style={styles.novaBadge}>
+                                  <View style={styles.unreadDot} />
+                                  <Text style={styles.novaBadgeText}>Nova</Text>
+                                </View>
+                              ) : null}
+                              {wide ? (
+                                <>
+                                  <View style={styles.typeBadge}>
+                                    <Text style={styles.typeBadgeText}>{historical ? "Histórico" : config.label}</Text>
+                                  </View>
+                                  {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
+                                </>
+                              ) : null}
+                            </View>
+                            {!wide ? (
+                              <View style={styles.metaRow}>
+                                <View style={styles.typeBadge}>
+                                  <Text style={styles.typeBadgeText}>{historical ? "Histórico" : config.label}</Text>
+                                </View>
+                                {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
+                              </View>
+                            ) : null}
+                            <Text style={styles.cardMessage}>{message}</Text>
+                            {!wide ? (
+                              <View style={[styles.cardFooter, !item.read && styles.cardFooterUnread]}>
+                                <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                                  {actionHint}
+                                </Text>
+                                <AppIcon
+                                  name="chevronRight"
+                                  size={14}
+                                  color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                                />
+                              </View>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        {/* Rodapé do card: ação contextual rápida */}
+                        {wide ? (
+                          <View
+                            style={[
+                              styles.cardFooter,
+                              styles.cardFooterWide,
+                              !item.read && styles.cardFooterUnread,
+                            ]}
+                          >
+                            <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                              {actionHint}
+                            </Text>
+                            <AppIcon
+                              name="chevronRight"
+                              size={14}
+                              color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                            />
+                          </View>
+                        ) : null}
                       </Pressable>
+
+                      <View style={styles.cardActions}>
+                        {!item.read ? (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Marcar como lida"
+                            testID={`mark-read-notif-${item.id}`}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            onPress={() => void actions.markAsRead(item.id)}
+                            style={withWebInteractive(
+                              styles.cardIconButton,
+                              styles.cardIconButtonPrimaryHover,
+                              colors.m3.focusRing,
+                            )}
+                          >
+                            <AppIcon name="check" size={16} color={colors.action} />
+                          </Pressable>
+                        ) : null}
+
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Excluir notificação"
+                          testID={`delete-notif-${item.id}`}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          onPress={() => void actions.deleteNotification(item.id)}
+                          style={withWebInteractive(
+                            styles.cardIconButton,
+                            styles.cardIconButtonDangerHover,
+                            colors.m3.focusRing,
+                          )}
+                        >
+                          <AppIcon
+                            name="delete"
+                            size={16}
+                            color={colors.secondaryText}
+                          />
+                        </Pressable>
+                      </View>
                     </View>
+                    {requestId && history && history.length > 0 ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: historyOpen }}
+                        onPress={() => toggleHistory(requestId)}
+                        style={withWebInteractive(styles.historyToggle, styles.actionBtnHover, colors.m3.focusRing)}
+                      >
+                        <AppIcon name={historyOpen ? "chevronUp" : "chevronDown"} size={16} color={colors.action} />
+                        <Text style={styles.actionBtnText}>
+                          {`${historyOpen ? "Ocultar histórico" : "Ver histórico"} (${history.length})${historyUnread ? ` · ${historyUnread} ${historyUnread === 1 ? "não lida" : "não lidas"}` : ""}`}
+                        </Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                 );
               }}
@@ -618,27 +552,23 @@ export default function Notifications({
       </View>
 
       <Snackbar
-        visible={state.actionError !== null || feedbackMessage !== null}
-        message={state.actionError ?? feedbackMessage ?? ""}
-        onDismiss={() => {
-          if (state.actionError) actions.clearActionError();
-          if (feedbackMessage) setFeedbackMessage(null);
-        }}
+        visible={state.actionError !== null}
+        message={state.actionError ?? ""}
+        onDismiss={actions.clearActionError}
       />
 
       <Dialog
-        visible={confirmClearAllVisible}
-        title="Limpar todas as notificações?"
-        message="Todas as notificações da sua conta serão removidas permanentemente."
-        confirmLabel="Limpar tudo"
+        visible={confirmDelete !== null}
+        title={confirmDelete === "read" ? "Excluir notificações lidas?" : "Excluir todas as notificações?"}
+        message={confirmDelete === "read"
+          ? "As notificações lidas serão removidas permanentemente."
+          : "Todas as notificações da sua conta serão removidas permanentemente."}
+        confirmLabel="Excluir"
         cancelLabel="Cancelar"
         destructive
-        onConfirm={() => {
-          setConfirmClearAllVisible(false);
-          void actions.clearAll();
-          setFeedbackMessage("Todas as notificações foram limpas.");
-        }}
-        onCancel={() => setConfirmClearAllVisible(false)}
+        loading={deleting}
+        onConfirm={() => void deleteBatch()}
+        onCancel={() => setConfirmDelete(null)}
       />
 
       {/* Reabrir o aviso explicativo: a pessoa pediu no botão da banner, então o prompt nativo vem depois. */}

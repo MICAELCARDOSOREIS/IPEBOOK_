@@ -10,7 +10,7 @@ export default function AuthCallbackRoute() {
   return (
     <AuthCallback
       url={url}
-      onSuccess={() => replaceOnce(consumeAuthReturnTo("/") as never)}
+      onSuccess={() => replaceOnce(consumeAuthReturnTo())}
       onBackToSignIn={() => {
         if (router.canGoBack()) backOnce();
         else replaceOnce("/entrar");

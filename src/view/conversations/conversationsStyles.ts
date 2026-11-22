@@ -152,7 +152,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       minHeight: 0,
     },
     wideListPane: {
-      width: 340,
+      width: 288,
       minHeight: 0,
       borderRightWidth: 1,
       borderRightColor: colors.book.paperEdge,
@@ -472,7 +472,7 @@ export function createConversationsStyles(colors: ColorPalette) {
     },
     rowSelected: {
       backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.nature.foliage,
+      borderColor: colors.m3.outlineVariant,
     },
     rowText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
     rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
@@ -572,19 +572,6 @@ export function createConversationsStyles(colors: ColorPalette) {
     },
     emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
     emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
-    deleteButton: {
-      width: 34,
-      height: 34,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      position: "absolute",
-      right: tokens.spacing[8],
-      top: "50%",
-      marginTop: -17,
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
     rowWrap: { position: "relative" },
     rowCardMobile: {
       marginHorizontal: tokens.spacing[16],
@@ -627,8 +614,6 @@ export function createConversationsStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     cancelRequestText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
-    rowWithDelete: { paddingRight: tokens.spacing[48] },
-    deleteButtonHovered: { backgroundColor: colors.errorContainer },
     pendingBanner: {
       flexDirection: "row",
       alignItems: "center",

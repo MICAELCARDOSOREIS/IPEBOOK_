@@ -179,7 +179,7 @@ export default function ProfileHub({
       icon: "calendar",
       iconColor: colors.text,
       label: "Histórico de encontros",
-      description: "Encontros nos pontos seguros de Piripiri",
+      description: "Encontros nos pontos recomendados de Piripiri",
       onPress: guardedNavigateToMeetingHistory,
       showChevron: true,
     },

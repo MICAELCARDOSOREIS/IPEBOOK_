@@ -129,7 +129,7 @@ export const ListingShareCard = forwardRef<ComponentRef<typeof View>, ListingSha
         <Text style={styles.author} numberOfLines={1}>{book.author}</Text>
         {metaDetails ? <Text style={styles.metaDetails} numberOfLines={1}>{metaDetails}</Text> : null}
         {book.neighborhood ? <Text style={styles.where}>{`${book.neighborhood}, Piripiri`}</Text> : null}
-        <Text style={styles.trustLine}>Ponto Seguro de Piripiri · Confirmação por QR Code</Text>
+        <Text style={styles.trustLine}>Ponto recomendado em Piripiri · Confirmação por QR Code</Text>
       </View>
 
       <View style={styles.linkPill}>

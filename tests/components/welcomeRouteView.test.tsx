@@ -9,11 +9,11 @@ jest.mock("@/viewmodel/useWelcomeGateViewModel", () => ({
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
 const mockedGate = jest.mocked(useWelcomeGateViewModel);
 
-async function renderRoute() {
+async function renderRoute(onExplore?: () => void) {
   const dismiss = jest.fn().mockResolvedValue(undefined);
   const onFinish = jest.fn();
   mockedGate.mockReturnValue(["skip", dismiss]);
-  const screen = await render(<WelcomeRoute onFinish={onFinish} />);
+  const screen = await render(<WelcomeRoute onFinish={onFinish} onExplore={onExplore} />);
   return { screen, dismiss, onFinish };
 }
 
@@ -36,8 +36,8 @@ describe("WelcomeRoute (issue #98)", () => {
     expect(onFinish).toHaveBeenCalledWith("/entrar");
   });
 
-  it("não oferece acesso de visitante ao catálogo (Spec 092)", async () => {
-    const { screen, dismiss, onFinish } = await renderRoute();
+  it("mantém o acesso de visitante ao catálogo restrito à Web", async () => {
+    const { screen, dismiss, onFinish } = await renderRoute(jest.fn());
 
     expect(screen.queryByRole("button", { name: /Explorar/i })).toBeNull();
     fireEvent.press(screen.getByRole("button", { name: "Já tenho conta" }));

@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type React from "react";
+import * as Linking from "expo-linking";
 import { Share } from "react-native";
 import type { Book } from "@/model/entities/book";
 import ManageListing from "@/view/listings/manageListing";
@@ -66,7 +67,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
     expect(headers).toContain("Gerenciar anúncio");
-    expect(headers).toContain("Seu livro, suas escolhas.");
+    expect(headers).toContain("O Pequeno Príncipe");
     expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
     expect(screen.getByText("Antoine de Saint-Exupéry")).toBeDefined();
     expect(screen.getByText("Bom estado")).toBeDefined();
@@ -74,6 +75,26 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByText("Anúncio ativo")).toBeDefined();
     expect(screen.getByLabelText("Editar anúncio")).toBeDefined();
     expect(screen.getByLabelText("Pausar anúncio")).toBeDefined();
+
+    expect(screen.getByRole("header", { name: "Segurança em Piripiri" })).toBeDefined();
+    const emergency = screen.getByRole("link", { name: "Emergência policial · Ligar 190" });
+    const civilPolice = screen.getByRole("link", { name: "Polícia Civil do Piauí · Ligar 197" });
+    const localStation = screen.getByRole("link", { name: "Consultar a Delegacia de Piripiri" });
+    const openURL = jest.spyOn(Linking, "openURL");
+    try {
+      await act(async () => {
+        fireEvent.press(emergency);
+        fireEvent.press(civilPolice);
+        fireEvent.press(localStation);
+      });
+      expect(openURL.mock.calls).toEqual([
+        ["tel:190"],
+        ["tel:197"],
+        ["https://portal.pi.gov.br/pc/delegacias-do-interior/"],
+      ]);
+    } finally {
+      openURL.mockRestore();
+    }
   });
 
   it("mostra o erro quando o compartilhamento no WhatsApp falha (Spec 118)", async () => {
@@ -109,8 +130,19 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
     expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
     expect(
-      screen.getByText("Conclua ou cancele a negociação em andamento para excluir este anúncio."),
+      screen.getByText("A exclusão fica indisponível enquanto houver uma negociação em andamento."),
     ).toBeDefined();
+
+    mockViewModel({ book: { ...book, status: "delivered" } });
+    await act(async () => {
+      await screen.rerender(<ManageListing bookId="b1" sessionUserId="user-1" />);
+    });
+    expect(screen.getByText("Livro entregue")).toBeDefined();
+    expect(screen.getByLabelText("Editar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByText("O anúncio de um livro entregue fica no histórico.")).toBeDefined();
+    expect(screen.queryByText(/enquanto houver uma negociação em andamento/)).toBeNull();
   });
 
   it("aciona a edição do anúncio", async () => {
@@ -224,8 +256,8 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
     // Seções organizadas com cabeçalhos acessíveis para navegação semântica
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
-    expect(headers).toContain("Edição e visualização");
-    expect(headers).toContain("Divulgar e compartilhar");
+    expect(headers).toContain("Divulgação");
+    expect(headers).toContain("Exclusão");
     expect(headers).toContain("Disponibilidade no catálogo");
 
     // Resumo acessível do livro para leitores de tela

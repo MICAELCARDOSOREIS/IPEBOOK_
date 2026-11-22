@@ -70,7 +70,38 @@ async function renderChat(props: Partial<Parameters<typeof Chat>[0]> = {}) {
 }
 
 describe("Chat em tela cheia (Spec 082)", () => {
-  it("tocar no cartão do livro abre o acompanhamento da negociação", async () => {
+  it("mostra o horário expirado e permite sugerir outro sem oferecer confirmação", async () => {
+    mockMeetingState = {
+      meeting: {
+        id: "m1", requestId: "r1", pointName: "Praça da Bandeira",
+        scheduledAt: "2000-01-01T14:00:00.000Z", status: "proposed", proposedBy: "ana",
+      },
+      loading: false,
+    };
+    setup();
+    const onScheduleMeeting = jest.fn();
+    try {
+      const screen = await renderChat({ embedded: true, onScheduleMeeting });
+      expect(screen.getByText("Horário expirado")).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Confirmar encontro" })).toBeNull();
+      fireEvent.press(screen.getByRole("button", { name: "Sugerir novo horário" }));
+      expect(onScheduleMeeting).toHaveBeenCalledWith("r1");
+    } finally {
+      mockMeetingState = { meeting: null, loading: false };
+    }
+  });
+
+  it("reúne as ações da conversa no menu do cabeçalho", async () => {
+    setup();
+    const onDeleteConversation = jest.fn();
+    const screen = await renderChat({ embedded: true, onDeleteConversation });
+    expect(screen.queryByText("Apagar conversa")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Opções da conversa" })); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Apagar conversa" })); });
+    expect(onDeleteConversation).toHaveBeenCalledTimes(1);
+  });
+
+  it("tocar no livro no cabeçalho abre o acompanhamento da negociação", async () => {
     setup();
     const onOpenNegotiation = jest.fn();
     const screen = await renderChat({ onOpenNegotiation });
@@ -420,7 +451,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
           id: "m2",
           requestId: "r1",
           pointName: "Praça da Bandeira",
-          scheduledAt: "2026-11-05T14:00:00.000Z",
+          scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           status: "proposed",
           proposedBy: "ana",
         },

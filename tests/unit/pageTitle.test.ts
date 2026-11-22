@@ -9,7 +9,25 @@ describe("pageTitleFor", () => {
     expect(pageTitleFor("/")).toBe("Início · IpêBook");
   });
 
-  it("usa só o nome do app em rotas dinâmicas ou desconhecidas", () => {
-    expect(pageTitleFor("/livro/abc")).toBe("IpêBook");
+  it("dá títulos descritivos a páginas dinâmicas, autenticação e endereços desconhecidos", () => {
+    const titles = {
+      "/alertas/exemplo": "Gerenciar alerta",
+      "/alertas/exemplo/editar": "Editar alerta",
+      "/auth/callback": "Concluir autenticação",
+      "/conversa/exemplo": "Conversa",
+      "/denunciar-pessoa/exemplo": "Denunciar pessoa",
+      "/denunciar/exemplo": "Denunciar anúncio",
+      "/editar-anuncio/exemplo": "Editar anúncio",
+      "/gerenciar-anuncio/exemplo": "Gerenciar anúncio",
+      "/livro/exemplo": "Detalhes do livro",
+      "/negociacao/exemplo": "Negociação",
+      "/negociacao/exemplo/encontro": "Combinar encontro",
+      "/negociacao/exemplo/entrega": "Entrega do livro",
+      "/perfil/exemplo": "Perfil de membro",
+      "/endereco-inexistente": "Página não encontrada",
+    };
+    for (const [path, title] of Object.entries(titles)) {
+      expect(pageTitleFor(path)).toBe(`${title} · IpêBook`);
+    }
   });
 });

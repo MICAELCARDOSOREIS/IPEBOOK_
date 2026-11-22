@@ -15,11 +15,13 @@ type NotificationRow = {
 };
 
 function mapNotification(row: NotificationRow): AppNotification {
+  // Atualiza a redação da dica de boas-vindas gerada pelo banco, inclusive para registros antigos.
+  const onboardingSafetyTip = row.type === "safety_tip" && row.title === "Dica de segurança: Pontos Seguros";
   return {
     id: row.id,
     userId: row.user_id,
-    title: row.title,
-    message: row.message,
+    title: onboardingSafetyTip ? "Dica de segurança: pontos de encontro recomendados" : row.title,
+    message: onboardingSafetyTip ? "Marque as entregas em um dos pontos públicos recomendados em Piripiri." : row.message,
     type: row.type,
     read: row.read,
     createdAt: row.created_at,

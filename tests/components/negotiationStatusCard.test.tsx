@@ -20,7 +20,7 @@ const proposedMeeting: Meeting = {
   id: "m-2",
   requestId: "r-1",
   pointName: "Praça da Bandeira (Centro)",
-  scheduledAt: "2026-11-05T15:00:00.000Z",
+  scheduledAt: new Date(Date.now() + 86_400_000).toISOString(),
   proposedBy: "other-user",
   status: "proposed",
 };

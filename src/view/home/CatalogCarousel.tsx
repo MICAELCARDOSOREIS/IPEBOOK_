@@ -12,7 +12,7 @@ import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export const MODALITY_PLURAL = {
@@ -71,7 +71,9 @@ export function CatalogCarousel({
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
-  const wideWeb = useIsWideWeb();
+  const windowWidth = useHydratedWindowWidth();
+  const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
+  const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
   const guardedNavigateToBookDetail = useGuardedPress((id: string) => onNavigateToBookDetail?.(id));
 
   const renderCard = (item: Book, wide = false) => {
@@ -112,7 +114,6 @@ export function CatalogCarousel({
               photoUrl={item.photoUrl}
               variant="card"
               width={wide ? 112 : undefined}
-              showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
         </View>
@@ -153,10 +154,10 @@ export function CatalogCarousel({
               <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
             </View>
           </View>
-          <View style={styles.carouselCardFooterRow}>
+          <View style={[styles.carouselCardFooterRow, compactWeb && styles.carouselCardFooterCompact]}>
             <View style={styles.carouselCardLocationRow}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+              <Text numberOfLines={compactWeb ? undefined : 1} style={styles.carouselCardNeighborhood}>
                 {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
@@ -201,8 +202,8 @@ export function CatalogCarousel({
         <View style={styles.carouselTitleGroup}>
           <Text
             accessibilityRole="header"
-            accessibilityLabel={title}
-            numberOfLines={1}
+            accessibilityLabel={Platform.OS === "web" ? (displayTitle ?? title) : title}
+            numberOfLines={compactWeb ? undefined : 1}
             style={styles.carouselTitle}
           >
             {displayTitle ?? title}
@@ -359,7 +360,7 @@ export function HomeShortcutsSection({
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
+          accessibilityLabel="Encontro recomendado: Locais públicos sugeridos e avaliação depois de cada troca"
           disabled={!onNavigateToHelp}
           onPress={() => onNavigateToHelp?.()}
           style={withPress(styles.shortcut)}
@@ -368,7 +369,7 @@ export function HomeShortcutsSection({
             <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
           </View>
           <View style={styles.shortcutText}>
-            <Text style={styles.shortcutTitle}>Encontro seguro</Text>
+            <Text style={styles.shortcutTitle}>Encontro recomendado</Text>
             <Text style={styles.shortcutBody}>
               Locais públicos sugeridos e avaliação depois de cada troca.
             </Text>
@@ -735,6 +736,7 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.book.paperEdge,
     },
+    carouselCardFooterCompact: { flexDirection: "column", alignItems: "flex-start" },
     carouselCardLocationRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], flexShrink: 1, },
     carouselCardNeighborhood: { ...tokens.typography.labelSmall, fontSize: 12, lineHeight: 16, fontFamily: fontFamily.medium, color: colors.m3.onSurfaceVariant, flexShrink: 1, },
     booksGridContainer: { flexDirection: "column", gap: tokens.spacing[14], },

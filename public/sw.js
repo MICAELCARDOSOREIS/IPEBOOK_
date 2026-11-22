@@ -3,21 +3,20 @@
  * Fornece App Shell offline, Stale-While-Revalidate para assets e Network-First para catálogo de livros.
  */
 
-const STATIC_CACHE_NAME = "ipebook-static-v1";
+const STATIC_CACHE_NAME = "ipebook-static-v2";
 const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v2";
 const CATALOG_CACHE_NAME = "ipebook-catalog-v2";
 
 const APP_SHELL_URLS = [
   "/",
-  "/index.html",
   "/manifest.json",
   "/icone-192.png",
   "/icone-512.png",
   "/favicon.ico",
-  "/bem-vindo.html",
-  "/pesquisa.html",
-  "/termos.html",
-  "/ajuda.html",
+  "/bem-vindo",
+  "/pesquisa",
+  "/termos",
+  "/ajuda",
 ];
 
 const ACTIVE_CACHES = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, CATALOG_CACHE_NAME];
@@ -27,12 +26,11 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE_NAME)
-      .then((cache) =>
-        cache.addAll(APP_SHELL_URLS).catch((err) => {
-          // Log suave para não quebrar a instalação se alguma rota específica falhar no pré-cache
-          console.warn("[IpêBook SW] Falha parcial no pré-cache:", err);
-        })
-      )
+      .then(async (cache) => {
+        const results = await Promise.allSettled(APP_SHELL_URLS.map((url) => cache.add(url)));
+        const failedUrls = APP_SHELL_URLS.filter((_, index) => results[index].status === "rejected");
+        if (failedUrls.length) console.warn("[IpêBook SW] Recursos não armazenados no pré-cache:", failedUrls);
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -183,7 +181,7 @@ self.addEventListener("fetch", (event) => {
   const acceptHeader = request.headers ? request.headers.get("accept") : "";
   const isNavigate = request.mode === "navigate" || (acceptHeader && acceptHeader.includes("text/html"));
 
-  // 1. Navegação SPA: Tenta rede, fallback para cache da página ou index.html do App Shell
+  // 1. Navegação SPA: tenta a rede, depois o cache da página ou da raiz.
   if (isNavigate) {
     event.respondWith(
       fetch(request)
@@ -197,7 +195,7 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => {
           const cached = await caches.match(request);
           if (cached) return cached;
-          const appShell = await caches.match("/index.html");
+          const appShell = await caches.match("/");
           if (appShell) return appShell;
           return createOfflineHtmlResponse();
         })

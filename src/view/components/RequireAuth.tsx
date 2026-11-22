@@ -1,5 +1,6 @@
 import { useEffect, useMemo, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useIsFocused } from "expo-router";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel, makeNetworkStatus } from "@/di/container";
 import { IpeMark } from "@/view/components/IpeMark";
 import { OfflineState } from "@/view/components/OfflineState";
@@ -7,6 +8,8 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
+import { getInternalAuthReturnTo } from "@/view/auth/authReturnTo";
+import { replaceOnce } from "@/view/pushOnce";
 import { useHydrated } from "@/view/useHydrated";
 
 export type RequireAuthProps = {
@@ -23,6 +26,7 @@ export type RequireAuthProps = {
 export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
   const [authState, authActions] = makeAuthViewModel();
   const hydrated = useHydrated();
+  const focused = useIsFocused();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -36,9 +40,18 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
 
   useEffect(() => {
     if (!authState.loading && !authState.user && isOnline) {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        if (!focused) return;
+        const { pathname, search, hash } = window.location;
+        const returnTo = getInternalAuthReturnTo(pathname + search + hash);
+        if (pathname !== "/" && returnTo) {
+          replaceOnce({ pathname: "/entrar", params: { returnTo } });
+          return;
+        }
+      }
       onRequireSignIn();
     }
-  }, [authState.loading, authState.user, isOnline, onRequireSignIn]);
+  }, [authState.loading, authState.user, focused, isOnline, onRequireSignIn]);
 
   // Se estiver sem conexão e sem usuário em cache, apresenta estado offline acolhedor
   if (hydrated && !isOnline && !authState.user && !authState.loading) {

@@ -253,7 +253,7 @@ describe("Melhorias na entrega do livro (Spec 115)", () => {
       const screen = await open();
       expect(screen.getByText("Grande Sertão: Veredas")).toBeDefined();
       expect(screen.getByText("Dicas para a Entrega Presencial")).toBeDefined();
-      expect(screen.getByText(/Realizem a troca em um dos 4 pontos públicos e seguros de Piripiri/)).toBeDefined();
+      expect(screen.getByText(/Realizem a troca em um dos 4 pontos públicos recomendados de Piripiri/)).toBeDefined();
       expect(screen.getByRole("header", { name: "Mostre este QR para quem recebe o livro" })).toBeDefined();
     } finally {
       jest.mocked(useIsWideWeb).mockReturnValue(false);

@@ -17,6 +17,7 @@ import { webColumnWidth } from "@/view/webLayout";
 export type SearchBookCardProps = {
   item: Book;
   wideWeb: boolean;
+  compactWeb?: boolean;
   gridColumns: number;
   userId: string | null;
   onPress: () => void;
@@ -26,6 +27,7 @@ export type SearchBookCardProps = {
 export function SearchBookCard({
   item,
   wideWeb,
+  compactWeb,
   gridColumns,
   userId,
   onPress,
@@ -89,7 +91,6 @@ export function SearchBookCard({
               title={item.title}
               photoUrl={item.photoUrl}
               variant={wideWeb ? "card" : "list"}
-              showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
         </ModalityCoverArea>
@@ -113,10 +114,10 @@ export function SearchBookCard({
               {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
             </View>
           </View>
-          <View style={styles.cardFooterRow}>
+          <View style={[styles.cardFooterRow, compactWeb && styles.cardFooterCompact]}>
             <View style={styles.cardLocationBadge}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-              <Text numberOfLines={1} style={styles.cardLocationText}>
+              <Text numberOfLines={compactWeb ? undefined : 1} style={styles.cardLocationText}>
                 {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
@@ -291,6 +292,7 @@ function createCardStyles(colors: ColorPalette) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.book.paperEdge,
     },
+    cardFooterCompact: { flexDirection: "column", alignItems: "flex-start" },
     cardLocationBadge: {
       flexDirection: "row",
       alignItems: "center",

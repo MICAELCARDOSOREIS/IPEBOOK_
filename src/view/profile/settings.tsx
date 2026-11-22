@@ -15,6 +15,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextButton } from "@/view/components/TextButton";
 import { makeAuthViewModel, makeIsModerator, makeNotificationPreferencesViewModel, makePublicProfileViewModel, makeSettingsViewModel } from "@/di/container";
+import { ALL_PIRIPIRI_LOCATIONS_LABEL, DEFAULT_PIRIPIRI_LOCATION } from "@/model/entities/location";
 import { NOTIFICATION_PREFERENCE_CATEGORIES, type NotificationPreferenceKey } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -47,10 +48,19 @@ type LinkItem = {
   icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail" | "instagram" | "flag";
   label: string;
   description?: string;
+  accessibilityLabel?: string;
   onPress?: () => void;
 };
 
 type SettingsSectionKey = "account" | "preferences" | "notifications" | "device" | "about";
+
+const ALL_LOCATION_VALUES = [
+  "all",
+  DEFAULT_PIRIPIRI_LOCATION,
+  ALL_PIRIPIRI_LOCATIONS_LABEL,
+  "Piripiri (Todos)",
+  "Todos os bairros (Piripiri)",
+];
 
 /**
  * Tela de configurações do aplicativo (Spec 073, ADR 0058 e ADR 0060).
@@ -110,9 +120,9 @@ export function Settings({
   const [expandedSection, setExpandedSection] = useState<SettingsSectionKey | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
-  const defaultNeighborhoodLabel =
-    neighborhood.activeNeighborhood === "all" || neighborhood.activeNeighborhood === "Todos os bairros (Piripiri)"
-      ? "Todos os bairros"
+  const defaultLocationLabel =
+    ALL_LOCATION_VALUES.includes(neighborhood.activeNeighborhood)
+      ? "Todos os locais de Piripiri"
       : neighborhood.activeNeighborhood;
 
   async function handleSignOut() {
@@ -239,7 +249,7 @@ export function Settings({
       <Pressable
         key={link.key}
         accessibilityRole="button"
-        accessibilityLabel={link.label}
+        accessibilityLabel={link.accessibilityLabel ?? link.label}
         onPress={link.onPress}
         android_ripple={Platform.OS === "android" ? { color: colors.m3.surfaceContainerHigh } : undefined}
         style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
@@ -411,16 +421,17 @@ export function Settings({
             </View>
           ) : null}
 
-          {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
+          {/* Preferências de uso (Spec 091): filtro de local ao abrir Início e Explorar */}
           <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.preferences = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("preferences", "Preferências", `Bairro padrão: ${defaultNeighborhoodLabel}`, "place")}
+            {renderSectionHeader("preferences", "Preferências", "Filtro de localização do catálogo", "place")}
             {expandedSection === "preferences" ? (
               <View style={styles.sectionBodyList}>
                 {renderLink({
                   key: "neighborhood",
                   icon: "place",
-                  label: "Bairro padrão",
-                  description: `${defaultNeighborhoodLabel} · usado para mostrar livros perto de você`,
+                  label: "Local padrão",
+                  description: defaultLocationLabel,
+                  accessibilityLabel: `Local padrão: ${defaultLocationLabel}`,
                   onPress: neighborhood.openSelector,
                 }, 0)}
               </View>

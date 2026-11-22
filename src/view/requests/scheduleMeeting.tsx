@@ -30,7 +30,7 @@ export type ScheduleMeetingProps = {
 
 /**
  * Figma `06.04 · Combinar encontro` (`27:809`) e `06.13 · Reagendar encontro` (`370:6601`):
- * local entre os pontos seguros, dia nos próximos sete dias e faixa de horário.
+ * local entre os pontos recomendados, dia nos próximos sete dias e faixa de horário.
  */
 export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: ScheduleMeetingProps) {
   const guardedBack = useGuardedPress(onBack);
@@ -125,7 +125,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
 
               <View style={styles.whereHeader}>
                 <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
-                <Text style={styles.whereHint}>Escolha um ponto público e seguro.</Text>
+                <Text style={styles.whereHint}>Escolha um dos pontos públicos recomendados.</Text>
               </View>
               <View accessibilityRole="radiogroup" accessibilityLabel="Local do encontro" style={styles.places}>
                 {PIRIPIRI_MEETING_POINTS.map((point, index) => {

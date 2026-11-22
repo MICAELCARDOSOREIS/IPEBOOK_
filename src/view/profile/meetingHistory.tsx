@@ -64,7 +64,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
                 Histórico de encontros
               </Text>
               <Text style={styles.wideSubtitle}>
-                Encontros nos 4 pontos seguros de Piripiri
+                Encontros nos 4 pontos recomendados de Piripiri
               </Text>
             </View>
           </View>
@@ -86,7 +86,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
             <AppIcon name="calendar" size={48} color={colors.m3.onSurfaceVariant} />
             <Text style={styles.emptyTitle}>Nenhum encontro registrado</Text>
             <Text style={styles.emptyText}>
-              Quando você aceitar ou propor trocas, os encontros nos 4 pontos seguros de Piripiri aparecerão aqui.
+              Quando você aceitar ou propor trocas, os encontros nos 4 pontos recomendados de Piripiri aparecerão aqui.
             </Text>
             {onBack ? (
               <Pressable accessibilityRole="button" accessibilityLabel="Voltar ao perfil" onPress={guardedBack} style={withPress(styles.emptyAction)}>
