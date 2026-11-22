@@ -36,3 +36,11 @@ Estabelecer uma suíte automatizada, reproduzível e versionada de testes End-to
 - **CA04 (Responsividade básica):** O catálogo inicial é validado tanto em viewport Desktop (`1440×900`) quanto Mobile (`390×844`) sem transbordamento horizontal.
 - **CA05 (Diagnóstico em falha):** Qualquer falha salva screenshot e log do console em `coverage/e2e-falhas/` e encerra o processo com código diferente de zero, sem deixar processos Chrome órfãos.
 - **CA06 (Integração no repositório e CI):** `npm run validate` continua passando e `.github/workflows/validacao.yml` executa `npm run test:e2e:build`.
+
+## Correções da auditoria web de 21/11/2026
+
+- O logotipo do cabeçalho desktop é um link para o início e pode ser acionado por teclado.
+- Ao abrir uma página protegida sem sessão na Web, a entrada e o cadastro preservam o caminho interno e a consulta. O retorno do OAuth lê o mesmo destino no armazenamento temporário da aba. O fluxo de boas-vindas continua exibido na primeira abertura do início.
+- Cada página Web apresenta um marco de conteúdo principal. Rotas dinâmicas, retorno de autenticação e endereço inexistente têm títulos descritivos. Após carregar um livro, seu título continua identificando o detalhe na aba do navegador.
+- A 320 px, a orientação do campo de pesquisa e o título da seção da página inicial cabem na tela. Os locais dos cartões podem usar mais de uma linha.
+- Validar os fluxos no Chrome com contas em memória e os títulos de rota no Jest. O HTTP 500 observado uma vez no servidor de desenvolvimento ficou fora do escopo desta correção.

@@ -20,6 +20,7 @@ import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignInProps = {
   onAuthenticated?: () => void;
+  onGoogleStart?: () => void;
   onNavigateToSignUp?: () => void;
   onNavigateToForgotPassword?: () => void;
   onBack?: () => void;
@@ -28,6 +29,7 @@ export type SignInProps = {
 /** Figma `01.10 · Entrar com e-mail` (nó `354:6017`). */
 export default function SignIn({
   onAuthenticated,
+  onGoogleStart,
   onNavigateToSignUp,
   onNavigateToForgotPassword,
   onBack,
@@ -51,6 +53,7 @@ export default function SignIn({
     if (busy) return;
     setGoogleLoading(true);
     try {
+      onGoogleStart?.();
       const success = await actions.signInWithGoogle?.();
       if (success) guardedAuthenticated();
     } finally {
