@@ -53,7 +53,7 @@ export function SellerCard({
             <View style={styles.sellerTrustIconBox}>
               <AppIcon name="place" size={13} color={colors.nature.foliage} />
             </View>
-            <Text style={styles.sellerTrustText}>Ponto Seguro de Piripiri · Confirmação por QR Code</Text>
+            <Text style={styles.sellerTrustText}>Ponto recomendado em Piripiri · Confirmação por QR Code</Text>
           </View>
         </View>
       </View>
