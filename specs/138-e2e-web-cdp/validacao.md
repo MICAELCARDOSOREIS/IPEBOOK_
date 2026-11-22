@@ -15,3 +15,12 @@
 7. **Cenário 7 — Resiliência offline/online e banner de conexão:** `PASSOU (2995ms)`
 
 **Resumo:** `7/7 cenários aprovados`, 0 exceções JavaScript não tratadas.
+
+## Correções da auditoria web em 21 de novembro de 2026
+
+- Exportação em modo memória com `expo export --platform web --output-dir dist-e2e --max-workers 2` e execução de `npm run test:e2e`. Os 7 cenários passaram no Chrome CDP.
+- A suíte confirmou o link HTML do logotipo, sua ativação com Enter, o marco principal e a legibilidade do início a 320 px. A pesquisa manteve a orientação do campo dentro da área útil. O link para Configurações preservou a consulta no login por e-mail. Uma conferência CDP adicional confirmou o foco com Tab e o fluxo simulado de Google.
+- A conferência visual a 320 px mostrou o título completo da seção e os locais dos cartões em mais de uma linha quando necessário. Os testes focados de títulos, autenticação, rotas e cabeçalho passaram.
+- `npm run typecheck`, `npm run lint`, `npm run check:architecture`, `npm run check:design-system`, `npm run check:numbering`, `npm run check:build-config` e `npm run test:sql` passaram. O lint apresentou avisos.
+- `npm run test:coverage` aprovou 2.335 testes em 317 arquivos e atingiu os limites de cobertura do projeto.
+- A validação do retorno usou contas em memória. O provedor Google externo e a publicação ficaram fora desta execução.

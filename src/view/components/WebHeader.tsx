@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "expo-router";
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -63,9 +64,11 @@ export function WebHeader({
   return (
     <View role="banner" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }]}>
       <View style={[styles.inner, compact && styles.innerCompact]}>
-        <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => guardedNavigate("home")} style={withPress(styles.brandLink)}>
-          <Text style={styles.brand}>IpêBook</Text>
-        </Pressable>
+        <Link href="/" replace asChild>
+          <Pressable accessibilityLabel="IpêBook, ir para o início" style={withPress(styles.brandLink)}>
+            <Text style={styles.brand}>IpêBook</Text>
+          </Pressable>
+        </Link>
 
         {active !== "search" ? (
           <View style={styles.search}>

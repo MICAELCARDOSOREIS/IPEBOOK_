@@ -143,6 +143,21 @@ const CENARIOS = [
       await page.waitForText("O Pequeno Príncipe");
       await assertSemOverflowHorizontal(page, "Pesquisa Mobile 390x844");
 
+      await page.setViewport(320, 844, true);
+      await page.waitFor(
+        `(() => {
+          const field = document.querySelector('input[aria-label="Buscar livros"]');
+          const canvas = document.createElement('canvas').getContext('2d');
+          if (!field || !field.placeholder || !canvas) return false;
+          const style = getComputedStyle(field);
+          canvas.font = style.fontSize + ' ' + style.fontFamily;
+          const textWidth = canvas.measureText(field.placeholder).width;
+          return textWidth <= field.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        })()`,
+        { message: "orientação de busca cabe no campo a 320 px" },
+      );
+      await assertSemOverflowHorizontal(page, "Pesquisa Mobile 320x844");
+
       await page.setViewport(1440, 900, false);
       await page.goto(`${baseUrl}/pesquisa`);
       await page.waitFor('Boolean(document.querySelector("input"))', {
@@ -189,6 +204,47 @@ const CENARIOS = [
       await page.waitForText("Apagar histórico de buscas?");
       await page.clickByText("Apagar histórico", { exact: true });
       await page.waitForText("Histórico de buscas apagado.", { timeoutMs: 10000 });
+
+      const logotipo = '[aria-label="IpêBook, ir para o início"]';
+      await page.waitFor(
+        `document.querySelector(${JSON.stringify(logotipo)})?.matches('a[href="/"]')`,
+        { message: "logotipo é um link HTML para o início" },
+      );
+      await page.eval(`document.querySelector(${JSON.stringify(logotipo)}).focus()`);
+      await page.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      await page.waitFor("location.pathname === '/'");
+
+      await page.setViewport(320, 844, true);
+      await page.waitFor(
+        `(() => {
+          const main = document.querySelector('main, [role="main"]');
+          if (!main || document.querySelectorAll('main, [role="main"]').length !== 1) return false;
+          const title = [...main.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')].find(el => el.textContent === 'Perto de você');
+          const place = [...main.querySelectorAll('div, span')].find(el => el.childElementCount === 0 && el.textContent === 'Praça da Bandeira');
+          return [title, place].every(el => el && el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1);
+        })()`,
+        { message: "marco principal, título e local legíveis na página inicial a 320 px" },
+      );
+      await assertSemOverflowHorizontal(page, "Home Mobile 320x844");
+      await page.setViewport(1440, 900, false);
+
+      await sairDaContaPeloPerfil(page);
+      const destino = "/perfil/configuracoes?origem=auditoria";
+      // A rota é aberta na mesma aba para conservar a conta do backend em memória.
+      await page.eval(`history.pushState(null, '', ${JSON.stringify(destino)}); dispatchEvent(new PopStateEvent('popstate'));`);
+      await page.waitFor(
+        `location.pathname === '/entrar' && new URLSearchParams(location.search).get('returnTo') === ${JSON.stringify(destino)}`,
+        { message: "login preserva caminho e consulta do link protegido" },
+      );
+      await page.fillInput('input[aria-label="E-mail"]', "leitor.e2e@ipebook.app");
+      await page.fillInput('input[aria-label="Senha"]', "SenhaForte123!");
+      await page.clickBySelector('[role="button"][aria-label="Entrar"]');
+      await page.waitFor(
+        `location.pathname + location.search === ${JSON.stringify(destino)}`,
+        { message: "login retorna às configurações solicitadas" },
+      );
+      await page.waitForText("Armazenamento e histórico");
     },
   },
   {
