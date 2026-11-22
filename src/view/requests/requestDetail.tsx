@@ -374,7 +374,7 @@ export function RequestDetail({
                           <Text style={styles.stepNumber}>3</Text>
                         </View>
                         <View style={styles.stepContent}>
-                          <Text style={styles.stepTitle}>Entrega presencial e segura</Text>
+                          <Text style={styles.stepTitle}>Entrega presencial</Text>
                           <Text style={styles.stepDesc}>
                             No encontro público em Piripiri, a entrega é confirmada via leitura de QR Code.
                           </Text>

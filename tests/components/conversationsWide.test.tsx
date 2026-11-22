@@ -9,13 +9,11 @@ jest.mock("@/viewmodel/useConversationsViewModel", () => ({
   useConversationsViewModel: jest.fn(),
 }));
 jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
-// Entrega por QR (Spec 095): começa sem conclusão.
-let mockDeliveryCompleted: Record<string, unknown> | null = null;
-jest.mock("@/viewmodel/useDeliveryViewModel", () => ({
-  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: mockDeliveryCompleted }),
-}));
 jest.mock("@/view/conversations/chat", () => ({
-  Chat: () => <>{/* Chat mock */}</>,
+  Chat: ({ onDeleteConversation }: { onDeleteConversation: () => void }) => {
+    const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");
+    return <Pressable accessibilityRole="button" onPress={onDeleteConversation}><Text>Apagar pelo chat</Text></Pressable>;
+  },
 }));
 
 import { Conversations } from "@/view/conversations/conversations";
@@ -63,7 +61,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
 
     // 3 destaques de segurança e circulação na comunidade de Piripiri
     expect(screen.getByText("Negociação direta")).toBeDefined();
-    expect(screen.getByText("Pontos de encontro seguros")).toBeDefined();
+    expect(screen.getByText("Pontos de encontro recomendados")).toBeDefined();
     expect(screen.getByText("Avaliações mútuas")).toBeDefined();
 
     await act(async () => {
@@ -110,48 +108,19 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByText("Sobre a troca")).toBeDefined();
   });
 
-  it("oferece botão visível de apagar só nas conversas aceitas, sem dica de toque longo", async () => {
+  it("oferece a exclusão no chat selecionado e informa o efeito da confirmação", async () => {
     setup({
       items: [
         { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Oi", lastMessageAt: null, kind: "accepted" },
-        { requestId: "r2", listing: listing("b2", "O Cortiço"), otherName: "Carlos", otherPhotoUrl: null, preview: "Proposta", lastMessageAt: null, kind: "pendingReceived" },
       ],
     });
     const screen = await renderView();
-    expect(screen.getByLabelText("Apagar conversa com Ana Paula")).toBeDefined();
-    expect(screen.queryByLabelText("Apagar conversa com Carlos")).toBeNull();
-    expect(screen.queryByText(/mantenha o dedo/)).toBeNull();
-  });
-
-  describe("Combinar encontro no painel lateral (Spec 095)", () => {
-    const accepted: ConversationItem = {
-      requestId: "r1",
-      listing: listing("b1", "Dom Casmurro"),
-      otherName: "Ana Paula",
-      otherPhotoUrl: null,
-      preview: "Pode ser sábado na praça?",
-      lastMessageAt: "2026-10-26T06:00:00",
-      kind: "accepted",
-    };
-
-    it("oferece Combinar encontro e abre a negociação", async () => {
-      setup({ items: [accepted] });
-      const onOpenNegotiation = jest.fn();
-      const screen = await renderView({ onOpenNegotiation });
-      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-      await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro" })); });
-      expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
-    });
-
-    it("com a entrega concluída, não oferece mais Combinar encontro", async () => {
-      mockDeliveryCompleted = { requestId: "r1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" };
-      setup({ items: [accepted] });
-      const screen = await renderView();
-      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-      mockDeliveryCompleted = null;
-      expect(screen.getByTestId("conversation-about")).toBeDefined();
-      expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
-    });
+    expect(screen.queryByLabelText("Apagar conversa com Ana Paula")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Apagar pelo chat" })).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
+    expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Apagar pelo chat" })); });
+    expect(screen.getByText(/some só para você/)).toBeDefined();
   });
 
   it("exibe o esqueleto em três painéis mantendo o cabeçalho e o subtítulo durante o carregamento", async () => {

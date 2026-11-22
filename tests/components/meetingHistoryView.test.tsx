@@ -76,7 +76,7 @@ describe("MeetingHistory (Spec 071)", () => {
       screen = await render(<MeetingHistory />);
     });
     expect(screen.getByText("Nenhum encontro registrado")).toBeDefined();
-    expect(screen.getByText(/4 pontos seguros de Piripiri/)).toBeDefined();
+    expect(screen.getByText(/4 pontos recomendados de Piripiri/)).toBeDefined();
   });
 
   it("lista encontros realizados, confirmados e cancelados e permite navegar para a negociação", async () => {

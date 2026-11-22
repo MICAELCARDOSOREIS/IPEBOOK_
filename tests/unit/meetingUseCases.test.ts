@@ -16,6 +16,7 @@ describe("combinar encontro (Spec 052)", () => {
   let notifications: MemoryNotificationDataSource;
   let meetings: MemoryMeetingDataSource;
   let useCases: MeetingUseCases;
+  let now: Date;
 
   beforeEach(() => {
     const books = new MemoryBookDataSource([
@@ -27,7 +28,8 @@ describe("combinar encontro (Spec 052)", () => {
     ]);
     notifications = new MemoryNotificationDataSource([]);
     meetings = new MemoryMeetingDataSource(requests, books, notifications);
-    useCases = new MeetingUseCases(meetings, requests, books, () => AGORA);
+    now = AGORA;
+    useCases = new MeetingUseCases(meetings, requests, books, () => now);
   });
 
   it("convite, confirmação pela outra pessoa e avisos para cada lado (RN-05, RN-08)", async () => {
@@ -42,6 +44,13 @@ describe("combinar encontro (Spec 052)", () => {
     const confirmado = await useCases.confirm(convite.id, "leitora");
     expect(confirmado.status).toBe("confirmed");
     expect((await notifications.listByUser("dono"))[0].title).toBe("Encontro confirmado");
+  });
+
+  it("recusa confirmar no horário expirado e preserva a proposta para reagendamento", async () => {
+    const proposal = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
+    now = new Date(amanha10h);
+    await expect(useCases.confirm(proposal.id, "leitora")).rejects.toThrow(/horário do encontro expirou/);
+    expect(await useCases.getMeeting("aceito", "leitora")).toMatchObject({ status: "proposed" });
   });
 
   it("reagendar volta a aguardar a confirmação da outra pessoa (RN-06)", async () => {

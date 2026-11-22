@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
@@ -16,6 +16,7 @@ export type NegotiationStatusCardProps = {
   sessionUserId: string;
   deliveryCompleted: boolean;
   embedded?: boolean;
+  busy?: boolean;
   combineAccessibilityLabel?: string;
   combineButtonLabel?: string;
   onCombineMeeting?: () => void;
@@ -35,6 +36,7 @@ export function NegotiationStatusCard({
   sessionUserId,
   deliveryCompleted,
   embedded,
+  busy,
   combineAccessibilityLabel,
   combineButtonLabel,
   onCombineMeeting,
@@ -48,6 +50,20 @@ export function NegotiationStatusCard({
 }: NegotiationStatusCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const [now, setNow] = useState(Date.now);
+  const proposalTime = meeting?.status === "proposed" ? Date.parse(meeting.scheduledAt) : null;
+  const expired = proposalTime !== null && proposalTime <= now;
+
+  useEffect(() => {
+    if (proposalTime === null || !Number.isFinite(proposalTime)) return;
+    const current = Date.now();
+    setNow(current);
+    const delay = Math.min(proposalTime - current, 2_147_483_647);
+    if (delay <= 0) return;
+    const timer = setTimeout(() => setNow(Date.now()), delay);
+    return () => clearTimeout(timer);
+  }, [proposalTime]);
 
   if (requestStatus !== "accepted") {
     return null;
@@ -173,19 +189,20 @@ export function NegotiationStatusCard({
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.title}>
-              {isProposer ? `Aguardando resposta de ${counterpartName}` : `Encontro sugerido por ${counterpartName}`}
+              {expired ? "Horário expirado" : isProposer ? `Aguardando resposta de ${counterpartName}` : `Encontro sugerido por ${counterpartName}`}
             </Text>
             <Text style={styles.subtitle}>
-              {whenFormatted} em {meeting.pointName || point?.name || "Ponto seguro"}
+              {whenFormatted} em {meeting.pointName || point?.name || "Ponto recomendado"}
             </Text>
           </View>
         </View>
 
         <View style={styles.actionsGrid}>
-          {!isProposer && onConfirmMeeting ? (
+          {!expired && !isProposer && onConfirmMeeting ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Confirmar encontro"
+              disabled={busy}
               onPress={onConfirmMeeting}
               style={withPress(styles.actionButtonPrimary)}
             >
@@ -196,13 +213,13 @@ export function NegotiationStatusCard({
           {(onSuggestOtherTime ?? onCombineMeeting) ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={isProposer ? "Alterar data sugerida" : "Sugerir outro horário"}
+              accessibilityLabel={expired ? "Sugerir novo horário" : isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
               onPress={onSuggestOtherTime ?? onCombineMeeting}
               style={withPress(styles.actionButtonSecondary)}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
               <Text style={styles.actionButtonSecondaryText}>
-                {isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
+                {expired ? "Sugerir novo horário" : isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
               </Text>
             </Pressable>
           ) : null}
@@ -219,7 +236,7 @@ export function NegotiationStatusCard({
           <AppIcon name="place" size={20} color={colors.nature.foliage} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Nenhum encontro marcado</Text>
+          <Text style={styles.title}>{meeting?.status === "cancelled" ? "Encontro cancelado" : "Nenhum encontro marcado"}</Text>
           <Text style={styles.subtitle}>Escolha um ponto público e horário em Piripiri.</Text>
         </View>
       </View>

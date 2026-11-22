@@ -45,7 +45,7 @@ import { withPress } from "@/view/pressFeedback";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 const SUGGESTIONS = [
   "O livro ainda está disponível?",
-  "Podemos combinar num ponto seguro?",
+  "Podemos combinar em um ponto recomendado?",
   "Qual horário fica bom para você?",
 ];
 
@@ -60,7 +60,8 @@ export type ChatProps = {
   onOpenDelivery?: (requestId: string) => void;
   /** Atalho direto para agendar o encontro (`/negociacao/[id]/encontro`). */
   onScheduleMeeting?: (requestId: string) => void;
-  /** Painel da web larga: a lista e o "Combinar encontro" já estão nas colunas vizinhas. */
+  onDeleteConversation?: () => void;
+  /** Painel da web larga entre a lista e os detalhes do livro. */
   embedded?: boolean;
   /** Dados já conhecidos pela lista para evitar flash genérico enquanto o detalhe carrega. */
   initialCounterpartName?: string;
@@ -79,6 +80,7 @@ export function Chat({
   onOpenNegotiation,
   onOpenDelivery,
   onScheduleMeeting,
+  onDeleteConversation,
   embedded = false,
   initialCounterpartName,
   initialCounterpartPhotoUrl,
@@ -99,6 +101,7 @@ export function Chat({
     void actions.reload();
     void meetingActions.reload();
   });
+  const [conversationOptionsOpen, setConversationOptionsOpen] = useState(false);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
 
@@ -106,6 +109,10 @@ export function Chat({
   const guardedOpenNegotiation = useGuardedPress((id: string) => onOpenNegotiation?.(id));
   const guardedOpenDelivery = useGuardedPress((id: string) => onOpenDelivery?.(id));
   const guardedScheduleMeeting = useGuardedPress((id: string) => onScheduleMeeting?.(id));
+
+  const openScheduling = onScheduleMeeting
+    ? () => guardedScheduleMeeting(requestId)
+    : onOpenNegotiation ? () => guardedOpenNegotiation(requestId) : undefined;
 
   const handleAcceptProposal = async () => {
     setRespondingProposal(true);
@@ -281,118 +288,83 @@ export function Chat({
               <Text style={styles.headerSubtitle} numberOfLines={1}>
                 {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
               </Text>
+            ) : detail && !embedded ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+                onPress={() => guardedOpenNegotiation(requestId)}
+                style={withPress(styles.headerBookLink, colors.m3.focusRing)}
+              >
+                <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
+                {modalityLabel ? <Text style={styles.headerSubtitle}>{modalityLabel}</Text> : null}
+                <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
             ) : embedded && modalityLabel ? (
               <Text style={styles.headerSubtitle} numberOfLines={1}>
                 {`Bate-papo da negociação · ${modalityLabel}`}
               </Text>
             ) : null}
           </View>
-          {isWebStandalone && detail && detail.request.status === "accepted" ? (
-            !meetingState.meeting && !delivery.completed ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Combinar encontro na negociação"
-                onPress={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                style={withPress(styles.webCombineButton)}
-              >
-                <AppIcon name="place" size={16} color={colors.m3.onPrimary} />
-                <Text style={styles.webCombineButtonText}>Combinar encontro</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Ver detalhes da negociação"
-                onPress={() => guardedOpenNegotiation(requestId)}
-                style={withPress(styles.webDetailsButton)}
-              >
-                <Text style={styles.webDetailsButtonText}>Ver detalhes</Text>
-                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurface} />
-              </Pressable>
-            )
-          ) : null}
-        </View>
-        {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088); aqui só o layout do chat. */}
-        <View style={styles.flex}>
-          {/* Embutido na web larga ou standalone web, o livro aparece no painel lateral direito. */}
-          {detail && !embedded && !isWebStandalone ? (
+          {onDeleteConversation ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
-              onPress={() => guardedOpenNegotiation(requestId)}
-              style={styles.bookCard}
+              accessibilityLabel="Opções da conversa"
+              accessibilityState={{ expanded: conversationOptionsOpen }}
+              onPress={() => setConversationOptionsOpen((open) => !open)}
+              style={withPress(styles.backButton, colors.m3.focusRing)}
             >
-              <View style={styles.bookRow}>
-                <BookCover
-                  id={detail.book.id}
-                  title={detail.book.title}
-                  photoUrl={detail.book.photoUrl}
-                  variant="list"
-                  width={36}
-                />
-                <View style={styles.bookText}>
-                  <Text style={styles.bookTitle} numberOfLines={1}>
-                    {detail.book.title}
-                  </Text>
-                  <View style={styles.bookMetaRow}>
-                    <Tag variant={detail.book.modality} />
-                    {detail.book.modality === "sale" && detail.book.price != null ? (
-                      <Text style={styles.bookPrice}>{formatPrice(detail.book.price)}</Text>
-                    ) : null}
-                  </View>
-                </View>
-                {/* Se a negociação estiver aceita e ainda sem encontro marcado, exibe o botão direto na linha compacta */}
-                {detail.request.status === "accepted" && !meetingState.meeting && !delivery.completed ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Combinar encontro na negociação"
-                    onPress={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                    style={withPress(styles.combine)}
-                  >
-                    <Text style={styles.combineText}>Combinar</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-
-              {/* Exibe o status do encontro somente quando há encontro agendado/proposto ou entrega concluída */}
-              {detail.request.status === "accepted" && (meetingState.meeting || delivery.completed) ? (
+              <AppIcon name="more" size={22} color={colors.m3.onSurface} />
+            </Pressable>
+          ) : null}
+        </View>
+        {conversationOptionsOpen && onDeleteConversation ? (
+          <View style={styles.conversationOptions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setConversationOptionsOpen(false);
+                onDeleteConversation();
+              }}
+              style={withPress(styles.conversationDelete, colors.m3.focusRing)}
+            >
+              <Text style={styles.conversationDeleteLabel}>Apagar conversa</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        <View style={styles.flex}>
+          {detail?.request.status === "accepted" &&
+            (meetingState.loading || meetingState.error || meetingState.meeting || delivery.completed || openScheduling) &&
+            (wideWeb || !isKeyboardVisible) ? (
+            <View style={[styles.embeddedStatusStrip, !wideWeb && styles.narrowStatusStrip]}>
+              {meetingState.loading && !delivery.completed ? (
+                <Text style={styles.headerSubtitle}>Carregando encontro…</Text>
+              ) : meetingState.error && !delivery.completed ? (
+                <Pressable accessibilityRole="button" onPress={() => void meetingActions.reload()} style={withPress(styles.headerBookLink)}>
+                  <Text style={styles.headerSubtitle}>Não foi possível carregar o encontro. Tentar novamente</Text>
+                </Pressable>
+              ) : (
                 <NegotiationStatusCard
                   embedded
-                  combineAccessibilityLabel="Combinar encontro na negociação"
                   meeting={meetingState.meeting}
                   requestStatus={detail.request.status}
                   counterpartName={name}
                   sessionUserId={sessionUserId}
                   deliveryCompleted={Boolean(delivery.completed)}
-                  onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                  busy={meetingState.busy}
+                  combineAccessibilityLabel="Combinar encontro na negociação"
+                  combineButtonLabel={wideWeb ? "Combinar encontro" : "Combinar"}
+                  onCombineMeeting={openScheduling}
                   onConfirmMeeting={() => void meetingActions.confirm()}
-                  onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                  onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                  onSuggestOtherTime={openScheduling}
+                  onRescheduleMeeting={openScheduling}
                   onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
                   onOpenDirections={handleOpenDirections}
                   onAddToCalendar={() => void handleAddToCalendar()}
                 />
+              )}
+              {meetingState.actionError ? (
+                <Text accessibilityRole="alert" style={styles.conversationDeleteLabel}>{meetingState.actionError}</Text>
               ) : null}
-            </Pressable>
-          ) : null}
-
-          {/* Embutido na web larga, o botão "Combinar encontro" já fica na coluna direita; só mostra faixa quando há encontro ou entrega. */}
-          {detail && embedded && detail.request.status === "accepted" && (meetingState.meeting || delivery.completed) ? (
-            <View style={styles.embeddedStatusStrip}>
-              <NegotiationStatusCard
-                embedded
-                meeting={meetingState.meeting}
-                requestStatus={detail.request.status}
-                counterpartName={name}
-                sessionUserId={sessionUserId}
-                deliveryCompleted={Boolean(delivery.completed)}
-                onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onConfirmMeeting={() => void meetingActions.confirm()}
-                onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
-                onOpenDirections={handleOpenDirections}
-                onAddToCalendar={() => void handleAddToCalendar()}
-              />
             </View>
           ) : null}
 
@@ -445,7 +417,7 @@ export function Chat({
                 <AppIcon name="chat" size={28} color={colors.m3.onSecondaryContainer} />
               </View>
               <Text style={styles.emptyTitle}>Comece a conversa</Text>
-              <Text style={styles.emptyBody}>Combine pelo chat e encontre em um ponto seguro de Piripiri.</Text>
+              <Text style={styles.emptyBody}>Combine pelo chat um encontro em um dos pontos recomendados de Piripiri.</Text>
               <View style={styles.suggestions}>
                 {SUGGESTIONS.map((text) => (
                   <Chip key={text} label={text} size="compact" selected={false} onPress={() => actions.setInputText(text)} />
@@ -586,30 +558,12 @@ export function Chat({
                 </View>
                 <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
               </View>
-              {detail.request.status === "accepted" && (meetingState.meeting || delivery.completed) ? (
-                <NegotiationStatusCard
-                  embedded
-                  combineAccessibilityLabel="Combinar encontro na negociação"
-                  meeting={meetingState.meeting}
-                  requestStatus={detail.request.status}
-                  counterpartName={name}
-                  sessionUserId={sessionUserId}
-                  deliveryCompleted={Boolean(delivery.completed)}
-                  onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                  onConfirmMeeting={() => void meetingActions.confirm()}
-                  onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                  onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                  onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
-                  onOpenDirections={handleOpenDirections}
-                  onAddToCalendar={() => void handleAddToCalendar()}
-                />
-              ) : null}
             </Pressable>
 
             <View style={styles.webSafeCard}>
               <View style={styles.webSafeHeader}>
                 <AppIcon name="place" size={16} color={colors.nature.foliage} />
-                <Text style={styles.webSafeTitle}>Encontro seguro</Text>
+                <Text style={styles.webSafeTitle}>Encontro recomendado</Text>
               </View>
               <Text style={styles.webSafeText}>
                 Locais públicos e horário de movimento em Piripiri.

@@ -133,6 +133,7 @@ export function MeetingCard({
   const confirmed = meeting.status === "confirmed";
   const pastMeetings = (state.history ?? []).filter((m) => m.id !== meeting.id);
   const countdown = describeMeetingCountdown(meeting.scheduledAt);
+  const expired = !confirmed && countdown.past;
 
   async function openDirections() {
     setMapError(null);
@@ -173,15 +174,17 @@ export function MeetingCard({
       <View style={styles.headerRow}>
         <IconBadge icon={confirmed ? "check" : "calendar"} tone="action" />
         <Text accessibilityRole="header" style={styles.title}>
-          {confirmed ? "Encontro combinado" : mine ? "Aguardando confirmação" : "Convite para encontro"}
+          {confirmed ? "Encontro combinado" : expired ? "Horário expirado" : mine ? "Aguardando confirmação" : "Convite para encontro"}
         </Text>
       </View>
       <Text style={styles.body}>
         {confirmed
           ? "Confirmado por ambos · aviso automático se algo mudar."
-          : mine
-            ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
-            : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
+          : expired
+            ? "Sugira um horário novo para combinar o encontro."
+            : mine
+              ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
+              : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
       </Text>
 
       {/* Linhas de `06.05`: quando, onde e o que fazer. */}
@@ -204,7 +207,7 @@ export function MeetingCard({
       {mapError ? <Text accessibilityRole="alert" style={styles.error}>{mapError}</Text> : null}
 
       {actionError}
-      {!confirmed && !mine ? (
+      {!confirmed && !mine && !expired ? (
         <FilledButton
           label="Confirmar encontro"
           loading={state.busy}
@@ -222,7 +225,7 @@ export function MeetingCard({
         </View>
         <View style={styles.actionHalf}>
           <OutlinedButton
-            label={confirmed || mine ? "Reagendar" : "Sugerir horário"}
+            label={expired ? "Sugerir novo horário" : confirmed || mine ? "Reagendar" : "Sugerir horário"}
             disabled={state.busy}
             onPress={() => onScheduleMeeting?.()}
           />
