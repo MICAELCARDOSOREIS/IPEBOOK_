@@ -66,7 +66,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
     expect(headers).toContain("Gerenciar anúncio");
-    expect(headers).toContain("Seu livro, suas escolhas.");
+    expect(headers).toContain("O Pequeno Príncipe");
     expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
     expect(screen.getByText("Antoine de Saint-Exupéry")).toBeDefined();
     expect(screen.getByText("Bom estado")).toBeDefined();
@@ -109,8 +109,19 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
     expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
     expect(
-      screen.getByText("Conclua ou cancele a negociação em andamento para excluir este anúncio."),
+      screen.getByText("A exclusão fica indisponível enquanto houver uma negociação em andamento."),
     ).toBeDefined();
+
+    mockViewModel({ book: { ...book, status: "delivered" } });
+    await act(async () => {
+      await screen.rerender(<ManageListing bookId="b1" sessionUserId="user-1" />);
+    });
+    expect(screen.getByText("Livro entregue")).toBeDefined();
+    expect(screen.getByLabelText("Editar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByText("O anúncio de um livro entregue fica no histórico.")).toBeDefined();
+    expect(screen.queryByText(/enquanto houver uma negociação em andamento/)).toBeNull();
   });
 
   it("aciona a edição do anúncio", async () => {
@@ -224,8 +235,8 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
     // Seções organizadas com cabeçalhos acessíveis para navegação semântica
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
-    expect(headers).toContain("Edição e visualização");
-    expect(headers).toContain("Divulgar e compartilhar");
+    expect(headers).toContain("Divulgação");
+    expect(headers).toContain("Exclusão");
     expect(headers).toContain("Disponibilidade no catálogo");
 
     // Resumo acessível do livro para leitores de tela

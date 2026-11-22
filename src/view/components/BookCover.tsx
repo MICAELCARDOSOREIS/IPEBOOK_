@@ -3,7 +3,6 @@ import { Animated, Image, Platform, StyleSheet, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
-import { IpeRibbon } from "@/view/components/IpeRibbon";
 import capaNoite from "@/view/assets/capas/capa-1.webp";
 import capaMontanhas from "@/view/assets/capas/capa-3.webp";
 import capaOndas from "@/view/assets/capas/capa-4.webp";
@@ -25,8 +24,6 @@ export type BookCoverProps = {
   width?: number;
   /** Desenha a lombada sobre a arte (capa plana). O livro 3D desliga: ele já tem a lombada de verdade. */
   showSpine?: boolean;
-  /** Fita marcadora dourada do Ipê-Amarelo no topo da capa. */
-  showRibbon?: boolean;
 };
 
 /** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, montanhas verdes e ondas azul-marinho (definida em `tokens.colors.cover.artBackgrounds`). */
@@ -93,7 +90,6 @@ export function BookCover({
   variant = "list",
   width: widthOverride,
   showSpine = true,
-  showRibbon = false,
   timeoutMs,
   maxRetries,
   initialBackoffMs,
@@ -154,7 +150,6 @@ export function BookCover({
             resizeMode="cover"
             style={StyleSheet.absoluteFill}
           />
-          {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
         </View>
       );
     }
@@ -199,7 +194,6 @@ export function BookCover({
           ))}
         </View>
       ) : null}
-      {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
     </View>
   );
 }

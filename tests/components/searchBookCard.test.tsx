@@ -39,6 +39,7 @@ describe("SearchBookCard", () => {
     });
 
     expect(root!.root.findByProps({ accessibilityLabel: "Ver detalhe de Dom Casmurro, Machado de Assis em Centro" })).toBeTruthy();
+    expect(root!.root.findAllByProps({ testID: "ipe-ribbon" })).toHaveLength(0);
   });
 
   it("renderiza modalidade troca e preco formatado com status reservado", () => {
@@ -66,6 +67,7 @@ describe("SearchBookCard", () => {
     });
 
     expect(root!.root.findByProps({ accessibilityLabel: "Ver detalhe de Dom Casmurro, Machado de Assis" })).toBeTruthy();
+    expect(root!.root.findAllByProps({ testID: "ipe-ribbon" })).toHaveLength(0);
     const favoriteBtn = root!.root.findByType(FavoriteButton);
     expect(favoriteBtn.props.variant).toBe("overlay");
   });

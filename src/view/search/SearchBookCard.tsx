@@ -91,7 +91,6 @@ export function SearchBookCard({
               title={item.title}
               photoUrl={item.photoUrl}
               variant={wideWeb ? "card" : "list"}
-              showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
         </ModalityCoverArea>
