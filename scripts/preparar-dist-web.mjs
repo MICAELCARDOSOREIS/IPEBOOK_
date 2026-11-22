@@ -51,7 +51,7 @@ for (const arquivo of listar(dist)) {
       '<meta property="og:site_name" content="IpêBook Piripiri"/>',
       '<meta property="og:type" content="website"/>',
       '<meta property="og:title" content="IpêBook · Circulação Comunitária de Livros em Piripiri"/>',
-      '<meta property="og:description" content="Compre, troque ou receba livros sob a florada do Ipê em Piripiri, PI. Negociação direta e pontos de encontro seguros!"/>',
+      '<meta property="og:description" content="Compre, troque ou receba livros sob a florada do Ipê em Piripiri, PI. Negociação direta e pontos de encontro recomendados!"/>',
       '<meta property="og:image" content="https://ipebook.app/icone-512.png"/>',
       '<meta property="og:image:width" content="512"/>',
       '<meta property="og:image:height" content="512"/>',

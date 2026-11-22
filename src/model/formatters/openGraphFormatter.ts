@@ -70,7 +70,7 @@ export function buildBookOpenGraph(book: OpenGraphBookInput): OpenGraphMetadata 
   const location = rawBairro?.trim() ? `no bairro ${rawBairro.trim()}, Piripiri - PI` : "em Piripiri - PI";
 
   const boxDetail = isBox ? `Coleção completa com ${book.boxVolumesCount} volumes. ` : "";
-  const description = `${modality} ${location}. ${boxDetail}Acesse o IpêBook para ver detalhes e combinar a entrega segura!`;
+  const description = `${modality} ${location}. ${boxDetail}Acesse o IpêBook para ver detalhes e combinar a entrega!`;
 
   const validPhoto =
     book.photoUrl && book.photoUrl.startsWith("http")

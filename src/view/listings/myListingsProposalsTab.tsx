@@ -101,7 +101,7 @@ export function MyListingsProposalsTab({
         <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
         <Text style={styles.orientationHint}>
           {hasReserved
-            ? "Livro reservado! Combine os detalhes e um ponto de encontro seguro em Piripiri para concluir a troca ou entrega."
+            ? "Livro reservado! Combine os detalhes e um ponto de encontro recomendado em Piripiri para concluir a troca ou entrega."
             : "Confira a proposta e combine os detalhes antes de reservar seu livro."}
         </Text>
       </View>

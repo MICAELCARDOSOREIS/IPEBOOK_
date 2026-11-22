@@ -5,7 +5,7 @@ export const ALL_PIRIPIRI_LOCATIONS_LABEL = "Piripiri (Todos os locais)" as cons
 export const DEFAULT_PIRIPIRI_LOCATION = "Piripiri" as const;
 
 /**
- * Principais pontos de encontro públicos seguros e locais para troca/entrega em Piripiri, PI.
+ * Principais pontos públicos recomendados para troca e entrega em Piripiri, PI.
  * Substitui os bairros residenciais fragmentados, unificando os livros na cidade de Piripiri
  * e em seus pontos públicos de referência comunitária.
  */

@@ -490,13 +490,13 @@ describe("datasources Supabase", () => {
     await expect(requests.respond("pedido", "rejected")).rejects.toThrow("Não foi possível responder ao pedido.");
   });
 
-  it("mapeia notificação sem action_url sem inserir a propriedade actionUrl", async () => {
+  it("atualiza a redação da dica de encontro legada e omite actionUrl quando ausente", async () => {
     const row = {
       id: "notif-2",
       user_id: "user-1",
-      title: "Aviso do sistema",
-      message: "Bem-vindo",
-      type: "system",
+      title: "Dica de segurança: Pontos Seguros",
+      message: "Sempre marque entregas nos Pontos Seguros cadastrados (Praça da Bandeira, Estação Ferroviária, IFPI).",
+      type: "safety_tip",
       read: false,
       created_at: "2026-10-15T12:00:00Z",
       action_url: null,
@@ -509,6 +509,10 @@ describe("datasources Supabase", () => {
     const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
     const list = await notifDs.listByUser("user-1");
 
+    expect(list[0]).toMatchObject({
+      title: "Dica de segurança: pontos de encontro recomendados",
+      message: "Marque as entregas em um dos pontos públicos recomendados em Piripiri.",
+    });
     expect(list[0]).not.toHaveProperty("actionUrl");
   });
 

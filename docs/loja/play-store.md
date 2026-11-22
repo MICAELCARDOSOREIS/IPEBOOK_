@@ -11,7 +11,7 @@ Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levanta
 - **Política de privacidade (URL pública):** https://ipebook.app/termos?aba=privacidade
 
 ## Descrição curta (até 80 caracteres)
-Venda, troque e doe livros com leitores de Piripiri, com encontro seguro.
+Venda, troque e doe livros com leitores de Piripiri, em pontos de encontro recomendados.
 
 ## Descrição completa
 O IpêBook conecta quem tem livros parados a quem quer ler, aqui em Piripiri (PI).
@@ -19,7 +19,7 @@ O IpêBook conecta quem tem livros parados a quem quer ler, aqui em Piripiri (PI
 - Anuncie em segundos: leia o código de barras (ISBN) e o app preenche título, autor e sinopse.
 - Encontre livros do seu bairro para comprar, trocar ou receber de doação.
 - Converse pelo chat do app, sem expor seu telefone.
-- Combine o encontro em pontos públicos e seguros da cidade, com lembrete antes do horário.
+- Combine o encontro em pontos públicos recomendados da cidade, com lembrete antes do horário.
 - Confirme a entrega pelo QR code e avalie a negociação.
 - Favoritos e alertas avisam quando aparece o livro que você procura.
 - Denuncie e bloqueie quem não respeita a comunidade; a moderação analisa cada denúncia.
