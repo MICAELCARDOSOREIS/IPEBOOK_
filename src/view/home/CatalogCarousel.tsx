@@ -114,7 +114,6 @@ export function CatalogCarousel({
               photoUrl={item.photoUrl}
               variant="card"
               width={wide ? 112 : undefined}
-              showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
         </View>
@@ -203,7 +202,7 @@ export function CatalogCarousel({
         <View style={styles.carouselTitleGroup}>
           <Text
             accessibilityRole="header"
-            accessibilityLabel={title}
+            accessibilityLabel={Platform.OS === "web" ? (displayTitle ?? title) : title}
             numberOfLines={compactWeb ? undefined : 1}
             style={styles.carouselTitle}
           >
@@ -361,7 +360,7 @@ export function HomeShortcutsSection({
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
+          accessibilityLabel="Encontro recomendado: Locais públicos sugeridos e avaliação depois de cada troca"
           disabled={!onNavigateToHelp}
           onPress={() => onNavigateToHelp?.()}
           style={withPress(styles.shortcut)}
@@ -370,7 +369,7 @@ export function HomeShortcutsSection({
             <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
           </View>
           <View style={styles.shortcutText}>
-            <Text style={styles.shortcutTitle}>Encontro seguro</Text>
+            <Text style={styles.shortcutTitle}>Encontro recomendado</Text>
             <Text style={styles.shortcutBody}>
               Locais públicos sugeridos e avaliação depois de cada troca.
             </Text>
