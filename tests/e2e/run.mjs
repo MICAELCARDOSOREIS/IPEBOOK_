@@ -40,6 +40,19 @@ async function assertSemOverflowHorizontal(page, contexto) {
   }
 }
 
+async function marcarComEspaco(page, selector) {
+  await page.waitFor(`document.querySelector(${JSON.stringify(selector)})?.getAttribute("aria-checked") === "false"`, {
+    message: "controle anuncia estado inicial desmarcado",
+  });
+  await page.eval(`document.querySelector(${JSON.stringify(selector)}).focus()`);
+  const key = { key: " ", code: "Space", windowsVirtualKeyCode: 32 };
+  await page.send("Input.dispatchKeyEvent", { ...key, type: "keyDown", text: " ", unmodifiedText: " " });
+  await page.send("Input.dispatchKeyEvent", { ...key, type: "keyUp" });
+  await page.waitFor(`document.querySelector(${JSON.stringify(selector)})?.getAttribute("aria-checked") === "true"`, {
+    message: "controle marcado com Espaço anuncia o novo estado",
+  });
+}
+
 function assertSemExcecoes(page, nomeCenario) {
   if (page.exceptions.length > 0) {
     throw new Error(`Exceção JS em "${nomeCenario}": ${page.exceptions.join(" | ")}`);
@@ -69,7 +82,7 @@ async function preencherCadastro(page, { nome, email, senha }) {
   await page.fillInput('input[aria-label="Nome completo"]', nome);
   await page.fillInput('input[aria-label="E-mail"]', email);
   await page.fillInput('input[aria-label="Senha"]', senha);
-  await page.clickByText("Aceito os termos de uso");
+  await marcarComEspaco(page, '[role="checkbox"][aria-label="Aceito os termos de uso"]');
   await page.clickByText("Criar conta", { exact: true });
   await dispensarAvisoNotificacoesSeVisivel(page);
 }
@@ -133,15 +146,34 @@ const CENARIOS = [
       await page.goto(baseUrl);
       await page.waitForText("Começar agora");
       await assertSemOverflowHorizontal(page, "Boas-vindas Desktop 1440x900");
+      await page.clickByText("Explorar livros", { exact: true });
+      await page.waitForText("O Pequeno Príncipe");
+      await assertSemOverflowHorizontal(page, "Pesquisa Desktop 1440x900");
 
       await page.setViewport(390, 844, true);
       await page.goto(baseUrl);
       await page.waitForText("Começar");
       await assertSemOverflowHorizontal(page, "Boas-vindas Mobile 390x844");
 
-      await page.goto(`${baseUrl}/pesquisa`);
+      await page.clickByText("Explorar livros", { exact: true });
       await page.waitForText("O Pequeno Príncipe");
       await assertSemOverflowHorizontal(page, "Pesquisa Mobile 390x844");
+      await marcarComEspaco(page, '[role="checkbox"][aria-label="Filtrar por Troca"]');
+
+      await page.setViewport(320, 844, true);
+      await page.waitFor(
+        `(() => {
+          const field = document.querySelector('input[aria-label="Buscar livros"]');
+          const canvas = document.createElement('canvas').getContext('2d');
+          if (!field || !field.placeholder || !canvas) return false;
+          const style = getComputedStyle(field);
+          canvas.font = style.fontSize + ' ' + style.fontFamily;
+          const textWidth = canvas.measureText(field.placeholder).width;
+          return textWidth <= field.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        })()`,
+        { message: "orientação de busca cabe no campo a 320 px" },
+      );
+      await assertSemOverflowHorizontal(page, "Pesquisa Mobile 320x844");
 
       await page.setViewport(1440, 900, false);
       await page.goto(`${baseUrl}/pesquisa`);
@@ -189,6 +221,47 @@ const CENARIOS = [
       await page.waitForText("Apagar histórico de buscas?");
       await page.clickByText("Apagar histórico", { exact: true });
       await page.waitForText("Histórico de buscas apagado.", { timeoutMs: 10000 });
+
+      const logotipo = '[aria-label="IpêBook, ir para o início"]';
+      await page.waitFor(
+        `document.querySelector(${JSON.stringify(logotipo)})?.matches('a[href="/"]')`,
+        { message: "logotipo é um link HTML para o início" },
+      );
+      await page.eval(`document.querySelector(${JSON.stringify(logotipo)}).focus()`);
+      await page.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      await page.waitFor("location.pathname === '/'");
+
+      await page.setViewport(320, 844, true);
+      await page.waitFor(
+        `(() => {
+          const main = document.querySelector('main, [role="main"]');
+          if (!main || document.querySelectorAll('main, [role="main"]').length !== 1) return false;
+          const title = [...main.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')].find(el => el.textContent === 'Perto de você');
+          const place = [...main.querySelectorAll('div, span')].find(el => el.childElementCount === 0 && el.textContent === 'Praça da Bandeira');
+          return [title, place].every(el => el && el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1);
+        })()`,
+        { message: "marco principal, título e local legíveis na página inicial a 320 px" },
+      );
+      await assertSemOverflowHorizontal(page, "Home Mobile 320x844");
+      await page.setViewport(1440, 900, false);
+
+      await sairDaContaPeloPerfil(page);
+      const destino = "/perfil/configuracoes?origem=auditoria";
+      // A rota é aberta na mesma aba para conservar a conta do backend em memória.
+      await page.eval(`history.pushState(null, '', ${JSON.stringify(destino)}); dispatchEvent(new PopStateEvent('popstate'));`);
+      await page.waitFor(
+        `location.pathname === '/entrar' && new URLSearchParams(location.search).get('returnTo') === ${JSON.stringify(destino)}`,
+        { message: "login preserva caminho e consulta do link protegido" },
+      );
+      await page.fillInput('input[aria-label="E-mail"]', "leitor.e2e@ipebook.app");
+      await page.fillInput('input[aria-label="Senha"]', "SenhaForte123!");
+      await page.clickBySelector('[role="button"][aria-label="Entrar"]');
+      await page.waitFor(
+        `location.pathname + location.search === ${JSON.stringify(destino)}`,
+        { message: "login retorna às configurações solicitadas" },
+      );
+      await page.waitForText("Armazenamento e histórico");
     },
   },
   {
@@ -211,6 +284,39 @@ const CENARIOS = [
 
       await page.clickBySelector('[aria-label="Gerenciar anúncio de Memórias Póstumas de Brás Cubas"]');
       await page.waitForText("Gerenciar anúncio");
+      await page.waitFor(`(() => {
+        const actions = ["Editar anúncio", "Ver anúncio como leitor", "Pausar anúncio", "Excluir anúncio"];
+        const contacts = ["tel:190", "tel:197", "https://portal.pi.gov.br/pc/delegacias-do-interior/"];
+        return actions.every(label => {
+          const button = document.querySelector('[aria-label="' + label + '"]');
+          return button && button.getBoundingClientRect().bottom <= innerHeight;
+        }) && contacts.every(href => {
+          const link = document.querySelector('a[href="' + href + '"]');
+          return link && link.getBoundingClientRect().bottom <= innerHeight;
+        });
+      })()`, { message: "ações de gerenciamento e contatos de segurança visíveis no desktop" });
+      await assertSemOverflowHorizontal(page, "Gerenciar anúncio no desktop");
+
+      await page.setViewport(320, 844, true);
+      await page.waitFor(`(() => {
+        const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
+        const heading = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')]
+          .find(element => element.textContent === "Disponibilidade no catálogo");
+        const civil = document.querySelector('a[href="tel:197"]');
+        const removal = document.querySelector('[aria-label="Excluir anúncio"]');
+        return innerWidth === 320 && share && heading && civil && removal
+          && heading.getBoundingClientRect().top >= share.getBoundingClientRect().bottom
+          && civil.getBoundingClientRect().bottom <= removal.getBoundingClientRect().top;
+      })()`, { message: "seções de gerenciamento empilhadas sem sobreposição a 320 px" });
+      await assertSemOverflowHorizontal(page, "Gerenciar anúncio a 320 px");
+
+      await page.setViewport(1440, 900, false);
+      await page.waitFor(`(() => {
+        const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
+        const pause = document.querySelector('[aria-label="Pausar anúncio"]');
+        return innerWidth === 1440 && share && pause
+          && pause.getBoundingClientRect().left >= share.getBoundingClientRect().right;
+      })()`, { message: "colunas de gerenciamento após voltar ao desktop" });
 
       await page.clickBySelector('[aria-label="Pausar anúncio"]');
       await page.waitFor(
@@ -362,14 +468,44 @@ const CENARIOS = [
       await page.waitForText("Encontro sugerido em", { timeoutMs: 15000 });
       await sairDaContaPeloPerfil(page);
 
-      // 4) Conta B confirma encontro direto no chat embutido de Conversas
+      // 4) Conta B revisa o aviso no celular e confirma no chat embutido em tela larga
       await entrarPelaTelaEntrar(page, contaB);
+      await page.clickBySelector('[aria-label^="Abrir notificações"]');
+      await page.waitForText("Revisar proposta");
+      await page.setViewport(390, 844, true);
+      await page.waitForText("Não lidas");
+      await assertSemOverflowHorizontal(page, "Notificações no celular");
+      await page.clickByText("Revisar proposta", { exact: true });
+      await page.waitFor("location.pathname.startsWith('/conversa/')");
+      await page.waitForText("Encontro sugerido por");
+      await page.waitFor(`Boolean(document.querySelector('[aria-label="Campo de mensagem"]')?.getBoundingClientRect().width)`);
+      await assertSemOverflowHorizontal(page, "Chat no celular");
+      await page.setViewport(1440, 900, false);
       await page.clickBySelector('[aria-label^="Conversas"]');
-      await page.clickBySelector(`[aria-label*="sobre ${tituloLivro}"]`);
+      const conversationSelector = JSON.stringify(`[aria-label*="sobre ${tituloLivro}"]`);
+      await page.waitFor(`Boolean(document.querySelector(${conversationSelector}))`);
+      const tab = { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 };
+      await page.send("Input.dispatchKeyEvent", { ...tab, type: "keyDown" });
+      await page.send("Input.dispatchKeyEvent", { ...tab, type: "keyUp" });
+      await page.eval(`document.querySelector(${conversationSelector}).focus()`);
+      await page.waitFor(`(() => {
+        const row = document.querySelector(${conversationSelector});
+        return row.matches(":focus-visible") && parseFloat(getComputedStyle(row).outlineWidth) > 0;
+      })()`, { message: "a lista mostra foco de teclado na conversa" });
+      const enter = { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 };
+      await page.send("Input.dispatchKeyEvent", { ...enter, type: "keyDown", text: "\r", unmodifiedText: "\r" });
+      await page.send("Input.dispatchKeyEvent", { ...enter, type: "keyUp" });
       await page.waitForText("Oi, combinamos a entrega hoje?");
       await page.waitForText("Confirmar encontro");
+      await page.waitFor(`(() => {
+        const pane = document.querySelector('[data-testid="conversation-about"]');
+        return Boolean(pane && !pane.textContent.includes("Combinar encontro"));
+      })()`);
       await page.clickByText("Confirmar encontro", { exact: true });
       await page.waitForText("Entrega do livro", { timeoutMs: 15000 });
+      await page.clickBySelector('[aria-label^="Abrir notificações"]');
+      await page.waitForText("Ver encontro");
+      await assertSemOverflowHorizontal(page, "Notificações em tela larga");
       await sairDaContaPeloPerfil(page);
 
       // 5) Conta A gera o código de entrega de 8 caracteres
@@ -396,8 +532,7 @@ const CENARIOS = [
       await page.clickBySelector(`[aria-label*="sobre ${tituloLivro}"]`);
       await page.waitForText("Entrega do livro");
       await page.clickByText("Entrega do livro", { exact: true });
-      await page.waitForText("Ler QR da entrega");
-      await page.clickByText("Ler QR da entrega", { exact: true });
+      await page.waitForText("Confirmar recebimento");
       await page.fillInput('input[aria-label="Código da entrega"]', codigoEntrega);
       await page.clickByText("Confirmar entrega", { exact: true });
       await page.waitForText("Entrega concluída!", { timeoutMs: 15000 });

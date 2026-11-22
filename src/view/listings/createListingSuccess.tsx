@@ -147,7 +147,7 @@ export function CreateListingSuccess({
               <View style={styles.nextStepTexts}>
                 <Text style={styles.nextStepTitle}>Combine em local público</Text>
                 <Text style={styles.nextStepHint}>
-                  Escolham juntos um ponto seguro e o horário.
+                  Escolham juntos um ponto recomendado e o horário.
                 </Text>
               </View>
             </View>

@@ -1,11 +1,14 @@
 import Module from "node:module";
 import path from "node:path";
+import type { ReactNode } from "react";
 
 jest.mock("expo-symbols", () => ({
   SymbolView: (props: any) => null,
 }));
 
 jest.mock("expo-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => children,
+  useIsFocused: () => true,
   router: {
     push: jest.fn(),
     replace: jest.fn(),

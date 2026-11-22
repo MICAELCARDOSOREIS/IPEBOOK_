@@ -68,7 +68,7 @@ const PIRIPIRI_LOCATIONS: readonly LocationItem[] = [
   {
     id: "eventos",
     name: "Praça de Eventos",
-    subtitle: "Centro de Piripiri · Espaço público seguro",
+    subtitle: "Centro de Piripiri · Espaço público",
   },
 ];
 

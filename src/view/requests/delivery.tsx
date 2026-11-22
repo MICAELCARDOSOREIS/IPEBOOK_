@@ -112,7 +112,7 @@ function DeliveryTipsCard({ colors }: { colors: ColorPalette }) {
         <Text style={styles.title}>Dicas para a Entrega Presencial</Text>
       </View>
       <Text style={styles.body}>
-        • Realizem a troca em um dos 4 pontos públicos e seguros de Piripiri.
+        • Realizem a troca em um dos 4 pontos públicos recomendados de Piripiri.
         {"\n\n"}
         • Confira o estado do livro, páginas e conservação antes de confirmar a entrega.
         {"\n\n"}

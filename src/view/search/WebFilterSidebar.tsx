@@ -13,7 +13,7 @@ import {
   type SearchSortOption,
 } from "@/viewmodel/searchFilters";
 
-import { withPress } from "@/view/pressFeedback";
+import { webCheckableProps, withPress } from "@/view/pressFeedback";
 export type WebFilterSidebarProps = {
   filters: SearchFilters;
   categories: readonly string[];
@@ -77,13 +77,15 @@ export function WebFilterSidebar({
         <View style={styles.chips}>
           {MODALITIES.map((item) => {
             const selected = filters.modality === item.value;
+            const toggle = () => onModality(selected ? "all" : item.value);
             return (
               <Pressable
                 key={item.value}
-                accessibilityRole="button"
+                accessibilityRole="checkbox"
                 accessibilityLabel={`Filtrar por ${item.label}`}
-                accessibilityState={{ selected }}
-                onPress={() => onModality(selected ? "all" : item.value)}
+                accessibilityState={{ checked: selected }}
+                {...webCheckableProps(selected, toggle)}
+                onPress={toggle}
                 style={withPress([styles.chip, selected && styles.chipSelected])}
               >
                 {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
@@ -141,6 +143,7 @@ export function WebFilterSidebar({
                   accessibilityRole="radio"
                   accessibilityLabel={`Ordenar por ${SORT_LABELS[opt]}`}
                   accessibilityState={{ selected }}
+                  aria-checked={selected}
                   onPress={() => onSortChange(opt)}
                   style={withPress([styles.chip, selected && styles.chipSelected])}
                 >
@@ -166,6 +169,7 @@ function CheckRow({ label, checked, onPress }: { label: string; checked: boolean
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked }}
+      {...webCheckableProps(checked, onPress)}
       onPress={onPress}
       style={withPress(styles.checkRow)}
     >

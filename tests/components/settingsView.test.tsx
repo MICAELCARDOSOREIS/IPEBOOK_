@@ -248,7 +248,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(onNavigateToBlockedUsers).toHaveBeenCalledTimes(1);
   });
 
-  it("mostra o cartão da conta, o bairro padrão e sair da conta com confirmação (Spec 091)", async () => {
+  it("mostra o cartão da conta, o local padrão e sair da conta com confirmação (Spec 091)", async () => {
     mockSession(true);
     mockSettings();
     const onNavigateToEditProfile = jest.fn();
@@ -262,7 +262,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Editar perfil de Ana Paula")); });
     expect(onNavigateToEditProfile).toHaveBeenCalledTimes(1);
     await expandSettingsSection(screen, "Preferências");
-    expect(screen.getByLabelText("Bairro padrão")).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Local padrão:/ })).toBeDefined();
 
     await act(async () => { fireEvent.press(screen.getByText("Sair da conta")); });
     expect(screen.getByText("Sair da conta?")).toBeDefined();
@@ -286,14 +286,14 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(screen.getByText("Não foi possível sair da conta. Tente novamente.")).toBeDefined();
   });
 
-  it("não mostra conta nem sair sem sessão, mas mantém bairro padrão e histórico (Spec 091)", async () => {
+  it("não mostra conta nem sair sem sessão, mas mantém local padrão e histórico (Spec 091)", async () => {
     mockSession(false);
     mockSettings();
     const { screen } = await renderSettings();
     expect(screen.queryByLabelText("Editar perfil")).toBeNull();
     expect(screen.queryByText("Sair da conta")).toBeNull();
     await expandSettingsSection(screen, "Preferências");
-    expect(screen.getByLabelText("Bairro padrão")).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Local padrão:/ })).toBeDefined();
     await expandSettingsSection(screen, "Armazenamento e histórico");
     expect(screen.getByLabelText("Apagar histórico de buscas deste aparelho")).toBeDefined();
   });
@@ -458,7 +458,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(screen.getByText("Erro ao limpar o histórico de buscas")).toBeDefined();
   });
 
-  it("permite cancelar saída da conta, voltar e selecionar bairro padrão", async () => {
+  it("permite cancelar saída da conta, voltar e alterar o local padrão do catálogo", async () => {
     mockSession(true);
     mockSettings();
     const onBack = jest.fn();
@@ -470,12 +470,16 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
 
     await expandSettingsSection(screen, "Preferências");
+    expect(screen.getByText("Filtro de localização do catálogo")).toBeDefined();
+    expect(screen.getByText("Todos os locais de Piripiri")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Bairro padrão"));
+      fireEvent.press(screen.getByRole("button", { name: "Local padrão: Todos os locais de Piripiri" }));
     });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Selecionar ponto de encontro Praça da Bandeira"));
     });
+    expect(screen.getByText("Praça da Bandeira")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Local padrão: Praça da Bandeira" })).toBeDefined();
 
     await act(async () => {
       fireEvent.press(screen.getByText("Sair da conta"));

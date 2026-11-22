@@ -27,7 +27,10 @@ afterEach(async () => {
   await act(async () => cleanup());
 });
 
-const sabado15h = new Date(2026, 9, 24, 15).toISOString();
+const proximoSabado = new Date();
+proximoSabado.setDate(proximoSabado.getDate() + ((6 - proximoSabado.getDay() + 7) % 7 || 7));
+proximoSabado.setHours(15, 0, 0, 0);
+const sabado15h = proximoSabado.toISOString();
 const baseMeeting: Meeting = {
   id: "m1",
   requestId: "r1",
@@ -88,7 +91,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     const screen = await renderCard("leitora");
     expect(screen.getByRole("header", { name: "Convite para encontro" })).toBeDefined();
     expect(screen.getByText("Ana Paula sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.")).toBeDefined();
-    expect(screen.getByText("Sáb, 24/10 · 15h")).toBeDefined();
+    expect(screen.getByText(/^Sáb, \d{2}\/\d{2} · 15h$/)).toBeDefined();
     expect(screen.getByText("Praça da Bandeira, Centro, Piripiri, PI")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar encontro" })); });
     expect(actions.confirm).toHaveBeenCalledTimes(1);

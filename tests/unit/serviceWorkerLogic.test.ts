@@ -13,11 +13,11 @@ import {
 
 describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
   it("expõe nomes corretos para caches ativos e lista canônica do App Shell", () => {
-    expect(STATIC_CACHE_NAME).toBe("ipebook-static-v1");
+    expect(STATIC_CACHE_NAME).toBe("ipebook-static-v2");
     expect(DYNAMIC_CACHE_NAME).toBe("ipebook-dynamic-v2");
     expect(CATALOG_CACHE_NAME).toBe("ipebook-catalog-v2");
     expect(APP_SHELL_URLS).toContain("/");
-    expect(APP_SHELL_URLS).toContain("/index.html");
+    expect(APP_SHELL_URLS).toContain("/bem-vindo");
     expect(APP_SHELL_URLS).toContain("/manifest.json");
     expect(APP_SHELL_URLS).toContain("/icone-192.png");
     expect(APP_SHELL_URLS).toContain("/icone-512.png");

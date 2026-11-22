@@ -4,7 +4,7 @@ import { AppErrorFallback, startErrorReporting } from "@/view/components/AppErro
 import { pushOnce, replaceOnce } from "@/view/pushOnce";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import { Platform } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
@@ -139,7 +139,11 @@ export default function RootLayout() {
                 onOpenNotifications={() => pushOnce("/notificacoes")}
               />
             ) : null}
-            <ThemedStack />
+            {Platform.OS === "web" ? (
+              <View role="main" style={styles.main}>
+                <ThemedStack />
+              </View>
+            ) : <ThemedStack />}
             {activeDestination && DOCK_DESTINATIONS.has(activeDestination) && !wideWeb && !WEB_BETA_ONLY ? (
               <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
             ) : null}
@@ -151,3 +155,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({ main: { flex: 1, minHeight: 0 } });

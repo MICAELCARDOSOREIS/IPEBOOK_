@@ -435,7 +435,6 @@ export default function CreateListing({
                   author={state.author.trim() || undefined}
                   photoUrl={state.photoUrl || undefined}
                   variant="card"
-                  showRibbon={state.modality === "donation" || state.modality === "trade"}
                 />
               </ModalityCoverArea>
               {!state.photoUrl ? (

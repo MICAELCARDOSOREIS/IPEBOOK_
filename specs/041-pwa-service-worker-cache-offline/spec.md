@@ -18,7 +18,7 @@ Antes desta especificação:
 ## Escopo
 
 - Implementar arquivo executável do Service Worker em `public/sw.js` para ser copiado estaticamente no build do Expo Web (`dist/sw.js`).
-- Configurar pré-cache estático do App Shell no evento `install` (`/`, `/index.html`, `/manifest.json`, favicons, ícones essenciais e páginas base).
+- Configurar pré-cache estático do App Shell no evento `install` (`/`, `/manifest.json`, favicon, ícones essenciais e rotas públicas canônicas sem a extensão `.html`).
 - Implementar estratégia Stale-While-Revalidate para assets estáticos (scripts, estilos, fontes e imagens locais em `_expo/static/` e assets).
 - Implementar estratégia Network-First com fallback para Cache e resposta estruturada HTTP 503 sem dados em cache para consultas anônimas do catálogo público do Supabase (`/rest/v1/v2_books`) que excluam rascunhos. As consultas autenticadas usam o cache local do aplicativo quando a rede falha. Conforme [ADR 0117](../../docs/adr/0117-pkce-e-privacidade-do-cache-web.md).
 - Gerenciar o ciclo de vida do Service Worker (`skipWaiting` na instalação, `clients.claim` na ativação e purga de caches legados no evento `activate`).
@@ -29,11 +29,11 @@ Antes desta especificação:
 
 ## Regras de Negócio e Comportamento Esperado
 
-- **RN-01 (Pré-cache do App Shell):** durante o evento `install`, o Service Worker pré-carrega os recursos essenciais do App Shell em cache estático dedicado (`ipebook-static-v1`).
+- **RN-01 (Pré-cache do App Shell):** durante o evento `install`, o Service Worker pré-carrega os recursos essenciais do App Shell em cache estático dedicado (`ipebook-static-v2`). A falha de um recurso não impede o armazenamento dos demais.
 - **RN-02 (Ativação e Limpeza de Caches Anteriores):** no evento `activate`, caches pertencentes a versões legadas são excluídos atomicamente, e o novo Service Worker assume o controle dos clientes abertos imediatamente via `clients.claim()`.
 - **RN-03 (Estratégia Stale-While-Revalidate para Assets Estáticos):** requisições de assets estáticos (scripts JS, estilos CSS, fontes do Google e ícones locais) retornam imediatamente a versão em cache (se disponível) enquanto uma requisição de rede em segundo plano atualiza o cache para o próximo acesso.
 - **RN-04 (Estratégia Network-First para Catálogo):** requisições GET para o catálogo de livros do Supabase tentam a rede primeiro. Se bem-sucedidas, armazenam a resposta atualizada no cache dedicado de catálogo (`ipebook-catalog-v1`). Em caso de falha de conexão ou timeout de rede, recuperam a versão mais recente em cache; caso não haja versão em cache, retornam uma resposta amigável offline sem travar o aplicativo.
-- **RN-05 (Fallback de Navegação SPA):** requisições de navegação HTML que falhem por falta de conexão utilizam a página em cache correspondente ou recorrem ao `index.html` do App Shell, permitindo que a aplicação SPA carregue suas rotas locais mesmo offline.
+- **RN-05 (Fallback de Navegação SPA):** requisições de navegação HTML que falhem por falta de conexão utilizam a página em cache correspondente ou recorrem à raiz `/` do App Shell.
 - **RN-06 (Registro Seguro e Isolamento de Plataforma):** o registro do Service Worker ocorre estritamente na plataforma Web (`Platform.OS === 'web'`), em navegadores que suportam a API (`'serviceWorker' in navigator`) e protocolos seguros (`https:` ou `http://localhost`). Em plataformas nativas (Android/iOS) e ambientes de teste (Node/Vitest), a rotina não executa operações inválidas.
 - **RN-07 (Resiliência e Ausência de Exceções Não Tratadas):** qualquer falha no registro ou na execução do Service Worker é capturada silenciosamente ou reportada via logger seguro, nunca impedindo o funcionamento normal da aplicação.
 

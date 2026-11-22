@@ -1,4 +1,4 @@
-import { Platform, type PressableStateCallbackType, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, type PressableProps, type PressableStateCallbackType, type StyleProp, type ViewStyle } from "react-native";
 
 /**
  * Resposta de toque padrão do Material 3 Expressive (Spec 109 / ADR 0084) para elementos tocáveis
@@ -11,6 +11,26 @@ export const expressivePressedStyle: ViewStyle = {
 
 const webPointerStyle: ViewStyle | null =
   Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as unknown as ViewStyle) : null;
+
+/** O Pressable na Web exige ARIA explícito e só trata Espaço para botões. */
+export function webCheckableProps(
+  checked: boolean,
+  onPress: () => void,
+  disabled = false,
+): Pick<PressableProps, "aria-checked" | "onKeyDown"> {
+  if (Platform.OS !== "web") return {};
+
+  return {
+    "aria-checked": checked,
+    onKeyDown(event) {
+      const keyboardEvent = event.nativeEvent as unknown as KeyboardEvent;
+      if (keyboardEvent.key !== " " || disabled) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!keyboardEvent.repeat) onPress();
+    },
+  };
+}
 
 /**
  * Anel de foco do teclado na web, na cor primária do tema. O React Native Web só marca `focused`

@@ -74,7 +74,7 @@ describe("Notifications Component (Spec 015)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza lista de notificações e abas de filtro para usuário autenticado", async () => {
+  it("anuncia contagens dos filtros e filtra as notificações não lidas", async () => {
     const onBack = jest.fn();
     const onAction = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -90,14 +90,16 @@ describe("Notifications Component (Spec 015)", () => {
     });
 
     expect(screen.getByRole("header", { name: "Notificações" })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /Todas/ })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /Não lidas/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Todas (3)", selected: true })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Não lidas (2)", selected: false })).toBeDefined();
 
     // Filtra por não lidas
-    const unreadTab = screen.getByRole("tab", { name: /Não lidas/ });
+    const unreadFilter = screen.getByRole("button", { name: "Não lidas (2)" });
     await act(async () => {
-      fireEvent.press(unreadTab);
+      fireEvent.press(unreadFilter);
     });
+    expect(screen.getByRole("button", { name: "Não lidas (2)", selected: true })).toBeDefined();
+    expect(screen.queryByText("Pedido aceito!")).toBeNull();
 
     // Clica no botão de marcar lidas se estiver visível
     const markAllBtn = screen.queryByRole("button", { name: "Marcar todas como lidas" });
@@ -152,18 +154,17 @@ describe("Notifications Component (Spec 015)", () => {
     expect(screen.getByRole("header", { name: "Notificações" })).toBeDefined();
   });
 
-  it("agrupa as notificações por período da lista (Figma 07.04, Spec 032)", async () => {
+  it("agrupa as notificações por data com cabeçalhos legíveis", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
       screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
-    const periodos = ["Hoje", "Esta semana", "Antes"];
     const cabecalhos = screen
       .getAllByRole("header")
       .map((node) => node.props.children)
-      .filter((texto) => typeof texto === "string" && periodos.includes(texto));
+      .filter((texto) => typeof texto === "string" && /^(Hoje|\d{1,2} de \p{L}+( de \d{4})?)$/u.test(texto));
 
     expect(cabecalhos.length).toBeGreaterThan(0);
     // Spec 043 RN-12: cada item traz o horário curto ("· 10h", "· Seg" ou "· 10/10").
@@ -219,36 +220,32 @@ describe("Notifications Component (Spec 015)", () => {
     expect(screen.queryByTestId("delete-notif-notif-001")).toBeNull();
   });
 
-  it("permite limpar notificações lidas e limpar tudo", async () => {
+  it("confirma exclusão de notificações lidas e depois a exclusão de todas", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
       screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
-    // Limpar lidas
-    const clearReadBtn = screen.queryByRole("button", { name: "Limpar notificações lidas" });
-    if (clearReadBtn) {
+    const openManagement = async () => {
       await act(async () => {
-        fireEvent.press(clearReadBtn);
+        fireEvent.press(screen.getByRole("button", { name: "Gerenciar notificações" }));
       });
-    }
+    };
 
-    // Limpar tudo: abre o diálogo
-    const clearAllBtn = screen.getByRole("button", { name: "Limpar todas as notificações" });
-    expect(clearAllBtn).toBeDefined();
-
+    await openManagement();
     await act(async () => {
-      fireEvent.press(clearAllBtn);
+      fireEvent.press(screen.getByRole("button", { name: "Excluir notificações lidas" }));
     });
+    expect(screen.getByText("Excluir notificações lidas?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Excluir" })); });
 
-    // Confirma no diálogo
-    const confirmBtn = screen.getByRole("button", { name: "Limpar tudo" });
-    expect(confirmBtn).toBeDefined();
-
+    await openManagement();
     await act(async () => {
-      fireEvent.press(confirmBtn);
+      fireEvent.press(screen.getByRole("button", { name: "Excluir todas as notificações" }));
     });
+    expect(screen.getByText("Excluir todas as notificações?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Excluir" })); });
 
     expect(screen.getByText("Você está em dia")).toBeDefined();
   });

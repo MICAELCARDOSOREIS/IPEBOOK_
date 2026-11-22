@@ -3,21 +3,20 @@
  * Exporta constantes, funções puras de classificação e estratégias de cache para reutilização e testes.
  */
 
-export const STATIC_CACHE_NAME = "ipebook-static-v1";
+export const STATIC_CACHE_NAME = "ipebook-static-v2";
 export const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v2";
 export const CATALOG_CACHE_NAME = "ipebook-catalog-v2";
 
 export const APP_SHELL_URLS: readonly string[] = [
   "/",
-  "/index.html",
   "/manifest.json",
   "/icone-192.png",
   "/icone-512.png",
   "/favicon.ico",
-  "/bem-vindo.html",
-  "/pesquisa.html",
-  "/termos.html",
-  "/ajuda.html",
+  "/bem-vindo",
+  "/pesquisa",
+  "/termos",
+  "/ajuda",
 ];
 
 export type RequestCategory = "navigation" | "catalog" | "static-asset" | "pass-through";

@@ -585,7 +585,7 @@ export default function BookDetail({
               <View style={styles.safeMeetingCard}>
                 <AppIcon name="place" size={20} color={colors.m3.onSecondaryContainer} />
                 <View style={styles.safeMeetingText}>
-                  <Text style={styles.safeMeetingTitle}>Encontro seguro</Text>
+                  <Text style={styles.safeMeetingTitle}>Encontro recomendado</Text>
                   <Text style={styles.safeMeetingBody}>Prefira locais públicos. Pague só depois de conferir o exemplar.</Text>
                 </View>
               </View>

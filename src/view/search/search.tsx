@@ -8,7 +8,7 @@ import type { SearchModalityFilter, SearchFilters, SearchSortOption } from "@/vi
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
 import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -107,7 +107,9 @@ export default function Search({
   const { isOnline } = makeNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const wideWeb = useIsWideWeb();
+  const windowWidth = useHydratedWindowWidth();
+  const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
+  const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
   const gridColumns = useWebGridColumns();
   const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialFilters = useRef(false);
@@ -331,6 +333,7 @@ export default function Search({
 
       {/* 3. Campo de Busca Integrado M3 (Figma nó 99:1733) */}
       <SearchField
+        placeholder={compactWeb ? "Título, autor ou categoria" : undefined}
         value={state.term}
         onChangeText={actions.setTerm}
         onSubmitEditing={() => void actions.registerSearch(state.term)}
@@ -607,6 +610,7 @@ export default function Search({
           <SearchBookCard
             item={item}
             wideWeb={wideWeb}
+            compactWeb={compactWeb}
             gridColumns={gridColumns}
             userId={auth.user?.id ?? null}
             onPress={() => guardedNavigateToBookDetail(item.id)}

@@ -10,6 +10,45 @@ jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedW
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 
 describe("Notificações na web larga", () => {
+  it("mostra a situação atual e mantém um aviso anterior não lido acessível no histórico", async () => {
+    const latest = {
+      id: "latest", userId: "u1", title: "Convite para encontro", message: "Primeiro local",
+      type: "meeting_update" as const, read: true, createdAt: "2026-11-15T12:00:00Z",
+      actionUrl: "/negociacao/r1",
+    };
+    const older = {
+      ...latest, id: "older", title: "Encontro reagendado", message: "Aviso anterior",
+      read: false, createdAt: "2026-11-14T12:00:00Z",
+    };
+    const meeting = {
+      id: "m1", requestId: "r1", pointName: "Praça da Bandeira",
+      scheduledAt: "2026-11-27T18:00:00Z", proposedBy: "u2", status: "confirmed" as const,
+    };
+    const state = {
+      notifications: [latest, older], filteredNotifications: [older],
+      loading: false, error: null, actionError: null, filter: "unread" as const,
+      unreadCount: 1, systemPermissionGranted: true, meetingsByRequest: new Map([["r1", meeting]]),
+    };
+    const actions: NotificationsActions = {
+      reload: jest.fn(), refresh: jest.fn(), markAsRead: jest.fn(), markAllAsRead: jest.fn(),
+      deleteNotification: jest.fn(), clearAll: jest.fn(), clearRead: jest.fn(),
+      clearActionError: jest.fn(), setFilter: jest.fn(),
+    };
+    jest.mocked(useNotificationsViewModel).mockReturnValue([state, actions]);
+    const onNavigateToAction = jest.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u1" onNavigateToAction={onNavigateToAction} />);
+    });
+    expect(screen.getByText("Encontro confirmado")).toBeDefined();
+    expect(screen.getByText(/Praça da Bandeira/)).toBeDefined();
+    expect(screen.queryByText("Encontro reagendado")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByText(/Ver histórico/)); });
+    expect(screen.getByText("Encontro reagendado")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver encontro")); });
+    expect(onNavigateToAction).toHaveBeenCalledWith("/conversa/r1");
+  });
+
   it("aviso de permissão ocupa a linha inteira e não espreme o estado vazio (regressão)", async () => {
     const state: NotificationsState = {
       notifications: [],
@@ -42,7 +81,7 @@ describe("Notificações na web larga", () => {
     const banner = StyleSheet.flatten(screen.getByTestId("permission-alert").props.style);
     expect(banner.width).toBe("100%");
     const row = StyleSheet.flatten(screen.getByTestId("permission-alert").parent?.props.style);
-    expect(row.flexWrap).toBe("wrap");
+    expect(row.flexDirection ?? "column").toBe("column");
     expect(screen.getByText("Você está em dia")).toBeDefined();
   });
 

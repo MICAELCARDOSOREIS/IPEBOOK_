@@ -74,7 +74,7 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
 
       expect(id).toBeDefined();
       const scheduled = service.getScheduledNotifications()[0];
-      expect(scheduled.options.title).toBe("Lembrete de Encontro no Ponto Seguro");
+      expect(scheduled.options.title).toBe("Lembrete de encontro");
       expect(scheduled.options.body).toContain("O Cortiço");
       expect(scheduled.options.body).toContain("Praça da Bandeira");
       expect(scheduled.options.data?.meetingId).toBe("meeting-123");

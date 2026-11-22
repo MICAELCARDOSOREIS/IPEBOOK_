@@ -5,7 +5,6 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
   makeConversationsViewModel,
-  makeDeliveryStatus,
   makeNetworkStatus,
 } from "@/di/container";
 import { Chat } from "@/view/conversations/chat";
@@ -31,13 +30,6 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
 
-/** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
-function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
-  const delivery = makeDeliveryStatus(requestId, sessionUserId);
-  if (delivery.completed) return null;
-  return <FilledButton label="Combinar encontro" onPress={() => onOpen?.(requestId)} />;
-}
-
 export type ConversationsProps = {
   sessionUserId: string;
   /** Volta à tela anterior (ex.: Início no celular). */
@@ -46,6 +38,8 @@ export type ConversationsProps = {
   onOpenChat?: (requestId: string) => void;
   /** "Combinar" dentro do chat embutido da web larga. */
   onOpenNegotiation?: (requestId: string) => void;
+  onScheduleMeeting?: (requestId: string) => void;
+  onOpenDelivery?: (requestId: string) => void;
   /** "Denunciar" do painel "Sobre a troca" (web larga). */
   onReportListing?: (listingId: string) => void;
   /** Proposta recebida pendente: abre os pedidos recebidos para aceitar ou recusar. */
@@ -64,6 +58,8 @@ export function Conversations({
   onBack,
   onOpenChat,
   onOpenNegotiation,
+  onScheduleMeeting,
+  onOpenDelivery,
   onReportListing,
   onOpenReceivedRequests,
   onOpenListing,
@@ -108,6 +104,7 @@ export function Conversations({
     setDeleting(true);
     const ok = await actions.deleteConversation(toDelete.requestId);
     setDeleting(false);
+    if (ok) setSelectedId((id) => id === toDelete.requestId ? null : id);
     setDeleteFailed(!ok);
     setToDelete(null);
   };
@@ -139,7 +136,7 @@ export function Conversations({
   );
   const visibleItems = filter === "completed" ? completedItems : activeItems;
 
-  const selectedItem = state.items.find((item) => item.requestId === selectedId) ?? null;
+  const selectedItem = visibleItems.find((item) => item.requestId === selectedId) ?? null;
 
   const pendingReceivedCount = useMemo(
     () => activeItems.filter((item) => item.kind === "pendingReceived").length,
@@ -350,9 +347,9 @@ export function Conversations({
                   <View style={styles.featureIconBoxWide}>
                     <AppIcon name="place" size={24} color={colors.m3.primary} />
                   </View>
-                  <Text style={styles.featureTitleWide}>Pontos de encontro seguros</Text>
+                  <Text style={styles.featureTitleWide}>Pontos de encontro recomendados</Text>
                   <Text style={styles.featureBodyWide}>
-                    Locais públicos sugeridos em Piripiri (Praça da Bandeira, IFPI, Memorial) para entrega segura.
+                    Locais públicos em Piripiri para combinar a entrega presencial dos livros.
                   </Text>
                 </View>
 
@@ -452,16 +449,16 @@ export function Conversations({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
-                        accessibilityHint={item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
+                        accessibilityState={wideWeb ? { selected: isSelected } : undefined}
+                        accessibilityHint={!wideWeb && item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
                         onPress={() => open(item)}
-                        onLongPress={item.kind === "accepted" ? () => setToDelete(item) : undefined}
+                        onLongPress={!wideWeb && item.kind === "accepted" ? () => setToDelete(item) : undefined}
                         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
                           styles.row,
                           wideWeb && styles.rowWideItem,
                           wideWeb && hovered && !isSelected ? styles.rowHovered : null,
                           pressed ? styles.rowPressed : null,
                           isSelected ? styles.rowSelected : null,
-                          wideWeb && item.kind === "accepted" ? styles.rowWithDelete : null,
                         ]}
                       >
                         <BookCover
@@ -469,6 +466,7 @@ export function Conversations({
                           title={item.listing.title}
                           photoUrl={item.listing.photoUrl}
                           variant="list"
+                          width={wideWeb ? 44 : undefined}
                         />
                         <View style={styles.rowText}>
                           <View style={styles.rowHeader}>
@@ -502,23 +500,12 @@ export function Conversations({
                           </View>
                           <Text
                             style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
-                            numberOfLines={2}
+                            numberOfLines={wideWeb ? 1 : 2}
                           >
                             {item.preview}
                           </Text>
                         </View>
                       </Pressable>
-                      {/* Na web larga não há toque longo: o apagar fica visível na própria linha. */}
-                      {wideWeb && item.kind === "accepted" ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Apagar conversa com ${item.otherName}`}
-                          onPress={() => setToDelete(item)}
-                          style={({ hovered }: { hovered?: boolean }) => [styles.deleteButton, hovered ? styles.deleteButtonHovered : null]}
-                        >
-                          <AppIcon name="delete" size={18} color={colors.m3.onSurfaceVariant} />
-                        </Pressable>
-                      ) : null}
                       {item.kind === "pendingSent" ? (
                         <View style={styles.cancelRequestBar}>
                           <Text style={styles.cancelRequestHint}>Solicitação aguardando o anunciante</Text>
@@ -542,16 +529,21 @@ export function Conversations({
             </View>
 
             {/* Painel Central: Chat da negociação selecionada ou placeholder */}
-            {wideWeb && selectedId ? (
+            {wideWeb && selectedItem ? (
               <View style={styles.widePane} testID="conversation-pane">
                 <Chat
                   embedded
-                  requestId={selectedId}
+                  key={selectedItem.requestId}
+                  requestId={selectedItem.requestId}
+                  focusKey={focusKey}
                   sessionUserId={sessionUserId}
                   initialCounterpartName={selectedItem?.otherName}
                   initialCounterpartPhotoUrl={selectedItem?.otherPhotoUrl}
                   initialModality={selectedItem?.listing.modality}
                   onOpenNegotiation={guardedOpenNegotiation}
+                  onScheduleMeeting={onScheduleMeeting}
+                  onOpenDelivery={onOpenDelivery}
+                  onDeleteConversation={() => setToDelete(selectedItem)}
                 />
               </View>
             ) : wideWeb ? (
@@ -566,7 +558,7 @@ export function Conversations({
               </View>
             ) : null}
 
-            {/* Painel Direito: Detalhes da negociação e encontro seguro */}
+            {/* Painel Direito: Detalhes da negociação e encontro recomendado */}
             {wideWeb && selectedItem ? (
               <View style={styles.aboutPane} testID="conversation-about">
                 <View style={styles.aboutHeader}>
@@ -576,13 +568,12 @@ export function Conversations({
                 </View>
                 <View style={styles.aboutBody}>
                   {renderAboutBook(selectedItem)}
-                  <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={guardedOpenNegotiation} />
                   <View style={styles.aboutSafe}>
                     <View style={styles.aboutSafeHeader}>
                       <View style={styles.aboutSafeIcon}>
                         <AppIcon name="place" size={14} color={colors.nature.foliageDeep} />
                       </View>
-                      <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+                      <Text style={styles.aboutSafeTitle}>Encontro recomendado</Text>
                     </View>
                     <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
                   </View>

@@ -22,6 +22,7 @@ import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignUpProps = {
   onAuthenticated?: () => void;
+  onGoogleStart?: () => void;
   onNavigateToSignIn?: () => void;
   onNavigateToTerms?: () => void;
   onBack?: () => void;
@@ -32,6 +33,7 @@ const TERMS_ERROR = "É preciso aceitar os termos de uso para criar a conta.";
 /** Figma `01.03 · Criar conta` (nó `336:118`). */
 export default function SignUp({
   onAuthenticated,
+  onGoogleStart,
   onNavigateToSignIn,
   onNavigateToTerms,
   onBack,
@@ -59,6 +61,7 @@ export default function SignUp({
     if (busy) return;
     setGoogleLoading(true);
     try {
+      onGoogleStart?.();
       const success = await actions.signInWithGoogle?.();
       if (success) guardedAuthenticated();
     } finally {

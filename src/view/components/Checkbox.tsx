@@ -1,6 +1,7 @@
 import { useId, useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
+import { webCheckableProps } from "@/view/pressFeedback";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -31,6 +32,7 @@ export function Checkbox({
   const hasError = Boolean(error);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const toggle = () => onChange(!checked);
 
   return (
     <View style={styles.wrapper}>
@@ -38,10 +40,11 @@ export function Checkbox({
         accessibilityRole="checkbox"
         accessibilityLabel={accessibilityLabel ?? label}
         accessibilityState={{ checked, disabled }}
+        {...webCheckableProps(checked, toggle, disabled)}
         accessibilityHint={hasError ? error ?? undefined : description}
         aria-describedby={hasError ? errorId : undefined}
         disabled={disabled}
-        onPress={() => onChange(!checked)}
+        onPress={toggle}
         style={({ pressed }) => [styles.row, pressed && !disabled && styles.rowPressed]}
       >
         <AppIcon

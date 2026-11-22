@@ -5,6 +5,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { contrastRatio } from "@/view/theme/contrastRatio";
 import { AppIcon } from "@/view/components/AppIcon";
+import { webCheckableProps } from "@/view/pressFeedback";
 import { useExpressivePress } from "@/view/useExpressivePress";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 
@@ -42,6 +43,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
         accessibilityRole="checkbox"
         accessibilityLabel={accessibilityLabel ?? label}
         accessibilityState={{ checked: selected, disabled }}
+        {...webCheckableProps(selected, onPress, disabled)}
         disabled={disabled}
         hitSlop={8}
         onPress={onPress}

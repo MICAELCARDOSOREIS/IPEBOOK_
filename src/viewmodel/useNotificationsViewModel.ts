@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
+import type { Meeting } from "@/model/entities/meeting";
+import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
+import { meetingNotificationRequestId } from "@/viewmodel/meetingNotifications";
 import type { AppNotification } from "@/model/entities/notification";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
@@ -9,6 +12,7 @@ export type NotificationFilter = "all" | "unread";
 
 export type NotificationsState = {
   notifications: readonly AppNotification[];
+  meetingsByRequest?: ReadonlyMap<string, Meeting>;
   filteredNotifications: readonly AppNotification[];
   loading: boolean;
   error: string | null;
@@ -47,6 +51,7 @@ export function useNotificationsViewModel(
   sessionUserId: string | null,
   useCases: INotificationUseCases,
   push: IPushNotificationService,
+  meetings?: Pick<IMeetingUseCases, "getUserMeetingHistory">,
 ): [NotificationsState, NotificationsActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialCached =
@@ -54,6 +59,10 @@ export function useNotificationsViewModel(
   const [notifications, setNotifications] = useState<readonly AppNotification[]>(
     initialCached ?? [],
   );
+  const [meetingSnapshot, setMeetingSnapshot] = useState<{
+    userId: string;
+    items: ReadonlyMap<string, Meeting>;
+  } | null>(null);
   const [loading, setLoading] = useState(initialCached === null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -97,6 +106,21 @@ export function useNotificationsViewModel(
         setNotifications(items);
         setLoading(false);
       }
+      if (!meetings) return;
+      const ids = new Set(items.map(meetingNotificationRequestId).filter((id) => id !== undefined));
+      // O histórico vem ordenado da criação mais recente para a mais antiga.
+      const history = ids.size > 0
+        ? await meetings.getUserMeetingHistory(sessionUserId).catch(() => [])
+        : [];
+      if (active.current && current === request.current) {
+        const latest = new Map<string, Meeting>();
+        for (const meeting of history) {
+          if (ids.has(meeting.requestId) && !latest.has(meeting.requestId)) {
+            latest.set(meeting.requestId, meeting);
+          }
+        }
+        setMeetingSnapshot({ userId: sessionUserId, items: latest });
+      }
     } catch (err) {
       if (active.current && current === request.current) {
         setLoading(false);
@@ -107,7 +131,7 @@ export function useNotificationsViewModel(
         );
       }
     }
-  }, [sessionUserId, useCases]);
+  }, [sessionUserId, useCases, meetings]);
 
   const reload = useCallback(() => load(false), [load]);
   const refresh = useCallback(() => load(true), [load]);
@@ -237,6 +261,7 @@ export function useNotificationsViewModel(
   return [
     {
       notifications,
+      meetingsByRequest: meetingSnapshot?.userId === sessionUserId ? meetingSnapshot?.items : undefined,
       filteredNotifications,
       loading,
       error,

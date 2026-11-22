@@ -118,7 +118,7 @@ export function ScheduleMeetingWideLayout({
                   <Text style={styles.wideBody}>
                     {rescheduling
                       ? "Escolha uma nova data e envie a sugestão para a outra pessoa."
-                      : "Ponto público e seguro em Piripiri para realizar a entrega presencial."}
+                      : "Ponto público recomendado em Piripiri para a entrega presencial."}
                   </Text>
                 </View>
 
@@ -126,7 +126,7 @@ export function ScheduleMeetingWideLayout({
                 <View style={styles.whereHeader}>
                   <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
                   <Text style={styles.whereHint}>
-                    Escolha um ponto público e seguro em Piripiri.
+                    Escolha um dos pontos públicos recomendados em Piripiri.
                   </Text>
                 </View>
 
@@ -249,13 +249,13 @@ export function ScheduleMeetingWideLayout({
                     <AppIcon name="place" size={18} color={colors.m3.primary} />
                     <Text style={styles.wideMapCardTitle}>Pontos de Encontro em Piripiri</Text>
                   </View>
-                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos oficiais</Text>
+                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos recomendados</Text>
                 </View>
 
                 <View style={[styles.wideMapViewport, { height: mapViewportHeight }]}>
                   <View style={styles.wideMapEmptyFallback}>
                     <AppIcon name="place" size={32} color={colors.m3.primary} />
-                    <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
+                    <Text style={styles.wideMapEmptyFallbackTitle}>4 pontos recomendados em Piripiri</Text>
                     <Text style={styles.wideMapEmptyFallbackText}>
                       Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
                     </Text>
@@ -276,7 +276,7 @@ export function ScheduleMeetingWideLayout({
                       <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
                         {selectedPoint
                           ? `${selectedPoint.address} · ${selectedPoint.recommendedTime}`
-                          : "Pontos monitorados e centrais em Piripiri, ideais para troca segura de livros."}
+                          : "Locais públicos recomendados para trocar livros em Piripiri."}
                       </Text>
                     </View>
                   </View>
@@ -291,7 +291,7 @@ export function ScheduleMeetingWideLayout({
                 </View>
                 <Text style={styles.wideSafetyText}>
                   • Prefira horários durante o dia e com circulação de pedestres.{"\n"}
-                  • Encontros nos pontos sugeridos garantem visibilidade e tranquilidade.{"\n"}
+                  • Escolham um local público onde seja fácil se encontrar.{"\n"}
                   • Confira o estado do livro no momento da entrega presencial.
                 </Text>
               </View>

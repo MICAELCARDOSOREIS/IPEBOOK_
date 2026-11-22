@@ -588,8 +588,13 @@ export const makeNegotiationRatingViewModel = (
 ) => useNegotiationRatingViewModel(requestId, sessionUserId, ratedUserId, ratingUseCases, storeReviewService);
 export const makeNavigationBadgesViewModel = (sessionUserId: string | null, refreshKey: string) =>
   useNavigationBadgesViewModel(sessionUserId, refreshKey, defaultNavigationBadgesDeps);
-export const makeNotificationsViewModel = (sessionUserId: string | null) =>
-  useNotificationsViewModel(sessionUserId, notificationUseCases, pushNotificationService);
+export const makeNotificationsViewModel = (sessionUserId: string | null, includeMeetings = false) =>
+  useNotificationsViewModel(
+    sessionUserId,
+    notificationUseCases,
+    pushNotificationService,
+    includeMeetings ? meetingUseCases : undefined,
+  );
 export const makeNotificationPreferencesViewModel = (sessionUserId: string | null) =>
   useNotificationPreferencesViewModel(sessionUserId, userPreferencesUseCases);
 export const makePushRegistration = (
