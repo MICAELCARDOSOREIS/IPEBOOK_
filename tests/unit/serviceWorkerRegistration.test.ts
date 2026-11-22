@@ -32,28 +32,42 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
   });
 
   describe("Simulação de ciclo de vida do Service Worker", () => {
-    it("evento install abre o cache estático e adiciona assets do App Shell", async () => {
-      const mockCache = {
-        addAll: jest.fn().mockResolvedValue(undefined),
-      };
-      const mockCaches = {
-        open: jest.fn().mockResolvedValue(mockCache),
-      };
+    it("instala o worker com rotas canônicas mesmo se um recurso do pré-cache falhar", async () => {
+      const stored = new Set<string>();
+      const add = jest.fn(async (path: string) => {
+        if (path.endsWith(".html") || path === "/favicon.ico") throw new Error("404");
+        stored.add(path);
+      });
+      const open = jest.fn().mockResolvedValue({
+        add,
+        addAll: jest.fn(async (paths: string[]) => {
+          if (paths.some((path) => path.endsWith(".html") || path === "/favicon.ico")) throw new Error("404");
+          for (const path of paths) stored.add(path);
+        }),
+      });
+      const handlers = new Map<string, (event: unknown) => void>();
+      const skipWaiting = jest.fn();
+      runInNewContext(swContent, {
+        self: { addEventListener: (name: string, handler: (event: unknown) => void) => handlers.set(name, handler), skipWaiting },
+        caches: { open },
+        console: { warn: jest.fn() },
+      });
 
-      // Simulação do comportamento de install
-      const cache = await mockCaches.open(STATIC_CACHE_NAME);
-      await cache.addAll([...APP_SHELL_URLS]);
+      const waitUntil = jest.fn();
+      handlers.get("install")?.({ waitUntil });
+      await waitUntil.mock.calls[0]?.[0];
 
-      expect(mockCaches.open).toHaveBeenCalledWith(STATIC_CACHE_NAME);
-      expect(mockCache.addAll).toHaveBeenCalledWith(expect.arrayContaining(["/index.html", "/manifest.json"]));
+      expect(open).toHaveBeenCalledWith(STATIC_CACHE_NAME);
+      expect([...stored]).toEqual(expect.arrayContaining(["/", "/bem-vindo", "/pesquisa", "/termos", "/ajuda", "/manifest.json"]));
+      expect(skipWaiting).toHaveBeenCalledTimes(1);
     });
 
     it("evento activate purga caches legados mantendo apenas os ativos", async () => {
       const existingCaches = [
-        "ipebook-static-v1",
+        STATIC_CACHE_NAME,
         "ipebook-catalog-v2",
         "ipebook-dynamic-v2",
-        "ipebook-static-v0-legado",
+        "ipebook-static-v1",
         "ipebook-dynamic-v1",
         "cache-antigo-desconhecido",
       ];
@@ -64,7 +78,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       await Promise.all(toDelete.map((c) => deleteMock(c)));
 
       expect(deleteMock).toHaveBeenCalledTimes(3);
-      expect(deleteMock).toHaveBeenCalledWith("ipebook-static-v0-legado");
+      expect(deleteMock).toHaveBeenCalledWith("ipebook-static-v1");
       expect(deleteMock).toHaveBeenCalledWith("ipebook-dynamic-v1");
       expect(deleteMock).toHaveBeenCalledWith("cache-antigo-desconhecido");
     });
@@ -85,7 +99,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
 
       const mockCaches = {
         match: jest.fn().mockImplementation((target: string | { url: string }) => {
-          if (typeof target === "string" && target === "/index.html") {
+          if (target === "/") {
             return Promise.resolve(mockAppShellResponse);
           }
           return Promise.resolve(undefined);
@@ -94,7 +108,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
 
       // Simulação do fallback de navegação offline
       const cached = await mockCaches.match(request as unknown as Request);
-      const finalResponse = cached || (await mockCaches.match("/index.html")) || createOfflineHtmlResponse();
+      const finalResponse = cached || (await mockCaches.match("/")) || createOfflineHtmlResponse();
 
       expect(finalResponse).toBe(mockAppShellResponse);
       const body = await finalResponse.text();
@@ -112,7 +126,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       };
 
       const cached = await mockCaches.match(request as unknown as Request);
-      const appShell = await mockCaches.match("/index.html");
+      const appShell = await mockCaches.match("/");
       const finalResponse = cached || appShell || createOfflineHtmlResponse();
 
       expect(finalResponse.headers.get("X-Ipebook-Offline")).toBe("true");
