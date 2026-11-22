@@ -1,4 +1,4 @@
-import { Linking } from "react-native";
+import { Linking, Platform } from "react-native";
 import Welcome from "@/view/onboarding/welcome";
 import { PLAY_STORE_URL } from "@/view/playStore";
 import { WEB_BETA_ONLY } from "@/view/webBetaMode";
@@ -10,6 +10,7 @@ export type WelcomeRouteProps = {
   onFinish: (destination: WelcomeDestination) => void;
   onHelp?: () => void;
   onTerms?: () => void;
+  onExplore?: () => void;
   /** Spec 108: no site, os botões levam ao convite do beta e à Play Store. */
   betaInvite?: boolean;
   onJoinBeta?: () => void;
@@ -21,6 +22,7 @@ export default function WelcomeRoute({
   onFinish,
   onHelp,
   onTerms,
+  onExplore,
   betaInvite = WEB_BETA_ONLY,
   onJoinBeta = () => {},
   onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
@@ -42,6 +44,7 @@ export default function WelcomeRoute({
       onSignIn={() => finish("/entrar")}
       onHelp={onHelp}
       onTerms={onTerms}
+      onExplore={Platform.OS === "web" ? onExplore : undefined}
     />
   );
 }

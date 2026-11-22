@@ -22,14 +22,14 @@ export type WelcomeProps = {
   /** Links do rodapé da página na web larga. */
   onHelp?: () => void;
   onTerms?: () => void;
+  onExplore?: () => void;
   /** Spec 108: no site, os botões chamam para o teste do app em vez de entrar ou criar conta. */
   betaInvite?: boolean;
 };
 
 /**
  * Boas-vindas do primeiro acesso (Figma `01.01`, Android `324:38` / Web `146:457`).
- * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
- * oferece criar conta ou entrar — não há acesso de visitante.
+ * Ver issue #98 e ADR 0022. Na Web, também oferece acesso à busca pública.
  */
 const MODALITY_CONFIG = {
   Venda: {
@@ -48,11 +48,12 @@ const MODALITY_CONFIG = {
 
 type ModalityKey = keyof typeof MODALITY_CONFIG;
 
-export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore, betaInvite = false }: WelcomeProps) {
   const guardedStart = useGuardedPress(onStart);
   const guardedSignIn = useGuardedPress(onSignIn);
   const guardedHelp = useGuardedPress(onHelp);
   const guardedTerms = useGuardedPress(onTerms);
+  const guardedExplore = useGuardedPress(onExplore);
   const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
   const labels = betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
@@ -119,6 +120,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
                   <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
                 </Pressable>
               )}
+              {onExplore ? (
+                <Pressable accessibilityRole="button" onPress={guardedExplore} style={withPress(styles.wideOutlined)}>
+                  <Text style={styles.wideOutlinedText}>Explorar livros</Text>
+                </Pressable>
+              ) : null}
             </View>
           </View>
           <View style={styles.widePanel}>
@@ -278,6 +284,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       <View style={styles.actions}>
         <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={guardedStart} />
         {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={guardedSignIn} />}
+        {onExplore ? <OutlinedButton label="Explorar livros" onPress={guardedExplore} /> : null}
       </View>
 
       {onHelp || onTerms ? (
@@ -333,7 +340,7 @@ function createStyles(colors: ColorPalette) {
   wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
   wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
   wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
-  wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
+  wideActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[16] },
   widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
   wideIllustration: { width: "90%", height: "90%" },
   wideCards: { flexDirection: "row", gap: tokens.spacing[24] },

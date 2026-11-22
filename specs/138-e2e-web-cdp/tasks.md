@@ -6,6 +6,11 @@
 - [x] T004 Implementar os 5 cenários E2E em `tests/e2e/run.mjs` e executar `npm run test:e2e:build`.
 - [x] T005 Atualizar `docs/estado.md`, `README.md` e `docs/adr/README.md` e validar com `npm run validate`.
 
+## Acesso ao catálogo pelas boas-vindas
+
+- [x] Acrescentar a ação de navegação nas duas apresentações da Web em modo completo.
+- [x] Verificar a navegação de visitante pelo cenário 1 da suíte CDP e preservar os fluxos de entrada e cadastro.
+
 ## Correções da auditoria web de 21/11/2026
 
 - [x] T006 Validar que o logotipo no cabeçalho desktop funciona com Tab e Enter em outra página, mantém um endereço de link e leva ao início.

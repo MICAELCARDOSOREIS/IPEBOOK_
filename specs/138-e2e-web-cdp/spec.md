@@ -37,6 +37,12 @@ Estabelecer uma suíte automatizada, reproduzível e versionada de testes End-to
 - **CA05 (Diagnóstico em falha):** Qualquer falha salva screenshot e log do console em `coverage/e2e-falhas/` e encerra o processo com código diferente de zero, sem deixar processos Chrome órfãos.
 - **CA06 (Integração no repositório e CI):** `npm run validate` continua passando e `.github/workflows/validacao.yml` executa `npm run test:e2e:build`.
 
+## Acesso ao catálogo pelas boas-vindas na Web
+
+- Exibir a ação **Explorar livros** nas versões larga e estreita das boas-vindas da Web. A ação abre a rota pública existente `/pesquisa` sem pedir conta.
+- Preservar o fluxo de entrada e cadastro e a restrição do catálogo nas boas-vindas nativas e no modo de convite ao beta.
+- Validar clicando na ação nas duas larguras no cenário 1 da suíte. Confirmar a chegada ao catálogo e a ausência de rolagem horizontal.
+
 ## Correções da auditoria web de 21/11/2026
 
 - O logotipo do cabeçalho desktop é um link para o início e pode ser acionado por teclado.

@@ -11,7 +11,7 @@ describe("AboutSections — página que apresenta o app (Spec 092)", () => {
     expect(screen.getByText("Como funciona")).toBeDefined();
     expect(screen.getByText("Anuncie ou procure")).toBeDefined();
     expect(screen.getByText("Combine pelo chat")).toBeDefined();
-    expect(screen.getByText("Encontre-se com segurança")).toBeDefined();
+    expect(screen.getByText("Combine o encontro")).toBeDefined();
     expect(screen.getByText("Feito para a comunidade de Piripiri.")).toBeDefined();
     expect(screen.getByText("Sem taxas: o IpêBook não cobra pelas negociações")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Criar conta grátis")); });

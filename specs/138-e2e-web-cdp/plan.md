@@ -20,3 +20,7 @@
 4. **Comandos:**
    - `npm run test:e2e`: exporta `dist-e2e/` se ainda não existir (ou se `--build` for passado) e executa todos os cenários.
    - `npm run test:e2e:build`: força novo export em modo memória antes de rodar.
+
+## Acesso ao catálogo pelas boas-vindas
+
+Expor a navegação para a rota pública existente `/pesquisa` por meio da rota de boas-vindas. Reusar os botões e as regras de apresentação por plataforma. Exercitar a ação nas duas larguras já cobertas pelo cenário 1.
