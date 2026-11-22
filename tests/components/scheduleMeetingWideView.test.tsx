@@ -75,8 +75,8 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
 
     // Coluna Direita: Guia de pontos e Dicas
     expect(screen.getByText("Pontos de Encontro em Piripiri")).toBeDefined();
-    expect(screen.getByText("4 locais públicos oficiais")).toBeDefined();
-    expect(screen.getByText("4 Pontos Seguros em Piripiri")).toBeDefined();
+    expect(screen.getByText("4 locais públicos recomendados")).toBeDefined();
+    expect(screen.getByText("4 pontos recomendados em Piripiri")).toBeDefined();
     expect(screen.getByText("Dicas de Segurança Comunitária")).toBeDefined();
 
     // Detalhe do ponto selecionado na coluna direita e no card da lista
@@ -179,7 +179,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     });
 
     expect(screen.getByText("Escolha o local na lista ao lado")).toBeDefined();
-    expect(screen.getByText(/Pontos monitorados e centrais em Piripiri/)).toBeDefined();
+    expect(screen.getByText("Locais públicos recomendados para trocar livros em Piripiri.")).toBeDefined();
   });
 
   it("renderiza ScrollView principal na página para permitir rolagem fluida e adaptação em qualquer altura de janela", async () => {

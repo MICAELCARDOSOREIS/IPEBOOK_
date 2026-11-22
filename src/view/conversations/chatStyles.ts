@@ -74,6 +74,32 @@ export function createChatStyles(colors: ColorPalette) {
         : {}),
     },
     headerTitle: { ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
+    headerBookLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      maxWidth: "100%",
+      minHeight: 28,
+      gap: tokens.spacing[6],
+    },
+    linkBookTitle: { flexShrink: 1 },
+    conversationOptions: {
+      alignItems: "flex-end",
+      paddingHorizontal: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    conversationDelete: {
+      justifyContent: "center",
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+    },
+    conversationDeleteLabel: {
+      ...tokens.typography.labelLarge,
+      color: colors.error,
+    },
+    narrowStatusStrip: {
+      paddingHorizontal: tokens.spacing[12],
+    },
     bookCard: {
       gap: tokens.spacing[8],
       marginHorizontal: tokens.spacing[16],
@@ -117,22 +143,6 @@ export function createChatStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderBottomWidth: 1,
       borderBottomColor: colors.m3.outlineVariant,
-    },
-    // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
-    combine: {
-      minHeight: 34,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[14],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.sprout,
-      borderWidth: 1,
-      borderColor: `${colors.nature.foliage}40`,
-    },
-    combineText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.nature.foliageDeep,
     },
     // Espaço no fim para a última mensagem não colar no campo de digitar (Spec 089).
     list: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[12], paddingBottom: tokens.spacing[24] },
@@ -374,36 +384,6 @@ export function createChatStyles(colors: ColorPalette) {
     headerSubtitle: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
-    },
-    webCombineButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-    },
-    webCombineButtonText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    webDetailsButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-    },
-    webDetailsButtonText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onSurface,
     },
     bookCardWide: {
       marginHorizontal: 0,
