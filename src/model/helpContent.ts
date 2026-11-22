@@ -6,13 +6,27 @@ function listMeetingPoints(): string {
   return names.length > 1 ? `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}` : names.join("");
 }
 
+export type FaqLink = { label: string; href: string };
+
 export interface FaqItem {
   readonly id: string;
   readonly question: string;
   readonly answer: string;
-  readonly links?: readonly { label: string; href: string }[];
+  readonly links?: readonly FaqLink[];
   readonly category: "funcionamento" | "seguranca" | "regras" | "suporte";
 }
+
+export const PIRIPIRI_POLICE_CONTACT = {
+  id: "faq-contato-policial",
+  category: "seguranca",
+  question: "Como falar com a polícia em Piripiri?",
+  answer: "Em uma emergência, ligue 190. Para falar com a Polícia Civil do Piauí, ligue 197.",
+  links: [
+    { label: "Emergência policial · Ligar 190", href: "tel:190" },
+    { label: "Polícia Civil do Piauí · Ligar 197", href: "tel:197" },
+    { label: "Consultar a Delegacia de Piripiri", href: "https://portal.pi.gov.br/pc/delegacias-do-interior/" },
+  ],
+} satisfies FaqItem;
 
 export const FAQ_ITEMS: readonly FaqItem[] = [
   {
@@ -29,17 +43,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     answer:
       "Não. O IpêBook é 100% gratuito e comunitário. Não cobramos comissões por trocas, doações ou vendas. Nas vendas, o valor é acertado diretamente entre as partes no momento do encontro.",
   },
-  {
-    id: "faq-contato-policial",
-    category: "seguranca",
-    question: "Como falar com a polícia em Piripiri?",
-    answer: "Em uma emergência, ligue 190. Para falar com a Polícia Civil do Piauí, ligue 197.",
-    links: [
-      { label: "Emergência policial · Ligar 190", href: "tel:190" },
-      { label: "Polícia Civil do Piauí · Ligar 197", href: "tel:197" },
-      { label: "Consultar a Delegacia de Piripiri", href: "https://portal.pi.gov.br/pc/delegacias-do-interior/" },
-    ],
-  },
+  PIRIPIRI_POLICE_CONTACT,
   {
     id: "faq-3",
     category: "seguranca",
