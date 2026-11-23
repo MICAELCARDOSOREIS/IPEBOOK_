@@ -162,7 +162,10 @@ export function Conversations({
   };
 
   const listFooter = (
-    <View style={wideWeb ? styles.wideListFooter : styles.footerContainer}>
+    <View
+      style={wideWeb ? styles.wideListFooter : styles.footerContainer}
+      testID={wideWeb ? "conversation-list-footer" : undefined}
+    >
       {cancelFailed ? (
         <Text accessibilityRole="alert" style={styles.footerError}>
           Não foi possível cancelar o pedido. Tente novamente.
@@ -283,9 +286,12 @@ export function Conversations({
                   <View style={styles.skeletonSendBtn} />
                 </View>
               </View>
-              <View style={styles.aboutPane} importantForAccessibility="no-hide-descendants">
-                <View style={styles.skeletonLineTitle} />
-                <View style={styles.aboutBookCard}>
+              <View
+                style={styles.aboutPane}
+                importantForAccessibility="no-hide-descendants"
+                testID="conversation-about-loading"
+              >
+                <View style={[styles.aboutBookCard, styles.aboutLoadingCard]}>
                   <View style={styles.aboutBook}>
                     <View style={styles.skeletonBookCover} />
                     <View style={styles.aboutBookText}>
@@ -294,7 +300,6 @@ export function Conversations({
                     </View>
                   </View>
                 </View>
-                <View style={styles.skeletonAboutButton} />
               </View>
             </View>
           ) : (
@@ -370,7 +375,7 @@ export function Conversations({
           <View style={wideWeb ? styles.wideWorkspace : styles.flexOne}>
             <View style={wideWeb ? styles.wideListPane : styles.flexOne}>
               {wideWeb ? (
-                <View style={styles.wideListHeader}>
+                <View style={styles.wideListHeader} testID="conversation-list-header">
                   <Text style={styles.wideListCount}>
                     {`${visibleItems.length} ${visibleItems.length === 1 ? "conversa" : "conversas"}`}
                   </Text>
@@ -561,7 +566,7 @@ export function Conversations({
             {/* Painel Direito: Detalhes da negociação e encontro recomendado */}
             {wideWeb && selectedItem ? (
               <View style={styles.aboutPane} testID="conversation-about">
-                <View style={styles.aboutHeader}>
+                <View style={styles.aboutHeader} testID="conversation-about-header">
                   <Text accessibilityRole="header" style={styles.aboutTitle}>
                     {`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
                   </Text>

@@ -71,7 +71,7 @@ export function WebHeader({
         </Link>
 
         {active !== "search" ? (
-          <View style={styles.search}>
+          <View style={styles.search} testID="web-header-search">
             <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
             <TextInput
               value={searchTerm}
@@ -207,8 +207,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
       fontSize: 16,
-      outlineStyle: "none",
-    } as object,
+    },
     spacer: { flex: 1 },
     countBadge: {
       position: "absolute",

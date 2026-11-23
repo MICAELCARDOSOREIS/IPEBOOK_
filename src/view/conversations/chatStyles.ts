@@ -1,6 +1,7 @@
 import { Platform, StyleSheet } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { CONVERSATIONS_FOOTER_MIN_HEIGHT } from "@/view/conversations/conversationsStyles";
 
 export function createChatStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -371,6 +372,7 @@ export function createChatStyles(colors: ColorPalette) {
       borderBottomWidth: 1,
       borderBottomColor: colors.book.paperEdge,
     },
+    headerEmbeddedWide: { paddingVertical: tokens.spacing[6] },
     headerInfo: {
       flex: 1,
       minWidth: 0,
@@ -408,6 +410,7 @@ export function createChatStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderTopColor: colors.book.paperEdge,
     },
+    composerEmbeddedWide: { minHeight: CONVERSATIONS_FOOTER_MIN_HEIGHT },
     offlineNotice: {
       flexDirection: "row",
       alignItems: "center",

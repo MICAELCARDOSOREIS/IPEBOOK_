@@ -199,6 +199,19 @@ const CENARIOS = [
         senha: "SenhaForte123!",
       });
       await assertSemOverflowHorizontal(page, "Home Desktop autenticada");
+      await page.eval(`document.querySelector('[aria-label="IpêBook, ir para o início"]').focus()`);
+      const tab = { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 };
+      await page.send("Input.dispatchKeyEvent", { ...tab, type: "keyDown" });
+      await page.send("Input.dispatchKeyEvent", { ...tab, type: "keyUp" });
+      await page.waitFor(`(() => {
+        const input = document.querySelector('input[aria-label="Buscar título, autor ou categoria"]');
+        if (!input?.matches(':focus-visible')) return false;
+        const field = getComputedStyle(input.parentElement);
+        const text = getComputedStyle(input);
+        return parseFloat(field.outlineWidth) >= 2 && field.outlineStyle === "solid" &&
+          parseFloat(field.borderTopLeftRadius) >= input.parentElement.clientHeight / 2 &&
+          text.outlineStyle === "none" && text.boxShadow === "none";
+      })()`, { message: "o foco pelo teclado contorna a busca arredondada do cabeçalho" });
 
       await page.clickBySelector('[aria-label="Meu perfil"]');
       await page.waitForText("Leitor E2E");
@@ -502,6 +515,17 @@ const CENARIOS = [
       await page.send("Input.dispatchKeyEvent", { ...enter, type: "keyUp" });
       await page.waitForText("Oi, combinamos a entrega hoje?");
       await page.waitForText("Confirmar encontro");
+      await page.waitFor(`(() => {
+        const bottoms = ["list", "chat", "about"].map((pane) =>
+          document.querySelector('[data-testid="conversation-' + pane + '-header"]')?.getBoundingClientRect().bottom
+        );
+        return bottoms.every(Number.isFinite) && Math.max(...bottoms) - Math.min(...bottoms) <= 1;
+      })()`, { message: "divisórias dos três cabeçalhos de Conversas alinhadas" });
+      await page.waitFor(`(() => {
+        const list = document.querySelector('[data-testid="conversation-list-footer"]')?.getBoundingClientRect();
+        const chat = document.querySelector('[data-testid="conversation-chat-footer"]')?.getBoundingClientRect();
+        return Boolean(list && chat && Math.abs(list.top - chat.top) <= 1);
+      })()`, { message: "divisórias dos rodapés da lista e do chat alinhadas" });
       await page.waitFor(`(() => {
         const pane = document.querySelector('[data-testid="conversation-about"]');
         return Boolean(pane && !pane.textContent.includes("Combinar encontro"));

@@ -162,6 +162,49 @@ describe("useConversationsViewModel (Spec 076)", () => {
     expect(hook.current[0].error).toBe("Não foi possível carregar suas conversas. Tente novamente.");
   });
 
+  it("encerra o carregamento quando uma consulta não responde e recupera a lista ao tentar novamente", async () => {
+    jest.useFakeTimers();
+    try {
+      const base = deps([], [], {}, {});
+      let resolveFirstRequest!: (items: RequestWithListing[]) => void;
+      const firstRequest = new Promise<RequestWithListing[]>((resolve) => {
+        resolveFirstRequest = resolve;
+      });
+      const received: RequestWithListing[] = [{
+        request: { id: "r1", listingId: "b1", requesterId: "ana", status: "pending" },
+        listing: book("b1", "Dom Casmurro", "me"),
+        requesterName: "Ana",
+      }];
+      base.listReceivedRequests = jest.fn()
+        .mockReturnValueOnce(firstRequest)
+        .mockResolvedValueOnce(received);
+      const hook = await renderHook("me", base);
+      expect(hook.current[0]).toMatchObject({ loading: true, error: null });
+
+      await act(async () => {
+        jest.advanceTimersByTime(15_000);
+      });
+      expect(hook.current[0]).toMatchObject({
+        loading: false,
+        error: "Não foi possível carregar suas conversas. Tente novamente.",
+      });
+
+      await act(async () => {
+        await hook.current[1].reload();
+      });
+      await act(async () => {
+        resolveFirstRequest([]);
+      });
+      expect(hook.current[0]).toMatchObject({
+        items: [{ requestId: "r1" }],
+        loading: false,
+        error: null,
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("formata o horário relativo como no Figma 06.01", () => {
     const now = new Date("2026-10-26T15:00:00");
     expect(formatConversationTime("2026-10-26T06:00:00", now)).toBe("9h");

@@ -52,6 +52,7 @@ function formatMemberName(name: string | null | undefined): string {
   return trimmed;
 }
 const LOAD_ERROR = "Não foi possível carregar suas conversas. Tente novamente.";
+const LOAD_TIMEOUT_MS = 15_000;
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 
 /** Horário relativo do Figma `06.01`: "agora", "10 min", "9h", "Ontem", dia da semana ou data. */
@@ -132,31 +133,43 @@ export type ConversationsActions = {
   cancelRequest: (requestId: string) => Promise<boolean>;
 };
 
+async function loadConversations(sessionUserId: string, deps: ConversationsDeps): Promise<ConversationItem[]> {
+  const [sent, received, hidden] = await Promise.all([
+    deps.listSentRequests(sessionUserId),
+    deps.listReceivedRequests(sessionUserId),
+    deps.listHiddenConversations
+      ? safely(deps.listHiddenConversations(sessionUserId), {})
+      : Promise.resolve({} as Record<string, string>),
+  ]);
+  const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
+  const profileMemo = new Map<string, Promise<{ name: string | null; photoUrl: string | null }>>();
+  const built = await Promise.all([
+    ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps, profileMemo)),
+    ...open(received).map((e) => buildItem(e, sessionUserId, false, deps, profileMemo)),
+  ]);
+  // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
+  const visible = built.filter(({ item }) => {
+    const hiddenAt = hidden[item.requestId];
+    return !hiddenAt || (item.lastMessageAt !== null && item.lastMessageAt > hiddenAt);
+  });
+  return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
+}
+
 export function useConversationsViewModel(
   sessionUserId: string | null,
   deps: ConversationsDeps,
 ): [ConversationsState, ConversationsActions] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];
-    const [sent, received, hidden] = await Promise.all([
-      deps.listSentRequests(sessionUserId),
-      deps.listReceivedRequests(sessionUserId),
-      deps.listHiddenConversations
-        ? safely(deps.listHiddenConversations(sessionUserId), {})
-        : Promise.resolve({} as Record<string, string>),
-    ]);
-    const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
-    const profileMemo = new Map<string, Promise<{ name: string | null; photoUrl: string | null }>>();
-    const built = await Promise.all([
-      ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps, profileMemo)),
-      ...open(received).map((e) => buildItem(e, sessionUserId, false, deps, profileMemo)),
-    ]);
-    // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
-    const visible = built.filter(({ item }) => {
-      const hiddenAt = hidden[item.requestId];
-      return !hiddenAt || (item.lastMessageAt !== null && item.lastMessageAt > hiddenAt);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(LOAD_ERROR)), LOAD_TIMEOUT_MS);
     });
-    return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
+    try {
+      return await Promise.race([loadConversations(sessionUserId, deps), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   }, [sessionUserId, deps]);
 
   const [state, reload] = useRequestList<ConversationItem>(
