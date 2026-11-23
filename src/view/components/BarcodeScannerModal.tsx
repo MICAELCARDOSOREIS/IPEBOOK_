@@ -6,6 +6,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -112,7 +113,7 @@ export function BarcodeScannerModal({
             </Text>
           </View>
         ) : !permission.granted ? (
-          <View style={styles.permissionContainer}>
+          <ScrollView style={styles.container} contentContainerStyle={styles.permissionContainer}>
             <View style={[styles.iconCircle, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
               <AppIcon name="camera" size={40} color={colors.action} />
             </View>
@@ -135,7 +136,7 @@ export function BarcodeScannerModal({
                 accessibilityLabel="Fechar e digitar ISBN manualmente"
               />
             </View>
-          </View>
+          </ScrollView>
         ) : (
           <View style={styles.cameraContainer}>
             <CameraView
@@ -207,10 +208,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   permissionContainer: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing[24],
+    paddingVertical: spacing[16],
   },
   iconCircle: {
     width: 80,
@@ -251,10 +253,12 @@ const styles = StyleSheet.create({
   overlayCenterRow: {
     flexDirection: "row",
     height: 180,
+    maxHeight: "50%",
   },
   reticle: {
-    width: 280,
-    height: 180,
+    width: "90%",
+    maxWidth: 280,
+    height: "100%",
     borderWidth: 1,
     borderRadius: radius.medium,
     position: "relative",

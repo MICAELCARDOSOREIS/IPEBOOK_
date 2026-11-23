@@ -5,7 +5,6 @@
     "owner": "ipebook",
     "scheme": "ipebook",
     "version": "0.2.2",
-    "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FCFAF5",
     "assetBundlePatterns": [
@@ -37,6 +36,7 @@
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
+        "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
         "NSCameraUsageDescription": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro, ler QR Codes de entrega e tirar a foto do seu perfil.",
         "NSPhotoLibraryUsageDescription": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o livro ou para o seu perfil.",
         "NSLocationWhenInUseUsageDescription": "O IpêBook usa a localização apenas para sugerir pontos públicos seguros em Piripiri."

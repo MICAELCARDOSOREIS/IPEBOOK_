@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Stack, usePathname, type ErrorBoundaryProps, type Href } from "expo-router";
 import { AppErrorFallback, startErrorReporting } from "@/view/components/AppErrorFallback";
 import { pushOnce, replaceOnce } from "@/view/pushOnce";
-import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import { Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
@@ -83,15 +82,6 @@ export default function RootLayout() {
     // Previne navegação duplicada e substitui a rota de topo sem empilhar histórico desnecessário entre abas
     if (pathname !== targetRoute) replaceOnce(targetRoute);
   };
-
-  // Trava o app em retrato em runtime (a app.json já trava em builds nativos; isto é a rede de
-  // segurança em Expo Go/dev). Web fica livre — lá o conteúdo é centralizado com maxWidth.
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {
-      /* dispositivo/emulador sem suporte à trava: ignora silenciosamente */
-    });
-  }, []);
 
   // Oculta o botão flutuante de ferramentas de desenvolvimento (FAB Tools) do expo-dev-client
   // para evitar sobreposição nos cabeçalhos e botões da interface.

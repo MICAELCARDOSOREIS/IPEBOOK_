@@ -152,7 +152,6 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
       maxWidth={560}
       paddingTop={tokens.spacing[12]}
       paddingBottom={tokens.spacing[24]}
-      edges={["top", "bottom"]}
       contentStyle={{ gap: tokens.spacing[12] }}
     >
       <View style={styles.header}>

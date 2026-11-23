@@ -64,12 +64,10 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 
 ## Orientação e layout responsivo
 
-- **Mobile é só retrato.** O app trava em `portrait` em dois níveis: a `orientation: "portrait"`
-  do `app.json` (trava nativa em builds Android/iOS) e, como rede de segurança em runtime, um
-  `lockAsync(PORTRAIT_UP)` do `expo-screen-orientation` no `src/app/_layout.tsx` (ignora Web).
-  (Adaptado — M3 é agnóstico de orientação; a escolha de retrato-only é da marca)
-- **O porquê:** a negociação entre vizinhos acontece numa mão, em qualquer lugar — não há tela
-  que ganhe com paisagem, e travar evita reflow acidental e estados de layout não testados.
+- **Android** acompanha a orientação e o tamanho da janela em celulares, tablets e dobráveis.
+  Use as áreas seguras para manter o conteúdo visível junto às barras do sistema e aos recortes,
+  inclusive nas laterais em paisagem.
+- **iOS** declara retrato em `ios.infoPlist.UISupportedInterfaceOrientations` no `app.json`.
 - **Web fica livre:** o navegador de desktop não força retrato. Em vez disso, o conteúdo é
   centralizado numa coluna de leitura com `maxWidth` (ver abaixo), com o fundo `surface` em
   volta. (Adaptado)
