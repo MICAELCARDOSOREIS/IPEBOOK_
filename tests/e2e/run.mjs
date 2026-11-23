@@ -473,6 +473,11 @@ const CENARIOS = [
       await page.clickBySelector('[aria-label^="Abrir notificações"]');
       await page.waitForText("Revisar proposta");
       await page.setViewport(390, 844, true);
+      // O filtro já existe na versão larga. Espere o cabeçalho móvel substituir o anterior.
+      await page.waitFor(`document.documentElement.clientWidth === 390 &&
+        !document.querySelector('[data-testid="web-header"]') &&
+        Boolean(document.querySelector('main [aria-label="Notificações"][role="heading"]'))`,
+      { message: "layout móvel de Notificações a 390 px" });
       await page.waitForText("Não lidas");
       await assertSemOverflowHorizontal(page, "Notificações no celular");
       await page.clickByText("Revisar proposta", { exact: true });
