@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Verificação de prontidão da configuração nativa e de release do Ipebook (CA da Spec 074).
 // Falha com código 1 quando qualquer invariante de build estiver quebrado, para que o
-// `npm run validate` e a CI impeçam a integração. Não requer o Expo rodando: lê os arquivos.
+// `npm run validate` e a CI impeçam a integração. Não inicia o servidor do Expo.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getPrebuildConfigAsync } from "@expo/prebuild-config";
+import configPlugins from "expo/config-plugins";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const falhas = [];
@@ -33,6 +35,34 @@ function dimensoesPng(caminho) {
 const app = lerJson("app.json").expo;
 const manifest = lerJson("public/manifest.json");
 const eas = lerJson("eas.json");
+
+const platforms = ["android"];
+const { exp } = await getPrebuildConfigAsync(raiz, { platforms });
+const { _internal } = await configPlugins.compileModsAsync(exp, { projectRoot: raiz, platforms, introspect: true });
+const configNativa = _internal.modResults;
+const appAndroid = configNativa.android.manifest.manifest.application[0];
+const mainActivity = appAndroid.activity.find((activity) => activity.$["android:name"] === ".MainActivity");
+conferir(
+  "Atividade principal Android redimensionável e sem orientação fixa",
+  (!app.orientation || app.orientation === "default") && mainActivity &&
+    !mainActivity.$["android:screenOrientation"] &&
+    [appAndroid, mainActivity].every(({ $ }) =>
+      $["android:resizeableActivity"] !== "false" && !$["android:minAspectRatio"] && !$["android:maxAspectRatio"],
+    ),
+  "o manifesto gerado deve permitir rotação, tela dividida e redimensionamento.",
+);
+const atributosDeJanelaLegados = new Set([
+  "android:statusBarColor",
+  "android:navigationBarColor",
+  "android:windowLayoutInDisplayCutoutMode",
+  "android:windowOptOutEdgeToEdgeEnforcement",
+]);
+conferir(
+  "Tema Android sem atributos legados de barras e janela",
+  configNativa.android.styles.resources.style.every(({ item }) =>
+    !item?.some(({ $ }) => atributosDeJanelaLegados.has($.name))),
+  "os estilos gerados pelo Expo ainda declaram atributos legados de ponta a ponta.",
+);
 
 console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
 /** Rotas de `src/app` com segmento dinâmico (`livro/[id].tsx`, `negociacao/[id]/entrega.tsx`). */

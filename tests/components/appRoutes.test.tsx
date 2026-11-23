@@ -36,11 +36,6 @@ jest.mock("expo-router", () => ({
   },
 }));
 
-jest.mock("expo-screen-orientation", () => ({
-  OrientationLock: { PORTRAIT_UP: 1 },
-  lockAsync: jest.fn(() => Promise.resolve()),
-}));
-
 jest.mock("expo-status-bar", () => ({
   StatusBar: mockCreateScreenStub("StatusBarStub"),
 }));

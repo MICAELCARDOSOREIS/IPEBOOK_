@@ -1,7 +1,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const {
+  AndroidConfig,
   withAppBuildGradle,
+  withAndroidManifest,
+  withAndroidStyles,
   withDangerousMod,
   withGradleProperties,
   withMainApplication,
@@ -171,6 +174,28 @@ function withBuildMemory(config) {
   });
 }
 
+function withAdaptiveAndroidWindow(config) {
+  config = withAndroidManifest(config, (manifest) => {
+    // Remove também a trava gravada por versões anteriores do prebuild.
+    const activity = AndroidConfig.Manifest.getMainActivityOrThrow(manifest.modResults);
+    delete activity.$["android:screenOrientation"];
+    return manifest;
+  });
+
+  return withAndroidStyles(config, (styles) => {
+    // O SDK 58 sempre grava estas cores no AppTheme. A janela edge-to-edge do
+    // React Native e do Android já configura as barras e seus recuos.
+    for (const name of ["android:statusBarColor", "android:navigationBarColor"]) {
+      styles.modResults = AndroidConfig.Styles.assignStylesValue(styles.modResults, {
+        add: false,
+        parent: AndroidConfig.Styles.getAppThemeGroup(),
+        name,
+      });
+    }
+    return styles;
+  });
+}
+
 // Spec 129 / ADR 0100: módulo nativo Google Play In-App Updates (com.google.android.play:app-update:2.1.0).
 function withPlayInAppUpdates(config) {
   let next = withAppBuildGradle(config, (gradle) => {
@@ -212,13 +237,13 @@ function withPlayInAppUpdates(config) {
 
 // Spec 106: o google-services.json não vai para o Git; na build do EAS ele chega pela variável de arquivo
 // GOOGLE_SERVICES_JSON (eas env:create --type file). Localmente, usa o arquivo da raiz definido no app.json.
-module.exports = ({ config }) =>
-  withPlayInAppUpdates(
-    withBuildMemory({
-      ...config,
-      android: {
-        ...config.android,
-        googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? config.android?.googleServicesFile,
-      },
-    }),
-  );
+module.exports = ({ config }) => {
+  const configured = {
+    ...config,
+    android: {
+      ...config.android,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? config.android?.googleServicesFile,
+    },
+  };
+  return withPlayInAppUpdates(withAdaptiveAndroidWindow(withBuildMemory(configured)));
+};
