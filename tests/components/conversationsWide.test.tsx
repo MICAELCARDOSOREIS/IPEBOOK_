@@ -123,7 +123,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByText(/some só para você/)).toBeDefined();
   });
 
-  it("exibe o esqueleto em três painéis mantendo o cabeçalho e o subtítulo durante o carregamento", async () => {
+  it("mantém o cabeçalho e exibe um único cartão no painel direito durante o carregamento", async () => {
     setup({ loading: true, items: [] });
     const screen = await renderView();
 
@@ -132,6 +132,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
       screen.getByText("Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri."),
     ).toBeDefined();
     expect(screen.getByLabelText("Carregando conversas")).toBeDefined();
+    expect(screen.getByTestId("conversation-about-loading", { includeHiddenElements: true }).children).toHaveLength(1);
   });
 
   it("no painel lateral de compra exibe autor, preço e permite abrir o anúncio ou denunciar", async () => {

@@ -2,6 +2,8 @@ import { Platform, StyleSheet } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
+export const CONVERSATIONS_FOOTER_MIN_HEIGHT = 102;
+
 export function createConversationsStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
@@ -179,6 +181,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[16],
     },
     wideListFooter: {
+      minHeight: CONVERSATIONS_FOOTER_MIN_HEIGHT,
       padding: tokens.spacing[12],
       borderTopWidth: 1,
       borderTopColor: colors.book.paperEdge,
@@ -273,12 +276,6 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.small,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },
-    skeletonAboutButton: {
-      width: "100%",
-      height: 44,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-    },
     widePane: {
       flex: 1,
       minWidth: 0,
@@ -345,6 +342,9 @@ export function createConversationsStyles(colors: ColorPalette) {
     },
     aboutBookCardHovered: {
       backgroundColor: colors.m3.surfaceContainer,
+    },
+    aboutLoadingCard: {
+      margin: tokens.spacing[16],
     },
     aboutBook: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     aboutBookText: { flex: 1, minWidth: 0, gap: tokens.spacing[4], alignItems: "flex-start" },

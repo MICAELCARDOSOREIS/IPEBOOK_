@@ -267,7 +267,10 @@ export function Chat({
     <View style={isWebStandalone ? styles.webWrapper : styles.flex}>
       <View style={isWebStandalone ? styles.webCard : styles.flex}>
         {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
-        <View style={[styles.header, wideWeb && styles.headerWide]}>
+        <View
+          style={[styles.header, wideWeb && styles.headerWide, wideWeb && embedded && styles.headerEmbeddedWide]}
+          testID={wideWeb && embedded ? "conversation-chat-header" : undefined}
+        >
           {embedded ? null : (
             <Pressable
               accessibilityRole="button"
@@ -482,7 +485,10 @@ export function Chat({
                   <Text style={styles.offlineNoticeText}>Sem conexão para enviar mensagens</Text>
                 </View>
               ) : null}
-              <View style={[styles.composer, wideWeb && styles.composerWide]}>
+              <View
+                style={[styles.composer, wideWeb && styles.composerWide, wideWeb && embedded && styles.composerEmbeddedWide]}
+                testID={wideWeb && embedded ? "conversation-chat-footer" : undefined}
+              >
                 <TextInput
                   accessibilityLabel="Campo de mensagem"
                   value={state.inputText}

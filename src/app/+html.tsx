@@ -48,7 +48,9 @@ export default function Root({ children }: PropsWithChildren) {
               // Safe area do Home Indicator no dock flutuante (ADR 0108 / Spec 135)
               `[data-testid="navigation-bar-tablist"]{padding-bottom:max(12px,calc(8px + env(safe-area-inset-bottom,0px)))!important}`,
               // Foco de teclado visível nos dois temas: anel escuro com halo claro (WCAG 2.4.7).
-              `:focus-visible{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer};border-radius:${tokens.radius.small}px}`,
+              `:focus-visible,[data-testid="web-header-search"]:focus-within{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer}}`,
+              `:focus-visible{border-radius:${tokens.radius.small}px}`,
+              `[data-testid="web-header-search"] input:focus-visible{outline:none;box-shadow:none}`,
               `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
               `[aria-disabled="true"]{cursor:not-allowed}`,
               `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,
