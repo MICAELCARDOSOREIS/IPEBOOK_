@@ -4,7 +4,7 @@
     "slug": "ipebook",
     "owner": "ipebook",
     "scheme": "ipebook",
-    "version": "0.2.0",
+    "version": "0.2.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FCFAF5",
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.ipebook.app",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 1,
+      "versionCode": 19,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#FCEFCB",
