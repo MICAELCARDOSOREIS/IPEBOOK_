@@ -21,6 +21,8 @@ const MIME_TYPES = {
   ".wasm": "application/wasm",
 };
 
+const CHROME_STARTUP_TIMEOUT_MS = 60_000;
+
 function resolveStaticFile(distDir, pathname) {
   const cleanPath = decodeURIComponent(pathname.split("?")[0]).replace(/^\/+/, "");
   const candidates = [];
@@ -417,7 +419,7 @@ export async function launchChromeCdp() {
     let stderr = "";
     const timer = setTimeout(() => {
       reject(new Error(`Timeout iniciando ${chromeBin}. Stderr: ${stderr}`));
-    }, 15000);
+    }, CHROME_STARTUP_TIMEOUT_MS);
 
     proc.once("error", (err) => {
       clearTimeout(timer);
