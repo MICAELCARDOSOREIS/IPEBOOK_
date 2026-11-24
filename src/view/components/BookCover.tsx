@@ -140,21 +140,6 @@ export function BookCover({
 
   // Se tem foto e não falhou definitivamente
   if (photoUrl && !hasFailed) {
-    if (isLoaded) {
-      return (
-        <View testID={testID} style={[styles.cover, { width, height }]}>
-          <Image
-            source={{ uri: photoUrl }}
-            accessibilityRole="image"
-            accessibilityLabel={`Foto da capa de ${title}`}
-            resizeMode="cover"
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      );
-    }
-
-    // Estado de carregamento: imagem sendo baixada + skeleton progressivo
     return (
       <View testID={testID} style={[styles.cover, { width, height }]}>
         <Image
@@ -163,16 +148,16 @@ export function BookCover({
           accessibilityRole="image"
           accessibilityLabel={`Foto da capa de ${title}`}
           resizeMode="cover"
-          style={[StyleSheet.absoluteFill, styles.hiddenImage]}
+          style={[StyleSheet.absoluteFill, !isLoaded && styles.hiddenImage]}
           onLoad={onLoad}
           onError={onError}
         />
-        <Animated.View
+        {!isLoaded ? <Animated.View
           testID="book-cover-skeleton"
           accessibilityRole="image"
           accessibilityLabel={`Carregando capa de ${title}`}
           style={[StyleSheet.absoluteFill, styles.skeleton, { opacity: pulseAnim }]}
-        />
+        /> : null}
       </View>
     );
   }

@@ -77,6 +77,7 @@ export function useBookCoverImage({
     clearTimers();
 
     if (currentRetriesRef.current < maxR) {
+      setStatus("loading");
       currentRetriesRef.current += 1;
       const nextRetry = currentRetriesRef.current;
       setRetryCount(nextRetry);

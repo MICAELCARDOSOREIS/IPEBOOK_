@@ -117,5 +117,6 @@
 - [0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo](0115-base-liquid-glass-apple-hig.md)
 - [0116 — Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS](0116-padronizacao-apple-hig-descoberta-busca-ios.md)
 - [0117 — PKCE e privacidade do cache web](0117-pkce-e-privacidade-do-cache-web.md)
+- [0118 — Última cópia para leitura sem conexão](0118-leitura-sem-conexao.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

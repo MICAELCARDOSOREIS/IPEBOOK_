@@ -136,6 +136,9 @@ import { useAppUpdateViewModel } from "@/viewmodel/useAppUpdateViewModel";
 const usaBackendSupabase =
   process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase";
 
+export const networkStatusDataSource: INetworkStatusDataSource =
+  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
+
 let supabaseAppClient: ReturnType<typeof createSupabaseAppClient> | null = null;
 
 /**
@@ -186,7 +189,7 @@ function createDataSources(): {
         redirectUrl,
         new GoogleNativeSignInService(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
       ),
-      books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
+      books: new CachedBookDataSource(new SupabaseBookDataSource(client), { network: networkStatusDataSource }),
       requests: new SupabaseBookRequestDataSource(client),
       meetings: new SupabaseMeetingDataSource(client),
       deliveries: new SupabaseDeliveryDataSource(client),
@@ -263,10 +266,10 @@ export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
 );
 export const localCacheUseCases: ILocalCacheUseCases = new LocalCacheUseCases(
-  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(),
+  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(
+      bookDataSource instanceof CachedBookDataSource ? bookDataSource : undefined,
+    ),
 );
-export const networkStatusDataSource: INetworkStatusDataSource =
-  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);

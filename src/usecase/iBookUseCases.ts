@@ -1,4 +1,4 @@
-import type { ListBooksOptions } from "@/model/datasources/iBookDataSource";
+import type { BookRead, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 
 export type CreateListingInput = Readonly<{
@@ -52,6 +52,9 @@ export type SaveDraftInput = CreateListingInput & {
 };
 
 export interface IBookUseCases {
+  readCatalog?(): Promise<BookRead<readonly Book[]>>;
+  readMyListings?(sessionUserId: string | null): Promise<BookRead<readonly Book[]>>;
+  readBookDetail?(id: string): Promise<BookRead<Book>>;
   listBooks(options?: ListBooksOptions): Promise<readonly Book[]>;
   createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book>;
   getBookById(id: string): Promise<Book>;

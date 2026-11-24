@@ -90,6 +90,32 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
+  it("mantém o livro, mostra a cópia e recarrega uma vez ao reconectar", async () => {
+    const network = jest.mocked(useNetworkStatus);
+    network.mockReturnValue({ isOnline: false });
+    const reload = jest.fn();
+    mockedUseHomeViewModel.mockReturnValue([{
+      books: [{ id: "1", title: "Vidas Secas", author: "Graciliano Ramos", ownerId: "u1", modality: "trade", status: "available" }],
+      cachedAt: Date.UTC(2026, 10, 23, 12, 0),
+      loading: false,
+      error: null,
+    }, { reload }]);
+
+    try {
+      const screen = await render(<Home />);
+      expect(screen.getAllByText("Vidas Secas").length).toBeGreaterThan(0);
+      expect(screen.getByText(/Cópia salva em .*Para carregar mais livros/)).toBeDefined();
+      expect(reload).not.toHaveBeenCalled();
+
+      network.mockReturnValue({ isOnline: true });
+      await screen.rerender(<Home />);
+      await screen.rerender(<Home />);
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
+      network.mockReturnValue({ isOnline: true });
+    }
+  });
+
   it("renderiza catálogo de livros populado com títulos e autores", async () => {
     const mockState: HomeState = {
       books: [

@@ -1,14 +1,17 @@
-import { useMemo } from "react";
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, type ComponentRef, type RefObject } from "react";
+import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { Book3D } from "@/view/components/Book3D";
+import { BottomSheet } from "@/view/components/BottomSheet";
+import { Snackbar } from "@/view/components/Snackbar";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { triggerHaptic } from "@/view/haptics";
+import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 
 /** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
 const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
@@ -69,17 +72,20 @@ export function HeroIconButton({
   onPress,
   disabled = false,
   iconColor,
+  buttonRef,
 }: {
   icon: AppIconName;
   label: string;
   onPress: () => void;
   disabled?: boolean;
   iconColor?: string;
+  buttonRef?: RefObject<ComponentRef<typeof View> | null>;
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
+      ref={buttonRef}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -149,6 +155,8 @@ export type BookDetailHeroSectionProps = {
   onBack: () => void;
   onShareWhatsApp?: () => void;
   onShareLink: () => void;
+  shareButtonRef?: RefObject<ComponentRef<typeof View> | null>;
+  favoriteDisabled?: boolean;
   onToggleFavorite: () => void;
   onOpenGallery: () => void;
 };
@@ -165,8 +173,10 @@ export function BookDetailHeroSection({
   sharing,
   isFavorite,
   favoriteLoading,
+  favoriteDisabled,
   onBack,
   onShareLink,
+  shareButtonRef,
   onToggleFavorite,
   onOpenGallery,
 }: BookDetailHeroSectionProps) {
@@ -196,11 +206,12 @@ export function BookDetailHeroSection({
               label="Compartilhar anúncio"
               disabled={sharing}
               onPress={onShareLink}
+              buttonRef={shareButtonRef}
             />
             <HeroIconButton
               icon={isFavorite ? "heartFill" : "heart"}
               label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-              disabled={favoriteLoading}
+              disabled={favoriteLoading || favoriteDisabled}
               iconColor={isFavorite ? colors.ipe.bloom : undefined}
               onPress={onToggleFavorite}
             />
@@ -262,8 +273,58 @@ export function BookDetailHeroSection({
   );
 }
 
+export function ShareListingFeedback({ state, onDismissCopied, onDismissError, shareButtonRef }: {
+  state: ShareListingState;
+  onDismissCopied: () => void;
+  onDismissError: () => void;
+  shareButtonRef: RefObject<ComponentRef<typeof View> | null>;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const linkRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const { manualShareLink, linkCopied, error } = state;
+
+  return (
+    <>
+      <Snackbar
+        visible={!manualShareLink && (linkCopied || Boolean(error))}
+        message={error ?? "Link copiado"}
+        onDismiss={error ? onDismissError : onDismissCopied}
+      />
+      <BottomSheet
+        visible={Boolean(manualShareLink)}
+        onClose={onDismissError}
+        onDismiss={() => shareButtonRef.current?.focus()}
+        title="Compartilhar anúncio"
+        showCloseButton
+        initialFocusRef={linkRef}
+      >
+        <Text style={styles.manualShareHint}>Copie o link abaixo para compartilhar o anúncio.</Text>
+        <TextInput
+          ref={linkRef}
+          accessibilityLabel="Link do anúncio"
+          value={manualShareLink ?? ""}
+          readOnly
+          selectTextOnFocus
+          style={styles.manualShareLink}
+        />
+      </BottomSheet>
+    </>
+  );
+}
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    manualShareHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    manualShareLink: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurface,
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+      borderRadius: tokens.radius.small,
+      padding: tokens.spacing[12],
+      marginTop: tokens.spacing[12],
+    },
     heroWide: {
       flex: 1.15,
       minWidth: 380,

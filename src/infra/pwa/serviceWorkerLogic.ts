@@ -65,6 +65,7 @@ export function classifyRequest(request: {
   method: string;
   url: string;
   mode?: string;
+  cache?: string;
   headers?: { get(name: string): string | null };
 }): RequestCategory {
   if (request.method !== "GET") return "pass-through";
@@ -90,7 +91,8 @@ export function classifyRequest(request: {
     return "navigation";
   }
 
-  if (isCatalogRequest(parsedUrl, request.headers?.get("authorization"), request.headers?.get("apikey"))) {
+  if (request.cache !== "no-store" &&
+      isCatalogRequest(parsedUrl, request.headers?.get("authorization"), request.headers?.get("apikey"))) {
     return "catalog";
   }
 

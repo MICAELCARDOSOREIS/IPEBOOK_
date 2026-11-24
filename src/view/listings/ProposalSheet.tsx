@@ -32,6 +32,7 @@ export type ProposalSheetProps = {
   userBooks?: readonly Book[];
   loadingBooks?: boolean;
   submitting?: boolean;
+  submitDisabled?: boolean;
   error?: string | null;
   onSubmit: (options: { initialMessage?: string; offeredBookId?: string }) => Promise<void>;
 };
@@ -43,6 +44,7 @@ export function ProposalSheet({
   userBooks = [],
   loadingBooks = false,
   submitting = false,
+  submitDisabled = false,
   error = null,
   onSubmit,
 }: ProposalSheetProps) {
@@ -63,6 +65,7 @@ export function ProposalSheet({
   );
 
   const handleSubmit = async () => {
+    if (submitDisabled) return;
     await onSubmit({
       initialMessage: message.trim() || undefined,
       offeredBookId: isTrade && selectedBookId ? selectedBookId : undefined,
@@ -250,6 +253,7 @@ export function ProposalSheet({
           <View style={styles.actions}>
             <FilledButton
               label={isTrade ? "Enviar proposta de troca" : "Confirmar interesse"}
+              disabled={submitDisabled}
               loading={submitting}
               loadingLabel="Enviando proposta…"
               onPress={() => void handleSubmit()}

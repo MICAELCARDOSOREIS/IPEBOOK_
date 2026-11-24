@@ -204,7 +204,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 2. Requisições ao Catálogo de Livros Supabase: Estratégia Network-First com fallback de cache
-  if (isCatalogRequest(url, request.headers.get("authorization"), request.headers.get("apikey"))) {
+  if (request.cache !== "no-store" && isCatalogRequest(url, request.headers.get("authorization"), request.headers.get("apikey"))) {
     event.respondWith(
       fetch(request)
         .then(async (networkResponse) => {

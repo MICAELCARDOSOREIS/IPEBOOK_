@@ -37,7 +37,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
   it("inicia em carregamento e atualiza para catálogo vazio com sucesso", async () => {
     const hook = await renderHook({ listBooks: async () => [] });
     expect(hook.loadingStates).toContain(true);
-    expect(hook.current[0]).toEqual({ books: [], loading: false, error: null });
+    expect(hook.current[0]).toEqual({ books: [], cachedAt: null, loading: false, error: null });
   });
 
   it("atualiza estado quando livros são carregados com sucesso", async () => {

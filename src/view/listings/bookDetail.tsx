@@ -1,3 +1,6 @@
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { OfflineState } from "@/view/components/OfflineState";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -8,6 +11,7 @@ import {
   makeAuthViewModel,
   makeBookDetailViewModel,
   makeMyListingsViewModel,
+  makeNetworkStatus,
   makePublicProfileViewModel,
   makeRequestNegotiationViewModel,
   makeShareListingViewModel,
@@ -23,9 +27,8 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { FilledButton } from "@/view/components/FilledButton";
-import { Snackbar } from "@/view/components/Snackbar";
 import { AppIcon } from "@/view/components/AppIcon";
-import { BookDetailHeroSection, DetailRow, SellerCard } from "@/view/listings/BookDetailSections";
+import { BookDetailHeroSection, DetailRow, SellerCard, ShareListingFeedback } from "@/view/listings/BookDetailSections";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
@@ -98,11 +101,14 @@ export default function BookDetail({
   const [authState] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBookDetailViewModel(bookId, sessionUserId);
+  const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   useOnRefocus(focusKey, () => {
     void actions.reload();
   });
   const [negotiation, negotiationActions] = makeRequestNegotiationViewModel();
   const [share, shareActions] = makeShareListingViewModel();
+  const shareButtonRef = useRef<React.ComponentRef<typeof View>>(null);
   const book = state.book;
   const [ownerProfileState] = makePublicProfileViewModel(book?.ownerId ?? "");
   const [galleryVisible, setGalleryVisible] = useState(false);
@@ -214,7 +220,7 @@ export default function BookDetail({
 
   const handleProposalSubmit = useCallback(
     async (options: { initialMessage?: string; offeredBookId?: string }) => {
-      if (!book || !sessionUserId) return;
+      if (!isOnline || !book || !sessionUserId) return;
       setProposalSubmitting(true);
       setProposalError(null);
       try {
@@ -233,7 +239,7 @@ export default function BookDetail({
         setProposalSubmitting(false);
       }
     },
-    [book, sessionUserId, negotiationActions, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests],
+    [book, isOnline, sessionUserId, negotiationActions, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests],
   );
 
   const handleStatusPress = () => {
@@ -329,6 +335,7 @@ export default function BookDetail({
         onNavigateToSignIn ? (
           <FilledButton
             label={primaryActionLabel}
+            disabled={!isOnline}
             onPress={guardedNavigateToSignIn}
             backgroundColor={heroColors?.background}
             textColor={heroColors?.text}
@@ -371,6 +378,7 @@ export default function BookDetail({
         ) : (
           <FilledButton
             label={primaryActionLabel}
+            disabled={!isOnline}
             loading={negotiation.pendingListingId === book.id}
             loadingLabel="Solicitando negociação"
             onPress={handlePrimaryAction}
@@ -453,8 +461,10 @@ export default function BookDetail({
           sharing={share.sharing}
           isFavorite={state.isFavorite}
           favoriteLoading={state.favoriteLoading}
+          favoriteDisabled={!isOnline}
           onBack={guardedBack}
           onShareLink={handleShareLink}
+          shareButtonRef={shareButtonRef}
           onToggleFavorite={() => void actions.toggleFavorite(sessionUserId)}
           onOpenGallery={() => setGalleryVisible(true)}
         />
@@ -465,10 +475,15 @@ export default function BookDetail({
           </View>
         ) : state.error ? (
           <View style={styles.status}>
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            {isOnline ? (
+              <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            ) : (
+              <OfflineState autoRetry={false} onRetry={actions.reload} />
+            )}
           </View>
         ) : book ? (
           <View style={[styles.content, wideWeb && styles.contentWide]}>
+            <CachedBookNotice cachedAt={state.cachedAt} />
             {/* 2. Título, autor, valor e etiqueta da modalidade */}
             <View style={styles.titleSection}>
               <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
@@ -591,7 +606,7 @@ export default function BookDetail({
               </View>
             ) : null}
 
-            {state.favoriteError ? (
+            {isOnline && state.favoriteError ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text>
             ) : null}
             {negotiation.errorListingId === book.id && !isRequested ? (
@@ -614,9 +629,6 @@ export default function BookDetail({
               ) : (
                 <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
               )
-            ) : null}
-            {share.error ? (
-              <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text>
             ) : null}
 
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
@@ -676,10 +688,11 @@ export default function BookDetail({
         />
       ) : null}
 
-      <Snackbar
-        visible={share.linkCopied}
-        message="Link copiado"
-        onDismiss={shareActions.dismissLinkCopied}
+      <ShareListingFeedback
+        state={share}
+        onDismissCopied={shareActions.dismissLinkCopied}
+        onDismissError={shareActions.dismissError}
+        shareButtonRef={shareButtonRef}
       />
 
       {book ? (
@@ -690,6 +703,7 @@ export default function BookDetail({
           category={book.category}
           isFavorite={state.isFavorite}
           favoriteLoading={state.favoriteLoading}
+          favoriteDisabled={!isOnline}
           onToggleFavorite={() => {
             if (!sessionUserId) {
               setReservedSheetVisible(false);
@@ -718,7 +732,8 @@ export default function BookDetail({
           userBooks={myListingsState.books}
           loadingBooks={myListingsState.loading}
           submitting={proposalSubmitting}
-          error={proposalError}
+          submitDisabled={!isOnline}
+          error={isOnline ? proposalError : "Conecte-se à internet para enviar a proposta."}
           onSubmit={handleProposalSubmit}
         />
       ) : null}

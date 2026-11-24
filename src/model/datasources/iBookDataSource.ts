@@ -8,7 +8,12 @@ export type ListBooksOptions = {
   onlyBoxes?: boolean;
 };
 
+export type BookRead<T> = Readonly<{ data: T; cachedAt: number | null }>;
+
 export interface IBookDataSource {
+  readCatalog?(options?: ListBooksOptions): Promise<BookRead<readonly Book[]>>;
+  readOwnerListings?(ownerId: string): Promise<BookRead<readonly Book[]>>;
+  readBookDetail?(id: string): Promise<BookRead<Book | null>>;
   list(options?: ListBooksOptions): Promise<readonly Book[]>;
   create(book: Omit<Book, "id">): Promise<Book>;
   findById(id: string): Promise<Book | null>;

@@ -9,6 +9,7 @@ export type ShareListingState = {
   sharing: boolean;
   linkCopied: boolean;
   error: string | null;
+  manualShareLink?: string;
 };
 
 export type ShareListingActions = {
@@ -52,7 +53,7 @@ export function useShareListingViewModel(
 
   const share = useCallback(
     async (bookId: string, listing?: ShareableListing, capture?: () => Promise<string>) => {
-      setState((prev) => ({ ...prev, sharing: true, error: null }));
+      setState({ sharing: true, linkCopied: false, error: null });
       try {
         const path = useCases.buildListingSharePath(bookId);
         const url = `${SHARE_BASE_URL}${path}`;
@@ -77,11 +78,20 @@ export function useShareListingViewModel(
                 if (active.current) setState({ sharing: false, linkCopied: false, error: null });
                 return;
               }
-              if (name !== "NotAllowedError") throw shareError;
             }
           }
-          await navigator.clipboard.writeText(message);
-          if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+          try {
+            if (webNavigator.clipboard) {
+              await webNavigator.clipboard.writeText(message);
+              if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+              return;
+            }
+          } catch {
+            // O navegador bloqueou a cópia automática. A tela pode oferecer o link para cópia manual.
+          }
+          if (active.current) {
+            setState({ sharing: false, linkCopied: false, error: GENERIC_ERROR, manualShareLink: url });
+          }
         } else {
           if (listing && capture) {
             try {
@@ -222,7 +232,9 @@ export function useShareListingViewModel(
   }, []);
 
   const dismissError = useCallback(() => {
-    setState((prev) => (prev.error ? { ...prev, error: null } : prev));
+    setState((prev) => (prev.error || prev.manualShareLink
+      ? { sharing: prev.sharing, linkCopied: prev.linkCopied, error: null }
+      : prev));
   }, []);
 
   return [state, { share, shareImage, shareToWhatsApp, dismissLinkCopied, dismissError }];

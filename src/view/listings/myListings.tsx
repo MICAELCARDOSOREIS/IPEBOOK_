@@ -1,3 +1,5 @@
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -86,6 +88,7 @@ export function MyListings({
   const [draftsState] = makeDraftsViewModel(sessionUserId);
   const [share, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
   const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
@@ -306,13 +309,14 @@ export function MyListings({
       </View>
 
       <View style={[styles.content, wideWeb && styles.contentWide]}>
+        <CachedBookNotice cachedAt={state.cachedAt} />
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (
           isOnline ? (
             <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           ) : (
-            <OfflineState onRetry={() => void actions.reload()} />
+            <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
           )
         ) : state.books.length === 0 ? (
           <MyListingsEmpty

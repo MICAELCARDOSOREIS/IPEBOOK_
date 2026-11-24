@@ -16,6 +16,7 @@ export type OfflineStateProps = {
   retryLabel?: string;
   networkDataSource?: INetworkStatusDataSource;
   testID?: string;
+  autoRetry?: boolean;
 };
 
 /**
@@ -29,6 +30,7 @@ export function OfflineState({
   retryLabel = "Tentar novamente",
   networkDataSource = defaultNetworkStatusDataSource,
   testID = "offline-state-card",
+  autoRetry = true,
 }: OfflineStateProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -41,9 +43,9 @@ export function OfflineState({
       wasOffline.current = true;
     } else if (wasOffline.current) {
       wasOffline.current = false;
-      onRetry();
+      if (autoRetry) onRetry();
     }
-  }, [isOnline, onRetry]);
+  }, [autoRetry, isOnline, onRetry]);
 
   const isIos = Platform.OS === "ios";
   const handleRetry = () => {

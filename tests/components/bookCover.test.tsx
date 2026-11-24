@@ -104,6 +104,15 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
     expect(bookCoverCache.isLoaded("https://imagens.ipebook.app/capas/iracema.jpg")).toBe(true);
   });
 
+  it("volta à capa ilustrativa quando uma foto anteriormente carregada falha offline", async () => {
+    const url = "https://imagens.ipebook.app/iracema.jpg";
+    bookCoverCache.setLoaded(url);
+    const cover = await render(<BookCover id="a1" title="Iracema" photoUrl={url} maxRetries={0} />);
+
+    await act(async () => cover.getByLabelText("Foto da capa de Iracema").props.onError());
+    expect(cover.getByLabelText("Capa ilustrativa de Iracema")).toBeDefined();
+  });
+
   it("renderiza imediatamente sem skeleton se a URL já estiver no cache (RN-01)", async () => {
     bookCoverCache.setLoaded("https://imagens.ipebook.app/capas/ja-cacheada.jpg");
 

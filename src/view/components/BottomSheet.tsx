@@ -27,6 +27,7 @@ import { useReduceTransparency } from "@/view/useReduceTransparency";
 export type BottomSheetProps = {
   visible: boolean;
   onClose: () => void;
+  onDismiss?: () => void;
   title?: string;
   children: ReactNode;
   testID?: string;
@@ -50,6 +51,7 @@ export type BottomSheetProps = {
 export function BottomSheet({
   visible,
   onClose,
+  onDismiss,
   title,
   children,
   testID,
@@ -128,6 +130,7 @@ export function BottomSheet({
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={guardedClose}
+      onDismiss={onDismiss}
     >
       <Animated.View
         testID={testID ? `${testID}-scrim` : "bottom-sheet-scrim"}

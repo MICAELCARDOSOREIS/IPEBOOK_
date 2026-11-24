@@ -5,6 +5,7 @@ import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
 export type MyListingsState = {
   books: readonly Book[];
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
   cancellingId: string | null;
@@ -38,6 +39,7 @@ export function useMyListingsViewModel(
   const initialCached = !isTest && sessionUserId ? (sessionMyListingsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<MyListingsState>({
     books: initialCached ?? [],
+    cachedAt: null,
     loading: initialCached === null,
     error: null,
     cancellingId: null,
@@ -59,12 +61,14 @@ export function useMyListingsViewModel(
       pauseError: null,
     }));
     try {
-      const result = await books.listMyListings(sessionUserId);
-      if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, result);
+      const { data, cachedAt } = await (books.readMyListings?.(sessionUserId) ??
+        books.listMyListings(sessionUserId).then((result) => ({ data: result, cachedAt: null })));
+      if (!isTest && sessionUserId && cachedAt === null) sessionMyListingsCache.set(sessionUserId, data);
       if (active.current && current === request.current) {
         setState((previous) => ({
           ...previous,
-          books: result,
+          books: data,
+          cachedAt,
           loading: false,
           error: null,
         }));

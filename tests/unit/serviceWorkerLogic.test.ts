@@ -133,6 +133,15 @@ describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
       expect(result).toBe("catalog");
     });
 
+    it("ignora o cache HTTP quando a consulta já tem cópia local gerenciada pelo app", () => {
+      expect(classifyRequest({
+        method: "GET",
+        url: "https://projeto.supabase.co/rest/v1/v2_books?select=id,title&status=neq.draft",
+        cache: "no-store",
+        headers: { get: (name) => name === "apikey" ? "sb_publishable_teste" : null },
+      })).toBe("pass-through");
+    });
+
     it("classifica requisições para assets estáticos", () => {
       const result = classifyRequest({
         method: "GET",
