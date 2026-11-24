@@ -5,7 +5,7 @@
 **Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes, Eric Vinícius dos Santos Oliveira  
 **Versão do Documento:** 1.1  
 **Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?t=xKQbpBwLpirB2jV2-0)  
-**Figma (modo Dev):** [Figma — IpêBook · Dev Mode](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev) — specs de cor, espaçamento e assets prontos para inspecionar, sem precisar converter manualmente. Telas individuais: [Android](../design-system/telas-android-figma.md) (137), [iPhone](../design-system/telas-iphone-figma.md) (144 — base do PWA Safari na Spec 136 e planejamento nativo na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md)), [Web](../design-system/telas-web-figma.md) (126).  
+**Referências do Figma** — [Pranchas e componentes de Android e iPhone](../design-system/referencias-figma/README.md). Inventários por plataforma para consulta em modo Dev: [Android](../design-system/telas-android-figma.md), [iPhone](../design-system/telas-iphone-figma.md) e [Web](../design-system/telas-web-figma.md).
 **Contratos Técnicos:** [`design-system/tokens.json`](../design-system/tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
 **Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md), [ADR 0104 — Cores canônicas](adr/0104-cores-canonicas-modalidades-e-vitrine-home.md), [ADR 0107 — Plus Jakarta Sans](adr/0107-adocao-plus-jakarta-sans-na-interface.md), [ADR 0114 — Operação exclusiva em tema claro editorial](adr/0114-remocao-do-tema-escuro.md)
 **Entrega completa (atividade IHC + PDM):** [`design-system/`](../design-system/)
@@ -63,7 +63,7 @@ Para garantir que pessoas com daltonismo compreendam o anúncio, **cada modalida
 
 ### 2.3 Capas Ilustrativas (Livros sem foto)
 
-Quando um usuário cadastra um anúncio sem enviar foto da câmera, o app (`BookCover.tsx`) gera uma capa estilizada determinística com texto em `#F5EFE8` (`cover.text`) e paleta saturada compartilhada entre tema claro e escuro:
+Quando uma pessoa cadastra um anúncio sem foto, o app (`BookCover.tsx`) gera uma capa estilizada determinística com texto em `#F5EFE8` (`cover.text`) e a paleta saturada abaixo.
 - **Azul Noturno:** `#253C4F` (`cover.blue`)
 - **Marrom Terra:** `#7B4A2F` (`cover.brown`)
 - **Verde Floresta:** `#30574A` (`cover.green`)
@@ -154,7 +154,7 @@ As diretrizes de IHC atendem estritamente às normas internacionais de usabilida
 
 ### 5.3 Estados de Feedback Essenciais
 Para garantir que o usuário nunca fique desorientado, toda tela implementa os estados recomendados:
-1. **Carregando (`loading`):** Indicadores (`ActivityIndicator` ou skeletons temáticos com cor de ação `#2B6334` no tema claro / `#98D6A2` no escuro) acompanhados de rótulo acessível descritivo ("Carregando livros…").
+1. **Carregando (`loading`)** — Indicadores (`ActivityIndicator` ou esqueletos de carregamento) acompanhados de rótulo acessível descritivo ("Carregando livros…").
 2. **Vazio (`empty`):** Mensagem acolhedora que explica a ausência de dados e antecipa o que acontecerá quando houver conteúdo disponível.
 3. **Erro com Recuperação (`error + retry`):** Mensagem em linguagem simples, sem termos técnicos indecifráveis, com botão de 48 dp para "Tentar novamente".
 4. **Offline (`offline`):** Estado dedicado (`OfflineState.tsx`) com detecção automática de retorno de rede ([ADR 0102](adr/0102-design-de-erros-e-auto-recuperacao-offline.md)).

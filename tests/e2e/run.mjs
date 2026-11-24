@@ -40,6 +40,24 @@ async function assertSemOverflowHorizontal(page, contexto) {
   }
 }
 
+async function assertContrasteBusca(page, selector) {
+  const contraste = await page.eval(`(() => {
+    const field = document.querySelector(${JSON.stringify(selector)}).parentElement;
+    const { borderTopColor, backgroundColor } = getComputedStyle(field);
+    const luminance = (color) => color.match(/\\d+/g).slice(0, 3).map(Number).reduce((sum, channel, index) => {
+      const value = channel / 255;
+      return sum + [0.2126, 0.7152, 0.0722][index] *
+        (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    }, 0);
+    const a = luminance(borderTopColor);
+    const b = luminance(backgroundColor);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  })()`);
+  if (contraste < 3) {
+    throw new Error(`Borda do campo ${selector} em repouso com contraste de ${contraste.toFixed(2)}:1.`);
+  }
+}
+
 async function marcarComEspaco(page, selector) {
   await page.waitFor(`document.querySelector(${JSON.stringify(selector)})?.getAttribute("aria-checked") === "false"`, {
     message: "controle anuncia estado inicial desmarcado",
@@ -174,6 +192,7 @@ const CENARIOS = [
         { message: "orientação de busca cabe no campo a 320 px" },
       );
       await assertSemOverflowHorizontal(page, "Pesquisa Mobile 320x844");
+      await assertContrasteBusca(page, 'input[aria-label="Buscar livros"]');
 
       await page.setViewport(1440, 900, false);
       await page.goto(`${baseUrl}/pesquisa`);
@@ -199,6 +218,7 @@ const CENARIOS = [
         senha: "SenhaForte123!",
       });
       await assertSemOverflowHorizontal(page, "Home Desktop autenticada");
+      await assertContrasteBusca(page, '[data-testid="web-header-search"] input');
       await page.eval(`document.querySelector('[aria-label="IpêBook, ir para o início"]').focus()`);
       const tab = { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 };
       await page.send("Input.dispatchKeyEvent", { ...tab, type: "keyDown" });
@@ -593,6 +613,62 @@ const CENARIOS = [
         "!document.body.innerText.includes('Sem conexão com a internet')",
         { timeoutMs: 10000, message: "ocultação do banner ao reconectar" },
       );
+    },
+  },
+  {
+    nome: "8. Leitura de Termos e Privacidade só com teclado",
+    async executar(page, baseUrl) {
+      await page.setViewport(320, 844, true);
+      await page.goto(`${baseUrl}/termos`);
+      await page.waitForText("Finalidade da Comunidade");
+      const pressKey = async (key, windowsVirtualKeyCode, shift = false) => {
+        const input = { key, code: key === " " ? "Space" : key, windowsVirtualKeyCode, modifiers: shift ? 8 : 0 };
+        await page.send("Input.dispatchKeyEvent", { ...input, type: "keyDown" });
+        await page.send("Input.dispatchKeyEvent", { ...input, type: "keyUp" });
+      };
+      const checkTab = (position) => page.waitFor(`(() => {
+        const tabs = [...document.querySelectorAll('[data-testid="terms-privacy-tablist"] [role="tab"]')];
+        const selected = tabs[${position}];
+        const other = tabs[${1 - position}];
+        const panel = document.getElementById(selected?.getAttribute('aria-controls'));
+        const hiddenPanel = document.getElementById(other?.getAttribute('aria-controls'));
+        return document.activeElement === selected && selected.matches(':focus-visible') &&
+          selected.tabIndex === 0 && selected.getAttribute('aria-selected') === 'true' &&
+          other.tabIndex === -1 && other.getAttribute('aria-selected') === 'false' &&
+          panel?.getAttribute('role') === 'tabpanel' && panel.getAttribute('aria-labelledby') === selected.id &&
+          getComputedStyle(panel).display !== 'none' && hiddenPanel &&
+          getComputedStyle(hiddenPanel).display === 'none';
+      })()`, { message: `foco, seleção e painel da aba ${position + 1}` });
+
+      await pressKey("Tab", 9);
+      await pressKey("Tab", 9);
+      await checkTab(0);
+      await pressKey("ArrowRight", 39);
+      await checkTab(1);
+      await page.waitForText("Portabilidade e Exclusão");
+      await pressKey("Tab", 9);
+      await page.waitFor("document.activeElement?.getAttribute('role') === 'tabpanel'", {
+        message: "Tab sai da lista de abas e entra no painel ativo",
+      });
+      await pressKey("Tab", 9, true);
+      await checkTab(1);
+      await pressKey("Home", 36);
+      await checkTab(0);
+      await pressKey("End", 35);
+      await checkTab(1);
+      await pressKey("Home", 36);
+      await checkTab(0);
+      await pressKey("ArrowLeft", 37);
+      await checkTab(1);
+      await pressKey(" ", 32);
+      await checkTab(1);
+      await assertSemOverflowHorizontal(page, "Termos e privacidade a 320 px");
+
+      await page.goto(`${baseUrl}/termos?aba=privacidade`);
+      await page.waitForText("Portabilidade e Exclusão");
+      await pressKey("Tab", 9);
+      await pressKey("Tab", 9);
+      await checkTab(1);
     },
   },
 ];

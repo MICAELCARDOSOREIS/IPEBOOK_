@@ -14,7 +14,7 @@ export type SearchFieldProps = {
   onCancel?: () => void;
 };
 
-/** Campo de busca M3 Expressive (campo-de-busca.md): pílula com destaque de foco e botão Limpar elástico. */
+/** Campo de busca com destaque de foco e acabamento adaptado ao iPhone. */
 export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing, onCancel }: SearchFieldProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -95,16 +95,16 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      height: tokens.spacing[56],
+      minHeight: tokens.spacing[56],
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.full,
       borderWidth: 1.5,
-      borderColor: colors.book.paperEdge,
+      borderColor: colors.m3.outline,
       paddingHorizontal: tokens.spacing[20],
       gap: tokens.spacing[12],
     },
     containerIos: {
-      height: 44,
+      minHeight: 44,
       borderRadius: tokens.radius.cardSmall,
       paddingHorizontal: tokens.spacing[12],
       gap: tokens.spacing[8],
@@ -129,7 +129,6 @@ function createStyles(colors: ColorPalette) {
     clearButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainer,
-      transform: [{ scale: 0.9 }],
     },
     clearIcon: { color: colors.secondaryText, fontSize: tokens.fontSize[16] },
     cancelButton: {

@@ -2,6 +2,21 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.32.1 · 2026-11-24
+
+- As abas de Termos e privacidade na Web passam a ter navegação por setas, foco no painel ativo
+  e associação semântica entre abas e painéis.
+- O campo de busca usa a borda semântica `outline` em repouso e altura mínima para acomodar
+  texto ampliado. O botão Limpar mantém feedback visual sem escala.
+- Acrescentadas verificações de regressão no Chrome CDP para teclado, foco e contraste.
+
+## 1.32.0 · 2026-11-24
+
+- Atualizadas as referências de Android e iPhone a partir do Figma, com pranchas, telas representativas
+  e links para os componentes. Retirado o lote anterior de exports de telas.
+- Sincronizadas as orientações de tema claro editorial, tipografia, busca e abas com a aplicação.
+- A verificação do design system passou a conferir a fonte de interface e funciona sem o lote antigo.
+
 ## 1.31.0 · 2026-11-18
 
 - **Acessibilidade Digital no iOS Apple HIG (Spec 137, Issue #233)**:
