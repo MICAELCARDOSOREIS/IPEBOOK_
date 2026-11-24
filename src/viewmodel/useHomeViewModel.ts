@@ -5,6 +5,7 @@ import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
 export type HomeState = {
   books: readonly Book[];
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
 };
@@ -27,6 +28,7 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
   const initialBooks = !isTest && sessionBooksCache ? sessionBooksCache : [];
   const [state, setState] = useState<HomeState>({
     books: initialBooks,
+    cachedAt: null,
     loading: initialBooks.length === 0,
     error: null,
   });
@@ -38,13 +40,14 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
     const current = ++request.current;
     setState((previous) => ({ ...previous, loading: previous.books.length === 0, error: null }));
     try {
-      const result = await books.listBooks();
-      if (!isTest) {
-        sessionBooksCache = result;
+      const { data, cachedAt } = await (books.readCatalog?.() ??
+        books.listBooks().then((result) => ({ data: result, cachedAt: null })));
+      if (!isTest && cachedAt === null) {
+        sessionBooksCache = data;
         lastSessionBooksLoadAt = Date.now();
       }
       if (active.current && current === request.current) {
-        setState({ books: result, loading: false, error: null });
+        setState({ books: data, cachedAt, loading: false, error: null });
       }
     } catch (error) {
       if (active.current && current === request.current) {

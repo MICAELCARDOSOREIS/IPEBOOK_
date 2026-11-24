@@ -505,7 +505,7 @@ export function Settings({
             {expandedSection === "device" ? (
               <View style={styles.sectionBodyCard}>
                 <Text style={styles.sectionDescription}>
-                  Uma cópia do catálogo fica salva para abrir livros sem internet. Removê-la libera espaço; ela pode ser baixada novamente. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
+                  O catálogo, a Estante e detalhes de livros visitados podem ficar salvos neste aparelho para leitura sem internet. Você pode remover essas cópias e carregar os dados novamente ao conectar. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
                 </Text>
                 <OutlinedButton
                   label="Remover cópia do catálogo"
@@ -571,8 +571,7 @@ export function Settings({
           ) : null}
 
           <Text style={styles.footer}>
-            Leitura, anúncios e configurações funcionam sem internet. Só publicar, favoritar e
-            negociar pedem conexão.
+            Consulte os livros salvos e as configurações locais sem internet. Para publicar, favoritar ou negociar, conecte-se à internet.
           </Text>
           </View>
         </View>

@@ -1,3 +1,5 @@
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, FlatList, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -105,6 +107,7 @@ export default function Search({
     void actions.reload();
   });
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const windowWidth = useHydratedWindowWidth();
@@ -260,6 +263,7 @@ export default function Search({
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
     <View style={[styles.filters, wideWeb && styles.filtersWide]}>
+      <CachedBookNotice cachedAt={state.cachedAt} catalog />
       {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
       <View style={styles.topBar}>
         <Pressable
@@ -451,7 +455,7 @@ export default function Search({
     isOnline ? (
       <ErrorState message={state.error} onRetry={() => void actions.reload()} />
     ) : (
-      <OfflineState onRetry={() => void actions.reload()} />
+      <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
     )
   ) : (
     <View style={[styles.empty, wideWeb && styles.emptyWide]}>

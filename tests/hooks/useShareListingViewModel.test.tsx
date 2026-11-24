@@ -391,17 +391,25 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
     Platform.OS = originalOS;
   });
 
-  it("mostra erro genérico quando a Web Share API falha por outro motivo", async () => {
+  it("oferece o link para cópia manual quando o menu e a área de transferência falham", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new Error("falha inesperada")) });
+    const writeText = jest.fn().mockRejectedValue(new Error("cópia bloqueada"));
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new Error("falha inesperada")), clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1", fakeListing);
     });
 
-    expect(hook.current[0].error).toBe("Não foi possível compartilhar o anúncio. Tente novamente.");
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("https://ipebook.app/livro/b1"));
+    expect(hook.current[0]).toEqual(expect.objectContaining({
+      sharing: false,
+      linkCopied: false,
+      manualShareLink: "https://ipebook.app/livro/b1",
+    }));
+    act(() => hook.current[1].dismissError());
+    expect(hook.current[0].manualShareLink).toBeUndefined();
     Platform.OS = originalOS;
   });
 

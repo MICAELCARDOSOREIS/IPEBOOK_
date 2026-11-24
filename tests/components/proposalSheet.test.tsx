@@ -64,6 +64,30 @@ describe("ProposalSheet (Spec 113)", () => {
     expect(screen.queryByText(/oferecer um livro/i)).toBeNull();
   });
 
+  it("mantém a mensagem digitada e bloqueia apenas o envio durante a desconexão", async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    const onClose = jest.fn();
+    const form = (submitDisabled: boolean) => (
+      <ThemeProvider>
+        <ProposalSheet visible targetBook={targetSaleBook} onClose={onClose} onSubmit={onSubmit} submitDisabled={submitDisabled} />
+      </ThemeProvider>
+    );
+
+    const screen = await render(form(false));
+    await fireEvent.changeText(screen.getByLabelText("Mensagem inicial da proposta"), "Posso buscar amanhã?");
+    await screen.rerender(form(true));
+    const submit = screen.getByRole("button", { name: "Confirmar interesse" });
+    expect(submit).toBeDisabled();
+    await fireEvent.press(submit);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeEnabled();
+    expect(screen.getByDisplayValue("Posso buscar amanhã?")).toBeDefined();
+
+    await screen.rerender(form(false));
+    await fireEvent.press(screen.getByRole("button", { name: "Confirmar interesse" }));
+    expect(onSubmit).toHaveBeenCalledWith({ initialMessage: "Posso buscar amanhã?", offeredBookId: undefined });
+  });
+
   it("renderiza opções de livros do usuário quando o anúncio é de troca", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

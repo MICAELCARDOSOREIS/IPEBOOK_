@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
+import { makeCreateListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -68,6 +68,7 @@ export default function CreateListing({
   const guardedGoHome = useGuardedPress(onGoHome);
   const guardedCreated = useGuardedPress(onCreated);
   const [state, actions] = makeCreateListingViewModel();
+  const { isOnline } = makeNetworkStatus();
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -182,6 +183,7 @@ export default function CreateListing({
   };
 
   const handleSubmit = async () => {
+    if (!isOnline) return;
     const result = await actions.submit(sessionUserId);
     if (result) {
       setPublished(result);
@@ -190,6 +192,10 @@ export default function CreateListing({
   };
 
   const handleSaveForLater = async () => {
+    if (!isOnline) {
+      await actions.saveDraft();
+      return;
+    }
     const saved = await actions.saveForLater(sessionUserId, step);
     if (saved) {
       guardedCancel();
@@ -500,12 +506,17 @@ export default function CreateListing({
       {!wideWeb && isKeyboardVisible ? null : (
         <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
           <View style={styles.actionBarInner}>
+            {!isOnline && step === 3 ? (
+              <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
+                Conecte-se à internet para publicar.
+              </Text>
+            ) : null}
             {wideWeb ? (
               <View style={styles.webActionRow}>
                 <View style={styles.webSecondaryActions}>
                   <TextButton
                     label="Salvar para depois"
-                    disabled={state.loading}
+                    disabled={state.loading || !isOnline}
                     onPress={() => void handleSaveForLater()}
                   />
                 </View>
@@ -527,6 +538,7 @@ export default function CreateListing({
                     {step === 3 ? (
                       <FilledButton
                         label="Publicar anúncio"
+                        disabled={!isOnline}
                         loading={state.loading}
                         loadingLabel="Publicando"
                         onPress={() => void handleSubmit()}
@@ -546,6 +558,7 @@ export default function CreateListing({
                 {step === 3 ? (
                   <FilledButton
                     label="Publicar anúncio"
+                    disabled={!isOnline}
                     loading={state.loading}
                     loadingLabel="Publicando"
                     onPress={() => void handleSubmit()}
@@ -560,7 +573,7 @@ export default function CreateListing({
                   <TextButton
                     label="Salvar rascunho"
                     accessibilityLabel="Salvar rascunho para depois"
-                    disabled={state.loading}
+                    disabled={state.loading || !isOnline}
                     onPress={() => {
                       if (Platform.OS === "ios") setConfirmSaveForLater(true);
                       else void handleSaveForLater();
@@ -676,6 +689,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     previewCardHeader: { gap: tokens.spacing[6], },
     previewLiveText: { ...tokens.typography.titleMedium, color: colors.text, fontWeight: tokens.fontWeight.bold, },
+    offlineNotice: { ...tokens.typography.footnote, color: colors.secondaryText, textAlign: "center" },
     previewHint: { ...tokens.typography.footnote, color: colors.secondaryText, },
     previewLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     previewCoverEmpty: {

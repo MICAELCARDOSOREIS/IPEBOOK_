@@ -8,6 +8,7 @@ import { getCachedMyListingById } from "@/viewmodel/useMyListingsViewModel";
 
 export type BookDetailState = {
   book: Book | null;
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
   isFavorite: boolean;
@@ -37,6 +38,7 @@ export function useBookDetailViewModel(
     : null;
   const [state, setState] = useState<BookDetailState>({
     book: initialBook,
+    cachedAt: null,
     loading: initialBook === null,
     error: null,
     isFavorite: false,
@@ -58,18 +60,23 @@ export function useBookDetailViewModel(
           )
         : Promise.resolve({ isFavorite: false, favoriteError: null as string | null });
 
-      const [book, { isFavorite, favoriteError }] = await Promise.all([
-        useCases.getBookById(bookId),
-        favoritePromise,
-      ]);
-      if (!isTest) sessionBookDetailCache.set(bookId, book);
+      const { data: book, cachedAt } = await (useCases.readBookDetail?.(bookId) ??
+        useCases.getBookById(bookId).then((data) => ({ data, cachedAt: null })));
+      if (!isTest && cachedAt === null && (book.status === "available" || book.status === "reserved")) {
+        sessionBookDetailCache.set(bookId, book);
+      }
       if (active.current && current === request.current) {
-        setState((prev) => ({ ...prev, book, isFavorite, favoriteError, loading: false, error: null }));
+        setState((prev) => ({ ...prev, book, cachedAt, loading: false, error: null }));
+      }
+      const { isFavorite, favoriteError } = await favoritePromise;
+      if (active.current && current === request.current) {
+        setState((prev) => prev.favoriteLoading ? prev : ({ ...prev, isFavorite, favoriteError }));
       }
     } catch (error) {
       if (active.current && current === request.current) {
         setState((prev) => ({ ...prev,
           book: null,
+          cachedAt: null,
           loading: false,
           error: error instanceof DomainError ? error.message : GENERIC_ERROR,
         }));

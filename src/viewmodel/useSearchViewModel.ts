@@ -53,6 +53,7 @@ export type SearchState = {
   /** Livros que bateriam com a busca e os filtros em outros bairros; 0 sem bairro aplicado (Spec 091). */
   matchesInOtherNeighborhoods: number;
   books: readonly Book[];
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
   history: readonly string[];
@@ -201,6 +202,7 @@ export function useSearchViewModel(
       draftResultCount,
       matchesInOtherNeighborhoods,
       books: filteredBooks,
+      cachedAt: homeState.cachedAt,
       loading: homeState.loading,
       error: homeState.error,
       history: terms,

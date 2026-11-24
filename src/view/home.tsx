@@ -1,3 +1,5 @@
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -104,6 +106,7 @@ export default function Home({
   const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, "home");
   const conversationsBadgeCount = explicitConversationsBadgeCount ?? navBadges.conversations;
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
@@ -518,6 +521,7 @@ export default function Home({
         </ScrollView>
       )}
 
+      <CachedBookNotice cachedAt={state.cachedAt} catalog />
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
       {state.loading ? (
         <LoadingState label="Carregando livros" variant="homeCarousel" />
@@ -525,7 +529,7 @@ export default function Home({
         isOnline ? (
           <ErrorState message={state.error} onRetry={() => void actions.reload()} />
         ) : (
-          <OfflineState onRetry={() => void actions.reload()} />
+          <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
         )
       ) : recentBooks.length > 0 ? (
         <CatalogCarousel

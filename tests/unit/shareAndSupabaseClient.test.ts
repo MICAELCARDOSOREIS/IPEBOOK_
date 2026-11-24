@@ -102,7 +102,10 @@ describe("defaultShareImageFile e createSupabaseAppClient", () => {
     expect(createClient).toHaveBeenLastCalledWith(
       "https://projeto.supabase.co",
       "sb_publishable_valida123",
-      { auth: expect.objectContaining({ flowType: "pkce", detectSessionInUrl: false }) },
+      {
+        auth: expect.objectContaining({ flowType: "pkce", detectSessionInUrl: false }),
+        global: { fetch: expect.any(Function) },
+      },
     );
 
     Platform.OS = "android";

@@ -15,6 +15,7 @@ export type ReservedListingSheetProps = {
   category?: string | null;
   isFavorite?: boolean;
   favoriteLoading?: boolean;
+  favoriteDisabled?: boolean;
   onToggleFavorite?: () => void;
   onSearchCategory?: (category: string) => void;
   onViewOwnerProfile?: () => void;
@@ -32,6 +33,7 @@ export function ReservedListingSheet({
   category,
   isFavorite = false,
   favoriteLoading = false,
+  favoriteDisabled,
   onToggleFavorite,
   onSearchCategory,
   onViewOwnerProfile,
@@ -96,7 +98,7 @@ export function ReservedListingSheet({
                     ? "Livro salvo nos favoritos. Toque para remover aviso."
                     : "Favoritar para ser avisado se a reserva for cancelada"
                 }
-                disabled={favoriteLoading}
+                disabled={favoriteLoading || favoriteDisabled}
                 onPress={onToggleFavorite}
                 style={withPress(styles.actionCard)}
               >
