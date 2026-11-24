@@ -2,6 +2,13 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.32.0 · 2026-11-24
+
+- Atualizadas as referências de Android e iPhone a partir do Figma, com pranchas, telas representativas
+  e links para os componentes. Retirado o lote anterior de exports de telas.
+- Sincronizadas as orientações de tema claro editorial, tipografia, busca e abas com a aplicação.
+- A verificação do design system passou a conferir a fonte de interface e funciona sem o lote antigo.
+
 ## 1.31.0 · 2026-11-18
 
 - **Acessibilidade Digital no iOS Apple HIG (Spec 137, Issue #233)**:

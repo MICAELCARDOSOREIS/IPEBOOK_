@@ -1,7 +1,7 @@
 # Interruptor (Switch)
 
 > [!NOTE]
-> **IMPLEMENTADO NA TELA DE CONFIGURAÇÕES (Spec 099 · ADR 0075)**: Inicialmente preterido no escopo reduzido da primeira etapa, o interruptor foi adotado via `Switch` nativo do React Native em [`src/view/profile/settings.tsx`](../../src/view/profile/settings.tsx) para preferências imediatas de canais e categorias de notificação, envolto em linha clicável (`toggleRow`) com `accessibilityRole="switch"` e cores M3 adaptativas do tema claro/escuro.
+> **Implementado em Configurações (Spec 099 · ADR 0075).** O `Switch` nativo do React Native em [`src/view/profile/settings.tsx`](../../src/view/profile/settings.tsx) controla preferências de notificação. A linha clicável `toggleRow` usa `accessibilityRole="switch"` e cores do tema claro editorial.
 
 Origem no sistema base: Material 3, Switch. Situação: **Herdado**.
 
