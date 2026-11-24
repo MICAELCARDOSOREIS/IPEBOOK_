@@ -197,7 +197,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.book.paperEdge,
+      borderColor: colors.m3.outline,
     },
     searchInput: {
       ...tokens.typography.bodyMedium,

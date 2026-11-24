@@ -78,6 +78,8 @@ const pares = [
   ["focus-ring", "surface", 3],
   ["on-secondary-container", "secondary-container", 4.5],
   ["on-doacao-container", "doacao-container", 4.5],
+  ["outline", "surface-container-low", 3],
+  ["outline", "surface", 3],
 ];
 for (const [texto, fundo, minimo] of pares) {
   const textoToken = tokenPorNome.get(texto)?.light;
