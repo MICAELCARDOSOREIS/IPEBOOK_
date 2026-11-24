@@ -2,7 +2,7 @@
 
 Fonte canônica dos valores: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
 Em código, [`src/view/tokens.ts`](../src/view/tokens.ts) é o espelho tipado que expõe a API consumida pelos componentes:
-`colors` (paleta clara), `darkColors` (paleta escura), `spacing`, `radius`, `typography`,
+`colors` (paleta clara editorial), `spacing`, `radius`, `typography`,
 `motion`, `elevation` e `accessibility`. Os nomes da API TypeScript não são uma cópia literal
 dos nomes M3 do JSON; a tabela de conversão abaixo é o contrato para implementação. Em caso de
 divergência, o valor do JSON canônico prevalece e o módulo TypeScript deve ser atualizado no
@@ -31,7 +31,7 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 
 ## 2. Semânticos (o significado)
 
-### Cor (temas claro e escuro)
+### Cor (tema claro editorial)
 
 | Token | Claro | Uso | Origem |
 | --- | --- | --- | --- |
@@ -67,8 +67,7 @@ Para manter a fidelidade editorial desenhada para a identidade do IpêBook (ADR 
 - **Troca:** Marrom Tronco/Couro (`#58331F`, `tokens.colors.brandBrown`) na área superior da capa, badge em pílula marrom com texto branco (`#FFFFFF`) e ponto sólido marrom no chip.
 - **Doação:** Amarelo Ouro Solar (`#F5B718`, `tokens.colors.ipe.bloom`) na área superior da capa, badge em pílula amarela com texto marrom tronco profundo (`#451A03`, contraste AAA 8,3:1), ponto sólido amarelo no chip e fundo do banner comunitário *"Doações da semana"*.
 
-Lista completa (~50 tokens, claro e escuro) em
-[`tokens.json`](tokens.json), campo `color.tokens`.
+Os valores ativos estão em `color.tokens[].value.light` no [JSON](tokens.json).
 
 ### Tipografia
 
@@ -146,27 +145,23 @@ devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os no
 | `button.bg-pressed` | `primary` + camada 12% | Herdado |
 | `button.bg-disabled` | `on-surface` 12% / rótulo 38% | Herdado |
 | `textfield.border` | `outline` (normal) / `primary` (foco) / `error` (erro) | Herdado |
+| Campo de busca, borda | `outline` (repouso) / `primary` (foco) | Adaptado |
 | `tag.venda.bg` | `secondary-container` | Adaptado |
 | `tag.troca.bg` | `tertiary-container` | Adaptado |
 | `tag.doacao.bg` | `doacao-container` | Novo |
 | `navitem.active.bg` | `secondary-container` | Herdado |
 | `ribbon.ipe` | `colors.ipe.ribbon` | Novo |
 
-## 4. Modo escuro
+## 4. Aplicação por plataforma
 
-Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
-`primary` claro `#2b6334` e escuro `#98d6a2`). A paleta escura é exposta por `darkColors` e
-selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
-`useThemeViewModel`. A paleta noturna foi refinada para garantir conforto visual e contraste AAA:
-- As badges mantêm suas cores canônicas e vibrantes de domínio nos dois temas (ADR 0104), garantindo identificação imediata;
-- `badge.sale` usa verde botânico profundo (`#1E4E27`) com texto `#FFFFFF`;
-- `badge.trade` usa marrom tronco (`#58331F`) com texto `#FFFFFF`;
-- `badge.donation` e `badge.reserved` usam amarelo ouro solar (`#F5B718`) com texto marrom profundo (`#451A03`, 8,3:1);
-- `ipe.container` no escuro usa `#38290E` e texto `#FFE099` (10,5:1).
-Todas as combinações atingem ou superam WCAG AAA para texto e elementos de status.
+O [ADR 0114](../docs/adr/0114-remocao-do-tema-escuro.md) fixa o tema claro editorial nas três
+plataformas. O `ThemeProvider` distribui `colors` por `useTheme()`. O campo `dark` no JSON é
+histórico. No iPhone, as superfícies que usam Liquid Glass têm acabamento translúcido e alternativa
+opaca quando a pessoa ativa Reduzir Transparência. Consulte a
+[base Liquid Glass](../docs/adr/0115-base-liquid-glass-apple-hig.md).
 
 ## 5. Versão legível por máquina
 
-A versão machine-readable dos tokens reside em [`tokens.json`](tokens.json), mantida sincronizada
-com a implementação ativa de [`src/view/tokens.ts`](../src/view/tokens.ts) como fonte canônica de verdade
+A fonte canônica legível por máquina fica em [`tokens.json`](tokens.json) e o espelho da aplicação
+em [`src/view/tokens.ts`](../src/view/tokens.ts)
 (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md) e [ADR 0104](../docs/adr/0104-cores-canonicas-modalidades-e-vitrine-home.md)).

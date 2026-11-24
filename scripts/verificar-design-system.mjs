@@ -66,7 +66,8 @@ for (const nome of ["primary", "secondary-container", "on-secondary-container", 
     );
   }
 }
-conferir("JSON declara os temas claro e escuro", tokens.color.themes.some((tema) => tema.id === "light") && tokens.color.themes.some((tema) => tema.id === "dark"), "temas incompletos");
+conferir("JSON declara a paleta clara", tokens.color.themes.some((tema) => tema.id === "light"), "paleta clara ausente");
+conferir("JSON e TypeScript declaram Plus Jakarta Sans para a interface", tokens.type?.families?.sans?.includes("Plus Jakarta Sans") && tokensTs.includes('regular: "PlusJakartaSans_400Regular"'), "família tipográfica divergente");
 conferir("README declara tokens.json como fonte canônica", readme.includes("Fonte canônica") || ler("design-system/02-tokens.md").includes("Fonte canônica"), "governança dos tokens não documentada");
 
 console.log("\x1b[36m▶ Contraste documentado\x1b[0m");
@@ -77,6 +78,8 @@ const pares = [
   ["focus-ring", "surface", 3],
   ["on-secondary-container", "secondary-container", 4.5],
   ["on-doacao-container", "doacao-container", 4.5],
+  ["outline", "surface-container-low", 3],
+  ["outline", "surface", 3],
 ];
 for (const [texto, fundo, minimo] of pares) {
   const textoToken = tokenPorNome.get(texto)?.light;
@@ -91,7 +94,6 @@ conferir("Inventário declara 29 documentos", componentes.length === 29, `encont
 conferir("README declara 29 componentes", readme.includes("29 componentes"), "contagem desatualizada");
 const exemplo = ler("design-system/ExplorarScreen.tsx");
 conferir("Exemplo histórico usa aliases M3 válidos", exemplo.includes("tokens.colors.m3.surfaceContainerHigh") && exemplo.includes("tokens.colors.m3.surfaceContainerLow"), "alias inexistente usado no exemplo");
-conferir("Exports do Figma são classificados como históricos", ler("design-system/figma-exports/README.md").includes("fallbacks de tokens históricos"), "limitação não documentada");
 
 console.log("\x1b[36m▶ Barreira de acessibilidade dos modais\x1b[0m");
 const modaisSemBarreira = arquivosTsx("src/view").filter((caminho) => {

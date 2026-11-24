@@ -1,7 +1,9 @@
 # Abas (Tabs)
 
 > [!NOTE]
-> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como componente de abas isolado. A navegação entre seções principais é realizada pela `NavigationBar` (3 destinos, ADR 0011) e filtros contextuais por categorias ou status utilizam o componente `Chip` (`selected`).
+> **Padrão composto.** A Estante usa `Chip` para alternar entre Anúncios, Propostas e Concluídos.
+> Termos e privacidade compõe duas abas na própria tela. A `NavigationBar` reúne os três
+> destinos principais do app. Consulte o [ADR 0019](../../docs/adr/0019-alinhamento-design-system-e-componentes.md) para a decisão sobre componentes genéricos.
 
 Origem no sistema base: Material 3, Primary tabs. Situação: **Herdado**.
 
@@ -17,53 +19,42 @@ Origem no sistema base: Material 3, Primary tabs. Situação: **Herdado**.
 
 ## Anatomia
 
-1. Linha de rótulos curtos
-2. Indicador de 3 px embaixo da aba ativa (`primary`)
+1. Linha de rótulos curtos.
+2. Em Termos e privacidade, indicador de 2 px embaixo da aba ativa (`colors.action`).
+3. Na Estante, a seleção aparece no estado do chip.
 
 ## Variantes
 
-Não há variantes — só a aba ativa muda.
+Termos e privacidade usa uma linha de abas sublinhadas. A Estante usa chips de seção.
 
 ## Estados
 
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
 | Inativa | `on-surface-variant` | Toque troca o conteúdo | Anunciada como não selecionada |
-| Ativa | `primary`, indicador de 3 px | - | Anunciada como selecionada |
+| Ativa | `colors.action`, com indicador na tela de Termos e privacidade | Exibe o painel associado | Anunciada como selecionada |
+| Foco na Web | Indicador de foco do teclado | Setas alternam a seção | Foco acompanha a aba selecionada |
 
 ## Acessibilidade
 
 - `accessibilityRole="tab"` com `accessibilityState={{ selected }}` em cada aba, dentro de um
   container `accessibilityRole="tablist"`.
 - Alvo de toque mínimo 48 dp de altura mesmo com rótulo curto.
-- No iOS (quando entrar em escopo), usar o controle segmentado nativo, não este componente.
+- Em Termos e privacidade na Web, `Tab` entra pela aba selecionada e segue para seu painel.
+  Esquerda e Direita movem o foco e selecionam a aba, com retorno na extremidade. `Home` e
+  `End` selecionam a primeira e a última. `Enter` e Espaço ativam a aba em foco.
+- Cada aba web aponta para um painel por `aria-controls`. O painel recebe o nome da aba por
+  `aria-labelledby`, e apenas o painel ativo fica visível e entra na ordem de foco.
+- O endereço `/termos?aba=privacidade` seleciona a política após a hidratação da página estática.
+- A Estante usa a aparência segmentada no iPhone com os mesmos chips da tela.
 
 ## Faça e evite
 
 - **Faça:** rótulos curtos, no máximo uma palavra ou duas.
 - **Evite:** mais de quatro abas — vira ilegível e não cabe em telas pequenas.
 
-## Código
+## Onde está no código
 
-```tsx
-import { Pressable, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
-
-function Abas({ rotulos, ativa, onMudar }: { rotulos: string[]; ativa: number; onMudar: (i: number) => void }) {
-  return (
-    <View accessibilityRole="tablist" style={{ flexDirection: "row" }}>
-      {rotulos.map((rotulo, i) => (
-        <Pressable
-          key={rotulo}
-          onPress={() => onMudar(i)}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: i === ativa }}
-          style={{ flex: 1, minHeight: 48, alignItems: "center", justifyContent: "center", borderBottomWidth: i === ativa ? 3 : 0, borderBottomColor: tokens.colors.action }}
-        >
-          <Text style={{ color: i === ativa ? tokens.colors.action : tokens.colors.secondaryText, ...tokens.typography.labelMedium }}>{rotulo}</Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-```
+- [Estante](../../src/view/listings/myListings.tsx)
+- [Termos e privacidade](../../src/view/legal/termsAndPrivacy.tsx)
+- [Padrão de abas do W3C](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)

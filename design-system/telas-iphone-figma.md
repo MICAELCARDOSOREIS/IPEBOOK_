@@ -2,6 +2,8 @@
 
 > Inventário extraído diretamente do Figma (canvas `APP · 20 · iPhone · iOS 26`, arquivo [IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook), node `31:2`) via MCP em 2026-11-19. Substitui a extração anterior de 2026-10-15 (144 telas antigas).
 
+Veja as [referências locais de iPhone](referencias-figma/README.md#componentes-de-iphone) para pranchas, componentes e imagens das telas atuais consultadas em 2026-11-24.
+
 **Diretriz vigente (Spec 137 + Spec 139 / ADR 0114):**
 - **Tema claro exclusivo** (sem Dark Mode).
 - **52 quadros principais** (`01` a `52`), **4 estados após carregamento** (`21B`, `24B`, `31B`, `34B`), **7 estados de catálogo/conversas/pedidos** (`53` a `59`), **25 quadros do protótipo nativo** (+ guia) e **2 pranchas iOS 26** de componentes Liquid Glass e padrões de interação.

@@ -16,6 +16,16 @@
 
 **Resumo:** `7/7 cenários aprovados`, 0 exceções JavaScript não tratadas.
 
+## Abas e contraste da busca em 24 de novembro de 2026
+
+- `npm run test:e2e:build` aprovou 8 de 8 cenários no Chrome CDP com o backend em memória.
+- Os cenários mediram o contraste da borda em repouso na busca do catálogo e na busca do
+  cabeçalho web. A borda passou de 1,19:1 para 3,99:1 em relação ao preenchimento.
+- A 320 px, o cenário de Termos e privacidade verificou foco e seleção por teclado, associação
+  com o painel e abertura da aba pelo endereço `/termos?aba=privacidade`, sem exceções JavaScript.
+- A revisão visual e da árvore de acessibilidade foi feita no Chrome. Dispositivos nativos
+  e leitores de tela foram considerados fora do escopo desta rodada.
+
 ## Acesso ao catálogo pelas boas-vindas em 21 de novembro de 2026
 
 - O Chrome abriu a pesquisa pelo botão **Explorar livros** em `localhost:8081` com o Supabase configurado. O catálogo exibiu 20 resultados na primeira página.

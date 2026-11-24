@@ -7,8 +7,8 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 
 - Use `primary` só para a ação principal da tela, o item ativo e links — nunca como cor
   decorativa. (Herdado)
-- Fundo de tela em `surface`; cartões e campos em `surface-container-low`; busca, diálogo e
-  bolha recebida em `surface-container-high`. (Herdado)
+- Fundo de tela em `surface`. O campo de busca usa `surface-container-low` em repouso e
+  `surface-container-highest` em foco. Consulte as fichas de cada componente para os demais fundos.
 - Cada modalidade tem uma cor fixa de contêiner: Venda `secondary-container`, Troca
   `tertiary-container`, Doação `doacao-container`. Nunca troque a cor de uma modalidade por
   outra. (Adaptado)
@@ -24,8 +24,8 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
   **Plus Jakarta Sans** (400, 500, 600 — [ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)). (Adaptado — ver [01-principios.md](01-principios.md) §4)
 - Rótulo de botão em `m3-label-lg`; texto de campo e mensagem em `m3-body-lg`; descrições em
   `m3-body-md`. (Herdado)
-- O texto respeita o tamanho de fonte escolhido no sistema Android, até 200%: nenhuma altura
-  fixa em elemento com texto; listas e cartões crescem. (Herdado)
+- O conteúdo deve se adaptar à fonte ampliada. Cabeçalhos e rótulos da navegação têm limites
+  de escala específicos, registrados em [Acessibilidade](06-acessibilidade.md#texto-ampliado-e-movimento).
 
 ## Espaçamento
 
