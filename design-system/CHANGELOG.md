@@ -2,6 +2,14 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.32.1 · 2026-11-24
+
+- As abas de Termos e privacidade na Web passam a ter navegação por setas, foco no painel ativo
+  e associação semântica entre abas e painéis.
+- O campo de busca usa a borda semântica `outline` em repouso e altura mínima para acomodar
+  texto ampliado. O botão Limpar mantém feedback visual sem escala.
+- Acrescentadas verificações de regressão no Chrome CDP para teclado, foco e contraste.
+
 ## 1.32.0 · 2026-11-24
 
 - Atualizadas as referências de Android e iPhone a partir do Figma, com pranchas, telas representativas

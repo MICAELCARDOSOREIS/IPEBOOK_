@@ -145,6 +145,7 @@ devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os no
 | `button.bg-pressed` | `primary` + camada 12% | Herdado |
 | `button.bg-disabled` | `on-surface` 12% / rótulo 38% | Herdado |
 | `textfield.border` | `outline` (normal) / `primary` (foco) / `error` (erro) | Herdado |
+| Campo de busca, borda | `outline` (repouso) / `primary` (foco) | Adaptado |
 | `tag.venda.bg` | `secondary-container` | Adaptado |
 | `tag.troca.bg` | `tertiary-container` | Adaptado |
 | `tag.doacao.bg` | `doacao-container` | Novo |

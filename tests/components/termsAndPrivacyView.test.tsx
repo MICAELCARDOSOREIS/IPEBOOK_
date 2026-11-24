@@ -31,6 +31,8 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
 
     expect(screen.getByTestId("terms-privacy-tablist").props.accessibilityRole).toBe("tablist");
     expect(screen.getAllByRole("tab")).toHaveLength(2);
+    expect(screen.getByRole("tab", { name: "Termos de Uso", selected: true })).toBeDefined();
+    expect(screen.getByRole("tab", { name: "Privacidade (LGPD)", selected: false })).toBeDefined();
   });
 
   it("permite alternar para a aba de Privacidade e exibe conformidade com LGPD", async () => {
