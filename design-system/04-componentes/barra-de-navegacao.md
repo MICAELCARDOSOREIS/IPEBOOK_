@@ -78,3 +78,7 @@ function ItemNavegacao({ rotulo, ativo, badge, onPress }: { rotulo: string; ativ
   );
 }
 ```
+
+## Variação visual iPhone (planejamento)
+
+A navegação do protótipo iPhone utiliza três abas (Início, Explorar, Estante), com Conversas e Perfil em atalhos superiores. O [resultado da busca](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2563&m=dev) usa material translúcido; a [prévia de transparência reduzida](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3645&m=dev) preserva material opaco. Isso não altera os cinco destinos da implementação Android/Web. Veja [a especificação iPhone](../iphone-liquid-glass.md).
