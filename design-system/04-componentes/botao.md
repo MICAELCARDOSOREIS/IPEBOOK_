@@ -100,3 +100,7 @@ function BotaoPreenchido({ label, onPress, disabled }: { label: string; onPress:
 Em uma tela com botão de voltar na [Barra superior](barra-superior.md), a ação contornada não pode
 se chamar só "Voltar": dois controles com o mesmo nome acessível confundem leitores de tela. Use um
 rótulo que diga para onde se volta, como "Voltar à etapa anterior" (ver `createListing.tsx`).
+
+## Variação visual iPhone (planejamento)
+
+O componente [iPhone / Botão](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=928-1090&m=dev) usa SF Pro Semibold 17 pt, cápsula de 52 pt e estilos principal, secundário, texto, destrutivo e desativado. O componente [Doação](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1353-3305&m=dev) usa `brand-amber` com `brand-brown`. Rodapés respeitam a área segura e mantêm fundo opaco quando a transparência compromete a legibilidade. Veja [a especificação iPhone](../iphone-liquid-glass.md). Não altera a API React Native atual.

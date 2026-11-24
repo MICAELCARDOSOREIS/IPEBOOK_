@@ -86,3 +86,7 @@ import { Chip } from "@/view/components/Chip";
   onPress={() => onRemoveFilter("modality")}
 />
 ```
+
+## Variação visual iPhone (planejamento)
+
+O [filtro iPhone](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=928-1131&m=dev) tem 44 pt de altura de referência, cápsula translúcida, rótulo ajustável e check quando selecionado. Usar nas escolhas de modalidade, favoritos, Ajuda e agendamento; tags de metadados não são controles. Respeitar texto ampliado e transparência reduzida. Veja [a especificação iPhone](../iphone-liquid-glass.md).
