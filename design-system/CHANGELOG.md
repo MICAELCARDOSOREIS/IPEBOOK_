@@ -2,6 +2,12 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.29.0 · 2026-11-24
+
+- Sincronizada a especificação visual iPhone com o Figma: botões em cápsula, variante Doação, rodapés, seletor de localização, filtros de favoritos/ajuda/agendamento e navegação Liquid Glass.
+- Registrados os 88 quadros inspecionados, mantendo o inventário anterior como histórico e as decisões de escopo de implementação.
+- Documentadas as referências de componentes Web, cards e acessibilidade, sem alterar o código de produção.
+
 ## 1.28.0 · 2026-11-09
 
 - **Cores Exclusivas por Situação e Filtro de Anúncios:** estabelecidas cores semânticas próprias para cada status de anúncio da estante e tags (`Tag.tsx`, `MyListingsListingsTab.tsx`): **Ativos** em Verde Folhagem canônico (`#1E4E27` / `#FFFFFF`), **Pausados** em Cinza Ardósia / Grafite neutro (`#52525B` / `#FFFFFF`), e **Reservados** em Amarelo Ouro Solar de Ipê (`#F5B718` / `#451A03`). Elimina a confusão de bolinhas pastel idênticas entre ativos e pausados.

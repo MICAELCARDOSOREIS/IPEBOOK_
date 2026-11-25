@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.26.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.29.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver
@@ -60,8 +60,9 @@ genérico em `src/view/components/`; essa classificação está descrita na seç
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro e explorar/filtrar catálogo |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [telas-android-figma.md](telas-android-figma.md) | Inventário das 137 telas Android do Figma (nome, node-id, link em modo Dev) — consulta offline, sem precisar abrir o Figma |
-| [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário das 144 telas iPhone/iOS 26 do Figma — fora do escopo atual de implementação (ver ADR 0008), consulta/planejamento |
+| [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário atual de 88 quadros iPhone/iOS 26 e levantamento histórico de 144 telas — consulta/planejamento |
 | [telas-web-figma.md](telas-web-figma.md) | Inventário das 126 telas Web do Figma (Desktop/Tablet/Celular) |
+| [iphone-liquid-glass.md](iphone-liquid-glass.md) | Especificação visual iOS 26, botões, filtros, navegação e links dos componentes; sem implementação iOS |
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
 | [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 

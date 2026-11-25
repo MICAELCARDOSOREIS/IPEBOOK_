@@ -172,3 +172,7 @@ Todas as combinações atingem ou superam WCAG AAA para texto e elementos de sta
 A versão machine-readable dos tokens reside em [`tokens.json`](tokens.json), mantida sincronizada
 com a implementação ativa de [`src/view/tokens.ts`](../src/view/tokens.ts) como fonte canônica de verdade
 (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md) e [ADR 0104](../docs/adr/0104-cores-canonicas-modalidades-e-vitrine-home.md)).
+
+## Referência visual iOS 26
+
+Os tokens de cor compartilhados permanecem canônicos. A [especificação iPhone](iphone-liquid-glass.md) documenta os parâmetros de vidro, dimensões, SF Pro e as variações de botões observadas no Figma. Esses parâmetros são de planejamento visual e não substituem o contrato TypeScript nem removem valores históricos de tema escuro.
