@@ -2,14 +2,16 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Dialog } from "@/view/components/Dialog";
+import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
-import { makeSearchAlertsViewModel } from "@/di/container";
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
@@ -18,6 +20,7 @@ import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollP
 export type ManageAlertProps = {
   alertId: string;
   userId: string | null;
+  sessionLoading?: boolean;
   onBack: () => void;
   onEditAlert: (alertId: string) => void;
   /** Volta para a lista depois que o alerta deixa de existir. */
@@ -28,6 +31,7 @@ export type ManageAlertProps = {
 export default function ManageAlert({
   alertId,
   userId,
+  sessionLoading = false,
   onBack,
   onEditAlert,
   onAlertDeleted,
@@ -36,13 +40,15 @@ export default function ManageAlert({
   const guardedEdit = useGuardedPress(onEditAlert);
   const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
   const [state, actions] = makeSearchAlertsViewModel(userId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const alert = state.alerts.find((item) => item.id === alertId);
+  const loadError = state.loadError ?? (!alert ? state.error : null);
 
-  if (state.loading) {
+  if (sessionLoading || state.loading) {
     return (
       <ScreenContainer
         maxWidth={wide ? WEB_MAX_WIDTH : 560}
@@ -52,6 +58,24 @@ export default function ManageAlert({
         contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
+    );
+  }
+
+  if (loadError && !alert) {
+    return (
+      <ScreenContainer
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
+      >
+        {isOnline ? (
+          <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+        ) : (
+          <OfflineState onRetry={() => void actions.reload()} />
+        )}
       </ScreenContainer>
     );
   }

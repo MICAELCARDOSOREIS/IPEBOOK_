@@ -26,6 +26,7 @@ import { triggerHaptic } from "@/view/haptics";
 
 export type FavoritesProps = {
   userId: string | null;
+  sessionLoading?: boolean;
   focusKey?: number;
   onBack: () => void;
   onLogin: () => void;
@@ -36,6 +37,7 @@ export type FavoritesProps = {
 /** Figma `02.06 · Favoritos` (nó `10:227`) e `02.14 · Favoritos · vazio` (nó `254:4129`). */
 export default function Favorites({
   userId,
+  sessionLoading = false,
   focusKey = 0,
   onBack,
   onLogin,
@@ -146,7 +148,11 @@ export default function Favorites({
       ) : null}
 
       {/* Lista de Favoritos */}
-      {!userId ? (
+      {sessionLoading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando favoritos" />
+        </View>
+      ) : !userId ? (
         <View style={[styles.status, wideWeb && styles.statusWide]}>
           <View style={styles.emptyIpeContainer}>
             <IpeMark size={72} />

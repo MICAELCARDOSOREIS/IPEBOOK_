@@ -43,13 +43,17 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
       if (!isTest) sessionFavoritesCache.set(userId, books);
       setState({ books, loading: false, error: null, removingId: null, actionError: null });
     } catch (error) {
-      setState({
-        books: [],
+      setState((prev) => ({
+        ...prev,
         loading: false,
-        error: error instanceof DomainError ? error.message : "Não foi possível carregar favoritos.",
+        error:
+          prev.books.length > 0
+            ? null
+            : error instanceof DomainError
+              ? error.message
+              : "Não foi possível carregar favoritos.",
         removingId: null,
-        actionError: null,
-      });
+      }));
     }
   }, [userId, useCases, isTest]);
   const removeFavorite = useCallback(async (bookId: string) => {

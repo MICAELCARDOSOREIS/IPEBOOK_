@@ -20,6 +20,7 @@ export default function ReportListingScreen({
       listingId={listingId}
       listingTitle={bookState.book?.title}
       sessionUserId={authState.user?.id ?? null}
+      sessionLoading={authState.loading}
       onBack={onBack}
       onNavigateToLogin={onNavigateToLogin}
     />

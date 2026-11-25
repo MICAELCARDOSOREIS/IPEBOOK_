@@ -51,11 +51,16 @@ export function useReceivedRatingsViewModel(
       }
     } catch (error) {
       if (active.current && current === request.current) {
-        setState({
-          ratings: [],
+        setState((previous) => ({
+          ...previous,
           loading: false,
-          error: error instanceof DomainError ? error.message : GENERIC_ERROR,
-        });
+          error:
+            previous.ratings.length > 0
+              ? null
+              : error instanceof DomainError
+                ? error.message
+                : GENERIC_ERROR,
+        }));
       }
     }
   }, [useCases, sessionUserId, isTest]);

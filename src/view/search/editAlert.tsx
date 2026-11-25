@@ -4,15 +4,17 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { BookModality } from "@/model/entities/book";
 import { ALL_ALERT_MODALITIES } from "@/model/entities/searchAlert";
 import { Chip } from "@/view/components/Chip";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
-import { makeSearchAlertsViewModel } from "@/di/container";
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
@@ -21,20 +23,23 @@ import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollP
 export type EditAlertProps = {
   alertId: string;
   userId: string | null;
+  sessionLoading?: boolean;
   onBack: () => void;
   /** Volta ao gerenciamento depois de salvar. */
   onSaved: () => void;
 };
 
 /** Figma `02.10 · Editar alerta` (`254:4437`). */
-export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAlertProps) {
+export default function EditAlert({ alertId, userId, sessionLoading = false, onBack, onSaved }: EditAlertProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeSearchAlertsViewModel(userId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const alert = state.alerts.find((item) => item.id === alertId);
+  const loadError = state.loadError ?? (!alert ? state.error : null);
   const [term, setTerm] = useState("");
   const [modalities, setModalities] = useState<readonly BookModality[]>(ALL_ALERT_MODALITIES);
   const [loadedId, setLoadedId] = useState<string | null>(null);
@@ -56,7 +61,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
     );
   };
 
-  if (state.loading) {
+  if (sessionLoading || state.loading) {
     return (
       <ScreenContainer
         maxWidth={wide ? WEB_MAX_WIDTH : 560}
@@ -66,6 +71,24 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
         contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
+    );
+  }
+
+  if (loadError && !alert) {
+    return (
+      <ScreenContainer
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
+      >
+        {isOnline ? (
+          <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+        ) : (
+          <OfflineState onRetry={() => void actions.reload()} />
+        )}
       </ScreenContainer>
     );
   }

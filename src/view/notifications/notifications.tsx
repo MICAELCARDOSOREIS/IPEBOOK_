@@ -30,6 +30,7 @@ import { createNotificationsStyles, withWebInteractive } from "./notificationsSt
 
 export type NotificationsProps = {
   sessionUserId: string | null;
+  sessionLoading?: boolean;
   onBack?: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToAction?: (actionUrl: string) => void;
@@ -59,6 +60,7 @@ const TYPE_CONFIG: Record<
  */
 export default function Notifications({
   sessionUserId,
+  sessionLoading = false,
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
@@ -170,6 +172,17 @@ export default function Notifications({
       </View>
     );
   };
+
+  if (sessionLoading) {
+    return (
+      <SafeAreaView style={styles.page}>
+        {renderHeader(false)}
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando notificações" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!sessionUserId) {
     return (
