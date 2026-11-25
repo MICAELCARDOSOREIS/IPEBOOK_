@@ -1,5 +1,147 @@
 # Inventário de telas — iPhone · iOS 26 (Figma)
 
+## Inventário atual — 24/11/2026
+
+88 quadros inspecionados na [página iPhone](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=31-2&m=dev), incluindo variações, protótipos e estados. Não inclui pranchas de componentes. A implementação iOS continua fora do escopo atual, conforme ADR 0008. Consulte [a especificação visual](iphone-liquid-glass.md).
+
+### Acesso, boas-vindas e ajuda (12)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Bem-vindo | `915:394` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-394&m=dev) |
+| Entrar | `915:434` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-434&m=dev) |
+| Criar conta | `916:119` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-119&m=dev) |
+| Esqueci minha senha | `916:156` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-156&m=dev) |
+| Sobre | `916:179` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-179&m=dev) |
+| Convite beta Android · informativo | `916:209` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-209&m=dev) |
+| Ajuda | `916:238` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-238&m=dev) |
+| Termos e privacidade | `916:270` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-270&m=dev) |
+| Nova senha | `916:301` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-301&m=dev) |
+| Página não encontrada | `916:322` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-322&m=dev) |
+| Autenticação · Carregando | `916:341` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-341&m=dev) |
+| Autenticação · Erro | `916:356` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-356&m=dev) |
+
+### Catálogo, favoritos e alertas (9)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Início | `915:472` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-472&m=dev) |
+| Detalhe do livro · venda | `915:557` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-557&m=dev) |
+| Pesquisa | `916:370` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-370&m=dev) |
+| Favoritos | `916:450` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-450&m=dev) |
+| Meus alertas | `916:490` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-490&m=dev) |
+| Detalhe do livro de outro usuário · doação | `916:512` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-512&m=dev) |
+| Detalhe do livro de outro usuário · rolagem | `916:542` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-542&m=dev) |
+| Gerenciar alerta | `916:595` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-595&m=dev) |
+| Editar alerta | `916:618` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-618&m=dev) |
+
+### Anúncios e rascunhos (6)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Estante | `916:649` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-649&m=dev) |
+| Anunciar livro | `916:745` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-745&m=dev) |
+| Rascunhos | `916:787` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-787&m=dev) |
+| Gerenciar anúncio | `916:824` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-824&m=dev) |
+| Editar anúncio | `916:872` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-872&m=dev) |
+| Detalhe do próprio anúncio | `916:896` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-896&m=dev) |
+
+### Conversas, encontros e entrega (8)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Conversa · encontro confirmado | `915:603` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-603&m=dev) |
+| Meus pedidos | `916:1508` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1508&m=dev) |
+| Conversas | `916:1564` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1564&m=dev) |
+| Pedidos recebidos | `916:1620` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1620&m=dev) |
+| Reagendar encontro | `916:1667` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1667&m=dev) |
+| Acompanhar encontro | `916:1735` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1735&m=dev) |
+| Entrega do livro | `916:1780` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1780&m=dev) |
+| Combinar encontro | `916:1809` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1809&m=dev) |
+
+### Perfil e conta (13)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Perfil sem sessão | `916:1881` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1881&m=dev) |
+| Meu perfil | `916:1899` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1899&m=dev) |
+| Editar perfil | `916:1946` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1946&m=dev) |
+| Configurações | `916:1971` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-1971&m=dev) |
+| Segurança e verificação | `916:2018` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2018&m=dev) |
+| Avaliações recebidas | `916:2036` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2036&m=dev) |
+| Histórico de encontros | `916:2070` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2070&m=dev) |
+| Pessoas bloqueadas | `916:2121` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2121&m=dev) |
+| Convidar amigos | `916:2138` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2138&m=dev) |
+| Notificações | `916:2169` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2169&m=dev) |
+| Perfil público | `916:2192` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2192&m=dev) |
+| Perfil de outro usuário | `916:2234` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2234&m=dev) |
+| Excluir conta · Privacidade e dados | `916:2273` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2273&m=dev) |
+
+### Moderação e denúncias (4)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Moderação | `916:2307` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2307&m=dev) |
+| Denunciar anúncio | `916:2342` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2342&m=dev) |
+| Denunciar ou bloquear | `916:2376` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2376&m=dev) |
+| Denunciar pessoa | `916:2428` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=916-2428&m=dev) |
+
+### Estados após carregamento (4)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Editar perfil · formulário | `921:994` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=921-994&m=dev) |
+| Avaliações recebidas · vazio | `921:1041` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=921-1041&m=dev) |
+| Moderação · fila vazia | `921:1068` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=921-1068&m=dev) |
+| Editar anúncio · formulário | `921:1095` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=921-1095&m=dev) |
+
+### Protótipo nativo (25)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Início · início do protótipo | `937:2040` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2040&m=dev) |
+| Explorar · catálogo | `937:2120` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2120&m=dev) |
+| Estante · meus anúncios | `937:2195` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2195&m=dev) |
+| Detalhe · O Pequeno Príncipe | `937:2284` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2284&m=dev) |
+| Meu perfil · atalhos | `937:2327` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2327&m=dev) |
+| Conta · segurança e verificação | `937:2372` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2372&m=dev) |
+| Notificações · permissões | `937:2386` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2386&m=dev) |
+| Conta · privacidade e dados | `937:2407` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2407&m=dev) |
+| Explorar · busca ativa | `937:2434` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2434&m=dev) |
+| Explorar · resultados da busca | `937:2563` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2563&m=dev) |
+| Explorar · filtros médios | `937:2603` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2603&m=dev) |
+| Explorar · filtros expandidos | `937:2709` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2709&m=dev) |
+| Detalhe · compartilhar no iOS | `937:2829` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2829&m=dev) |
+| Detalhe · enviar proposta | `937:3131` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3131&m=dev) |
+| Negociação · proposta enviada | `937:3192` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3192&m=dev) |
+| Conversa · Carlos Gomes | `937:3225` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3225&m=dev) |
+| Conversa · teclado aberto | `937:3258` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3258&m=dev) |
+| Conversa · mensagem enviada | `937:3391` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3391&m=dev) |
+| Configurações · listas agrupadas | `937:3426` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3426&m=dev) |
+| Configurações · título compacto | `937:3480` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3480&m=dev) |
+| Acessibilidade · texto maior | `937:3534` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3534&m=dev) |
+| Configurações · Conta e dados | `937:3588` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3588&m=dev) |
+| Configurações · Preferências | `937:3616` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3616&m=dev) |
+| Acessibilidade · transparência reduzida | `937:3645` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-3645&m=dev) |
+| Rascunhos · confirmar descarte | `997:2248` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=997-2248&m=dev) |
+
+### Estados de catálogo, conversas e pedidos (7)
+
+| Tela | Node ID | Link (Dev) |
+| --- | --- | --- |
+| Busca · Sem resultados | `1016:2383` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2383&m=dev) |
+| Conversas · Vazio | `1016:2416` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2416&m=dev) |
+| Pedidos · Vazio | `1016:2446` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2446&m=dev) |
+| Catálogo · Sem conexão | `1016:2476` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2476&m=dev) |
+| Catálogo · Erro | `1016:2506` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2506&m=dev) |
+| Anúncio · Salvo com sucesso | `1016:2536` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2536&m=dev) |
+| Catálogo · Carregando | `1016:2566` | [abrir](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1016-2566&m=dev) |
+
+## Inventário histórico — 15/10/2026
+
+O levantamento anterior de 144 telas é preservado abaixo como registro histórico; não representa a contagem atual da página revisada.
+
+
 > Lista das 144 telas reais do Figma (canvas `APP · 20 · iPhone · iOS 26`, arquivo [IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook)), extraída em 2026-10-15 via MCP do Figma. Existe para consulta offline — não é preciso manter o Figma aberto para saber o que cada tela é ou achar o link dela.
 
 **Atenção de escopo:** iOS está fora do escopo atual de implementação do app (ver [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) e `design-system/README.md` §3). Este inventário é só de consulta/planejamento — não implementar nenhuma tela daqui sem antes confirmar que o escopo mudou.
