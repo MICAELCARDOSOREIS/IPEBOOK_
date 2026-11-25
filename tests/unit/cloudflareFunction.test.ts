@@ -1,10 +1,12 @@
 import { OPEN_GRAPH_BOOK_COLUMNS, onRequest } from "../../functions/livro/[id]";
 import { BOOK_COLUMNS } from "@/infra/datasources/supabaseBookDataSource";
 
-describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
+describe("Cloudflare Pages Function /livro/[id] (Spec 119 / Spec 143)", () => {
+  const validBookId = "11111111-2222-4333-8444-555555555555";
+
   it("enriquece HTML com metadados do livro ao consultar Supabase com sucesso", async () => {
     const mockBook = {
-      id: "livro-teste-1",
+      id: validBookId,
       title: "Torto Arado",
       author: "Itamar Vieira Junior",
       modality: "sale" as const,
@@ -34,8 +36,8 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
     try {
       const response = await onRequest({
-        request: new Request("https://ipebook.app/livro/livro-teste-1"),
-        params: { id: "livro-teste-1" },
+        request: new Request(`https://ipebook.app/livro/${validBookId}`),
+        params: { id: validBookId },
         env: {
           EXPO_PUBLIC_SUPABASE_URL: "https://fake.supabase.co",
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fake-key",
@@ -61,7 +63,42 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
     }
   });
 
-  it("retorna o HTML original caso o livro não seja encontrado no Supabase", async () => {
+  it("retorna o HTML original sem chamar Supabase quando id não é um UUID válido (Spec 143 / M5)", async () => {
+    const originalHtml = `<!DOCTYPE html><html><head><title>IpêBook</title></head><body></body></html>`;
+    const fakeNext = jest.fn().mockImplementation(async () =>
+      new Response(originalHtml, {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      }),
+    );
+
+    const originalFetch = globalThis.fetch;
+    const fetchMock = jest.fn();
+    globalThis.fetch = fetchMock;
+
+    try {
+      for (const badId of ["inexistente", "123&or=(status.eq.draft)", "../etc/passwd"]) {
+        const response = await onRequest({
+          request: new Request(`https://ipebook.app/livro/${encodeURIComponent(badId)}`),
+          params: { id: badId },
+          env: {
+            EXPO_PUBLIC_SUPABASE_URL: "https://fake.supabase.co",
+            EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fake-key",
+          },
+          next: fakeNext,
+          functionPath: "/livro/[id]",
+          waitUntil: () => {},
+          data: {},
+        });
+        expect(await response.text()).toBe(originalHtml);
+      }
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("retorna o HTML original caso o livro com UUID válido não seja encontrado no Supabase", async () => {
     const originalHtml = `<!DOCTYPE html><html><head><title>IpêBook</title></head><body></body></html>`;
     const fakeNext = jest.fn().mockResolvedValue(
       new Response(originalHtml, {
@@ -71,15 +108,16 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
     );
 
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
     } as unknown as Response);
+    globalThis.fetch = fetchMock;
 
     try {
       const response = await onRequest({
-        request: new Request("https://ipebook.app/livro/inexistente"),
-        params: { id: "inexistente" },
+        request: new Request(`https://ipebook.app/livro/${validBookId}`),
+        params: { id: validBookId },
         env: {
           EXPO_PUBLIC_SUPABASE_URL: "https://fake.supabase.co",
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fake-key",
@@ -92,6 +130,7 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
       const text = await response.text();
       expect(text).toBe(originalHtml);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     } finally {
       globalThis.fetch = originalFetch;
     }

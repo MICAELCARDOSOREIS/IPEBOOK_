@@ -220,12 +220,16 @@ function createDataSources(): {
   const auth = new MemoryAuthDataSource();
   const ratings = new MemoryRatingDataSource();
   const blockedUsers = new MemoryBlockedUserDataSource([], profiles);
+  const meetings = new MemoryMeetingDataSource(requests, books, notifications);
+  const deliveries = new MemoryDeliveryDataSource(requests, books, notifications);
+  const userPreferences = new MemoryUserPreferencesDataSource();
+  const messages = new MemoryMessageDataSource();
   return {
     auth,
     books,
     requests,
-    meetings: new MemoryMeetingDataSource(requests, books, notifications),
-    deliveries: new MemoryDeliveryDataSource(requests, books, notifications),
+    meetings,
+    deliveries,
     reports,
     notifications,
     favorites,
@@ -234,11 +238,20 @@ function createDataSources(): {
     profiles,
     ratings,
     userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts, {
-      auth, profiles, notifications, reports, ratings,
+      auth,
+      profiles,
+      userPreferences,
+      messages,
+      meetings,
+      deliveries,
+      blockedUsers,
+      notifications,
+      reports,
+      ratings,
     }),
-    userPreferences: new MemoryUserPreferencesDataSource(),
+    userPreferences,
     blockedUsers,
-    messages: new MemoryMessageDataSource(),
+    messages,
     photos: new MemoryPhotoStorageDataSource(),
     moderation: new MemoryModerationDataSource(),
     betaTesters: new MemoryBetaTesterDataSource(),

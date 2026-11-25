@@ -103,6 +103,38 @@ export function isInvalidTokenTicket(ticket: PushTicket | undefined): boolean {
   return ticket?.status === "error" && ticket.details?.error === "DeviceNotRegistered";
 }
 
+/** Cabeçalho dedicado enviado pela trigger `v2_push_new_notification()` (Spec 143 / ADR 0119). */
+export const PUSH_WEBHOOK_HEADER = "x-push-webhook-secret";
+
+/** Resposta padronizada sem oráculo de existência, token ou preferências (Spec 143 / A2). */
+export const PUSH_ACCEPTED_RESPONSE = { processado: true } as const;
+
+/**
+ * Comparação em tempo constante (UTF-8) para segredos de webhook, evitando vazamento por timing.
+ */
+export function constantTimeEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  if (aBytes.length === 0 || bBytes.length === 0) return false;
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < maxLen; i += 1) {
+    diff |= aBytes[i % aBytes.length] ^ bBytes[i % bBytes.length];
+  }
+  return diff === 0;
+}
+
+/** Valida o cabeçalho de segredo contra `PUSH_WEBHOOK_SECRET` em tempo constante. */
+export function isAuthorizedWebhookSecret(
+  provided: string | null | undefined,
+  expected: string | null | undefined,
+): boolean {
+  if (typeof expected !== "string" || expected.trim().length === 0) return false;
+  if (typeof provided !== "string" || provided.length === 0) return false;
+  return constantTimeEqual(provided, expected);
+}
+
 /** Pega o `id` do corpo da chamada, sem confiar em nada além de um texto não vazio. */
 export function parseRequestId(body: unknown): string | null {
   if (typeof body !== "object" || body === null) return null;

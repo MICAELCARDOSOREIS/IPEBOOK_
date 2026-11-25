@@ -423,6 +423,15 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async deleteAccount(userId: string): Promise<void> {
+    // Spec 143 / A3: impede apagar fotos no Storage quando a conta está suspensa (antes da recusa da RPC).
+    const { data: isSuspended, error: suspendedError } = await this.client.rpc("v2_current_user_suspended");
+    if (suspendedError) {
+      throw new AuthError("Não foi possível verificar o estado da conta antes da exclusão.");
+    }
+    if (isSuspended === true) {
+      throw new AuthError("Conta suspensa não pode ser excluída pelo app. Escreva para ipebook738@gmail.com.");
+    }
+
     // O banco não apaga arquivos do storage; sem isto as fotos seguiriam públicas após a exclusão.
     await this.removeUserPhotos(userId);
     const { error } = await this.client.rpc("delete_user_account", { target_user_id: userId });
@@ -432,28 +441,35 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     await this.client.auth.signOut();
   }
 
-  /** Remove todos os objetos da pasta `<userId>/` antes de concluir a exclusão da conta. */
+  /** Remove todos os objetos da pasta `<userId>/` paginando `bucket.list` até esgotar as páginas. */
   private async removeUserPhotos(userId: string): Promise<void> {
+    const PAGE_SIZE = 100;
     const bucket = this.client.storage.from(BUCKET_NAME);
     const paths: string[] = [];
     const directories = [userId];
     while (directories.length > 0) {
       const directory = directories.shift();
       if (!directory) break;
-      const { data, error } = await bucket.list(directory, { limit: 1000, offset: 0 });
-      if (error) throw new AuthError("Não foi possível preparar a exclusão das fotos.");
-      for (const item of data ?? []) {
-        const path = `${directory}/${item.name}`;
-        if (item.id) {
-          paths.push(path);
-        } else {
-          directories.push(path);
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data, error } = await bucket.list(directory, { limit: PAGE_SIZE, offset });
+        if (error) throw new AuthError("Não foi possível preparar a exclusão das fotos.");
+        const batch = data ?? [];
+        for (const item of batch) {
+          const path = `${directory}/${item.name}`;
+          if (item.id) {
+            paths.push(path);
+          } else {
+            directories.push(path);
+          }
         }
+        if (batch.length < PAGE_SIZE) break;
       }
     }
     if (paths.length === 0) return;
-    const { error } = await bucket.remove(paths);
-    if (error) throw new AuthError("Não foi possível excluir as fotos da conta.");
+    for (let i = 0; i < paths.length; i += PAGE_SIZE) {
+      const { error } = await bucket.remove(paths.slice(i, i + PAGE_SIZE));
+      if (error) throw new AuthError("Não foi possível excluir as fotos da conta.");
+    }
   }
 }
 

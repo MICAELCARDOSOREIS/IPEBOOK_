@@ -190,7 +190,11 @@ describe("datasources Supabase", () => {
   });
 
   it("lança AuthError ao falhar na RPC de exclusão de conta", async () => {
-    const rpc = jest.fn().mockResolvedValue({ data: null, error: { message: "negado" } });
+    const rpc = jest.fn(async (fn: string) =>
+      fn === "v2_current_user_suspended"
+        ? { data: false, error: null }
+        : { data: null, error: { message: "negado" } },
+    );
     const signOut = jest.fn().mockResolvedValue({ error: null });
     const list = jest.fn().mockResolvedValue({ data: [], error: null });
     const auth = new SupabaseAuthDataSource(

@@ -21,12 +21,16 @@ export class FileDownloadService implements IFileDownloadService {
 
       const FileSystem = await import("expo-file-system/legacy");
       const Sharing = await import("expo-sharing");
-      if (!FileSystem.documentDirectory || !(await Sharing.isAvailableAsync())) return false;
+      if (!FileSystem.cacheDirectory || !(await Sharing.isAvailableAsync())) return false;
 
       const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const fileUri = `${FileSystem.documentDirectory}${safeName}`;
+      const fileUri = `${FileSystem.cacheDirectory}${safeName}`;
       await FileSystem.writeAsStringAsync(fileUri, jsonString);
-      await Sharing.shareAsync(fileUri, { mimeType: "application/json", UTI: "public.json" });
+      try {
+        await Sharing.shareAsync(fileUri, { mimeType: "application/json", UTI: "public.json" });
+      } finally {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => undefined);
+      }
       return true;
     } catch {
       return false;

@@ -5,6 +5,7 @@ import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
 import { PIRIPIRI_MEETING_POINTS, type MeetingPoint } from "@/model/entities/meetingPoint";
 import { AuthError, ValidationError } from "@/model/errors";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import type {
   IBookRequestUseCases,
   NegotiationDetail,
@@ -54,7 +55,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
 
     let trimmedMessage: string | undefined;
     if (options?.initialMessage !== undefined && options?.initialMessage !== null) {
-      const msg = options.initialMessage.trim();
+      const msg = sanitizeTextInput(options.initialMessage, { allowNewlines: true });
       if (msg.length > 500) {
         throw new ValidationError("A mensagem inicial não pode ultrapassar 500 caracteres.");
       }
