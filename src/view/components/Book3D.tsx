@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, PanResponder, Platform, StyleSheet, Text, View, type ViewProps } from "react-native";
+import { AccessibilityInfo, Image, PanResponder, Platform, StyleSheet, Text, View, type ViewProps } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
 import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle, type BookFace } from "@/view/book3dGeometry";
 import { fontFamily, tokens } from "@/view/tokens";
@@ -15,6 +15,10 @@ export type Book3DProps = {
   /** Quantidade de páginas, usada para ajustar a espessura da lombada e do corte das folhas. */
   pageCount?: number;
   photoUrl?: string;
+  /** Foto real da lombada do livro, exibida na face lateral esquerda do livro 3D quando disponível. */
+  spinePhotoUrl?: string;
+  /** Foto real do verso (contracapa) do livro, exibida na face traseira do livro 3D quando disponível. */
+  backPhotoUrl?: string;
   /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque alterna entre capa e contracapa. */
   onPress?: () => void;
   /** Gira um pouco ao aparecer, para mostrar que é um livro. Desligado nos testes. */
@@ -61,6 +65,8 @@ export function Book3D({
   publisher,
   pageCount,
   photoUrl,
+  spinePhotoUrl,
+  backPhotoUrl,
   onPress,
   intro = true,
   scale = 1,
@@ -253,7 +259,22 @@ export function Book3D({
               },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} description={description} publisher={publisher} photoUrl={photoUrl} base={base} width={WIDTH} height={faceHeight} depth={DEPTH} fade={fade} />
+            <FaceContent
+              face={face}
+              id={id}
+              title={title}
+              author={author}
+              description={description}
+              publisher={publisher}
+              photoUrl={photoUrl}
+              spinePhotoUrl={spinePhotoUrl}
+              backPhotoUrl={backPhotoUrl}
+              base={base}
+              width={WIDTH}
+              height={faceHeight}
+              depth={DEPTH}
+              fade={fade}
+            />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${(isPageBlock ? shade * 0.35 : shade).toFixed(3)})` }]} />
           </View>
         );
@@ -262,7 +283,51 @@ export function Book3D({
   );
 }
 
-function FaceContent({ face, id, title, author, description, publisher, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "description" | "publisher" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
+function BookSidePhoto({
+  uri,
+  accessibilityLabel,
+  fallback,
+}: {
+  uri: string;
+  accessibilityLabel: string;
+  fallback: React.ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [uri]);
+  if (failed) return <>{fallback}</>;
+  return (
+    <Image
+      source={{ uri }}
+      accessibilityRole="image"
+      accessibilityLabel={accessibilityLabel}
+      resizeMode="cover"
+      onError={() => setFailed(true)}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+}
+
+function FaceContent({
+  face,
+  id,
+  title,
+  author,
+  description,
+  publisher,
+  photoUrl,
+  spinePhotoUrl,
+  backPhotoUrl,
+  base,
+  width,
+  height,
+  depth,
+  fade,
+}: { face: BookFace } & Pick<
+  Book3DProps,
+  "id" | "title" | "author" | "description" | "publisher" | "photoUrl" | "spinePhotoUrl" | "backPhotoUrl"
+> & { base: string; width: number; height: number; depth: number; fade: number }) {
   if (face === "front") {
     return (
       <View style={[styles.fill, { opacity: fade }]}>
@@ -274,8 +339,8 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
     );
   }
   if (face === "back") {
-    return (
-      <View style={[styles.fill, { backgroundColor: darken(base, 0.1) }]}>
+    const illustratedBack = (
+      <>
         <View style={[styles.backFrame, { opacity: 0.7 * fade }]} />
         {/* Contracapa: título, autor e a descrição do anúncio, como numa orelha de livro. */}
         <View style={[styles.backText, { padding: width * 0.14, opacity: fade }]}>
@@ -301,13 +366,25 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
             </Text>
           ) : null}
         </View>
+      </>
+    );
+    return (
+      <View style={[styles.fill, { backgroundColor: darken(base, 0.1), opacity: fade }]}>
+        {backPhotoUrl ? (
+          <BookSidePhoto
+            uri={backPhotoUrl}
+            accessibilityLabel={`Foto do verso de ${title}`}
+            fallback={illustratedBack}
+          />
+        ) : (
+          illustratedBack
+        )}
       </View>
     );
   }
   if (face === "left") {
-    // Lombada: título na vertical, entre filetes dourados.
-    return (
-      <View style={[styles.fill, { backgroundColor: darken(base, 0.25) }]}>
+    const illustratedSpine = (
+      <>
         {[0.05, 0.08, 0.92, 0.95].map((at) => (
           <View key={at} style={[styles.band, { top: height * at }]} />
         ))}
@@ -321,6 +398,20 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
             </Text>
           ) : null}
         </View>
+      </>
+    );
+    // Lombada: foto real quando enviada; senão título na vertical entre filetes dourados.
+    return (
+      <View style={[styles.fill, { backgroundColor: darken(base, 0.25), opacity: fade }]}>
+        {spinePhotoUrl ? (
+          <BookSidePhoto
+            uri={spinePhotoUrl}
+            accessibilityLabel={`Foto da lombada de ${title}`}
+            fallback={illustratedSpine}
+          />
+        ) : (
+          illustratedSpine
+        )}
       </View>
     );
   }

@@ -23,4 +23,15 @@ describe("ListingPhotoUseCases (Spec 092)", () => {
     await expect(uc.uploadListingPhoto("u1", { bytes: new Uint8Array(5 * 1024 * 1024 + 1), fileName: "x" })).rejects.toThrow(/5 MB/);
     expect(uploadPhoto).not.toHaveBeenCalled();
   });
+
+  it("marca o nome do arquivo para lombada e verso ao enviar fotos extras", async () => {
+    const uploadPhoto = jest.fn().mockResolvedValue("https://cdn/u1/anuncio/ok.jpg");
+    const uc = new ListingPhotoUseCases({ uploadPhoto, deletePhoto: jest.fn() });
+
+    await uc.uploadListingPhoto("u1", { bytes: JPEG, fileName: "x.jpg", side: "spine" });
+    await uc.uploadListingPhoto("u1", { bytes: JPEG, fileName: "x.jpg", side: "back" });
+
+    expect(uploadPhoto.mock.calls[0][0].fileName).toMatch(/^foto-lombada-\d+-[a-z0-9]+\.jpg$/);
+    expect(uploadPhoto.mock.calls[1][0].fileName).toMatch(/^foto-verso-\d+-[a-z0-9]+\.jpg$/);
+  });
 });

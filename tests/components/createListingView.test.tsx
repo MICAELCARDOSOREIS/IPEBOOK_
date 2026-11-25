@@ -496,6 +496,7 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
     const choose = jest
       .fn()
       .mockResolvedValueOnce("https://cdn.ipebook.app/capa-camera.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/extra-galeria.jpg")
       .mockResolvedValueOnce("https://cdn.ipebook.app/extra-galeria.jpg");
     const photoSpy = jest
       .spyOn(container, "makeListingPhotoViewModel")
@@ -519,7 +520,7 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
       await act(async () => {
         fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
       });
-      expect(choose).toHaveBeenCalledWith("camera");
+      expect(choose).toHaveBeenCalledWith("camera", "cover");
       expect(actions.setPhotoUrl).toHaveBeenCalledWith("https://cdn.ipebook.app/capa-camera.jpg");
 
       await act(async () => {
@@ -531,8 +532,20 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
       await act(async () => {
         fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
       });
-      expect(choose).toHaveBeenCalledWith("library");
-      expect(actions.addPhoto).toHaveBeenCalledWith("https://cdn.ipebook.app/extra-galeria.jpg");
+      expect(choose).toHaveBeenCalledWith("library", "spine");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(0, "https://cdn.ipebook.app/extra-galeria.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar verso"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library", "back");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(1, "https://cdn.ipebook.app/extra-galeria.jpg");
 
       await act(async () => {
         fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
