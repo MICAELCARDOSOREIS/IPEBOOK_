@@ -394,15 +394,23 @@ export default function CreateListing({
                 error={state.error}
                 errorRef={errorRef}
                 onSetPhotoUrl={actions.setPhotoUrl}
-                onRemovePhoto={actions.removePhoto}
+                onRemovePhoto={(index) => actions.setPhotoAt(index, "")}
                 uploading={photoState.uploading}
                 photoError={photoState.error}
                 photoPermissionDenied={photoState.permissionDenied}
                 onChoosePhoto={(slot, source, slotIndex) => {
-                  void photoActions.choose(source).then((url) => {
+                  const side =
+                    slot === "cover"
+                      ? "cover"
+                      : slotIndex === 0
+                        ? "spine"
+                        : slotIndex === 1
+                          ? "back"
+                          : undefined;
+                  void photoActions.choose(source, side).then((url) => {
                     if (!url) return;
                     if (slot === "cover") actions.setPhotoUrl(url);
-                    else if (slotIndex !== undefined && slotIndex < state.photos.length) actions.setPhotoAt(slotIndex, url);
+                    else if (slotIndex !== undefined) actions.setPhotoAt(slotIndex, url);
                     else actions.addPhoto(url);
                   });
                 }}

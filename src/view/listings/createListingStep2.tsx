@@ -79,14 +79,14 @@ export function CreateListingStep2({
         <View testID="step2-side-slots" style={wideWeb ? styles.webSideSlots : styles.sideSlots}>
           <AddPhotoCard
             label="Lombada"
-            photoUrl={photos[0]}
+            photoUrl={photos[0] || undefined}
             onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
             onRemovePhoto={() => onRemovePhoto(0)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
           <AddPhotoCard
             label="Verso"
-            photoUrl={photos[1]}
+            photoUrl={photos[1] || undefined}
             onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
             onRemovePhoto={() => onRemovePhoto(1)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}

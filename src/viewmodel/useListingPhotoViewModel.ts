@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { BookPhotoSide } from "@/model/bookPhotos";
 import { DomainError, ImagePermissionDeniedError } from "@/model/errors";
 import type { IImagePickerService, ImageSource } from "@/model/services/iImagePickerService";
 import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
@@ -17,7 +18,10 @@ export function useListingPhotoViewModel(
   sessionUserId: string | null,
   picker: IImagePickerService,
   useCases: IListingPhotoUseCases,
-): [ListingPhotoState, { choose: (source: ImageSource) => Promise<string | null>; clearError: () => void }] {
+): [
+  ListingPhotoState,
+  { choose: (source: ImageSource, side?: BookPhotoSide) => Promise<string | null>; clearError: () => void },
+] {
   const [state, setState] = useState<ListingPhotoState>({ uploading: false, error: null });
   const active = useRef(true);
   const busy = useRef(false);
@@ -29,7 +33,7 @@ export function useListingPhotoViewModel(
   }, []);
 
   const choose = useCallback(
-    async (source: ImageSource) => {
+    async (source: ImageSource, side?: BookPhotoSide) => {
       if (busy.current) return null;
       busy.current = true;
       setState({ uploading: false, error: null });
@@ -37,7 +41,8 @@ export function useListingPhotoViewModel(
         const image = await picker.pickImage(source, COVER_ASPECT);
         if (!image) return null;
         if (active.current) setState({ uploading: true, error: null });
-        const url = await useCases.uploadListingPhoto(sessionUserId ?? "", image);
+        const file = side ? { ...image, side } : image;
+        const url = await useCases.uploadListingPhoto(sessionUserId ?? "", file);
         if (active.current) setState({ uploading: false, error: null });
         return url;
       } catch (error) {

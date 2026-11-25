@@ -316,6 +316,55 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     expect(hook.current[0].photos).toHaveLength(2);
   });
 
+  it("salva foto do verso no slot 1 sem jogar para lombada e compacta slots vazios ao publicar", async () => {
+    const useCases = stubUseCases();
+    const hook = await renderHook(useCases);
+    const backUrl = "https://exemplo.com/foto-verso-1.jpg";
+    const spineUrl = "https://exemplo.com/foto-lombada-1.jpg";
+
+    await act(async () => {
+      hook.current[1].setTitle("Alchemised");
+      hook.current[1].setAuthor("SenLinYu");
+      hook.current[1].setModality("donation");
+      hook.current[1].setPhotoAt(1, backUrl);
+    });
+
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+
+    await act(async () => {
+      await hook.current[1].submit("user-1");
+    });
+    expect(useCases.createListing).toHaveBeenCalledWith(
+      expect.objectContaining({ photos: [backUrl] }),
+      "user-1",
+    );
+
+    // Adicionar lombada depois não sobrescreve o verso; remover lombada mantém o verso no slot 1.
+    await act(async () => {
+      hook.current[1].setPhotoAt(1, backUrl);
+      hook.current[1].setPhotoAt(0, spineUrl);
+    });
+    expect(hook.current[0].photos).toEqual([spineUrl, backUrl]);
+
+    await act(async () => {
+      hook.current[1].setPhotoAt(0, "");
+    });
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+
+    await act(async () => {
+      hook.current[1].resumeDraft({
+        id: "draft-1",
+        title: "Alchemised",
+        author: "SenLinYu",
+        ownerId: "user-1",
+        modality: "donation",
+        status: "draft",
+        photos: [backUrl],
+      });
+    });
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+  });
+
   it("recusa preço não numérico antes de chamar createListing", async () => {
     const mock = stubUseCases();
     const hook = await renderHook(mock);

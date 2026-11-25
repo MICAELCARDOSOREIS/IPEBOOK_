@@ -103,6 +103,42 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.getByLabelText("Foto da capa de Capitães da Areia")).toBeDefined();
   });
 
+  it("com foto da lombada e do verso, exibe as fotos reais nas faces correspondentes do livro 3D", async () => {
+    const spine = await open({
+      startAngle: 90,
+      spinePhotoUrl: "https://exemplo.com/foto-lombada-1.jpg",
+    });
+    expect(spine.getByLabelText("Foto da lombada de Capitães da Areia")).toBeDefined();
+
+    const back = await open({
+      startAngle: 180,
+      backPhotoUrl: "https://exemplo.com/foto-verso-1.jpg",
+    });
+    expect(back.getByLabelText("Foto do verso de Capitães da Areia")).toBeDefined();
+  });
+
+  it("com apenas foto do verso, mantém lombada ilustrativa e mostra foto real no verso", async () => {
+    const spine = await open({
+      startAngle: 90,
+      backPhotoUrl: "https://exemplo.com/foto-verso-1.jpg",
+    });
+    expect(spine.queryByLabelText("Foto da lombada de Capitães da Areia")).toBeNull();
+    expect(spine.getByText("Capitães da Areia")).toBeDefined();
+  });
+
+  it("volta para a arte ilustrativa se a foto da lombada ou do verso falhar ao carregar", async () => {
+    const back = await open({
+      startAngle: 180,
+      description: "Sinopse de fallback.",
+      backPhotoUrl: "https://exemplo.com/quebrada-verso.jpg",
+    });
+    const img = back.getByLabelText("Foto do verso de Capitães da Areia");
+    await act(async () => {
+      img.props.onError?.();
+    });
+    expect(back.getByText("Sinopse de fallback.")).toBeDefined();
+  });
+
   it("a animação de entrada começa girada e termina em leve perspectiva mostrando a capa e o corte das páginas", async () => {
     const screen = await open({ intro: true });
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 700)); });

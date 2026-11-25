@@ -1,6 +1,9 @@
+import type { BookPhotoSide } from "@/model/bookPhotos";
+
 export type ListingPhotoFile = {
   bytes: Uint8Array;
   fileName: string;
+  side?: BookPhotoSide;
 };
 
 export interface IListingPhotoUseCases {

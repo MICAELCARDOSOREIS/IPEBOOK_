@@ -1,5 +1,6 @@
 import { useMemo, useRef, type ComponentRef, type RefObject } from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { extractBookSidePhotos } from "@/model/bookPhotos";
 import type { Book } from "@/model/entities/book";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -182,6 +183,7 @@ export function BookDetailHeroSection({
 }: BookDetailHeroSectionProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const sidePhotos = useMemo(() => extractBookSidePhotos(book?.photos), [book?.photos]);
 
   return (
     <View
@@ -229,6 +231,8 @@ export function BookDetailHeroSection({
                 publisher={book.publisher}
                 pageCount={book.pageCount}
                 photoUrl={book.photoUrl}
+                spinePhotoUrl={sidePhotos.spinePhotoUrl}
+                backPhotoUrl={sidePhotos.backPhotoUrl}
                 scale={wideWeb ? 1.35 : 1}
               />
             </View>
@@ -241,7 +245,9 @@ export function BookDetailHeroSection({
                 style={withPress(styles.photosButton)}
               >
                 <AppIcon name="camera" size={16} color={colors.m3.primary} />
-                <Text style={styles.photosButtonText}>Ver fotos</Text>
+                <Text style={styles.photosButtonText}>
+                  {photos.length > 1 ? `Ver fotos (${photos.length})` : "Ver fotos"}
+                </Text>
               </Pressable>
             ) : null}
             {photos.length > 1 && wideWeb ? (

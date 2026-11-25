@@ -34,6 +34,7 @@ import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
 import { updateWebSocialMeta } from "@/view/webMeta";
+import { extractBookSidePhotos } from "@/model/bookPhotos";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -160,7 +161,12 @@ export default function BookDetail({
     }
     return captureRef(shareCardRef, { format: "png", quality: 1, result: "tmpfile" });
   };
-  const photos = book ? [book.photoUrl, ...(book.photos ?? [])].filter((url): url is string => Boolean(url)) : [];
+  const sidePhotos = useMemo(() => extractBookSidePhotos(book?.photos), [book?.photos]);
+  const photos = book
+    ? [book.photoUrl, sidePhotos.spinePhotoUrl, sidePhotos.backPhotoUrl, ...sidePhotos.extras].filter(
+        (url): url is string => Boolean(url),
+      )
+    : [];
 
   const formattedPrice = useMemo(() => {
     if (!book) return "";
