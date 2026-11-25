@@ -55,6 +55,15 @@
       "expo-status-bar",
       "expo-font",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#FCFAF5",
+          "imageWidth": 180,
+          "resizeMode": "contain"
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",

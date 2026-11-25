@@ -76,6 +76,29 @@ conferir(
     corFundoJanelaAndroid?.toUpperCase() === "#FCFAF5",
   `esperado expo_system_ui_user_interface_style="light" e activityBackground="#FCFAF5" (obtido: style="${estiloSistemaAndroid ?? "ausente"}", bg="${corFundoJanelaAndroid ?? "ausente"}"). Verifique se expo-system-ui está instalado.`,
 );
+const corSplashAndroid = configNativa.android.colors?.resources?.color?.find(
+  ({ $ }) => $.name === "splashscreen_background",
+)?._;
+const estiloSplashAndroid = configNativa.android.styles?.resources?.style?.find(
+  ({ $ }) => $.name === "Theme.App.SplashScreen",
+);
+const temIconeSplashAndroid12 = Boolean(
+  estiloSplashAndroid?.item?.some(
+    ({ $, _ }) => $.name === "windowSplashScreenAnimatedIcon" && _ === "@drawable/splashscreen_logo",
+  ),
+);
+const temFundoSplashAndroid12 = Boolean(
+  estiloSplashAndroid?.item?.some(
+    ({ $, _ }) => $.name === "windowSplashScreenBackground" && _ === "@color/splashscreen_background",
+  ),
+);
+conferir(
+  "Splash nativa Android 12+ configurada com a marca do app (expo-splash-screen)",
+  corSplashAndroid?.toUpperCase() === "#FCFAF5" &&
+    temIconeSplashAndroid12 &&
+    temFundoSplashAndroid12,
+  `esperado splashscreen_background="#FCFAF5" e Theme.App.SplashScreen com windowSplashScreenAnimatedIcon/Background (obtido: bg="${corSplashAndroid ?? "ausente"}", icon=${temIconeSplashAndroid12}, bgItem=${temFundoSplashAndroid12}).`,
+);
 
 console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
 /** Rotas de `src/app` com segmento dinâmico (`livro/[id].tsx`, `negociacao/[id]/entrega.tsx`). */
@@ -163,13 +186,21 @@ conferir(
 
 console.log("\n\x1b[36m▶ Config plugins nativos exigidos pelas bibliotecas em uso\x1b[0m");
 const plugins = (app.plugins ?? []).map((p) => (Array.isArray(p) ? p[0] : p));
-for (const necessario of ["expo-camera", "expo-notifications"]) {
+for (const necessario of ["expo-camera", "expo-notifications", "expo-splash-screen"]) {
   conferir(
     `plugin ${necessario} registrado`,
     plugins.includes(necessario),
     `${necessario} é usado em runtime; sem o plugin o \`expo prebuild\` não gera permissões nem recursos nativos e a funcionalidade quebra no app instalado.`,
   );
 }
+const pluginSplash = (app.plugins ?? []).find((p) => (Array.isArray(p) ? p[0] : p) === "expo-splash-screen");
+conferir(
+  "expo-splash-screen configurado com assets/splash-icon.png e fundo #FCFAF5",
+  Array.isArray(pluginSplash) &&
+    pluginSplash[1]?.image === "./assets/splash-icon.png" &&
+    String(pluginSplash[1]?.backgroundColor ?? "").toUpperCase() === "#FCFAF5",
+  "sem o plugin expo-splash-screen apontando para ./assets/splash-icon.png e #FCFAF5, o prebuild Android 12+ deixa o placeholder quadriculado padrão do Expo.",
+);
 const pluginCamera = (app.plugins ?? []).find((p) => (Array.isArray(p) ? p[0] : p) === "expo-camera");
 conferir(
   "expo-camera sem permissão de áudio e com justificativa em português",
