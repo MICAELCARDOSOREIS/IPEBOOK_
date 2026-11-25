@@ -5,6 +5,7 @@ import { USER_REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { LoadingState } from "@/view/components/LoadingState";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -49,6 +50,17 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
           <View style={styles.full}>
             <FilledButton label="Voltar ao perfil" onPress={guardedBack} />
           </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (auth.loading) {
+    return (
+      <SafeAreaView style={styles.page}>
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
+        <View style={styles.centered}>
+          <LoadingState label="Carregando sessão" variant="form" />
         </View>
       </SafeAreaView>
     );

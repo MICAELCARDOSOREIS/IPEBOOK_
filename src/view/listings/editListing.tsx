@@ -21,9 +21,11 @@ import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
 import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
@@ -33,7 +35,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeEditListingViewModel, makeListingPhotoViewModel } from "@/di/container";
+import { makeEditListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -66,6 +68,7 @@ export default function EditListing({
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeEditListingViewModel(bookId, sessionUserId);
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
@@ -158,9 +161,11 @@ export default function EditListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
         <View style={styles.statusContainer}>
-          <Text accessibilityRole="alert" style={styles.errorText}>
-            {state.error}
-          </Text>
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.load()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.load()} />
+          )}
           {onCancel && (
             <View style={styles.backButtonContainer}>
               <FilledButton label="Voltar" onPress={guardedCancel} />

@@ -10,5 +10,5 @@ export type SearchAlertsScreenProps = {
 };
 export default function SearchAlertsScreen(props: SearchAlertsScreenProps) {
   const [auth] = makeAuthViewModel();
-  return <SearchAlerts {...props} userId={auth.user?.id ?? null} />;
+  return <SearchAlerts {...props} userId={auth.user?.id ?? null} sessionLoading={auth.loading} />;
 }

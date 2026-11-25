@@ -20,6 +20,7 @@ export default function NotificationsScreen({
   return (
     <Notifications
       sessionUserId={authState.user?.id ?? null}
+      sessionLoading={authState.loading}
       onBack={onBack}
       onNavigateToLogin={onNavigateToLogin}
       onNavigateToAction={onNavigateToAction}

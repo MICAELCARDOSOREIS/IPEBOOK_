@@ -3,7 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { Meeting } from "@/model/entities/meeting";
-import { makeAuthViewModel, makeUserMeetingsViewModel } from "@/di/container";
+import { makeAuthViewModel, makeNetworkStatus, makeUserMeetingsViewModel } from "@/di/container";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingWhen } from "@/view/meetingFormat";
@@ -11,6 +11,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
@@ -32,6 +33,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
   const [state, actions] = makeUserMeetingsViewModel(userId);
+  const { isOnline } = makeNetworkStatus();
 
   function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {
     if (meeting.status === "cancelled") {
@@ -72,13 +74,17 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Histórico de encontros" onBack={guardedBack} />
       )}
-      {state.loading ? (
+      {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando encontros…" />
         </View>
       ) : state.error ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
         </View>
       ) : state.meetings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>

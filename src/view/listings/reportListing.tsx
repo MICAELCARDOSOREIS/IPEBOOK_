@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { LoadingState } from "@/view/components/LoadingState";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -19,6 +20,7 @@ export type ReportListingProps = {
   listingId: string;
   listingTitle?: string;
   sessionUserId: string | null;
+  sessionLoading?: boolean;
   onBack: () => void;
   onNavigateToLogin?: () => void;
 };
@@ -31,6 +33,7 @@ export default function ReportListing({
   listingId,
   listingTitle,
   sessionUserId,
+  sessionLoading = false,
   onBack,
   onNavigateToLogin,
 }: ReportListingProps) {
@@ -70,6 +73,17 @@ export default function ReportListing({
             </View>
           </View>
         </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (sessionLoading) {
+    return (
+      <SafeAreaView style={styles.page}>
+        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando sessão" variant="form" />
+        </View>
       </SafeAreaView>
     );
   }

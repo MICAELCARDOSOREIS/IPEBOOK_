@@ -13,5 +13,5 @@ export type FavoritesScreenProps = {
 
 export default function FavoritesScreen(props: FavoritesScreenProps) {
   const [auth] = makeAuthViewModel();
-  return <Favorites {...props} userId={auth.user?.id ?? null} />;
+  return <Favorites {...props} userId={auth.user?.id ?? null} sessionLoading={auth.loading} />;
 }

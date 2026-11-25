@@ -22,6 +22,7 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type SearchAlertsProps = {
   userId: string | null;
+  sessionLoading?: boolean;
   initialQuery?: string;
   onBack: () => void;
   onLogin: () => void;
@@ -35,7 +36,7 @@ export type SearchAlertsProps = {
  * `02.08 · Avisaremos você` (`19:420` / Web `148:968`),
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
-export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
+export default function SearchAlerts({ userId, sessionLoading = false, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedLogin = useGuardedPress(onLogin);
   const guardedSearchBooks = useGuardedPress(onSearchBooks);
@@ -95,7 +96,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         )
       }
     >
-      {!userId ? (
+      {sessionLoading ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando alertas" />
+        </View>
+      ) : !userId ? (
         <View style={[styles.centered, wide && styles.centeredWide]}>
           <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>

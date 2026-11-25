@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
+import { makeAuthViewModel, makeBlockedUsersViewModel, makeNetworkStatus } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -33,6 +34,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   const wide = useIsWideWeb();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBlockedUsersViewModel(sessionUserId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -72,7 +74,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
       )}
-      {state.loading ? (
+      {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
@@ -84,7 +86,11 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
           </Text>
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
         </View>
       ) : state.blockedUsers.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
