@@ -42,6 +42,8 @@ export function useManageListingViewModel(
     removed: false,
   });
   const active = useRef(false);
+  const bookRef = useRef<Book | null>(state.book);
+  bookRef.current = state.book;
 
   const load = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: prev.book === null, error: null }));
@@ -72,7 +74,15 @@ export function useManageListingViewModel(
   }, [bookId, sessionUserId, useCases]);
 
   const togglePause = useCallback(async () => {
-    setState((prev) => ({ ...prev, busy: true, error: null }));
+    const previousBook = bookRef.current;
+    const optimisticBook =
+      previousBook && (previousBook.status === "available" || previousBook.status === "paused")
+        ? {
+            ...previousBook,
+            status: (previousBook.status === "paused" ? "available" : "paused") as Book["status"],
+          }
+        : previousBook;
+    setState((prev) => ({ ...prev, book: optimisticBook, busy: true, error: null }));
     try {
       const updated = await useCases.togglePauseListing(bookId, sessionUserId);
       if (active.current) setState((prev) => ({ ...prev, book: updated, busy: false }));
@@ -81,6 +91,7 @@ export function useManageListingViewModel(
       if (active.current) {
         setState((prev) => ({
           ...prev,
+          book: previousBook,
           busy: false,
           error: error instanceof DomainError ? error.message : ACTION_ERROR,
         }));

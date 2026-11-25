@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
@@ -35,6 +35,8 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
     removingId: null,
     actionError: null,
   });
+  const booksRef = useRef<readonly Book[]>(state.books);
+  booksRef.current = state.books;
   const reload = useCallback(async () => {
     if (!userId) { setState({ books: [], loading: false, error: null, removingId: null, actionError: null }); return; }
     setState((prev) => ({ ...prev, loading: prev.books.length === 0, error: null }));
@@ -58,24 +60,33 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
   }, [userId, useCases, isTest]);
   const removeFavorite = useCallback(async (bookId: string) => {
     if (!userId) return false;
-    setState((prev) => ({ ...prev, removingId: bookId, actionError: null }));
+    const previousBooks = booksRef.current;
+    const optimisticBooks = previousBooks.filter((book) => book.id !== bookId);
+    if (!isTest) sessionFavoritesCache.set(userId, optimisticBooks);
+    setState((prev) => ({
+      ...prev,
+      books: optimisticBooks,
+      removingId: bookId,
+      actionError: null,
+    }));
     try {
       await useCases.toggleFavorite(userId, bookId);
       setState((prev) => ({
         ...prev,
-        books: prev.books.filter((book) => book.id !== bookId),
         removingId: null,
       }));
       return true;
     } catch (error) {
+      if (!isTest) sessionFavoritesCache.set(userId, previousBooks);
       setState((prev) => ({
         ...prev,
+        books: previousBooks,
         removingId: null,
         actionError: error instanceof DomainError ? error.message : "Não foi possível atualizar o favorito.",
       }));
       return false;
     }
-  }, [userId, useCases]);
+  }, [userId, useCases, isTest]);
 
   const clearActionError = useCallback(() => {
     setState((prev) => ({ ...prev, actionError: null }));
