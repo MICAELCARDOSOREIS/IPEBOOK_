@@ -736,6 +736,17 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_notifications?.existe),
     detalhe: 'Política RLS e permissão de exclusão em v2_notifications',
   },
+  '202611250001_endurecimento_seguranca_rls_lgpd.sql': {
+    titulo: 'Endurecimento de segurança, RLS e LGPD',
+    validar: (ctx) =>
+      Boolean(
+        ctx.tabelas.v2_books?.existe &&
+          ctx.tabelas.v2_book_requests?.existe &&
+          ctx.tabelas.v2_search_alerts?.existe &&
+          ctx.tabelas.v2_blocked_users?.existe,
+      ),
+    detalhe: 'Máquina de estados v2_books, webhook_secret, delete_user_account/v2_beta_testers, bloqueio bilateral e limites de alertas (Spec 143 / ADR 0119)',
+  },
 };
 
 /**

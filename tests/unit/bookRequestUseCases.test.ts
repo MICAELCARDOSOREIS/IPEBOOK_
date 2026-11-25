@@ -219,6 +219,13 @@ describe("negociação simples (spec 004)", () => {
       );
     });
 
+    it("sanitiza tags HTML, scripts e caracteres de controle em initialMessage (Spec 143 / M4)", async () => {
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "  <b>Olá!</b><script>alert(1)</script>\x07 Posso retirar hoje?  ",
+      });
+      expect(created.initialMessage).toBe("Olá! Posso retirar hoje?");
+    });
+
     it("rejeita mensagem inicial com mais de 500 caracteres", async () => {
       const longMessage = "a".repeat(501);
       await expect(

@@ -6,8 +6,10 @@ import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
 import { colors } from "@/view/tokens";
 
 jest.mock("expo-file-system/legacy", () => ({
+  cacheDirectory: "file:///cache/",
   documentDirectory: "file:///dados/",
   writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock("expo-sharing", () => ({
   isAvailableAsync: jest.fn().mockResolvedValue(true),

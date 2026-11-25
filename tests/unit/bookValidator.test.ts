@@ -188,8 +188,8 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       expect(result.errors).toHaveLength(0);
     });
 
-    it("rejeita URL de foto de capa que não seja HTTP/HTTPS", () => {
-      const result = validateBookPayload({
+    it("rejeita URL de foto de capa e galeria que não seja HTTPS (Spec 143 / M7)", () => {
+      const ftpResult = validateBookPayload({
         id: "book-photo-bad",
         title: "Livro com URL Ruim",
         author: "Autor",
@@ -197,8 +197,21 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         modality: "donation",
         photoUrl: "ftp://servidor/arquivo.png",
       });
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      expect(ftpResult.isValid).toBe(false);
+      expect(ftpResult.errors).toContain("URL da foto de capa deve ser um endereço HTTPS válido.");
+
+      const httpResult = validateBookPayload({
+        id: "book-photo-http",
+        title: "Livro com HTTP",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        photoUrl: "http://inseguro.example/capa.jpg",
+        photos: ["https://seguro.example/1.jpg", "http://inseguro.example/2.jpg"],
+      });
+      expect(httpResult.isValid).toBe(false);
+      expect(httpResult.errors).toContain("URL da foto de capa deve ser um endereço HTTPS válido.");
+      expect(httpResult.errors).toContain("Cada foto da galeria deve ser um endereço HTTPS válido.");
     });
 
     it("rejeita galeria com mais de 5 fotos", () => {

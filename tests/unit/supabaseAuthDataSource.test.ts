@@ -274,15 +274,73 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     const client = {
       auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
       storage: { from: jest.fn(() => ({ list, remove })) },
-      rpc: jest.fn(async () => { ordem.push("rpc"); return { error: null }; }),
+      rpc: jest.fn(async (fn: string) => {
+        ordem.push(`rpc:${fn}`);
+        return fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null };
+      }),
     } as unknown as SupabaseAppClient;
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
     await ds.deleteAccount("u1");
-    expect(ordem).toEqual(["remove:u1/avatar.jpg,u1/livro1/capa.jpg", "rpc"]);
+    expect(ordem).toEqual([
+      "rpc:v2_current_user_suspended",
+      "remove:u1/avatar.jpg,u1/livro1/capa.jpg",
+      "rpc:delete_user_account",
+    ]);
+  });
+
+  it("não apaga fotos no storage nem exclui a conta quando o usuário está suspenso (Spec 143 / A3)", async () => {
+    const list = jest.fn();
+    const remove = jest.fn();
+    const rpc = jest.fn(async (fn: string) => {
+      if (fn === "v2_current_user_suspended") return { data: true, error: null };
+      return { error: null };
+    });
+    const client = {
+      auth: { signOut: jest.fn() },
+      storage: { from: jest.fn(() => ({ list, remove })) },
+      rpc,
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+
+    await expect(ds.deleteAccount("u1")).rejects.toThrow("Conta suspensa não pode ser excluída pelo app.");
+    expect(list).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("v2_current_user_suspended");
+  });
+
+  it("pagina bucket.list e remove todas as fotos em lotes quando ultrapassam 100 arquivos (Spec 143 / A3)", async () => {
+    const firstPage = Array.from({ length: 100 }, (_, i) => ({ name: `foto-${i}.jpg`, id: `id-${i}` }));
+    const secondPage = [{ name: "foto-100.jpg", id: "id-100" }];
+    const list = jest.fn(async (_prefix: string, options?: { limit?: number; offset?: number }) => {
+      if (options?.offset === 0) return { data: firstPage, error: null };
+      if (options?.offset === 100) return { data: secondPage, error: null };
+      return { data: [], error: null };
+    });
+    const removedBatches: number[] = [];
+    const remove = jest.fn(async (paths: string[]) => {
+      removedBatches.push(paths.length);
+      return { error: null };
+    });
+    const client = {
+      auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
+      storage: { from: jest.fn(() => ({ list, remove })) },
+      rpc: jest.fn(async (fn: string) =>
+        fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null },
+      ),
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+
+    await ds.deleteAccount("u1");
+    expect(list).toHaveBeenCalledWith("u1", { limit: 100, offset: 0 });
+    expect(list).toHaveBeenCalledWith("u1", { limit: 100, offset: 100 });
+    expect(removedBatches).toEqual([100, 1]);
   });
 
   it("não exclui a conta quando a limpeza do storage falha", async () => {
-    const rpc = jest.fn();
+    const rpc = jest.fn(async (fn: string) =>
+      fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null },
+    );
     const client = {
       auth: { signOut: jest.fn() },
       storage: {
@@ -296,6 +354,6 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
 
     await expect(ds.deleteAccount("u1")).rejects.toBeInstanceOf(AuthError);
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalledWith("delete_user_account", expect.anything());
   });
 });

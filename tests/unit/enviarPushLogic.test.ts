@@ -1,7 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
+  PUSH_ACCEPTED_RESPONSE,
+  PUSH_WEBHOOK_HEADER,
   buildPushMessage,
   channelOf,
+  constantTimeEqual,
   NOTIFICATION_CHANNEL,
+  isAuthorizedWebhookSecret,
   isExpoPushToken,
   isInvalidTokenTicket,
   isTypeMuted,
@@ -111,5 +117,43 @@ describe("função enviar-push: lógica pura (Spec 096)", () => {
     for (const ruim of [null, undefined, "n1", 3, {}, { id: 5 }, { id: "  " }, { id: "x".repeat(65) }]) {
       expect(parseRequestId(ruim)).toBeNull();
     }
+  });
+
+  describe("autenticação de webhook e ausência de oráculo (Spec 143 / A2)", () => {
+    it("compara segredos em tempo constante corretamente", () => {
+      expect(constantTimeEqual("segredo-123", "segredo-123")).toBe(true);
+      expect(constantTimeEqual("segredo-123", "segredo-124")).toBe(false);
+      expect(constantTimeEqual("segredo-123", "segredo-1234")).toBe(false);
+      expect(constantTimeEqual("segredo-çã", "segredo-çã")).toBe(true);
+      expect(constantTimeEqual("", "")).toBe(false);
+      expect(constantTimeEqual("abc", "")).toBe(false);
+    });
+
+    it("autoriza somente quando PUSH_WEBHOOK_SECRET configurado coincide com o cabeçalho", () => {
+      expect(PUSH_WEBHOOK_HEADER).toBe("x-push-webhook-secret");
+      expect(PUSH_ACCEPTED_RESPONSE).toEqual({ processado: true });
+      expect(isAuthorizedWebhookSecret("segredo-forte", "segredo-forte")).toBe(true);
+      expect(isAuthorizedWebhookSecret("segredo-errado", "segredo-forte")).toBe(false);
+      expect(isAuthorizedWebhookSecret(null, "segredo-forte")).toBe(false);
+      expect(isAuthorizedWebhookSecret("", "segredo-forte")).toBe(false);
+      expect(isAuthorizedWebhookSecret("segredo-forte", undefined)).toBe(false);
+      expect(isAuthorizedWebhookSecret("segredo-forte", "   ")).toBe(false);
+    });
+
+    it("valida PUSH_WEBHOOK_SECRET antes de consultar o banco e não expõe oráculos em index.ts", () => {
+      const source = readFileSync(join(process.cwd(), "supabase/functions/enviar-push/index.ts"), "utf-8");
+      const serveBody = source.slice(source.indexOf("Deno.serve"));
+      const authPos = serveBody.indexOf("isAuthorizedWebhookSecret");
+      const dbPos = serveBody.indexOf("createClient(");
+      expect(authPos).toBeGreaterThan(-1);
+      expect(dbPos).toBeGreaterThan(authPos);
+      expect(source).toContain('Deno.env.get("PUSH_WEBHOOK_SECRET")');
+      expect(source).toContain("reply(401");
+      expect(source).not.toContain("aviso inexistente");
+      expect(source).not.toContain("pessoa sem token");
+      expect(source).not.toContain("tipo de aviso desativado");
+      expect(source).not.toContain("envio reivindicado");
+      expect(source).not.toContain("token inválido removido");
+    });
   });
 });

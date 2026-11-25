@@ -25,7 +25,7 @@ const MAX_PHOTO_URL_LENGTH = 2048;
 function isValidHttpUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
+    return parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -123,7 +123,7 @@ export function validateBookPayload(input: unknown): BookValidationResult {
     } else if (raw.photoUrl.length > MAX_PHOTO_URL_LENGTH) {
       errors.push(`URL da foto de capa deve conter no máximo ${MAX_PHOTO_URL_LENGTH} caracteres.`);
     } else if (!isValidHttpUrl(raw.photoUrl)) {
-      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("URL da foto de capa deve ser um endereço HTTPS válido.");
     }
   }
 
@@ -142,7 +142,7 @@ export function validateBookPayload(input: unknown): BookValidationResult {
           errors.push(`Cada URL de foto deve conter no máximo ${MAX_PHOTO_URL_LENGTH} caracteres.`);
           break;
         } else if (!isValidHttpUrl(item)) {
-          errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
+          errors.push("Cada foto da galeria deve ser um endereço HTTPS válido.");
           break;
         }
       }
@@ -210,7 +210,7 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
 
   if (raw.photoUrl !== undefined && raw.photoUrl !== null && raw.photoUrl !== "") {
     if (typeof raw.photoUrl !== "string" || !isValidHttpUrl(raw.photoUrl)) {
-      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("URL da foto de capa deve ser um endereço HTTPS válido.");
     }
   }
 
@@ -218,7 +218,7 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
     if (!Array.isArray(raw.photos) || raw.photos.length > MAX_PHOTOS) {
       errors.push(`Galeria de fotos deve ser uma lista de no máximo ${MAX_PHOTOS} itens.`);
     } else if (raw.photos.some((item) => typeof item !== "string" || !isValidHttpUrl(item))) {
-      errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("Cada foto da galeria deve ser um endereço HTTPS válido.");
     }
   }
 

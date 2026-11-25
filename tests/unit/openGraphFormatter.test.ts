@@ -95,4 +95,46 @@ describe("openGraphFormatter (Spec 119, ADR 0093)", () => {
     expect(htmlResultado).toContain('<meta property="og:url" content="https://ipebook.app/livro/abc" />');
     expect(htmlResultado).toContain("</head>");
   });
+
+  it("exige https:// em photoUrl e recorre à capa ilustrativa para http:// ou outros esquemas (Spec 143 / M5)", () => {
+    const httpMeta = buildBookOpenGraph({
+      id: "livro-http",
+      title: "Vidas Secas",
+      author: "Graciliano Ramos",
+      tradeType: "donation",
+      photoUrl: "http://inseguro.example/capa.jpg",
+    });
+    expect(httpMeta.image).toBe(getIllustrativeCoverUrl("livro-http"));
+
+    const protoMeta = buildBookOpenGraph({
+      id: "livro-proto",
+      title: "Vidas Secas",
+      author: "Graciliano Ramos",
+      tradeType: "donation",
+      photoUrl: "https:invalido",
+    });
+    expect(protoMeta.image).toBe(getIllustrativeCoverUrl("livro-proto"));
+  });
+
+  it("neutraliza padrões especiais de String.prototype.replace ($&, $`, $') em injectOpenGraphIntoHtml (Spec 143 / M5)", () => {
+    const meta = buildBookOpenGraph({
+      id: "livro-dollar",
+      title: "Preço $& e $` e $'",
+      author: "Autor $&",
+      tradeType: "sell",
+      price: 10,
+    });
+    const comTitle = "<!DOCTYPE html><html><head><title>Antigo</title></head><body>Corpo</body></html>";
+    const resComTitle = injectOpenGraphIntoHtml(comTitle, meta);
+    expect(resComTitle).toContain("<title>Preço $&amp; e $` e $&#39; · Autor $&amp; | IpêBook Piripiri</title>");
+    expect(resComTitle).not.toContain("<title>Antigo</title>");
+    expect(resComTitle.match(/<!DOCTYPE html>/g)).toHaveLength(1);
+    expect(resComTitle.match(/<\/head>/g)).toHaveLength(1);
+
+    const semTitle = "<!DOCTYPE html><html><head></head><body>Corpo</body></html>";
+    const resSemTitle = injectOpenGraphIntoHtml(semTitle, meta);
+    expect(resSemTitle).toContain("<title>Preço $&amp; e $` e $&#39; · Autor $&amp; | IpêBook Piripiri</title>");
+    expect(resSemTitle.match(/<head>/g)).toHaveLength(1);
+    expect(resSemTitle.match(/<\/head>/g)).toHaveLength(1);
+  });
 });
