@@ -46,12 +46,24 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     );
   });
 
-  it("encerra a sessão ao sair e volta ao estado de visitante", async () => {
-    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+  it("encerra a sessão ao sair, limpa o cache local de livros e volta ao estado de visitante", async () => {
+    const clearBooksCache = jest.fn().mockResolvedValue(undefined);
+    const useCases = new AuthUseCases(new MemoryAuthDataSource(), undefined, { clearBooksCache });
     await useCases.signUp("pessoa@exemplo.com", "12345678", "Leitora Teste");
 
     await useCases.signOut();
 
+    expect(clearBooksCache).toHaveBeenCalledTimes(1);
+    await expect(useCases.getSession()).resolves.toBeNull();
+  });
+
+  it("não falha o logout se a limpeza do cache local lançar erro após encerrar a sessão", async () => {
+    const clearBooksCache = jest.fn().mockRejectedValue(new Error("storage indisponível"));
+    const useCases = new AuthUseCases(new MemoryAuthDataSource(), undefined, { clearBooksCache });
+    await useCases.signUp("pessoa@exemplo.com", "12345678", "Leitora Teste");
+
+    await expect(useCases.signOut()).resolves.toBeUndefined();
+    expect(clearBooksCache).toHaveBeenCalledTimes(1);
     await expect(useCases.getSession()).resolves.toBeNull();
   });
 

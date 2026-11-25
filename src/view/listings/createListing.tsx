@@ -76,6 +76,7 @@ export default function CreateListing({
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
   const [confirmSaveForLater, setConfirmSaveForLater] = useState(false);
+  const [localDraftSavedNotice, setLocalDraftSavedNotice] = useState(false);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
   const [basicsTouched, setBasicsTouched] = useState(false);
@@ -191,11 +192,17 @@ export default function CreateListing({
     }
   };
 
+  useEffect(() => {
+    if (isOnline) setLocalDraftSavedNotice(false);
+  }, [isOnline]);
+
   const handleSaveForLater = async () => {
     if (!isOnline) {
       await actions.saveDraft();
+      setLocalDraftSavedNotice(true);
       return;
     }
+    setLocalDraftSavedNotice(false);
     const saved = await actions.saveForLater(sessionUserId, step);
     if (saved) {
       guardedCancel();
@@ -343,6 +350,7 @@ export default function CreateListing({
                 accessibilityLabel="Limpar rascunho"
                 onPress={() => {
                   actions.reset();
+                  setLocalDraftSavedNotice(false);
                   setBasicsTouched(false);
                   setStep(1);
                 }}
@@ -506,7 +514,11 @@ export default function CreateListing({
       {!wideWeb && isKeyboardVisible ? null : (
         <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
           <View style={styles.actionBarInner}>
-            {!isOnline && step === 3 ? (
+            {localDraftSavedNotice ? (
+              <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
+                Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar.
+              </Text>
+            ) : !isOnline && step === 3 ? (
               <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
                 Conecte-se à internet para publicar.
               </Text>
@@ -516,7 +528,7 @@ export default function CreateListing({
                 <View style={styles.webSecondaryActions}>
                   <TextButton
                     label="Salvar para depois"
-                    disabled={state.loading || !isOnline}
+                    disabled={state.loading}
                     onPress={() => void handleSaveForLater()}
                   />
                 </View>
@@ -573,7 +585,7 @@ export default function CreateListing({
                   <TextButton
                     label="Salvar rascunho"
                     accessibilityLabel="Salvar rascunho para depois"
-                    disabled={state.loading || !isOnline}
+                    disabled={state.loading}
                     onPress={() => {
                       if (Platform.OS === "ios") setConfirmSaveForLater(true);
                       else void handleSaveForLater();
@@ -589,7 +601,11 @@ export default function CreateListing({
         <Dialog
           visible
           title="Salvar para depois?"
-          message="Seu anúncio ficará em Rascunhos para você continuar quando quiser."
+          message={
+            isOnline
+              ? "Seu anúncio ficará em Rascunhos para você continuar quando quiser."
+              : "Sem internet agora: o rascunho ficará salvo neste aparelho para você continuar depois."
+          }
           confirmLabel="Salvar rascunho"
           cancelLabel="Continuar editando"
           onConfirm={() => {

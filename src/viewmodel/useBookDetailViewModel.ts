@@ -3,6 +3,7 @@ import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
+import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 import { getCachedCatalogBookById } from "@/viewmodel/useHomeViewModel";
 import { getCachedMyListingById } from "@/viewmodel/useMyListingsViewModel";
 
@@ -24,6 +25,10 @@ export type BookDetailActions = {
 const GENERIC_ERROR = "Não foi possível carregar o anúncio. Tente novamente.";
 const sessionBookDetailCache = new Map<string, Book>();
 
+registerBooksMemoryCache(() => {
+  sessionBookDetailCache.clear();
+});
+
 export function useBookDetailViewModel(
   bookId: string,
   useCases: IBookUseCases,
@@ -34,7 +39,7 @@ export function useBookDetailViewModel(
   const initialBook = !isTest
     ? (sessionBookDetailCache.get(bookId) ??
       getCachedCatalogBookById(bookId) ??
-      getCachedMyListingById(bookId))
+      getCachedMyListingById(bookId, userId))
     : null;
   const [state, setState] = useState<BookDetailState>({
     book: initialBook,

@@ -7,6 +7,7 @@ import type { AppNotification } from "@/model/entities/notification";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type NotificationFilter = "all" | "unread";
 
@@ -38,6 +39,10 @@ export type NotificationsActions = {
 };
 
 const sessionNotificationsCache = new Map<string, readonly AppNotification[]>();
+
+registerSessionMemoryCache(() => {
+  sessionNotificationsCache.clear();
+});
 
 export function clearSessionNotificationsCache(userId?: string): void {
   if (userId) {

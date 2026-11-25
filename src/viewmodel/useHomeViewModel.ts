@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type HomeState = {
   books: readonly Book[];
@@ -17,6 +18,11 @@ export type HomeActions = {
 let sessionBooksCache: readonly Book[] | null = null;
 let lastSessionBooksLoadAt = 0;
 const CATALOG_CACHE_TTL_MS = 60_000; // 1 minuto de frescor para navegação instantânea entre abas
+
+registerBooksMemoryCache(() => {
+  sessionBooksCache = null;
+  lastSessionBooksLoadAt = 0;
+});
 
 export function getCachedCatalogBookById(bookId: string): Book | null {
   if (process.env.NODE_ENV === "test" || !sessionBooksCache) return null;

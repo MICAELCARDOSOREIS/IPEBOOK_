@@ -104,7 +104,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     try {
       const screen = await render(<Home />);
       expect(screen.getAllByText("Vidas Secas").length).toBeGreaterThan(0);
-      expect(screen.getByText(/Catálogo salvo às .*Conecte-se para carregar mais/)).toBeDefined();
+      expect(screen.getByText(/Catálogo salvo em \d{2}\/\d{2} às .*Conecte-se para carregar mais/)).toBeDefined();
       expect(reload).not.toHaveBeenCalled();
 
       network.mockReturnValue({ isOnline: true });

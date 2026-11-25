@@ -521,7 +521,7 @@ export default function Home({
         </ScrollView>
       )}
 
-      <CachedBookNotice cachedAt={state.cachedAt} catalog />
+      <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
       {state.loading ? (
         <LoadingState label="Carregando livros" variant="homeCarousel" />

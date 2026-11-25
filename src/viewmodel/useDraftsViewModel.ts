@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type DraftsState = {
   drafts: readonly Book[];
@@ -22,6 +23,10 @@ export type DraftsActions = {
  * expõe o estado vazio para a tela não-autenticada ou sem rascunhos.
  */
 const sessionDraftsCache = new Map<string, readonly Book[]>();
+
+registerSessionMemoryCache(() => {
+  sessionDraftsCache.clear();
+});
 
 export function useDraftsViewModel(
   sessionUserId: string | null,

@@ -63,6 +63,19 @@ conferir(
     !item?.some(({ $ }) => atributosDeJanelaLegados.has($.name))),
   "os estilos gerados pelo Expo ainda declaram atributos legados de ponta a ponta.",
 );
+const estiloSistemaAndroid = configNativa.android.strings?.resources?.string?.find(
+  ({ $ }) => $.name === "expo_system_ui_user_interface_style",
+)?._;
+const corFundoJanelaAndroid = configNativa.android.colors?.resources?.color?.find(
+  ({ $ }) => $.name === "activityBackground",
+)?._;
+conferir(
+  "Tema claro exclusivo travado no prebuild Android (ADR 0114 / expo-system-ui)",
+  app.userInterfaceStyle === "light" &&
+    estiloSistemaAndroid === "light" &&
+    corFundoJanelaAndroid?.toUpperCase() === "#FCFAF5",
+  `esperado expo_system_ui_user_interface_style="light" e activityBackground="#FCFAF5" (obtido: style="${estiloSistemaAndroid ?? "ausente"}", bg="${corFundoJanelaAndroid ?? "ausente"}"). Verifique se expo-system-ui está instalado.`,
+);
 
 console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
 /** Rotas de `src/app` com segmento dinâmico (`livro/[id].tsx`, `negociacao/[id]/entrega.tsx`). */

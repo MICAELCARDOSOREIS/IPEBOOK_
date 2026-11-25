@@ -263,7 +263,7 @@ export default function Search({
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
     <View style={[styles.filters, wideWeb && styles.filtersWide]}>
-      <CachedBookNotice cachedAt={state.cachedAt} catalog />
+      <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
       {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
       <View style={styles.topBar}>
         <Pressable

@@ -604,4 +604,75 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
       wideSpy.mockRestore();
     }
   });
+
+  it("permite salvar rascunho localmente quando está sem conexão, limpa aviso no botão Limpar e na reconexão", async () => {
+    const netSpy = jest.spyOn(container, "makeNetworkStatus").mockReturnValue({ isOnline: false });
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
+      });
+      expect(
+        screen.getByText("Sem internet agora: o rascunho ficará salvo neste aparelho para você continuar depois."),
+      ).toBeDefined();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho" }));
+      });
+
+      expect(actions.saveDraft).toHaveBeenCalled();
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      expect(
+        screen.getByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeDefined();
+
+      // Clicar em Limpar deve apagar o aviso de rascunho salvo localmente.
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Limpar rascunho" }));
+      });
+      expect(actions.reset).toHaveBeenCalledTimes(1);
+      expect(
+        screen.queryByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeNull();
+    } finally {
+      netSpy.mockRestore();
+    }
+  });
+
+  it("salva rascunho direto sem diálogo na web larga offline e limpa aviso ao reconectar", async () => {
+    const wideSpy = jest.spyOn(useIsWideWebModule, "useIsWideWeb").mockReturnValue(true);
+    let online = false;
+    const netSpy = jest.spyOn(container, "makeNetworkStatus").mockImplementation(() => ({ isOnline: online }));
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar para depois" }));
+      });
+      expect(actions.saveDraft).toHaveBeenCalled();
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      expect(
+        screen.getByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeDefined();
+
+      online = true;
+      await screen.rerender(
+        <CreateListing
+          sessionUserId="user-1"
+          onCreated={jest.fn()}
+          onCancel={jest.fn()}
+          onViewMyListings={jest.fn()}
+          onGoHome={jest.fn()}
+        />,
+      );
+      expect(
+        screen.queryByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeNull();
+    } finally {
+      wideSpy.mockRestore();
+      netSpy.mockRestore();
+    }
+  });
 });

@@ -1,6 +1,7 @@
 import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { DomainError } from "@/model/errors";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type { RequestWithListing };
 
@@ -14,6 +15,10 @@ export type RequestListState = ListState<RequestWithListing>;
 
 const LOAD_ERROR = "Não foi possível carregar os pedidos. Tente novamente.";
 const sessionRequestListCache = new Map<string, readonly unknown[]>();
+
+registerSessionMemoryCache(() => {
+  sessionRequestListCache.clear();
+});
 
 export function messageOf(error: unknown, fallback: string): string {
   return error instanceof DomainError ? error.message : fallback;

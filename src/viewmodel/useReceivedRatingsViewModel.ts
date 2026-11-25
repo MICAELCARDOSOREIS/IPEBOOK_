@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DomainError } from "@/model/errors";
 import type { IRatingUseCases, ReceivedRating } from "@/usecase/iRatingUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type ReceivedRatingsState = {
   ratings: readonly ReceivedRating[];
@@ -14,6 +15,10 @@ export type ReceivedRatingsActions = {
 
 const GENERIC_ERROR = "Não foi possível carregar suas avaliações. Tente novamente.";
 const sessionRatingsCache = new Map<string, readonly ReceivedRating[]>();
+
+registerSessionMemoryCache(() => {
+  sessionRatingsCache.clear();
+});
 
 export function useReceivedRatingsViewModel(
   sessionUserId: string | null,

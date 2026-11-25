@@ -30,7 +30,7 @@ export function useManageListingViewModel(
 ): [ManageListingState, ManageListingActions] {
   const isTest = process.env.NODE_ENV === "test";
   const cachedBook = !isTest
-    ? (getCachedMyListingById(bookId) ?? getCachedCatalogBookById(bookId))
+    ? (getCachedMyListingById(bookId, sessionUserId) ?? getCachedCatalogBookById(bookId))
     : null;
   const initialBook =
     cachedBook && (!sessionUserId || cachedBook.ownerId === sessionUserId) ? cachedBook : null;

@@ -398,6 +398,7 @@ function createStyles(colors: ColorPalette) {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[8],
+    minHeight: accessibility.touchTarget,
     borderWidth: 1,
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[16],
