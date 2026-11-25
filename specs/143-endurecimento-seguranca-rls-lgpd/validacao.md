@@ -22,11 +22,15 @@
 - `npm run validate` — **aprovado (exit 0)**: `typecheck`, `lint` (0 erros), `check:architecture` (0 violações em 497 arquivos), `check:design-system`, `check:numbering` (142 specs e 119 ADRs sem colisão), `check:build-config`, `test:sql` (44 migrações no PGlite com todos os vetores A1–A3/M4/M6/M7 validados), `test:coverage` (**318/318 suítes, 2.361/2.361 testes**; cobertura **95,29% statements, 85,65% branches, 85,84% functions, 95,29% lines**) e `check:docs` (`Documentação sincronizada: 2361 testes em 318 arquivos, 44 migrações, 46 rotas, 142 specs, 119 ADRs.`).
 - `npm run test:e2e:build` — **aprovado (exit 0)**: exportação Web estática (`dist-e2e/` incluindo `dist-e2e/sw-register.js`) e suíte Chrome CDP (**8/8 cenários aprovados**).
 
-## Pendências de implantação remota (T008 — fora do escopo local)
+## Implantação remota executada (T008 — 2026-11-25)
 
-As alterações de produção no Supabase e Cloudflare Pages permanecem pendentes de autorização explícita:
-1. Aplicar a migração `202611250001_endurecimento_seguranca_rls_lgpd.sql` no Supabase remoto (`supabase db push`).
-2. Configurar o segredo dedicado na Edge Function: `supabase secrets set PUSH_WEBHOOK_SECRET=<segredo-aleatorio-forte>`.
-3. Reimplantar a Edge Function `enviar-push` (`supabase functions deploy enviar-push`).
-4. Atualizar `public.v2_push_settings.webhook_secret` no banco remoto com o mesmo segredo configurado no passo 2.
-5. Validar o ambiente remoto com `npm run health:supabase:remote` e publicar a nova compilação Web (`npm run build:web`) no Cloudflare Pages para ativar `public/_headers`, `public/sw-register.js` e `functions/livro/[id].ts`.
+1. `git push origin develop` concluído após aprovação do hook `ci:local` (11/11 etapas, incluindo `validate` e `build:web`).
+2. Histórico de migrações reconciliado (`supabase migration repair --status applied` para `202610260003`–`202611060002`, já aplicadas anteriormente) e migração `202611250001_endurecimento_seguranca_rls_lgpd.sql` aplicada via `supabase db push` no projeto `xiuuiggpccpgrwkzeloc`.
+3. Segredo dedicado `PUSH_WEBHOOK_SECRET` (32 bytes aleatórios em hexadecimal) configurado via `supabase secrets set --env-file` (sem exposição em logs ou histórico) e replicado em `public.v2_push_settings.webhook_secret`.
+4. Edge Function `enviar-push` reimplantada (`supabase functions deploy enviar-push`, mantendo `verify_jwt: true`).
+5. Verificação ao vivo aprovada:
+   - Consulta SQL confirmou `push_secret_ok = 1`, `v2_has_block_with_listing_owner`, `v2_valid_https_photos`, constraint `v2_books_photos_https_max5` e trigger `v2_search_alerts_rate_limit` (`BEFORE INSERT OR UPDATE OF active`).
+   - Sondas HTTP POST em `/functions/v1/enviar-push` sem cabeçalho `X-Push-Webhook-Secret` e com valor inválido retornaram `HTTP 401` (`{"erro":"Não autorizado."}`).
+   - `npm run health:supabase:remote` aprovado (**44/44 migrações sincronizadas**, Storage e RPCs OK).
+
+**Pendência remota restante fora do escopo Supabase:** republicar a compilação Web (`npm run build:web`) no Cloudflare Pages para ativar `WEB_BETA_ONLY=false`, `public/_headers`, `public/sw-register.js` e `functions/livro/[id].ts` em `https://ipebook.app`.
