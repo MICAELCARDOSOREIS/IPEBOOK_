@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -29,6 +29,26 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
   };
 }
 
+const carouselStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getCarouselStyles(colors: ColorPalette) {
+  let cached = carouselStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    carouselStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+const modalityTagCache = new WeakMap<ColorPalette, ReturnType<typeof createModalityTag>>();
+function getModalityTag(colors: ColorPalette) {
+  let cached = modalityTagCache.get(colors);
+  if (!cached) {
+    cached = createModalityTag(colors);
+    modalityTagCache.set(colors, cached);
+  }
+  return cached;
+}
+
 const CAROUSEL_ITEM_WIDTH = 168;
 const CAROUSEL_ITEM_GAP = tokens.spacing[12];
 const CAROUSEL_ITEM_STRIDE = CAROUSEL_ITEM_WIDTH + CAROUSEL_ITEM_GAP;
@@ -52,7 +72,7 @@ export type CatalogCarouselProps = {
 /**
  * Seção destacada da Home (Figma `02.01 · Início`, `02.02 · Explorar por seção`).
  */
-export function CatalogCarousel({
+function CatalogCarouselComponent({
   title,
   displayTitle,
   badgeText,
@@ -69,8 +89,8 @@ export function CatalogCarousel({
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
+  const styles = getCarouselStyles(colors);
+  const modalityTag = getModalityTag(colors);
   const windowWidth = useHydratedWindowWidth();
   const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
   const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
@@ -302,6 +322,9 @@ export function CatalogCarousel({
   );
 }
 
+export const CatalogCarousel = memo(CatalogCarouselComponent);
+CatalogCarousel.displayName = "CatalogCarousel";
+
 export type HomeShortcutsSectionProps = {
   wideWeb: boolean;
   donationSummary: string;
@@ -322,7 +345,7 @@ export function HomeShortcutsSection({
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getCarouselStyles(colors);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
   if (wideWeb) {
@@ -434,7 +457,7 @@ export function HomeEmptyCatalogSection({
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getCarouselStyles(colors);
 
   const isFilteredByModalityOnly =
     hasAnyBooks && !isSpecificNeighborhood && selectedModality !== "all";

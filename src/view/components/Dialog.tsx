@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -64,6 +64,16 @@ export function useModalFocusTrap(
   }, [visible, disabled, isWeb]);
 
   useEffect(() => {
+    if (!isWeb) return;
+    return () => {
+      if (triggerRef.current) {
+        focusSafely(triggerRef.current);
+        triggerRef.current = null;
+      }
+    };
+  }, [isWeb]);
+
+  useEffect(() => {
     if (!isWeb || !visible) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -99,11 +109,26 @@ export type DialogProps = {
   onCancel: () => void;
 };
 
+const dialogStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getDialogStyles(colors: ColorPalette) {
+  let cached = dialogStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    dialogStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Diálogo do design system (design-system/04-componentes/dialogo.md).
  * Usado para confirmação de ações irreversíveis ou destrutivas (ex: exclusão de anúncio).
  */
-export function Dialog({
+export function Dialog(props: DialogProps) {
+  if (!props.visible) return null;
+  return <DialogContent {...props} />;
+}
+
+function DialogContent({
   visible,
   title,
   message,
@@ -122,7 +147,7 @@ export function Dialog({
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDialogStyles(colors);
   const guardedCancel = useGuardedPress(onCancel);
   const guardedConfirm = useGuardedPress(onConfirm);
 

@@ -72,7 +72,22 @@ const PIRIPIRI_LOCATIONS: readonly LocationItem[] = [
   },
 ];
 
-export function NeighborhoodSelectorModal({
+const neighborhoodModalStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getNeighborhoodModalStyles(colors: ColorPalette) {
+  let cached = neighborhoodModalStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    neighborhoodModalStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+export function NeighborhoodSelectorModal(props: NeighborhoodSelectorModalProps) {
+  if (!props.visible) return null;
+  return <NeighborhoodSelectorModalContent {...props} />;
+}
+
+function NeighborhoodSelectorModalContent({
   visible,
   currentNeighborhood = "all",
   onSelect,
@@ -81,7 +96,7 @@ export function NeighborhoodSelectorModal({
 }: NeighborhoodSelectorModalProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getNeighborhoodModalStyles(colors);
   const [filterText, setFilterText] = useState("");
   const wideWeb = useIsWideWeb();
 

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -22,11 +22,26 @@ export type ProfileSafetySheetProps = {
   onClose: () => void;
 };
 
+const profileSafetyStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getProfileSafetyStyles(colors: ColorPalette) {
+  let cached = profileSafetyStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    profileSafetyStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Folha "Denunciar ou bloquear" do perfil público (Spec 091): bloquear a pessoa (com confirmação) ou
  * denunciar um dos anúncios dela, que é onde a denúncia existe no app.
  */
-export function ProfileSafetySheet({
+export function ProfileSafetySheet(props: ProfileSafetySheetProps) {
+  if (!props.visible) return null;
+  return <ProfileSafetySheetContent {...props} />;
+}
+
+function ProfileSafetySheetContent({
   visible,
   personName,
   listings,
@@ -40,7 +55,7 @@ export function ProfileSafetySheet({
   onClose,
 }: ProfileSafetySheetProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getProfileSafetyStyles(colors);
   const wideWeb = useIsWideWeb();
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [choosingListing, setChoosingListing] = useState(false);

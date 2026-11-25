@@ -17,6 +17,16 @@ import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 /** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
 const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
 
+const detailSectionStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getDetailSectionStyles(colors: ColorPalette) {
+  let cached = detailSectionStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    detailSectionStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Card do anunciante (Figma `03.01 · O Pequeno Príncipe`, nó `Material 3 · Link · Anunciante`).
  */
@@ -28,7 +38,7 @@ export function SellerCard({
   onPress?: () => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDetailSectionStyles(colors);
   const name = profile?.name?.trim();
   const label = name ? `Anunciado por ${name}` : OWNER_FALLBACK_LABEL;
 
@@ -83,7 +93,7 @@ export function HeroIconButton({
   buttonRef?: RefObject<ComponentRef<typeof View> | null>;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDetailSectionStyles(colors);
   return (
     <Pressable
       ref={buttonRef}
@@ -123,7 +133,7 @@ export function DetailRow({
   iconColor?: string;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDetailSectionStyles(colors);
   return (
     <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
       <View
@@ -182,7 +192,7 @@ export function BookDetailHeroSection({
   onOpenGallery,
 }: BookDetailHeroSectionProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDetailSectionStyles(colors);
   const sidePhotos = useMemo(() => extractBookSidePhotos(book?.photos), [book?.photos]);
 
   return (
@@ -286,7 +296,7 @@ export function ShareListingFeedback({ state, onDismissCopied, onDismissError, s
   shareButtonRef: RefObject<ComponentRef<typeof View> | null>;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getDetailSectionStyles(colors);
   const linkRef = useRef<ComponentRef<typeof TextInput>>(null);
   const { manualShareLink, linkCopied, error } = state;
 

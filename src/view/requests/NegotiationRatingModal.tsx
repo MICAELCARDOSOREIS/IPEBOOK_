@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -21,11 +20,26 @@ export type NegotiationRatingModalProps = {
 
 const SCORES = [1, 2, 3, 4, 5] as const;
 
+const ratingModalStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getRatingModalStyles(colors: ColorPalette) {
+  let cached = ratingModalStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    ratingModalStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Modal para avaliar a negociação presencial (Spec 063 / ADR 0046).
  * Telas Figma 06.21 (Avaliar negociação) e 06.22 (Avaliação enviada).
  */
-export function NegotiationRatingModal({
+export function NegotiationRatingModal(props: NegotiationRatingModalProps) {
+  if (!props.visible) return null;
+  return <NegotiationRatingModalContent {...props} />;
+}
+
+function NegotiationRatingModalContent({
   visible,
   counterpartName,
   selectedScore,
@@ -37,7 +51,7 @@ export function NegotiationRatingModal({
   isSuccess,
 }: NegotiationRatingModalProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getRatingModalStyles(colors);
 
   return (
     <Modal

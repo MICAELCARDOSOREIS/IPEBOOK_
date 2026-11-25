@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ImageSource } from "@/model/services/iImagePickerService";
@@ -26,13 +26,28 @@ const bookPhotoTips = {
   back: "Fotografe a contracapa de frente, com todas as bordas no quadro. Evite reflexos sobre o texto.",
 };
 
+const photoSourceStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getPhotoSourceStyles(colors: ColorPalette) {
+  let cached = photoSourceStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    photoSourceStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /** Folha inferior "Tirar foto" ou "Escolher da galeria", igual à escolha da foto de perfil. */
-export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, onChoose, onClose }: PhotoSourceSheetProps) {
+export function PhotoSourceSheet(props: PhotoSourceSheetProps) {
+  if (!props.visible) return null;
+  return <PhotoSourceSheetContent {...props} />;
+}
+
+function PhotoSourceSheetContent({ visible, title = "Adicionar foto", bookSide, onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getPhotoSourceStyles(colors);
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const cameraRef = useRef<FocusableElement | null>(null);
