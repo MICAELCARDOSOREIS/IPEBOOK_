@@ -31,6 +31,8 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isIos = Platform.OS === "ios";
 
+  if (!visible) return null;
+
   return (
     <BottomSheet
       visible={visible}

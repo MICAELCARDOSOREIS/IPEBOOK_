@@ -82,6 +82,17 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     expect(queryByText("Ordenar por")).toBeNull();
   });
 
+  it("SortSheet não monta conteúdo quando visible=false", async () => {
+    const { queryByTestId, queryByText } = await render(
+      <ThemeProvider>
+        <SortSheet visible={false} selected="recent" onSelect={jest.fn()} onClose={jest.fn()} />
+      </ThemeProvider>,
+    );
+
+    expect(queryByTestId("sort-sheet")).toBeNull();
+    expect(queryByText("Menor preço")).toBeNull();
+  });
+
   it("WebFilterSidebar exibe seção 'Ordenar por' e dispara onSortChange", async () => {
     const onSortChange = jest.fn();
 

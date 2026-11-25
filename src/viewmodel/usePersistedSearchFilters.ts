@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DEFAULT_SEARCH_FILTERS, SORT_IDS, type SearchFilters, type SearchSortOption } from "@/viewmodel/searchFilters";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export const SEARCH_FILTERS_STORAGE_KEY = "@ipebook:search_filters";
 
@@ -18,15 +19,26 @@ export type UsePersistedSearchFiltersResult = {
   persist: (filters: SearchFilters, sortBy: SearchSortOption) => void;
 };
 
+let memoryPersistedSearchFilters: PersistedSearchFilters | null | undefined;
+
+registerSessionMemoryCache(() => {
+  memoryPersistedSearchFilters = undefined;
+});
+
 /**
  * Persiste os filtros aplicados e a ordenação do Explorar entre sessões.
  * Segue o mesmo padrão de `useActiveNeighborhood`: carrega na montagem, grava sob demanda.
  */
 export function usePersistedSearchFilters(): UsePersistedSearchFiltersResult {
-  const [persisted, setPersisted] = useState<PersistedSearchFilters | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const isTest = process.env.NODE_ENV === "test";
+  const hasMemoryCache = !isTest && memoryPersistedSearchFilters !== undefined;
+  const [persisted, setPersisted] = useState<PersistedSearchFilters | null>(
+    hasMemoryCache ? (memoryPersistedSearchFilters ?? null) : null,
+  );
+  const [loaded, setLoaded] = useState(hasMemoryCache);
 
   useEffect(() => {
+    if (hasMemoryCache) return;
     let isMounted = true;
     async function loadStored() {
       try {
@@ -36,10 +48,14 @@ export function usePersistedSearchFilters(): UsePersistedSearchFiltersResult {
           const rawSort = parsed.sortBy;
           const validSort =
             rawSort && SORT_IDS.includes(rawSort) ? rawSort : "recent";
-          setPersisted({
+          const nextPersisted: PersistedSearchFilters = {
             filters: { ...DEFAULT_SEARCH_FILTERS, ...(parsed.filters ?? {}) },
             sortBy: validSort,
-          });
+          };
+          if (!isTest) memoryPersistedSearchFilters = nextPersisted;
+          setPersisted(nextPersisted);
+        } else if (!isTest) {
+          memoryPersistedSearchFilters = null;
         }
       } catch {
         // Fallback silencioso em caso de falha de leitura
@@ -50,16 +66,17 @@ export function usePersistedSearchFilters(): UsePersistedSearchFiltersResult {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hasMemoryCache, isTest]);
 
   const persist = useCallback((filters: SearchFilters, sortBy: SearchSortOption) => {
+    if (!isTest) memoryPersistedSearchFilters = { filters, sortBy };
     void AsyncStorage.setItem(
       SEARCH_FILTERS_STORAGE_KEY,
       JSON.stringify({ filters, sortBy }),
     ).catch(() => {
       // Ignora erro de gravação não crítico
     });
-  }, []);
+  }, [isTest]);
 
   return { persisted, loaded, persist };
 }

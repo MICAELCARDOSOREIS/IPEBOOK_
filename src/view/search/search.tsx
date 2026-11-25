@@ -1,8 +1,9 @@
 import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, FlatList, Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { Book } from "@/model/entities/book";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
@@ -12,7 +13,7 @@ import { FilterSheet } from "@/view/search/FilterSheet";
 import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
 import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 import { SortSheet } from "@/view/search/SortSheet";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
@@ -21,12 +22,13 @@ import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
+import { getSearchStyles } from "@/view/search/searchStyles";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters";
-import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -49,6 +51,7 @@ export type SearchProps = {
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
+const extractBookKey = (book: Book) => book.id;
 /** Converte o parâmetro de rota `modalidade` (string) no filtro válido, ou `undefined`. */
 export function parseInitialModality(value: string | string[] | undefined): SearchModalityFilter | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -101,7 +104,7 @@ export default function Search({
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
   const [auth] = makeAuthViewModel();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getSearchStyles(colors);
   const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
   useOnRefocus(focusKey, () => {
     void actions.reload();
@@ -132,6 +135,53 @@ export default function Search({
     onNavigateToBookDetail?.(bookId);
   });
   const guardedNavigateToFavorites = useGuardedPress(onNavigateToFavorites);
+  const navigateToBookDetailRef = useRef(guardedNavigateToBookDetail);
+  navigateToBookDetailRef.current = guardedNavigateToBookDetail;
+  const navigateToFavoritesRef = useRef(guardedNavigateToFavorites);
+  navigateToFavoritesRef.current = guardedNavigateToFavorites;
+  const hasFavoritesRoute = Boolean(onNavigateToFavorites);
+
+  const handleOpenBookDetail = useCallback((bookId: string) => {
+    navigateToBookDetailRef.current(bookId);
+  }, []);
+
+  const handleFavoriteToggle = useCallback(
+    (selected: boolean, bookTitle?: string) => {
+      const label = bookTitle ?? "Livro";
+      setSnackbarMessage(
+        selected
+          ? `"${label}" foi adicionado aos Favoritos!`
+          : `"${label}" foi removido dos Favoritos.`,
+      );
+      setSnackbarAction(
+        hasFavoritesRoute
+          ? { label: "Ver favoritos", onPress: () => navigateToFavoritesRef.current() }
+          : null,
+      );
+    },
+    [hasFavoritesRoute],
+  );
+
+  const handleListScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = e.nativeEvent.contentOffset.y > 300;
+    setShowScrollTop((prev) => (prev === next ? prev : next));
+  }, []);
+
+  const sessionUserId = auth.user?.id ?? null;
+  const renderBookItem = useCallback(
+    ({ item }: { item: Book }) => (
+      <SearchBookCard
+        item={item}
+        wideWeb={wideWeb}
+        compactWeb={compactWeb}
+        gridColumns={gridColumns}
+        userId={sessionUserId}
+        onPress={handleOpenBookDetail}
+        onFavoriteToggle={handleFavoriteToggle}
+      />
+    ),
+    [wideWeb, compactWeb, gridColumns, sessionUserId, handleOpenBookDetail, handleFavoriteToggle],
+  );
 
   const undoClear = () => {
     const snapshot = clearedSnapshotRef.current;
@@ -431,16 +481,18 @@ export default function Search({
         </View>
       ) : null}
 
-      <Dialog
-        visible={confirmingClear}
-        title="Limpar histórico de buscas?"
-        message="As buscas recentes salvas neste dispositivo serão removidas."
-        confirmLabel="Limpar histórico"
-        cancelLabel="Cancelar"
-        destructive
-        onCancel={() => setConfirmingClear(false)}
-        onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
-      />
+      {confirmingClear ? (
+        <Dialog
+          visible={confirmingClear}
+          title="Limpar histórico de buscas?"
+          message="As buscas recentes salvas neste dispositivo serão removidas."
+          confirmLabel="Limpar histórico"
+          cancelLabel="Cancelar"
+          destructive
+          onCancel={() => setConfirmingClear(false)}
+          onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
+        />
+      ) : null}
     </View>
   );
 
@@ -538,44 +590,50 @@ export default function Search({
             />
           </View>
 
-          <FilterSheet
-            visible={showFilterSheet}
-            draftFilters={state.draftFilters}
-            sortBy={state.sortBy}
-            availableCategories={state.availableCategories}
-            resultCount={state.draftResultCount}
-            onChange={actions.updateDraftFilters}
-            onSortChange={actions.setSortBy}
-            onApply={() => {
-              actions.applyDraftFilters();
-              setShowFilterSheet(false);
-            }}
-            onReset={() => {
-              clearedSnapshotRef.current = {
-                term: state.term,
-                filters: state.filters,
-                sortBy: state.sortBy,
-                neighborhood: state.neighborhood,
-              };
-              actions.resetFilters();
-              setShowFilterSheet(false);
-              setSnackbarMessage("Filtros limpos");
-              setSnackbarAction({ label: "Desfazer", onPress: undoClear });
-            }}
-            onClose={() => setShowFilterSheet(false)}
-          />
-          <SortSheet
-            visible={showSortSheet}
-            selected={state.sortBy}
-            onSelect={actions.setSortBy}
-            onClose={() => setShowSortSheet(false)}
-          />
-          <NeighborhoodSelectorModal
-            visible={neighborhoodHook.isSelectorOpen}
-            currentNeighborhood={effectiveNeighborhood}
-            onSelect={handleSelectNeighborhoodOption}
-            onClose={neighborhoodHook.closeSelector}
-          />
+          {showFilterSheet ? (
+            <FilterSheet
+              visible={showFilterSheet}
+              draftFilters={state.draftFilters}
+              sortBy={state.sortBy}
+              availableCategories={state.availableCategories}
+              resultCount={state.draftResultCount}
+              onChange={actions.updateDraftFilters}
+              onSortChange={actions.setSortBy}
+              onApply={() => {
+                actions.applyDraftFilters();
+                setShowFilterSheet(false);
+              }}
+              onReset={() => {
+                clearedSnapshotRef.current = {
+                  term: state.term,
+                  filters: state.filters,
+                  sortBy: state.sortBy,
+                  neighborhood: state.neighborhood,
+                };
+                actions.resetFilters();
+                setShowFilterSheet(false);
+                setSnackbarMessage("Filtros limpos");
+                setSnackbarAction({ label: "Desfazer", onPress: undoClear });
+              }}
+              onClose={() => setShowFilterSheet(false)}
+            />
+          ) : null}
+          {showSortSheet ? (
+            <SortSheet
+              visible={showSortSheet}
+              selected={state.sortBy}
+              onSelect={actions.setSortBy}
+              onClose={() => setShowSortSheet(false)}
+            />
+          ) : null}
+          {neighborhoodHook.isSelectorOpen ? (
+            <NeighborhoodSelectorModal
+              visible={neighborhoodHook.isSelectorOpen}
+              currentNeighborhood={effectiveNeighborhood}
+              onSelect={handleSelectNeighborhoodOption}
+              onClose={neighborhoodHook.closeSelector}
+            />
+          ) : null}
         </>
       }
     >
@@ -600,208 +658,23 @@ export default function Search({
         numColumns={wideWeb ? gridColumns : 1}
         columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
-        keyExtractor={(book) => book.id}
+        keyExtractor={extractBookKey}
+        initialNumToRender={wideWeb ? 8 : 5}
+        maxToRenderPerBatch={wideWeb ? 8 : 5}
+        windowSize={wideWeb ? 9 : 7}
+        updateCellsBatchingPeriod={40}
+        removeClippedSubviews={Platform.OS === "android"}
         style={styles.flexOne}
         contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, { paddingBottom: scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24] }]}
-        onScroll={(e) => {
-          const offsetY = e.nativeEvent.contentOffset.y;
-          setShowScrollTop(offsetY > 300);
-        }}
-        scrollEventThrottle={16}
+        onScroll={handleListScroll}
+        scrollEventThrottle={32}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        renderItem={({ item }) => (
-          <SearchBookCard
-            item={item}
-            wideWeb={wideWeb}
-            compactWeb={compactWeb}
-            gridColumns={gridColumns}
-            userId={auth.user?.id ?? null}
-            onPress={() => guardedNavigateToBookDetail(item.id)}
-            onFavoriteToggle={(selected) => {
-              setSnackbarMessage(
-                selected
-                  ? `"${item.title}" foi adicionado aos Favoritos!`
-                  : `"${item.title}" foi removido dos Favoritos.`
-              );
-              setSnackbarAction(
-                onNavigateToFavorites ? { label: "Ver favoritos", onPress: guardedNavigateToFavorites } : null,
-              );
-            }}
-          />
-        )}
+        renderItem={renderBookItem}
       />
       </View>
     </ScreenContainer>
   );
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    flexOne: { flex: 1 },
-    // Web larga: filtros fixos à esquerda e resultados em grade de ponta a ponta.
-    wideRow: {
-      flex: 1,
-      flexDirection: "row",
-      gap: tokens.spacing[32],
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[24],
-    },
-    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[20] },
-    gridRow: { gap: tokens.spacing[24], alignItems: "stretch" },
-    content: { flexGrow: 1, width: "100%", paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24], },
-    filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
-    filtersWide: { gap: tokens.spacing[12], marginBottom: tokens.spacing[8] },
-    topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: tokens.spacing[40], },
-    neighborhoodPill: {
-      flexShrink: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      paddingHorizontal: tokens.spacing[14],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    neighborhoodText: { flexShrink: 1, ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
-    favoritesTopButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      justifyContent: "center",
-      alignItems: "center",
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    favoritesTopButtonWide: { width: "auto", flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[14], },
-    favoritesButtonText: { ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    tuneButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
-    // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
-    tuneBadge: {
-      position: "absolute",
-      top: -2,
-      right: -2,
-      minWidth: tokens.spacing[18],
-      height: tokens.spacing[18],
-      paddingHorizontal: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    tuneBadgeText: { ...tokens.typography.captionSmall, fontFamily: fontFamily.semiBold, color: colors.m3.onPrimary, },
-    heroSection: { gap: tokens.spacing[6], marginTop: tokens.spacing[4], marginBottom: tokens.spacing[4], },
-    heading: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, letterSpacing: tokens.letterSpacing.brandTighter, },
-    subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, },
-    quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4], },
-    quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[2], },
-    clearFiltersButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[8],
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    clearFiltersText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold, },
-    // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
-    activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    activeFilterChip: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      height: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.shapeMorph.chipSelected,
-      backgroundColor: colors.nature.foliage,
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    activeFilterText: { ...tokens.typography.labelLarge, color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      paddingBottom: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.book.paperEdge,
-    },
-    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.medium, },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      height: 36,
-      paddingHorizontal: tokens.spacing[14],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    sortText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface, fontWeight: tokens.fontWeight.semiBold, },
-    body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText, textAlign: "center", },
-    empty: { alignItems: "center", paddingTop: tokens.spacing[32], paddingHorizontal: tokens.spacing[24], gap: tokens.spacing[12], },
-    emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
-    emptyIcon: { width: tokens.spacing[64], height: tokens.spacing[64], borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
-    alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
-    alertCardText: { flex: 1, gap: tokens.spacing[2] },
-    alertCardTitle: { ...tokens.typography.titleBlock, color: colors.m3.onTertiaryContainer },
-    alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
-    alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
-    alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: { ...tokens.typography.brandCardTitle, color: colors.action, textAlign: "center", },
-    emptyActions: { flexDirection: "column", alignItems: "center", gap: tokens.spacing[12], marginTop: tokens.spacing[8], },
-    emptyPrimaryButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.primary,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[12],
-    },
-    emptyPrimaryButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
-    emptySecondaryButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[20],
-      paddingVertical: tokens.spacing[10],
-    },
-    emptySecondaryButtonText: { ...tokens.typography.labelLarge, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    emptyActionButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.primary,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[12],
-    },
-    emptyActionText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
-    alertLink: { color: colors.action, fontWeight: tokens.fontWeight.semiBold, padding: tokens.spacing[12] },
-    historySection: { gap: tokens.spacing[8] },
-    historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    historyTitle: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.secondaryText },
-    historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16], },
-    historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
-    snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20, },
-  });
 }
 
 function SearchScrollTopButton({
