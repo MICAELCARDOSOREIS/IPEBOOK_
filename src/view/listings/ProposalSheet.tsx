@@ -37,7 +37,22 @@ export type ProposalSheetProps = {
   onSubmit: (options: { initialMessage?: string; offeredBookId?: string }) => Promise<void>;
 };
 
-export function ProposalSheet({
+const proposalSheetStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getProposalSheetStyles(colors: ColorPalette) {
+  let cached = proposalSheetStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    proposalSheetStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+export function ProposalSheet(props: ProposalSheetProps) {
+  if (!props.visible) return null;
+  return <ProposalSheetContent {...props} />;
+}
+
+function ProposalSheetContent({
   visible,
   onClose,
   targetBook,
@@ -53,7 +68,7 @@ export function ProposalSheet({
   const wideWeb = useIsWideWeb();
   const keyboardInset = useAnimatedKeyboardInset();
   const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getProposalSheetStyles(colors);
 
   const [message, setMessage] = useState("");
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
 import { formatBookLocation } from "@/model/entities/location";
@@ -23,10 +23,20 @@ export type ShelfRowProps = {
   wide?: { statusVariant: TagProps["variant"]; statusLabel: string; offer: string; actionLabel?: string };
 };
 
+const shelfRowStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getShelfRowStyles(colors: ColorPalette) {
+  let cached = shelfRowStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    shelfRowStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
-export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
+function ShelfRowComponent({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getShelfRowStyles(colors);
   const [isHovered, setIsHovered] = useState(false);
 
   if (wide) {
@@ -228,6 +238,9 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
     </View>
   );
 }
+
+export const ShelfRow = memo(ShelfRowComponent);
+ShelfRow.displayName = "ShelfRow";
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({

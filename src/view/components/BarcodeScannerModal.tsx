@@ -32,7 +32,12 @@ export type BarcodeScannerModalProps = {
  * Modal com leitor de código de barras físico via expo-camera (Spec 059 / ADR 0042).
  * Focado na leitura de códigos de barras de livros (EAN-13, EAN-8, UPC-A, UPC-E).
  */
-export function BarcodeScannerModal({
+export function BarcodeScannerModal(props: BarcodeScannerModalProps) {
+  if (!props.visible) return null;
+  return <BarcodeScannerModalContent {...props} />;
+}
+
+function BarcodeScannerModalContent({
   visible,
   onClose,
   onScan,

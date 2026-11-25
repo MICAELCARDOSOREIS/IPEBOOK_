@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -22,11 +21,26 @@ export type ReservedListingSheetProps = {
   ownerName?: string | null;
 };
 
+const reservedSheetStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getReservedSheetStyles(colors: ColorPalette) {
+  let cached = reservedSheetStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    reservedSheetStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Folha informativa M3 Expressive aberta ao tocar na pílula "Reservado" ou "Entregue" (Spec 110).
  * Apresenta contexto da reserva e atalhos úteis (favoritar para ser avisado, buscar na categoria e perfil).
  */
-export function ReservedListingSheet({
+export function ReservedListingSheet(props: ReservedListingSheetProps) {
+  if (!props.visible) return null;
+  return <ReservedListingSheetContent {...props} />;
+}
+
+function ReservedListingSheetContent({
   visible,
   onClose,
   status,
@@ -40,7 +54,7 @@ export function ReservedListingSheet({
   ownerName,
 }: ReservedListingSheetProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getReservedSheetStyles(colors);
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
 

@@ -4,6 +4,10 @@ import { Platform } from "react-native";
 import { Dialog, resolveDialogTabWrap, type FocusableElement } from "@/view/components/Dialog";
 import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
+import { ProposalSheet } from "@/view/listings/ProposalSheet";
+import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
+import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 
 describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   afterEach(() => {
@@ -289,6 +293,58 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
         <BarcodeScannerModal visible={false} onClose={onCloseScanner} onScan={() => {}} />,
       );
       expect(trigger.focus).toHaveBeenCalledTimes(1);
+    });
+
+    it("modais e folhas fechados (visible=false) não montam conteúdo na árvore", async () => {
+      const sampleBook = {
+        id: "b-1",
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        ownerId: "u-1",
+        modality: "donation" as const,
+        status: "available" as const,
+      };
+      const proposal = await render(
+        <ProposalSheet visible={false} onClose={() => {}} targetBook={sampleBook} onSubmit={async () => {}} />,
+      );
+      expect(proposal.toJSON()).toBeNull();
+
+      const reserved = await render(
+        <ReservedListingSheet visible={false} onClose={() => {}} status="reserved" />,
+      );
+      expect(reserved.toJSON()).toBeNull();
+
+      const safety = await render(
+        <ProfileSafetySheet
+          visible={false}
+          personName="Maria"
+          listings={null}
+          loadingListings={false}
+          blocking={false}
+          error={null}
+          onLoadListings={() => {}}
+          onReportListing={() => {}}
+          onReportUser={() => {}}
+          onConfirmBlock={() => {}}
+          onClose={() => {}}
+        />,
+      );
+      expect(safety.toJSON()).toBeNull();
+
+      const rating = await render(
+        <NegotiationRatingModal
+          visible={false}
+          counterpartName="Maria"
+          selectedScore={5}
+          onSelectScore={() => {}}
+          onSubmit={async () => true}
+          onClose={() => {}}
+          isSubmitting={false}
+          submitError={null}
+          isSuccess={false}
+        />,
+      );
+      expect(rating.toJSON()).toBeNull();
     });
   });
 });
