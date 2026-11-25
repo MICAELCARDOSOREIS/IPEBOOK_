@@ -1,6 +1,7 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
+import * as container from "@/di/container";
 import type { EditListingState, EditListingActions } from "@/viewmodel/useEditListingViewModel";
 import EditListing from "@/view/listings/editListing";
 
@@ -24,6 +25,7 @@ function mockViewModel(state: EditListingState, actions: Partial<EditListingActi
     setDescription: jest.fn(),
     setPhotoUrl: jest.fn(),
     addPhoto: jest.fn(),
+    setPhotoAt: jest.fn(),
     removePhoto: jest.fn(),
     setIsBox: jest.fn(),
     setBoxVolumesCount: jest.fn(),
@@ -277,6 +279,10 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Alterar foto da capa" }));
     });
+    expect(screen.getByLabelText("Escolher foto da galeria")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Fechar ao tocar fora" }));
+    });
     expect(screen.getByLabelText("URL da foto da capa")).toBeDefined();
 
     await act(async () => {
@@ -290,5 +296,70 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     });
 
     expect(actions.setModality).toHaveBeenCalledWith("trade");
+  });
+
+  it("permite adicionar e remover fotos da lombada e do verso na tela Editar anúncio", async () => {
+    const choose = jest
+      .fn()
+      .mockResolvedValueOnce("https://cdn.ipebook.app/foto-lombada-1.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/foto-verso-1.jpg");
+    const photoSpy = jest
+      .spyOn(container, "makeListingPhotoViewModel")
+      .mockReturnValue([{ uploading: false, error: null }, { choose, clearError: jest.fn() }]);
+
+    try {
+      const actions = mockViewModel({
+        ...loadedState,
+        photoUrl: "https://cdn.ipebook.app/capa.jpg",
+        photos: [],
+      });
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+      });
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar lombada"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library", "spine");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(0, "https://cdn.ipebook.app/foto-lombada-1.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar verso"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Tirar foto com a câmera"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("camera", "back");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(1, "https://cdn.ipebook.app/foto-verso-1.jpg");
+
+      // Remoção limpa cada slot independentemente
+      const filledActions = mockViewModel({
+        ...loadedState,
+        photoUrl: "https://cdn.ipebook.app/capa.jpg",
+        photos: ["https://cdn.ipebook.app/foto-lombada-1.jpg", "https://cdn.ipebook.app/foto-verso-1.jpg"],
+      });
+      await act(async () => {
+        screen.rerender(<EditListing bookId="b1" sessionUserId="user-1" />);
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Remover lombada" }));
+        fireEvent.press(screen.getByRole("button", { name: "Remover verso" }));
+      });
+      expect(filledActions.setPhotoAt).toHaveBeenCalledWith(0, "");
+      expect(filledActions.setPhotoAt).toHaveBeenCalledWith(1, "");
+    } finally {
+      photoSpy.mockRestore();
+    }
   });
 });
