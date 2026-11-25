@@ -662,6 +662,8 @@ const CENARIOS = [
       await checkTab(1);
       await pressKey(" ", 32);
       await checkTab(1);
+      await pressKey("Enter", 13);
+      await checkTab(1);
       await assertSemOverflowHorizontal(page, "Termos e privacidade a 320 px");
 
       await page.goto(`${baseUrl}/termos?aba=privacidade`);

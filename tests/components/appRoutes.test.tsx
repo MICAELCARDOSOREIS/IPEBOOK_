@@ -1,5 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react-native";
+import { Platform } from "react-native";
 
 const mockPushOnce = jest.fn();
 const mockReplaceOnce = jest.fn();
@@ -8,10 +9,13 @@ const mockCanGoBack = jest.fn(() => true);
 const mockParamsState = { current: {} as Record<string, string | undefined> };
 const mockPathnameState = { current: "/" };
 const mockRenderedProps: Record<string, Record<string, unknown>> = {};
+const mockRenderHistory: Record<string, Array<Record<string, unknown>>> = {};
 
 function mockCreateScreenStub(name: string) {
   const Stub = (props: Record<string, unknown>) => {
     mockRenderedProps[name] = props;
+    if (!mockRenderHistory[name]) mockRenderHistory[name] = [];
+    mockRenderHistory[name].push(props);
     const ReactRuntime = require("react") as typeof import("react");
     return ReactRuntime.createElement(name, props, props.children as React.ReactNode);
   };
@@ -227,6 +231,9 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     mockCanGoBack.mockReturnValue(true);
     for (const key of Object.keys(mockRenderedProps)) {
       delete mockRenderedProps[key];
+    }
+    for (const key of Object.keys(mockRenderHistory)) {
+      delete mockRenderHistory[key];
     }
   });
 
@@ -594,5 +601,34 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     const retryFn = jest.fn();
     await renderRoute(<ErrorBoundary error={new Error("Falha")} retry={retryFn} />);
     expect(getStub("AppErrorFallbackStub").retry).toBe(retryFn);
+  });
+
+  it("TermosRoute (/termos?aba=privacidade) aplica aba de privacidade só após hidratação na Web e direto no nativo", async () => {
+    const originalOS = Platform.OS;
+    try {
+      Platform.OS = "web";
+      mockParamsState.current = { aba: "privacidade" };
+      await renderRoute(<TermosRoute />);
+      const webPrivacyHistory = mockRenderHistory.TermsAndPrivacyStub ?? [];
+      expect(webPrivacyHistory.length).toBeGreaterThanOrEqual(2);
+      expect(webPrivacyHistory[0].initialTab).toBe("terms");
+      expect(webPrivacyHistory[webPrivacyHistory.length - 1].initialTab).toBe("privacy");
+
+      mockParamsState.current = {};
+      mockRenderHistory.TermsAndPrivacyStub = [];
+      await renderRoute(<TermosRoute />);
+      const webDefaultHistory = mockRenderHistory.TermsAndPrivacyStub ?? [];
+      expect(webDefaultHistory.length).toBeGreaterThanOrEqual(1);
+      expect(webDefaultHistory.every((props) => props.initialTab === "terms")).toBe(true);
+
+      Platform.OS = "android";
+      mockParamsState.current = { aba: "privacidade" };
+      mockRenderHistory.TermsAndPrivacyStub = [];
+      await renderRoute(<TermosRoute />);
+      const nativePrivacyHistory = mockRenderHistory.TermsAndPrivacyStub ?? [];
+      expect(nativePrivacyHistory[0].initialTab).toBe("privacy");
+    } finally {
+      Platform.OS = originalOS;
+    }
   });
 });

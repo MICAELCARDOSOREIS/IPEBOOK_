@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const raiz = resolve(import.meta.dirname, "..");
@@ -94,6 +94,30 @@ conferir("Inventário declara 29 documentos", componentes.length === 29, `encont
 conferir("README declara 29 componentes", readme.includes("29 componentes"), "contagem desatualizada");
 const exemplo = ler("design-system/ExplorarScreen.tsx");
 conferir("Exemplo histórico usa aliases M3 válidos", exemplo.includes("tokens.colors.m3.surfaceContainerHigh") && exemplo.includes("tokens.colors.m3.surfaceContainerLow"), "alias inexistente usado no exemplo");
+const referenciasFigmaPath = "design-system/referencias-figma/README.md";
+const referenciasFigmaExiste = existsSync(join(raiz, referenciasFigmaPath));
+conferir("Referências atuais do Figma estão documentadas", referenciasFigmaExiste && readme.includes("referencias-figma/README.md"), "referencias-figma/README.md ausente ou sem link no README");
+if (referenciasFigmaExiste) {
+  const referenciasFigma = ler(referenciasFigmaPath);
+  conferir(
+    "Referências do Figma delimitam papel de consulta visual e apontam para guia/tokens",
+    referenciasFigma.includes("consulta visual") && referenciasFigma.includes("../README.md") && referenciasFigma.includes("../tokens.json"),
+    "papel das imagens ou links canônicos ausentes em referencias-figma/README.md",
+  );
+  const pngsNoReadme = [...new Set([...referenciasFigma.matchAll(/\(([a-z0-9-]+\.png)\)/g)].map((m) => m[1]))];
+  const pngsNaPasta = readdirSync(join(raiz, "design-system/referencias-figma")).filter((arquivo) => arquivo.endsWith(".png"));
+  const faltandoNoDisco = pngsNoReadme.filter((arquivo) => !pngsNaPasta.includes(arquivo));
+  const semReferencia = pngsNaPasta.filter((arquivo) => !pngsNoReadme.includes(arquivo));
+  conferir(
+    "Capturas PNG das referências do Figma sincronizadas com README",
+    pngsNoReadme.length > 0 && faltandoNoDisco.length === 0 && semReferencia.length === 0,
+    faltandoNoDisco.length > 0
+      ? `faltam no disco: ${faltandoNoDisco.join(", ")}`
+      : semReferencia.length > 0
+        ? `sem menção no README: ${semReferencia.join(", ")}`
+        : "nenhuma captura PNG listada",
+  );
+}
 
 console.log("\x1b[36m▶ Barreira de acessibilidade dos modais\x1b[0m");
 const modaisSemBarreira = arquivosTsx("src/view").filter((caminho) => {
