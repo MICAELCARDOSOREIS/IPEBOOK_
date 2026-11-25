@@ -67,6 +67,7 @@ export default function TermsAndPrivacy({
         nextTab = "privacy";
         break;
       case " ":
+      case "Enter":
         nextTab = tab;
         break;
       default:
@@ -74,7 +75,7 @@ export default function TermsAndPrivacy({
     }
     event.preventDefault();
     setActiveTab(nextTab);
-    tabRefs.current[nextTab]?.focus();
+    tabRefs.current[nextTab]?.focus?.();
   }
 
   return (
