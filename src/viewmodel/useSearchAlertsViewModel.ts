@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { BookModality } from "@/model/entities/book";
 import type { SearchAlert } from "@/model/entities/searchAlert";
 import { DomainError } from "@/model/errors";
@@ -39,6 +39,8 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery: st
     loadError: null,
     message: null,
   });
+  const alertsRef = useRef<readonly SearchAlert[]>(state.alerts);
+  alertsRef.current = state.alerts;
   const reload = useCallback(async () => {
     if (!userId) { setState((prev) => ({ ...prev, loading: false, loadError: null })); return; }
     setState((prev) => ({ ...prev, loading: prev.alerts.length === 0 && (!isTest ? !sessionAlertsCache.has(userId) : true), loadError: null }));
@@ -76,12 +78,42 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery: st
     }
   }, [userId, useCases, reload]);
   const setActive = useCallback(async (id: string, active: boolean) => {
-    try { await useCases.setActive(userId, id, active); await reload(); }
-    catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível atualizar o alerta." })); }
-  }, [userId, useCases, reload]);
+    const previousAlerts = alertsRef.current;
+    const optimisticAlerts = previousAlerts.map((item) =>
+      item.id === id ? { ...item, active } : item,
+    );
+    if (!isTest && userId) sessionAlertsCache.set(userId, optimisticAlerts);
+    setState((prev) => ({ ...prev, alerts: optimisticAlerts, error: null }));
+    try {
+      await useCases.setActive(userId, id, active);
+      await reload();
+    } catch (error) {
+      if (!isTest && userId) sessionAlertsCache.set(userId, previousAlerts);
+      setState((prev) => ({
+        ...prev,
+        alerts: previousAlerts,
+        error: error instanceof DomainError ? error.message : "Não foi possível atualizar o alerta.",
+      }));
+    }
+  }, [userId, useCases, reload, isTest]);
   const remove = useCallback(async (id: string) => {
-    try { await useCases.deleteAlert(userId, id); await reload(); return true; }
-    catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível excluir o alerta." })); return false; }
-  }, [userId, useCases, reload]);
+    const previousAlerts = alertsRef.current;
+    const optimisticAlerts = previousAlerts.filter((item) => item.id !== id);
+    if (!isTest && userId) sessionAlertsCache.set(userId, optimisticAlerts);
+    setState((prev) => ({ ...prev, alerts: optimisticAlerts, error: null }));
+    try {
+      await useCases.deleteAlert(userId, id);
+      await reload();
+      return true;
+    } catch (error) {
+      if (!isTest && userId) sessionAlertsCache.set(userId, previousAlerts);
+      setState((prev) => ({
+        ...prev,
+        alerts: previousAlerts,
+        error: error instanceof DomainError ? error.message : "Não foi possível excluir o alerta.",
+      }));
+      return false;
+    }
+  }, [userId, useCases, reload, isTest]);
   return [state, { setQuery, reload, create, update, setActive, remove }];
 }

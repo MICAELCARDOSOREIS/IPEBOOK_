@@ -51,6 +51,8 @@ export function useMyListingsViewModel(
   });
   const active = useRef(false);
   const request = useRef(0);
+  const booksRef = useRef<readonly Book[]>(state.books);
+  booksRef.current = state.books;
 
   const reload = useCallback(async () => {
     if (!active.current) return;
@@ -91,54 +93,103 @@ export function useMyListingsViewModel(
 
   const cancelListing = useCallback(
     async (bookId: string): Promise<boolean> => {
-      setState((previous) => ({ ...previous, cancellingId: bookId, cancelError: null }));
+      const previousBooks = booksRef.current;
+      const optimisticBooks = previousBooks.filter((b) => b.id !== bookId);
+      if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, optimisticBooks);
+      setState((previous) => ({
+        ...previous,
+        books: optimisticBooks,
+        cancellingId: bookId,
+        cancelError: null,
+      }));
       try {
         await books.cancelListing(bookId, sessionUserId);
-        setState((previous) => ({
-          ...previous,
-          cancellingId: null,
-          books: previous.books.filter((b) => b.id !== bookId),
-        }));
+        if (active.current) {
+          setState((previous) => {
+            const nextBooks = previous.books.filter((b) => b.id !== bookId);
+            if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, nextBooks);
+            return {
+              ...previous,
+              cancellingId: null,
+              books: nextBooks,
+            };
+          });
+        }
         return true;
       } catch (error) {
-        setState((previous) => ({
-          ...previous,
-          cancellingId: null,
-          cancelError:
-            error instanceof DomainError
-              ? error.message
-              : "Não foi possível remover o anúncio. Tente novamente.",
-        }));
+        if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, previousBooks);
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            books: previousBooks,
+            cancellingId: null,
+            cancelError:
+              error instanceof DomainError
+                ? error.message
+                : "Não foi possível remover o anúncio. Tente novamente.",
+          }));
+        }
         return false;
       }
     },
-    [books, sessionUserId],
+    [books, sessionUserId, isTest],
   );
 
   const togglePauseListing = useCallback(
     async (bookId: string): Promise<boolean> => {
-      setState((previous) => ({ ...previous, pausingId: bookId, pauseError: null }));
+      const previousBooks = booksRef.current;
+      const target = previousBooks.find((b) => b.id === bookId);
+      const canOptimisticallyFlip =
+        target !== undefined && (target.status === "available" || target.status === "paused");
+      const optimisticBooks = canOptimisticallyFlip
+        ? previousBooks.map((b) =>
+            b.id === bookId
+              ? { ...b, status: (b.status === "paused" ? "available" : "paused") as Book["status"] }
+              : b,
+          )
+        : previousBooks;
+      if (canOptimisticallyFlip && !isTest && sessionUserId) {
+        sessionMyListingsCache.set(sessionUserId, optimisticBooks);
+      }
+      setState((previous) => ({
+        ...previous,
+        books: optimisticBooks,
+        pausingId: bookId,
+        pauseError: null,
+      }));
       try {
         const updated = await books.togglePauseListing(bookId, sessionUserId);
-        setState((previous) => ({
-          ...previous,
-          pausingId: null,
-          books: previous.books.map((b) => (b.id === bookId ? updated : b)),
-        }));
+        if (active.current) {
+          setState((previous) => {
+            const nextBooks = previous.books.map((b) => (b.id === bookId ? updated : b));
+            if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, nextBooks);
+            return {
+              ...previous,
+              pausingId: null,
+              books: nextBooks,
+            };
+          });
+        }
         return true;
       } catch (error) {
-        setState((previous) => ({
-          ...previous,
-          pausingId: null,
-          pauseError:
-            error instanceof DomainError
-              ? error.message
-              : "Não foi possível alterar o status do anúncio. Tente novamente.",
-        }));
+        if (canOptimisticallyFlip && !isTest && sessionUserId) {
+          sessionMyListingsCache.set(sessionUserId, previousBooks);
+        }
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            books: previousBooks,
+            pausingId: null,
+            pauseError:
+              error instanceof DomainError
+                ? error.message
+                : "Não foi possível alterar o status do anúncio. Tente novamente.",
+          }));
+        }
         return false;
       }
     },
-    [books, sessionUserId],
+    [books, sessionUserId, isTest],
   );
 
   useEffect(() => {

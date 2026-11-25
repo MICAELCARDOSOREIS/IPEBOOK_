@@ -38,8 +38,10 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "def
     if (Platform.OS === "ios") {
       triggerHaptic("selection");
     }
-    await actions.toggle();
-    onToggleSuccess?.(!wasSelected);
+    const ok = await actions.toggle();
+    if (ok !== false) {
+      onToggleSuccess?.(!wasSelected);
+    }
   });
   return (
     <View style={{ alignItems: "center", justifyContent: "center" }}>

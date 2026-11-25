@@ -58,18 +58,25 @@ export function useNotificationPreferencesViewModel(
 ): [NotificationPreferencesState, NotificationPreferencesActions] {
   const [prefs, actions] = useUserPreferencesViewModel(sessionUserId, useCases);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [optimisticOverrides, setOptimisticOverrides] = useState<
+    Partial<Record<NotificationPreferenceKey, boolean>>
+  >({});
 
   const muted = useMemo(() => new Set<string>(prefs.preferences?.mutedTypes ?? []), [prefs.preferences]);
 
   const enabled = useMemo(() => {
     const result = {} as Record<NotificationPreferenceKey, boolean>;
     for (const key of KEYS) {
-      const types = NOTIFICATION_PREFERENCE_CATEGORIES[key].types;
-      // Ligado quando nenhum tipo da categoria está na lista de desativados.
-      result[key] = !types.some((type) => muted.has(type));
+      if (optimisticOverrides[key] !== undefined) {
+        result[key] = optimisticOverrides[key];
+      } else {
+        const types = NOTIFICATION_PREFERENCE_CATEGORIES[key].types;
+        // Ligado quando nenhum tipo da categoria está na lista de desativados.
+        result[key] = !types.some((type) => muted.has(type));
+      }
     }
     return result;
-  }, [muted]);
+  }, [muted, optimisticOverrides]);
 
   const setEnabled = useCallback(
     async (key: NotificationPreferenceKey, value: boolean) => {
@@ -80,7 +87,14 @@ export function useNotificationPreferencesViewModel(
         else current.add(type);
       }
       setFeedbackError(null);
+      // Caminho feliz otimista: alterna a chave na hora e sincroniza no banco em segundo plano.
+      setOptimisticOverrides((prev) => ({ ...prev, [key]: value }));
       const saved = await actions.update({ mutedTypes: [...current] as NotificationType[] });
+      setOptimisticOverrides((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       if (!saved) setFeedbackError("Não foi possível salvar suas preferências de notificação.");
     },
     [actions, prefs.preferences],

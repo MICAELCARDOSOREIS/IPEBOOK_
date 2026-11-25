@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import { DomainError } from "@/model/errors";
 
@@ -40,6 +40,7 @@ export function useNegotiationChatViewModel(
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [lastFailedText, setLastFailedText] = useState<string | null>(null);
+  const optimisticSeq = useRef(0);
 
   const loadMessages = useCallback(async () => {
     if (!requestId || !sessionUserId) {
@@ -70,7 +71,19 @@ export function useNegotiationChatViewModel(
     }
 
     const unsubscribe = useCases.subscribeToMessages(requestId, (newMsg) => {
-      setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        const optimisticIndex = prev.findIndex(
+          (m) =>
+            m.id.startsWith("optimistic-") &&
+            m.senderId === newMsg.senderId &&
+            m.content === newMsg.content,
+        );
+        if (optimisticIndex !== -1) {
+          return prev.map((m, idx) => (idx === optimisticIndex ? newMsg : m));
+        }
+        return [...prev, newMsg];
+      });
     });
 
     return () => {
@@ -83,8 +96,19 @@ export function useNegotiationChatViewModel(
       const trimmed = textToSend.trim();
       if (!trimmed || isSending) return false;
 
+      const optimisticId = `optimistic-${++optimisticSeq.current}-${Date.now()}`;
+      const optimisticMessage: NegotiationMessage = {
+        id: optimisticId,
+        requestId,
+        senderId: sessionUserId,
+        content: trimmed,
+        createdAt: new Date().toISOString(),
+      };
+
       setIsSending(true);
       setSendError(null);
+      setMessages((prev) => [...prev, optimisticMessage]);
+      setInputText("");
 
       try {
         const sent = await useCases.sendMessage({
@@ -93,12 +117,19 @@ export function useNegotiationChatViewModel(
           content: trimmed,
         });
 
-        setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
-        setInputText("");
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === sent.id)) {
+            return prev.filter((m) => m.id !== optimisticId);
+          }
+          const replaced = prev.map((m) => (m.id === optimisticId ? sent : m));
+          return replaced.some((m) => m.id === sent.id) ? replaced : [...replaced, sent];
+        });
         setLastFailedText(null);
         return true;
       } catch (err) {
         const msg = err instanceof DomainError ? err.message : "Não foi possível enviar a mensagem.";
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        setInputText((current) => (current.trim() === "" ? trimmed : current));
         setSendError(msg);
         setLastFailedText(trimmed);
         return false;

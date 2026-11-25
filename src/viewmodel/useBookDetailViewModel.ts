@@ -52,12 +52,16 @@ export function useBookDetailViewModel(
   });
   const active = useRef(false);
   const request = useRef(0);
+  const favoriteSeq = useRef(0);
+  const isFavoriteRef = useRef(state.isFavorite);
+  isFavoriteRef.current = state.isFavorite;
 
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
     setState((previous) => ({ ...previous, loading: previous.book === null, error: null }));
     try {
+      const seqAtLoad = favoriteSeq.current;
       const favoritePromise = userId
         ? favorites.isFavorite(userId, bookId).then(
             (val) => ({ isFavorite: val, favoriteError: null as string | null }),
@@ -74,8 +78,8 @@ export function useBookDetailViewModel(
         setState((prev) => ({ ...prev, book, cachedAt, loading: false, error: null }));
       }
       const { isFavorite, favoriteError } = await favoritePromise;
-      if (active.current && current === request.current) {
-        setState((prev) => prev.favoriteLoading ? prev : ({ ...prev, isFavorite, favoriteError }));
+      if (active.current && current === request.current && favoriteSeq.current === seqAtLoad) {
+        setState((prev) => ({ ...prev, isFavorite, favoriteError }));
       }
     } catch (error) {
       if (active.current && current === request.current) {
@@ -90,12 +94,28 @@ export function useBookDetailViewModel(
   }, [useCases, bookId, favorites, userId, isTest]);
 
   const toggleFavorite = useCallback(async (sessionUserId: string | null) => {
-    setState((prev) => ({ ...prev, favoriteLoading: true, favoriteError: null }));
+    const seq = ++favoriteSeq.current;
+    const previousIsFavorite = isFavoriteRef.current;
+    setState((prev) => ({
+      ...prev,
+      isFavorite: sessionUserId ? !previousIsFavorite : previousIsFavorite,
+      favoriteLoading: true,
+      favoriteError: null,
+    }));
     try {
       const isFavorite = await favorites.toggleFavorite(sessionUserId, bookId);
-      setState((prev) => ({ ...prev, isFavorite, favoriteLoading: false }));
+      if (active.current && favoriteSeq.current === seq) {
+        setState((prev) => ({ ...prev, isFavorite, favoriteLoading: false }));
+      }
     } catch (error) {
-      setState((prev) => ({ ...prev, favoriteLoading: false, favoriteError: error instanceof DomainError ? error.message : "Não foi possível atualizar favorito." }));
+      if (active.current && favoriteSeq.current === seq) {
+        setState((prev) => ({
+          ...prev,
+          isFavorite: previousIsFavorite,
+          favoriteLoading: false,
+          favoriteError: error instanceof DomainError ? error.message : "Não foi possível atualizar favorito.",
+        }));
+      }
     }
   }, [favorites, bookId]);
 

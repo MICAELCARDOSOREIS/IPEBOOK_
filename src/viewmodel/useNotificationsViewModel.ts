@@ -76,6 +76,8 @@ export function useNotificationsViewModel(
 
   const active = useRef(false);
   const request = useRef(0);
+  const notificationsRef = useRef<readonly AppNotification[]>(notifications);
+  notificationsRef.current = notifications;
 
   useEffect(() => {
     let isMounted = true;
@@ -157,16 +159,18 @@ export function useNotificationsViewModel(
 
   const markAsRead = useCallback(
     async (notificationId: string) => {
+      const previous = notificationsRef.current;
+      const optimistic = previous.map((item) =>
+        item.id === notificationId ? { ...item, read: true } : item,
+      );
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, optimistic);
+      setActionError(null);
+      setNotifications(optimistic);
       try {
         await useCases.markAsRead(sessionUserId, notificationId);
-        setNotifications((prev) => {
-          const next = prev.map((item) =>
-            item.id === notificationId ? { ...item, read: true } : item,
-          );
-          if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
-          return next;
-        });
       } catch (err) {
+        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, previous);
+        setNotifications(previous);
         setActionError(
           err instanceof DomainError
             ? err.message
@@ -178,14 +182,16 @@ export function useNotificationsViewModel(
   );
 
   const markAllAsRead = useCallback(async () => {
+    const previous = notificationsRef.current;
+    const optimistic = previous.map((item) => ({ ...item, read: true }));
+    if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, optimistic);
+    setActionError(null);
+    setNotifications(optimistic);
     try {
       await useCases.markAllAsRead(sessionUserId);
-      setNotifications((prev) => {
-        const next = prev.map((item) => ({ ...item, read: true }));
-        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
-        return next;
-      });
     } catch (err) {
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, previous);
+      setNotifications(previous);
       setActionError(
         err instanceof DomainError
           ? err.message
@@ -196,14 +202,16 @@ export function useNotificationsViewModel(
 
   const deleteNotification = useCallback(
     async (notificationId: string) => {
+      const previous = notificationsRef.current;
+      const optimistic = previous.filter((item) => item.id !== notificationId);
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, optimistic);
+      setActionError(null);
+      setNotifications(optimistic);
       try {
         await useCases.deleteNotification(sessionUserId, notificationId);
-        setNotifications((prev) => {
-          const next = prev.filter((item) => item.id !== notificationId);
-          if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
-          return next;
-        });
       } catch (err) {
+        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, previous);
+        setNotifications(previous);
         setActionError(
           err instanceof DomainError
             ? err.message
@@ -215,11 +223,15 @@ export function useNotificationsViewModel(
   );
 
   const clearAll = useCallback(async () => {
+    const previous = notificationsRef.current;
+    if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, []);
+    setActionError(null);
+    setNotifications([]);
     try {
       await useCases.clearAll(sessionUserId);
-      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, []);
-      setNotifications([]);
     } catch (err) {
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, previous);
+      setNotifications(previous);
       setActionError(
         err instanceof DomainError
           ? err.message
@@ -229,14 +241,16 @@ export function useNotificationsViewModel(
   }, [sessionUserId, useCases, isTest]);
 
   const clearRead = useCallback(async () => {
+    const previous = notificationsRef.current;
+    const optimistic = previous.filter((item) => !item.read);
+    if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, optimistic);
+    setActionError(null);
+    setNotifications(optimistic);
     try {
       await useCases.clearRead(sessionUserId);
-      setNotifications((prev) => {
-        const next = prev.filter((item) => !item.read);
-        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
-        return next;
-      });
     } catch (err) {
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, previous);
+      setNotifications(previous);
       setActionError(
         err instanceof DomainError
           ? err.message
