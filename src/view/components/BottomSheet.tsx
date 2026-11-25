@@ -48,18 +48,16 @@ export type BottomSheetProps = {
  * - Foco acessível com useModalFocusTrap, aria-modal e accessibilityViewIsModal
  * - Desvio de teclado interno com KeyboardAvoidingView próprio para superfícies modais
  */
-export function BottomSheet({
+function BottomSheetContent({
   visible,
-  onClose,
-  onDismiss,
+  guardedClose,
   title,
   children,
   testID,
   style,
-  showCloseButton = false,
+  showCloseButton,
   initialFocusRef,
-}: BottomSheetProps) {
-  const guardedClose = useGuardedPress(onClose);
+}: Omit<BottomSheetProps, "onClose" | "onDismiss"> & { guardedClose: () => void }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
@@ -120,95 +118,126 @@ export function BottomSheet({
   );
 
   return (
+    <Animated.View
+      testID={testID ? `${testID}-scrim` : "bottom-sheet-scrim"}
+      style={[
+        styles.scrim,
+        wideWeb && styles.scrimWide,
+        !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
+      ]}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Fechar ao tocar fora"
+        onPress={guardedClose}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        ref={sheetRef as never}
+        testID={testID ? `${testID}-container` : "bottom-sheet-container"}
+        {...(Platform.OS === "web" ? ({ tabIndex: -1 } as never) : {})}
+        style={[
+          styles.sheet,
+          wideWeb && styles.sheetWide,
+          { paddingBottom: wideWeb ? tokens.spacing[24] : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
+          style,
+        ]}
+      >
+        {isIos && !reduceTransparency ? (
+          <BlurView
+            pointerEvents="none"
+            tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
+            intensity={60}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+
+        {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar (oculto no desktop) */}
+        {wideWeb ? null : (
+          <View
+            {...panResponder.panHandlers}
+            style={styles.handleContainer}
+            testID="bottom-sheet-drag-area"
+          >
+            <View
+              accessible={false}
+              importantForAccessibility="no"
+              style={styles.handle}
+              testID="bottom-sheet-handle"
+            />
+          </View>
+        )}
+
+        {title || showCloseButton ? (
+          <View style={styles.header}>
+            {title ? (
+              <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
+                {title}
+              </Text>
+            ) : (
+              <View style={styles.headerSpacer} />
+            )}
+            {showCloseButton ? (
+              <Pressable
+                ref={closeButtonRef as never}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar"
+                onPress={guardedClose}
+                hitSlop={8}
+                style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
+              >
+                <AppIcon name="close" size={20} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
+        {children}
+      </View>
+    </Animated.View>
+  );
+}
+
+export function BottomSheet({
+  visible,
+  onClose,
+  onDismiss,
+  title,
+  children,
+  testID,
+  style,
+  showCloseButton = false,
+  initialFocusRef,
+}: BottomSheetProps) {
+  const guardedClose = useGuardedPress(onClose);
+
+  return (
     <Modal
       testID={testID}
       accessibilityViewIsModal
       aria-modal
       visible={visible}
       transparent
+      hardwareAccelerated
       animationType="fade"
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={guardedClose}
       onDismiss={onDismiss}
     >
-      <Animated.View
-        testID={testID ? `${testID}-scrim` : "bottom-sheet-scrim"}
-        style={[
-          styles.scrim,
-          wideWeb && styles.scrimWide,
-          !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
-        ]}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Fechar ao tocar fora"
-          onPress={guardedClose}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          ref={sheetRef as never}
-          testID={testID ? `${testID}-container` : "bottom-sheet-container"}
-          {...(Platform.OS === "web" ? ({ tabIndex: -1 } as never) : {})}
-          style={[
-            styles.sheet,
-            wideWeb && styles.sheetWide,
-            { paddingBottom: wideWeb ? tokens.spacing[24] : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
-            style,
-          ]}
+      {visible ? (
+        <BottomSheetContent
+          visible={visible}
+          guardedClose={guardedClose}
+          title={title}
+          testID={testID}
+          style={style}
+          showCloseButton={showCloseButton}
+          initialFocusRef={initialFocusRef}
         >
-          {isIos && !reduceTransparency ? (
-            <BlurView
-              pointerEvents="none"
-              tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
-              intensity={60}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : null}
-
-          {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar (oculto no desktop) */}
-          {wideWeb ? null : (
-            <View
-              {...panResponder.panHandlers}
-              style={styles.handleContainer}
-              testID="bottom-sheet-drag-area"
-            >
-              <View
-                accessible={false}
-                importantForAccessibility="no"
-                style={styles.handle}
-                testID="bottom-sheet-handle"
-              />
-            </View>
-          )}
-
-          {title || showCloseButton ? (
-            <View style={styles.header}>
-              {title ? (
-                <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
-                  {title}
-                </Text>
-              ) : (
-                <View style={styles.headerSpacer} />
-              )}
-              {showCloseButton ? (
-                <Pressable
-                  ref={closeButtonRef as never}
-                  accessibilityRole="button"
-                  accessibilityLabel="Fechar"
-                  onPress={guardedClose}
-                  hitSlop={8}
-                  style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
-                >
-                  <AppIcon name="close" size={20} color={colors.m3.onSurfaceVariant} />
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
-
           {children}
-        </View>
-      </Animated.View>
+        </BottomSheetContent>
+      ) : null}
     </Modal>
   );
 }

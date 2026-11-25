@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -19,7 +19,17 @@ import { tokens } from "@/view/tokens";
 
 import { withPress } from "@/view/pressFeedback";
 /** Uma página da galeria: se a foto não carregar, avisa em vez de deixar a tela preta. */
-function GalleryPhoto({ uri, position, width, height }: { uri: string; position: number; width: number; height: number }) {
+const GalleryPhoto = memo(function GalleryPhoto({
+  uri,
+  position,
+  width,
+  height,
+}: {
+  uri: string;
+  position: number;
+  width: number;
+  height: number;
+}) {
   const [failed, setFailed] = useState(false);
   return (
     <View style={[styles.photoPage, { width, height }]}>
@@ -32,13 +42,15 @@ function GalleryPhoto({ uri, position, width, height }: { uri: string; position:
           source={{ uri }}
           accessibilityLabel={`Foto ${position} do anúncio`}
           resizeMode="contain"
+          resizeMethod="resize"
+          fadeDuration={0}
           onError={() => setFailed(true)}
           style={{ width, height }}
         />
       )}
     </View>
   );
-}
+});
 
 export type PhotoGalleryProps = {
   photos: readonly string[];
@@ -70,10 +82,22 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
   const [area, setArea] = useState<{ width: number; height: number } | null>(null);
   const pageWidth = area?.width ?? window.width;
   const pageHeight = area?.height ?? window.height * 0.7;
-  const handleAreaLayout = (event: LayoutChangeEvent) => {
+  const handleAreaLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
-    if (width > 0 && height > 0) setArea({ width, height });
-  };
+    if (width <= 0 || height <= 0) return;
+    setArea((prev) =>
+      prev && Math.abs(prev.width - width) < 1 && Math.abs(prev.height - height) < 1
+        ? prev
+        : { width, height },
+    );
+  }, []);
+
+  const renderPhoto = useCallback(
+    ({ item, index: itemIndex }: { item: string; index: number }) => (
+      <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
+    ),
+    [pageWidth, pageHeight],
+  );
 
   const goTo = (nextIndex: number) => {
     const clamped = clampIndex(nextIndex, photos.length);
@@ -107,8 +131,10 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWeb, visible, index, onClose]);
 
+  if (!visible) return null;
+
   return (
-    <Modal accessibilityViewIsModal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
+    <Modal accessibilityViewIsModal visible={visible} hardwareAccelerated animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaView style={styles.page}>
         <View style={styles.header}>
           <Pressable ref={closeRef as never} accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>
@@ -125,13 +151,15 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            initialNumToRender={3}
+            maxToRenderPerBatch={2}
+            windowSize={3}
+            removeClippedSubviews={Platform.OS === "android"}
             keyExtractor={(uri, itemIndex) => `${uri}-${itemIndex}`}
             initialScrollIndex={clampIndex(initialIndex, photos.length)}
             getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}
             onMomentumScrollEnd={handleMomentumScrollEnd}
-            renderItem={({ item, index: itemIndex }) => (
-              <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
-            )}
+            renderItem={renderPhoto}
           />
         </View>
         <View style={styles.navRow}>

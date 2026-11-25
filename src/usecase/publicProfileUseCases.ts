@@ -27,13 +27,14 @@ export class PublicProfileUseCases implements IPublicProfileUseCases {
       throw new ValidationError("Usuário não encontrado.");
     }
 
-    const profile = await this.profiles.ensure(userId, defaultName(userId));
-    const userRatings = await this.ratings.listByRatedUser(userId);
+    const [profile, userRatings, completedNegotiations] = await Promise.all([
+      this.profiles.ensure(userId, defaultName(userId)),
+      this.ratings.listByRatedUser(userId),
+      this.countCompletedNegotiations(userId),
+    ]);
     const averageRating = userRatings.length > 0
       ? userRatings.reduce((sum, rating) => sum + rating.score, 0) / userRatings.length
       : null;
-
-    const completedNegotiations = await this.countCompletedNegotiations(userId);
 
     return {
       userId,
@@ -76,14 +77,17 @@ export class PublicProfileUseCases implements IPublicProfileUseCases {
   }
 
   private async countCompletedNegotiations(userId: string): Promise<number> {
-    const ownedListings = await this.books.listByOwner(userId);
-    let count = 0;
-    for (const listing of ownedListings) {
-      const listingRequests = await this.requests.listByListing(listing.id);
+    const [ownedListings, sentRequests] = await Promise.all([
+      this.books.listByOwner(userId),
+      this.requests.listByRequester(userId),
+    ]);
+    const listingRequestLists = await Promise.all(
+      ownedListings.map((listing) => this.requests.listByListing(listing.id)),
+    );
+    let count = sentRequests.filter((request) => request.status === "accepted").length;
+    for (const listingRequests of listingRequestLists) {
       count += listingRequests.filter((request) => request.status === "accepted").length;
     }
-    const sentRequests = await this.requests.listByRequester(userId);
-    count += sentRequests.filter((request) => request.status === "accepted").length;
     return count;
   }
 }

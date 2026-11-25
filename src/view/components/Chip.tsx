@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -22,12 +22,12 @@ export type ChipProps = {
 };
 
 /** Chip de filtro M3 Expressive (chip.md): alterna curvatura entre 8 dp (inativo) e 16 dp (selecionado/pressionado). */
-export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
+export const Chip = memo(function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => getChipStyles(colors), [colors]);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
   const dotColor = useMemo(() => {
     if (!tone) return undefined;
@@ -90,6 +90,16 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
       </Pressable>
     </Animated.View>
   );
+});
+
+const chipStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+
+function getChipStyles(colors: ColorPalette) {
+  const cached = chipStylesCache.get(colors);
+  if (cached) return cached;
+  const created = createStyles(colors);
+  chipStylesCache.set(colors, created);
+  return created;
 }
 
 function createStyles(colors: ColorPalette) {
