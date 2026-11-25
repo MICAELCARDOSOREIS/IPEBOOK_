@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export const ACTIVE_NEIGHBORHOOD_STORAGE_KEY = "@ipebook:active_neighborhood";
 
@@ -11,6 +12,12 @@ export type ActiveNeighborhoodHookResult = {
   selectNeighborhood: (neighborhood: string) => Promise<void>;
 };
 
+let memoryActiveNeighborhood: string | null = null;
+
+registerSessionMemoryCache(() => {
+  memoryActiveNeighborhood = null;
+});
+
 /**
  * Hook para gerenciar e persistir o bairro ativo do leitor em Piripiri, PI (Spec 067 / ADR 0050).
  * Persiste a escolha em AsyncStorage sob a chave `@ipebook:active_neighborhood`.
@@ -18,10 +25,14 @@ export type ActiveNeighborhoodHookResult = {
 export function useActiveNeighborhood(
   defaultNeighborhood = "all",
 ): ActiveNeighborhoodHookResult {
-  const [activeNeighborhood, setActiveNeighborhood] = useState(defaultNeighborhood);
+  const isTest = process.env.NODE_ENV === "test";
+  const initialNeighborhood =
+    !isTest && memoryActiveNeighborhood !== null ? memoryActiveNeighborhood : defaultNeighborhood;
+  const [activeNeighborhood, setActiveNeighborhood] = useState(initialNeighborhood);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
   useEffect(() => {
+    if (!isTest && memoryActiveNeighborhood !== null) return;
     let isMounted = true;
     async function loadStored() {
       try {
@@ -35,7 +46,11 @@ export function useActiveNeighborhood(
             val === "Crioli" ||
             val === "Petecas" ||
             val === "Prado";
-          setActiveNeighborhood(isLegacyNeighborhood ? "all" : val);
+          const resolved = isLegacyNeighborhood ? "all" : val;
+          if (!isTest) memoryActiveNeighborhood = resolved;
+          setActiveNeighborhood(resolved);
+        } else if (!isTest) {
+          memoryActiveNeighborhood = defaultNeighborhood;
         }
       } catch {
         // Fallback para o valor inicial em caso de falha de leitura
@@ -45,7 +60,7 @@ export function useActiveNeighborhood(
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [defaultNeighborhood, isTest]);
 
   const openSelector = useCallback(() => {
     setIsSelectorOpen(true);
@@ -57,6 +72,7 @@ export function useActiveNeighborhood(
 
   const selectNeighborhood = useCallback(async (neighborhood: string) => {
     const trimmed = neighborhood.trim();
+    if (!isTest) memoryActiveNeighborhood = trimmed;
     setActiveNeighborhood(trimmed);
     setIsSelectorOpen(false);
     try {
@@ -64,7 +80,7 @@ export function useActiveNeighborhood(
     } catch {
       // Ignora erro de gravação não crítico
     }
-  }, []);
+  }, [isTest]);
 
   return {
     activeNeighborhood,

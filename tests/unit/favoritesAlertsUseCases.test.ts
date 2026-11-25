@@ -19,6 +19,37 @@ describe("favoritos", () => {
     expect(await useCases.toggleFavorite("reader", book.id)).toBe(false);
     expect(await useCases.listFavorites("reader")).toEqual([]);
   });
+
+  it("deduplica consultas simultâneas de isFavorite e reutiliza cache sem N+1", async () => {
+    const books = new MemoryBookDataSource();
+    const b1 = await books.create({ title: "Livro 1", author: "Autora", ownerId: "owner", modality: "donation", status: "available" });
+    const b2 = await books.create({ title: "Livro 2", author: "Autora", ownerId: "owner", modality: "sale", price: 20, status: "available" });
+    const favSource = new MemoryFavoriteDataSource();
+    await favSource.add("reader", b1.id);
+    const listSpy = jest.spyOn(favSource, "listByUser");
+    const useCases = new FavoriteUseCases(favSource, books);
+
+    // 10 cards consultando isFavorite ao mesmo tempo devem disparar apenas 1 consulta ao banco
+    const results = await Promise.all([
+      useCases.isFavorite("reader", b1.id),
+      useCases.isFavorite("reader", b2.id),
+      useCases.isFavorite("reader", b1.id),
+      useCases.isFavorite("reader", "inexistente-1"),
+      useCases.isFavorite("reader", "inexistente-2"),
+    ]);
+
+    expect(results).toEqual([true, false, true, false, false]);
+    expect(listSpy).toHaveBeenCalledTimes(1);
+
+    // Nova consulta dentro da janela de cache também não vai ao banco
+    expect(await useCases.isFavorite("reader", b1.id)).toBe(true);
+    expect(listSpy).toHaveBeenCalledTimes(1);
+
+    // toggleFavorite mantém o cache sincronizado sem precisar recarregar
+    expect(await useCases.toggleFavorite("reader", b2.id)).toBe(true);
+    expect(await useCases.isFavorite("reader", b2.id)).toBe(true);
+    expect(listSpy).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("alertas de busca", () => {

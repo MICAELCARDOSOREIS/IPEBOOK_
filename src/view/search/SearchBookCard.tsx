@@ -20,11 +20,21 @@ export type SearchBookCardProps = {
   compactWeb?: boolean;
   gridColumns: number;
   userId: string | null;
-  onPress: () => void;
-  onFavoriteToggle: (selected: boolean) => void;
+  onPress: (bookId: string) => void;
+  onFavoriteToggle: (selected: boolean, bookTitle?: string) => void;
 };
 
-export function SearchBookCard({
+const cardStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createCardStyles>>();
+function getCardStyles(colors: ColorPalette) {
+  let cached = cardStylesCache.get(colors);
+  if (!cached) {
+    cached = createCardStyles(colors);
+    cardStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+function SearchBookCardComponent({
   item,
   wideWeb,
   compactWeb,
@@ -37,7 +47,7 @@ export function SearchBookCard({
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
   const iosGlass = isIos && !reduceTransparency;
-  const styles = React.useMemo(() => createCardStyles(colors), [colors]);
+  const styles = getCardStyles(colors);
   const [isHovered, setIsHovered] = useState(false);
 
   const priceOrCondition =
@@ -74,7 +84,7 @@ export function SearchBookCard({
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
         onPress={() => {
           if (isIos) triggerHaptic("light");
-          onPress();
+          onPress(item.id);
         }}
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
@@ -134,13 +144,13 @@ export function SearchBookCard({
           bookId={item.id}
           userId={userId}
           variant={wideWeb ? "overlay" : "default"}
-          onToggleSuccess={onFavoriteToggle}
+          onToggleSuccess={(selected) => onFavoriteToggle(selected, item.title)}
         />
         {!wideWeb ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${item.title}`}
-            onPress={onPress}
+            onPress={() => onPress(item.id)}
             style={styles.chevronButton}
           >
             <AppIcon name="chevronRight" size={18} color={colors.nature.foliage} />
@@ -150,6 +160,9 @@ export function SearchBookCard({
     </View>
   );
 }
+
+export const SearchBookCard = React.memo(SearchBookCardComponent);
+SearchBookCard.displayName = "SearchBookCard";
 
 function createCardStyles(colors: ColorPalette) {
   return StyleSheet.create({
