@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ImageSource } from "@/model/services/iImagePickerService";
 import type { BookCondition, BookModality } from "@/model/entities/book";
 import {
   BOOK_CATEGORIES,
@@ -21,14 +22,18 @@ import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
+import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeEditListingViewModel } from "@/di/container";
+import { makeEditListingViewModel, makeListingPhotoViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -60,9 +65,16 @@ export default function EditListing({
   const guardedCancel = useGuardedPress(onCancel);
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeEditListingViewModel(bookId, sessionUserId);
+  const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
+  const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{
+    slot: "cover" | "extra";
+    index?: number;
+    source: ImageSource;
+  } | null>(null);
   // Web larga: foto e identificação de um lado, descrição e venda do outro.
   const wide = useIsWideWeb();
   const isKeyboardVisible = useKeyboardVisible();
@@ -98,6 +110,33 @@ export default function EditListing({
     const result = await actions.submit();
     if (result) guardedSaved();
   };
+
+  const handleRemoveExtraPhoto = (index: number) => {
+    if (actions.setPhotoAt) actions.setPhotoAt(index, "");
+    else actions.removePhoto(index);
+  };
+
+  const handleChoosePhoto = (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => {
+    const side =
+      slot === "cover" ? "cover" : slotIndex === 0 ? "spine" : slotIndex === 1 ? "back" : undefined;
+    void photoActions.choose(source, side).then((url) => {
+      if (!url) return;
+      if (slot === "cover") actions.setPhotoUrl(url);
+      else if (slotIndex !== undefined && actions.setPhotoAt) actions.setPhotoAt(slotIndex, url);
+      else actions.addPhoto(url);
+    });
+  };
+
+  const bookSide =
+    sheetSlot?.slot === "cover"
+      ? "cover"
+      : sheetSlot?.index === 0
+        ? "spine"
+        : sheetSlot?.index === 1
+          ? "back"
+          : undefined;
+  const photoTitle =
+    bookSide === "spine" ? "Foto da lombada" : bookSide === "back" ? "Foto do verso" : "Foto da capa";
 
   if (state.loading) {
     return (
@@ -165,37 +204,88 @@ export default function EditListing({
           <View style={[styles.columns, wide && styles.columnsWide]}>
           <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.photoSection}>
-            <Text style={styles.sectionLabel}>Foto da capa</Text>
-            <View style={styles.photoRow}>
+            <Text style={styles.sectionLabel}>Fotos do livro (capa, lombada e verso)</Text>
+            <View style={styles.photoGrid}>
               <AddPhotoCard
-                photoUrl={state.photoUrl}
-                onPress={() => setShowPhotoInput(true)}
+                label="Foto da capa"
+                photoUrl={state.photoUrl || undefined}
+                onPress={() => setSheetSlot({ slot: "cover" })}
                 onRemovePhoto={() => {
                   actions.setPhotoUrl("");
                   setShowPhotoInput(false);
                 }}
+                style={styles.coverSlot}
               />
-              {showPhotoInput || state.photoUrl ? (
-                <View style={styles.photoInputContainer}>
-                  <TextField
-                    label="URL da foto da capa"
-                    value={state.photoUrl}
-                    onChangeText={actions.setPhotoUrl}
-                    editable={!state.saving}
-                    placeholder="https://exemplo.com/capa.jpg"
-                    autoCapitalize="none"
-                  />
-                </View>
-              ) : (
-                <View style={styles.photoHelper}>
-                  <Text style={styles.photoHelperTitle}>Adicione uma foto real</Text>
-                  <Text style={styles.photoHelperText}>
-                    Anúncios com foto da capa chamam mais atenção na comunidade de Piripiri.
-                  </Text>
-                </View>
-              )}
+              <View style={styles.sideSlots}>
+                <AddPhotoCard
+                  label="Lombada"
+                  photoUrl={state.photos[0] || undefined}
+                  onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
+                  onRemovePhoto={() => handleRemoveExtraPhoto(0)}
+                  style={styles.sideSlot}
+                />
+                <AddPhotoCard
+                  label="Verso"
+                  photoUrl={state.photos[1] || undefined}
+                  onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
+                  onRemovePhoto={() => handleRemoveExtraPhoto(1)}
+                  style={styles.sideSlot}
+                />
+              </View>
             </View>
+            {photoState.uploading ? (
+              <View accessibilityLiveRegion="polite" style={styles.uploadingRow}>
+                <ActivityIndicator color={colors.action} accessibilityLabel="Enviando foto" />
+                <Text style={styles.photoHelperText}>Enviando a foto…</Text>
+              </View>
+            ) : null}
+            {photoState.error ? (
+              <View style={styles.photoErrorBlock}>
+                <InlineErrorCard message={photoState.error} />
+                {Platform.OS === "ios" && photoState.permissionDenied ? <OpenAppSettingsButton /> : null}
+              </View>
+            ) : null}
+            {showPhotoInput || state.photoUrl ? (
+              <TextField
+                label="URL da foto da capa"
+                value={state.photoUrl}
+                onChangeText={actions.setPhotoUrl}
+                editable={!state.saving}
+                placeholder="https://exemplo.com/capa.jpg"
+                autoCapitalize="none"
+              />
+            ) : (
+              <TextButton
+                label="Prefiro colar o link da capa"
+                disabled={state.saving}
+                onPress={() => setShowPhotoInput(true)}
+              />
+            )}
           </View>
+
+          <PhotoSourceSheet
+            visible={sheetSlot !== null}
+            title={photoTitle}
+            bookSide={bookSide}
+            onChoose={(source) => {
+              const slot = sheetSlot;
+              setSheetSlot(null);
+              if (slot) setPendingPhoto({ ...slot, source });
+            }}
+            onClose={() => setSheetSlot(null)}
+          />
+
+          <PermissionPromptDialog
+            permission="photos"
+            status={pendingPhoto ? "explain" : "idle"}
+            onAllow={() => {
+              const pending = pendingPhoto;
+              setPendingPhoto(null);
+              if (pending) handleChoosePhoto(pending.slot, pending.source, pending.index);
+            }}
+            onLater={() => setPendingPhoto(null)}
+            onDismiss={() => setPendingPhoto(null)}
+          />
 
           <View
             onLayout={(event) => {
@@ -481,24 +571,29 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelMedium,
     color: colors.secondaryText,
   },
-  photoRow: {
+  photoGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
     gap: tokens.spacing[12],
   },
-  photoInputContainer: {
-    flex: 1,
+  coverSlot: {
+    flex: 2,
+    aspectRatio: undefined,
+    minWidth: 0,
   },
-  photoHelper: {
+  sideSlots: {
     flex: 1,
-    justifyContent: "center",
-    gap: tokens.spacing[4],
-    paddingTop: tokens.spacing[4],
+    gap: tokens.spacing[12],
   },
-  photoHelperTitle: {
-    ...tokens.typography.bodyMedium,
-    fontWeight: tokens.fontWeight.semiBold,
-    color: colors.text,
+  sideSlot: {
+    minWidth: 0,
+  },
+  uploadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+  },
+  photoErrorBlock: {
+    gap: tokens.spacing[8],
   },
   photoHelperText: {
     ...tokens.typography.labelMedium,

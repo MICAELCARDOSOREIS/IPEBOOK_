@@ -278,4 +278,70 @@ describe("useEditListingViewModel", () => {
     expect(hook.current[0].isBox).toBe(false);
     expect(hook.current[0].boxVolumesCount).toBe("");
   });
+
+  it("carrega foto do verso no slot 1, atualiza slots sem sobrescrever e envia [] ao remover todas", async () => {
+    const versoUrl = "https://example.com/foto-verso-1.jpg";
+    const lombadaUrl = "https://example.com/foto-lombada-1.jpg";
+    const useCases = stubUseCases({
+      getBookById: jest.fn().mockResolvedValue({
+        id: "b-sides",
+        title: "Alchemised",
+        author: "SenLinYu",
+        modality: "sale",
+        price: 50,
+        ownerId: "user-1",
+        status: "available",
+        photoUrl: "https://example.com/capa.jpg",
+        photos: [versoUrl],
+      } satisfies Book),
+      updateListing: jest.fn().mockImplementation(async (_id, input) => ({
+        id: "b-sides",
+        title: input.title ?? "Alchemised",
+        author: input.author ?? "SenLinYu",
+        modality: "sale",
+        price: 50,
+        ownerId: "user-1",
+        status: "available",
+        photoUrl: input.photoUrl,
+        photos: input.photos,
+      })),
+    });
+
+    const hook = await renderHook("b-sides", "user-1", useCases);
+    expect(hook.current[0].photos).toEqual(["", versoUrl]);
+
+    await act(async () => {
+      hook.current[1].setPhotoAt?.(0, lombadaUrl);
+    });
+    expect(hook.current[0].photos).toEqual([lombadaUrl, versoUrl]);
+
+    await act(async () => {
+      await hook.current[1].submit();
+    });
+    expect(useCases.updateListing).toHaveBeenCalledWith(
+      "b-sides",
+      expect.objectContaining({ photos: [lombadaUrl, versoUrl] }),
+      "user-1",
+    );
+
+    // Remover lombada mantém verso no slot 1; remover verso envia [] explícito.
+    await act(async () => {
+      hook.current[1].setPhotoAt?.(0, "");
+    });
+    expect(hook.current[0].photos).toEqual(["", versoUrl]);
+
+    await act(async () => {
+      hook.current[1].setPhotoAt?.(1, "");
+    });
+    expect(hook.current[0].photos).toEqual([]);
+
+    await act(async () => {
+      await hook.current[1].submit();
+    });
+    expect(useCases.updateListing).toHaveBeenLastCalledWith(
+      "b-sides",
+      expect.objectContaining({ photos: [] }),
+      "user-1",
+    );
+  });
 });
