@@ -92,8 +92,13 @@ export class AuthUseCases implements IAuthUseCases {
     return user;
   }
 
-  signOut(): Promise<void> {
-    return this.dataSource.signOut();
+  async signOut(): Promise<void> {
+    await this.dataSource.signOut();
+    try {
+      await this.localCache?.clearBooksCache();
+    } catch {
+      // A sessão já foi encerrada no provedor; falha no storage local não pode travar o logout.
+    }
   }
 
   getSession(): Promise<User | null> {

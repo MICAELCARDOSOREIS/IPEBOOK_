@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type FavoritesState = {
   books: readonly Book[];
@@ -19,6 +20,10 @@ export type FavoritesActions = {
 };
 
 const sessionFavoritesCache = new Map<string, readonly Book[]>();
+
+registerSessionMemoryCache(() => {
+  sessionFavoritesCache.clear();
+});
 
 export function useFavoritesViewModel(userId: string | null, useCases: IFavoriteUseCases): [FavoritesState, FavoritesActions] {
   const isTest = process.env.NODE_ENV === "test";

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { UserPreferences, UserPreferencesEdits } from "@/model/entities/userPreferences";
 import { DomainError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type UserPreferencesState = {
   preferences: UserPreferences | null;
@@ -21,6 +22,10 @@ export type UserPreferencesActions = {
 const GENERIC_ERROR = "Não foi possível carregar suas preferências. Tente novamente.";
 const GENERIC_SAVE_ERROR = "Não foi possível salvar suas preferências. Tente novamente.";
 const sessionPreferencesCache = new Map<string, UserPreferences>();
+
+registerSessionMemoryCache(() => {
+  sessionPreferencesCache.clear();
+});
 
 export function useUserPreferencesViewModel(
   userId: string | null,

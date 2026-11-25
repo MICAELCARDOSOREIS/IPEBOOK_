@@ -235,7 +235,7 @@ export function BetaInviteScreen({
 
       {showHelp ? (
         <View style={styles.helpGuide} accessibilityLiveRegion="polite">
-          <Text accessibilityRole="header" style={styles.helpGuideHeader}>
+          <Text accessibilityRole="header" aria-level={2} style={styles.helpGuideHeader}>
             Como liberar e baixar o IpêBook (passo a passo)
           </Text>
           <View style={wide ? styles.helpStepsGrid : styles.helpStepsCol}>
@@ -466,6 +466,8 @@ function createStyles(colors: ColorPalette) {
     },
     logoPressable: {
       alignSelf: "center",
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       cursor: "pointer" as never,
     },
     topBarActions: {
@@ -477,8 +479,9 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
+      minHeight: tokens.accessibility.touchTarget,
       paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerHigh,
       cursor: "pointer" as never,
@@ -698,7 +701,10 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     switchAccount: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
       alignSelf: "center",
     },
     switchAccountText: {

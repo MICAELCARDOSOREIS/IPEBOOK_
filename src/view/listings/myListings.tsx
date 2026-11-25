@@ -309,7 +309,7 @@ export function MyListings({
       </View>
 
       <View style={[styles.content, wideWeb && styles.contentWide]}>
-        <CachedBookNotice cachedAt={state.cachedAt} />
+        <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type UserMeetingsState = {
   meetings: readonly Meeting[];
@@ -15,6 +16,10 @@ export type UserMeetingsActions = {
 
 const LOAD_ERROR = "Não foi possível carregar o histórico de encontros. Tente novamente.";
 const sessionMeetingsCache = new Map<string, readonly Meeting[]>();
+
+registerSessionMemoryCache(() => {
+  sessionMeetingsCache.clear();
+});
 
 /** Histórico geral de encontros do usuário em suas trocas e vendas em Piripiri (Spec 071). */
 export function useUserMeetingsViewModel(

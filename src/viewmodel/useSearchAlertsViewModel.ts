@@ -3,6 +3,7 @@ import type { BookModality } from "@/model/entities/book";
 import type { SearchAlert } from "@/model/entities/searchAlert";
 import { DomainError } from "@/model/errors";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type SearchAlertsState = {
   alerts: readonly SearchAlert[];
@@ -22,6 +23,10 @@ export type SearchAlertsActions = {
 };
 
 const sessionAlertsCache = new Map<string, readonly SearchAlert[]>();
+
+registerSessionMemoryCache(() => {
+  sessionAlertsCache.clear();
+});
 
 export function useSearchAlertsViewModel(userId: string | null, initialQuery: string, useCases: ISearchAlertUseCases): [SearchAlertsState, SearchAlertsActions] {
   const isTest = process.env.NODE_ENV === "test";

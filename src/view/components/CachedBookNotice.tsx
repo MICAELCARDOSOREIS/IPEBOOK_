@@ -3,12 +3,37 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
 
-export function CachedBookNotice({ cachedAt, catalog }: { cachedAt?: number | null; catalog?: boolean }) {
-  const { colors } = useTheme();
-  if (cachedAt == null) return null;
-  const updatedAt = new Date(cachedAt).toLocaleTimeString("pt-BR", {
+export type CachedBookNoticeVariant = "catalog" | "shelf" | "detail";
+
+export type CachedBookNoticeProps = {
+  cachedAt?: number | null;
+  variant?: CachedBookNoticeVariant;
+  /** Compatibilidade: equivale a `variant="catalog"`. */
+  catalog?: boolean;
+};
+
+function formatCachedMessage(cachedAt: number, variant: CachedBookNoticeVariant): string {
+  const date = new Date(cachedAt);
+  const updatedDate = date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+  const updatedTime = date.toLocaleTimeString("pt-BR", {
     timeStyle: "short",
   });
+  if (variant === "catalog") {
+    return `Catálogo salvo em ${updatedDate} às ${updatedTime}. Conecte-se para carregar mais.`;
+  }
+  if (variant === "detail") {
+    return `Anúncio salvo em ${updatedDate} às ${updatedTime}. Conecte-se para confirmar a disponibilidade.`;
+  }
+  return `Estante salva em ${updatedDate} às ${updatedTime}.`;
+}
+
+export function CachedBookNotice({ cachedAt, variant, catalog }: CachedBookNoticeProps) {
+  const { colors } = useTheme();
+  if (cachedAt == null) return null;
+  const resolvedVariant: CachedBookNoticeVariant = variant ?? (catalog ? "catalog" : "shelf");
   return (
     <View
       accessibilityLiveRegion="polite"
@@ -26,9 +51,7 @@ export function CachedBookNotice({ cachedAt, catalog }: { cachedAt?: number | nu
     >
       <AppIcon name="info" size={18} color={colors.m3.onSecondaryContainer} />
       <Text style={{ ...tokens.typography.footnote, color: colors.m3.onSecondaryContainer, flex: 1 }}>
-        {catalog
-          ? `Catálogo salvo às ${updatedAt}. Conecte-se para carregar mais.`
-          : `Estante salva às ${updatedAt}.`}
+        {formatCachedMessage(cachedAt, resolvedVariant)}
       </Text>
     </View>
   );

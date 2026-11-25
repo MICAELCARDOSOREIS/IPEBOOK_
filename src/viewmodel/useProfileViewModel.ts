@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ProfileEdits, PublicProfile } from "@/model/entities/publicProfile";
 import { DomainError } from "@/model/errors";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type ProfileState = {
   profile: PublicProfile | null;
@@ -20,6 +21,10 @@ const GENERIC_ERROR = "Não foi possível carregar o perfil. Tente novamente.";
 const GENERIC_SAVE_ERROR = "Não foi possível salvar o perfil. Tente novamente.";
 
 const sessionProfileCache = new Map<string, PublicProfile>();
+
+registerSessionMemoryCache(() => {
+  sessionProfileCache.clear();
+});
 
 export function useProfileViewModel(
   userId: string | null,

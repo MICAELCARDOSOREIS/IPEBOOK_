@@ -483,7 +483,7 @@ export default function BookDetail({
           </View>
         ) : book ? (
           <View style={[styles.content, wideWeb && styles.contentWide]}>
-            <CachedBookNotice cachedAt={state.cachedAt} />
+            <CachedBookNotice cachedAt={state.cachedAt} variant="detail" />
             {/* 2. Título, autor, valor e etiqueta da modalidade */}
             <View style={styles.titleSection}>
               <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>

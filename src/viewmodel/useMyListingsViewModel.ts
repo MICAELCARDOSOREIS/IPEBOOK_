@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type MyListingsState = {
   books: readonly Book[];
@@ -22,13 +23,14 @@ export type MyListingsActions = {
 
 const sessionMyListingsCache = new Map<string, readonly Book[]>();
 
-export function getCachedMyListingById(bookId: string): Book | null {
-  if (process.env.NODE_ENV === "test") return null;
-  for (const list of sessionMyListingsCache.values()) {
-    const found = list.find((b) => b.id === bookId);
-    if (found) return found;
-  }
-  return null;
+registerBooksMemoryCache(() => {
+  sessionMyListingsCache.clear();
+});
+
+export function getCachedMyListingById(bookId: string, userId?: string | null): Book | null {
+  if (process.env.NODE_ENV === "test" || !userId) return null;
+  const list = sessionMyListingsCache.get(userId);
+  return list?.find((b) => b.id === bookId) ?? null;
 }
 
 export function useMyListingsViewModel(

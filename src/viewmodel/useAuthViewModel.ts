@@ -5,6 +5,7 @@ import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
+import { clearAllSessionMemoryCaches, registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type AuthState = {
   user: User | null;
@@ -47,6 +48,19 @@ let sessionAuthCache: { resolved: boolean; user: User | null } = {
   user: null,
 };
 
+registerSessionMemoryCache(() => {
+  sessionAuthCache = { resolved: false, user: null };
+});
+
+function updateSessionAuthCache(nextUser: User | null): void {
+  const previousUserId = sessionAuthCache.user?.id ?? null;
+  const nextUserId = nextUser?.id ?? null;
+  if (previousUserId && previousUserId !== nextUserId) {
+    clearAllSessionMemoryCaches();
+  }
+  sessionAuthCache = { resolved: true, user: nextUser };
+}
+
 export function useAuthViewModel(
   auth: IAuthUseCases,
   rateLimiter: IRateLimiter,
@@ -71,10 +85,10 @@ export function useAuthViewModel(
         const user = timeoutPromise
           ? await Promise.race([auth.getSession(), timeoutPromise])
           : await auth.getSession();
-        if (!isTest) sessionAuthCache = { resolved: true, user };
+        if (!isTest) updateSessionAuthCache(user);
         if (active.current) setState({ user, loading: false, error: null });
       } catch {
-        if (!isTest) sessionAuthCache = { resolved: true, user: null };
+        if (!isTest) updateSessionAuthCache(null);
         if (active.current) setState({ user: null, loading: false, error: null });
       }
     })();
@@ -87,7 +101,7 @@ export function useAuthViewModel(
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       const user = await action();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) setState({ user, loading: false, error: null });
       return true;
     } catch (error) {
@@ -113,7 +127,7 @@ export function useAuthViewModel(
     try {
       await auth.signUp(email, password, name);
       const user = await auth.getSession();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) setState({
         user,
         loading: false,
@@ -193,7 +207,7 @@ export function useAuthViewModel(
         throw new DomainError("Login com Google indisponível.");
       }
       const user = await auth.signInWithGoogle();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -235,7 +249,7 @@ export function useAuthViewModel(
         return false;
       }
       const user = await auth.setSessionFromUrl(url);
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -264,6 +278,7 @@ export function useAuthViewModel(
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       await auth.signOut();
+      clearAllSessionMemoryCaches();
       if (!isTest) sessionAuthCache = { resolved: true, user: null };
       if (active.current) setState({ user: null, loading: false, error: null });
       return true;
@@ -284,7 +299,7 @@ export function useAuthViewModel(
   const refreshSession = useCallback(async () => {
     try {
       const user = await auth.getSession();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (!active.current) return;
       setState((previous) => (previous.user?.id === user?.id ? previous : { ...previous, user, loading: false, error: null }));
     } catch {
