@@ -564,8 +564,8 @@ const defaultConversationsDeps: ConversationsDeps = {
   listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
   cancelRequest: (requestId, userId) => bookRequestUseCases.cancelRequest(requestId, userId),
   getProfile: async (userId) => {
-    const profile = await publicProfileUseCases.getPublicProfile(userId);
-    return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
+    const profile = await dataSources.profiles.findById(userId);
+    return { name: profile?.name ?? null, photoUrl: profile?.photoUrl ?? null };
   },
   subscribe: (sessionUserId, onChange) => {
     const offMessages = negotiationMessageUseCases.subscribeToAllMessages(() => onChange());

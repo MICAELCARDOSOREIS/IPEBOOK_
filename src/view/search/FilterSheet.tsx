@@ -69,6 +69,8 @@ export function FilterSheet({
     return list;
   }, [availableCategories, draftFilters.category]);
 
+  if (!visible) return null;
+
   return (
     <BottomSheet
       visible={visible}

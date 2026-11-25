@@ -33,6 +33,13 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
     expect(typeof style.width).toBe("number");
     expect(typeof style.height).toBe("number");
     expect(style.width).toBeGreaterThan(0);
+    expect(image.props.resizeMethod).toBe("resize");
+    expect(image.props.fadeDuration).toBe(0);
+  });
+
+  it("não monta a lista de fotos quando visible=false", async () => {
+    const screen = await renderGallery({ visible: false });
+    expect(screen.queryByTestId("photo-gallery-list")).toBeNull();
   });
 
   it("foto que não carrega (bloqueada ou fora do ar) mostra um aviso em vez da tela preta", async () => {

@@ -85,17 +85,28 @@ async function buildItem(
   profileMemo: Map<string, Promise<{ name: string | null; photoUrl: string | null }>>,
 ): Promise<{ item: ConversationItem; sortKey: string }> {
   const { request, listing } = entry;
-  let other: { name: string | null; photoUrl: string | null };
+  let profilePromise: Promise<{ name: string | null; photoUrl: string | null }>;
   if (sent) {
     let pending = profileMemo.get(listing.ownerId);
     if (!pending) {
       pending = safely(deps.getProfile(listing.ownerId), { name: null, photoUrl: null });
       profileMemo.set(listing.ownerId, pending);
     }
-    other = await pending;
+    profilePromise = pending;
   } else {
-    other = { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
+    profilePromise = Promise.resolve({
+      name: entry.requesterName ?? null,
+      photoUrl: entry.requesterPhotoUrl ?? null,
+    });
   }
+
+  // Perfil e mensagens da negociação aceita correm em paralelo para reduzir o carregamento frio.
+  const messagesPromise =
+    request.status === "pending"
+      ? Promise.resolve<NegotiationMessage[] | null>(null)
+      : safely(deps.getMessages(request.id, sessionUserId), []);
+
+  const [other, messages] = await Promise.all([profilePromise, messagesPromise]);
   const base = {
     requestId: request.id,
     listing,
@@ -111,8 +122,7 @@ async function buildItem(
     };
   }
 
-  const messages = await safely(deps.getMessages(request.id, sessionUserId), []);
-  const last = messages[messages.length - 1];
+  const last = messages?.[messages.length - 1];
   if (!last) {
     return { item: { ...base, kind: "accepted", lastMessageAt: null, preview: "Combinem os detalhes pelo chat" }, sortKey: "" };
   }

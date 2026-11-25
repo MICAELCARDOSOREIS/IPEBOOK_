@@ -284,6 +284,33 @@ describe("negociação simples (spec 004)", () => {
         useCases.requestNegotiation("listing-1", "alice", { offeredBookId: unavailableBook.id }),
       ).rejects.toThrow(/não está disponível/);
     });
+
+    it("deduplica consultas de anúncios e perfis em listReceivedRequests e listSentRequests", async () => {
+      const ownerBook2 = await books.create({
+        title: "Grande Sertão: Veredas",
+        author: "Guimarães Rosa",
+        ownerId: "owner",
+        modality: "donation",
+        status: "available",
+      });
+      const profiles = new MemoryProfileDataSource();
+      await profiles.ensure("alice", "Alice");
+      const withProfiles = new BookRequestUseCases(books, requests, profiles);
+
+      await withProfiles.requestNegotiation("listing-1", "alice");
+      await withProfiles.requestNegotiation(ownerBook2.id, "alice");
+
+      const findProfileSpy = jest.spyOn(profiles, "findById");
+      const received = await withProfiles.listReceivedRequests("owner");
+      expect(received).toHaveLength(2);
+      expect(received.map((r) => r.listing.id)).toEqual(["listing-1", ownerBook2.id]);
+      expect(findProfileSpy).toHaveBeenCalledTimes(1);
+
+      const findBookSpy = jest.spyOn(books, "findById");
+      const sent = await withProfiles.listSentRequests("alice");
+      expect(sent).toHaveLength(2);
+      expect(findBookSpy).toHaveBeenCalledTimes(2);
+    });
   });
 });
 
