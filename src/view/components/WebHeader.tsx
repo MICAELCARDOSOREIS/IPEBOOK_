@@ -52,6 +52,7 @@ export function WebHeader({
   // Janelas médias (tablet, notebook pequeno): vãos menores para tudo caber sem cortar o avatar.
   const compact = width < 1280;
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const guardedNavigate = useGuardedPress(onNavigate);
   const submitSearch = () => {
     const term = searchTerm.trim();
@@ -71,11 +72,13 @@ export function WebHeader({
         </Link>
 
         {active !== "search" ? (
-          <View style={styles.search} testID="web-header-search">
-            <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
+          <View style={[styles.search, searchFocused && styles.searchFocused]} testID="web-header-search">
+            <AppIcon name="search" size={20} color={searchFocused ? colors.m3.primary : colors.m3.onSurfaceVariant} />
             <TextInput
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               onSubmitEditing={submitSearch}
               placeholder="Buscar título, autor ou categoria"
               placeholderTextColor={colors.m3.onSurfaceVariant}
@@ -199,6 +202,11 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outline,
     },
+    searchFocused: {
+      borderColor: colors.m3.primary,
+      borderWidth: 1.5,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
     searchInput: {
       ...tokens.typography.bodyMedium,
       flex: 1,
@@ -207,6 +215,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
       fontSize: 16,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     spacer: { flex: 1 },
     countBadge: {

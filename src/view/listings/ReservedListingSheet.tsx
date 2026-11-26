@@ -164,7 +164,11 @@ function ReservedListingSheetContent({
             {onViewOwnerProfile ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Ver perfil e outros anúncios de ${ownerName ?? "deste leitor"}`}
+                accessibilityLabel={
+                  ownerName
+                    ? `Ver perfil e outros anúncios de ${ownerName}`
+                    : "Ver perfil e outros anúncios deste leitor"
+                }
                 onPress={() => {
                   onClose();
                   onViewOwnerProfile();
@@ -176,7 +180,9 @@ function ReservedListingSheetContent({
                 </View>
                 <View style={styles.actionContent}>
                   <Text style={styles.actionTitle}>
-                    Outros livros de {ownerName ? ownerName.split(" ")[0] : "deste leitor"}
+                    {ownerName
+                      ? `Outros livros de ${ownerName.split(" ")[0]}`
+                      : "Outros livros deste leitor"}
                   </Text>
                   <Text style={styles.actionSubtitle}>
                     Aproveite o mesmo encontro para circular mais títulos

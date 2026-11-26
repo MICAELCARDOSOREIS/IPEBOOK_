@@ -333,13 +333,15 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     manualShareHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     manualShareLink: {
-      ...tokens.typography.bodyMedium,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      ...tokens.typography.bodyLarge,
       color: colors.m3.onSurface,
       borderWidth: 1,
       borderColor: colors.m3.outline,
       borderRadius: tokens.radius.small,
       padding: tokens.spacing[12],
       marginTop: tokens.spacing[12],
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     heroWide: {
       flex: 1.15,

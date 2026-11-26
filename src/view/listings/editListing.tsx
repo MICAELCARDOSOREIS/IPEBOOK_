@@ -100,7 +100,8 @@ export default function EditListing({
   }, [state.category]);
 
   const handleFocusField = (yOffset: number) => {
-    if (wide) return;
+    // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
+    if (wide || Platform.OS === "web") return;
     setTimeout(() => {
       scrollRef.current?.scrollTo({
         y: Math.max(0, yOffset - 24),

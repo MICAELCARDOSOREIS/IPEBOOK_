@@ -113,7 +113,12 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHighest,
       borderColor: colors.m3.primary,
     },
-    input: { flex: 1, ...tokens.typography.bodyLarge, color: colors.text },
+    input: {
+      flex: 1,
+      ...tokens.typography.bodyLarge,
+      color: colors.text,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+    },
     clearButton: {
       minHeight: tokens.accessibility.touchTarget,
       minWidth: tokens.accessibility.touchTarget,

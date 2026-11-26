@@ -254,7 +254,8 @@ export function createChatStyles(colors: ColorPalette) {
       borderColor: colors.book.paperEdge,
       backgroundColor: colors.m3.surfaceContainerLow,
       color: colors.m3.onSurface,
-      ...tokens.typography.bodyMedium,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      ...tokens.typography.bodyLarge,
       ...(typeof Platform !== "undefined" && Platform.OS === "web"
         ? ({ outlineStyle: "none", resize: "none" } as never)
         : {}),
