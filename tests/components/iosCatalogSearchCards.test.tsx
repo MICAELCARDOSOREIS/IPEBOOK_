@@ -112,7 +112,7 @@ describe("Cards de Catálogo e Busca iOS 26 (Spec 137 · #229)", () => {
     Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
     const androidFab = await render(<HomeFloatingAddButton onPress={onAdd} />);
     const androidFabStyle = StyleSheet.flatten(androidFab.getByTestId("home-floating-add-button").props.style);
-    expect(androidFabStyle.backgroundColor).toBe(colors.nature.sprout);
+    expect(androidFabStyle.backgroundColor).toBe(colors.m3.primaryContainer);
     impactSpy.mockRestore();
   });
 });
