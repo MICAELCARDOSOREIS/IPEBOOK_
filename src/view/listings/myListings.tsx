@@ -217,8 +217,8 @@ export function MyListings({
     },
     {
       key: "proposals",
-      label: pendingProposals.length > 0 ? `Propostas (${pendingProposals.length})` : "Propostas",
-      a11y: pendingProposals.length > 0 ? `Propostas, ${pendingProposals.length} em aberto` : "Propostas",
+      label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
+      a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
       tone: colors.badge.trade,
       visible: true,
       onPress: () => {

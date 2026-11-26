@@ -370,8 +370,8 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
     expect(screen.getByText("Pessoa da comunidade · negociação aceita · Troca")).toBeDefined();
     expect(screen.queryByText(/Caio/)).toBeNull();
-    // A barra de abas e filtros permanece acessível no topo para retorno em 1 toque
-    expect(screen.getByText("Todos (1)")).toBeDefined();
+    // A barra de abas permanece acessível no topo para retorno em 1 toque
+    expect(screen.getByLabelText("Anúncios")).toBeDefined();
     expect(screen.getByText("Tudo pela conversa")).toBeDefined();
 
     const rows = screen.getAllByRole("button", { name: "Abrir proposta para Dom Casmurro" });
@@ -387,6 +387,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
   });
 
   it("aba Propostas sem propostas mostra estado próprio e volta para Anúncios (Spec 075, CA5)", async () => {
+    mockReceived([]);
     mockViewModel({
       books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
     });
