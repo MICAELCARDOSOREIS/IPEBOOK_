@@ -250,21 +250,32 @@ export default function EditListing({
                 {Platform.OS === "ios" && photoState.permissionDenied ? <OpenAppSettingsButton /> : null}
               </View>
             ) : null}
-            {showPhotoInput || state.photoUrl ? (
-              <TextField
-                label="URL da foto da capa"
-                value={state.photoUrl}
-                onChangeText={actions.setPhotoUrl}
-                editable={!state.saving}
-                placeholder="https://exemplo.com/capa.jpg"
-                autoCapitalize="none"
-              />
+            {showPhotoInput ? (
+              <View style={styles.photoUrlBlock}>
+                <TextField
+                  label="URL da foto da capa"
+                  value={state.photoUrl}
+                  onChangeText={actions.setPhotoUrl}
+                  editable={!state.saving}
+                  placeholder="https://exemplo.com/capa.jpg"
+                  autoCapitalize="none"
+                />
+                <View style={styles.photoLinkToggleRow}>
+                  <TextButton
+                    label="Ocultar link da capa"
+                    disabled={state.saving}
+                    onPress={() => setShowPhotoInput(false)}
+                  />
+                </View>
+              </View>
             ) : (
-              <TextButton
-                label="Prefiro colar o link da capa"
-                disabled={state.saving}
-                onPress={() => setShowPhotoInput(true)}
-              />
+              <View style={styles.photoLinkToggleRow}>
+                <TextButton
+                  label={state.photoUrl ? "Editar link da capa" : "Prefiro colar o link da capa"}
+                  disabled={state.saving}
+                  onPress={() => setShowPhotoInput(true)}
+                />
+              </View>
             )}
           </View>
 
@@ -329,10 +340,11 @@ export default function EditListing({
 
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Categoria</Text>
-            <View style={styles.modalityRow} testID="edit-listing-category-row">
+            <View style={styles.categoryRow} testID="edit-listing-category-row">
               {displayedCategories.map((category) => (
                 <Chip
                   key={category}
+                  size="compact"
                   label={category}
                   accessibilityLabel={`Categoria ${category}`}
                   tone={categoryTone(category)}
@@ -600,12 +612,24 @@ function createStyles(colors: ColorPalette) {
   photoErrorBlock: {
     gap: tokens.spacing[8],
   },
+  photoUrlBlock: {
+    gap: tokens.spacing[4],
+    marginTop: tokens.spacing[4],
+  },
+  photoLinkToggleRow: {
+    alignItems: "flex-start",
+  },
   photoHelperText: {
     ...tokens.typography.labelMedium,
     color: colors.secondaryText,
   },
   field: {
     gap: tokens.spacing[8],
+  },
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: tokens.spacing[6],
   },
   modalityRow: {
     flexDirection: "row",
