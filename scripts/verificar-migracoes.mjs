@@ -407,15 +407,15 @@ const discarded = await db.query(`select id from public.v2_books where id = '${d
 if (discarded.rows.length !== 0) throw new Error('Dono não conseguiu descartar o próprio rascunho');
 process.stdout.write('Rascunhos de anúncio (Spec 017): verificado com sucesso\n');
 
-// Spec 086: tabelas das conversas e notificações publicadas no Realtime
+// Spec 086 + 202611260001: tabelas das conversas, notificações, encontros e entregas publicadas no Realtime
 const realtime = await db.query(
   "select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by tablename",
 );
 const publicadas = realtime.rows.map((row) => row.tablename).join(',');
-if (publicadas !== 'v2_book_requests,v2_negotiation_messages,v2_notifications') {
+if (publicadas !== 'v2_book_requests,v2_deliveries,v2_meetings,v2_negotiation_messages,v2_notifications') {
   throw new Error(`Publicação de tempo real incompleta: ${publicadas}`);
 }
-process.stdout.write('Tempo real de conversas e notificações (Spec 086): verificado com sucesso\n');
+process.stdout.write('Tempo real de conversas, notificações, encontros e entregas: verificado com sucesso\n');
 
 // Spec 095 / ADR 0070: conclusão da entrega por QR code (pedido bbbb; dono = owner, leitor = reader).
 const pedido = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
