@@ -88,9 +88,10 @@ export function TextField({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const hasValue = value.length > 0;
   const floating = focused || hasValue;
-  const accentColor = hasError ? colors.error : focused ? colors.action : colors.m3.onSurfaceVariant;
+  const focusColor = Platform.OS === "ios" ? colors.m3.focusRing : colors.action;
+  const accentColor = hasError ? colors.error : focused ? focusColor : colors.m3.onSurfaceVariant;
   const restingBorderColor = Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline;
-  const borderColor = hasError ? colors.error : focused ? colors.action : restingBorderColor;
+  const borderColor = hasError ? colors.error : focused ? focusColor : restingBorderColor;
 
   return (
     <View style={styles.field}>

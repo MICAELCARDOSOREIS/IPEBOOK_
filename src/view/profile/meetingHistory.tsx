@@ -263,6 +263,8 @@ function createStyles(colors: ColorPalette) {
     },
     emptyAction: {
       marginTop: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[24],
       borderRadius: tokens.radius.full,

@@ -438,10 +438,11 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     messageInput: {
-      backgroundColor: colors.background,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.background,
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
       borderRadius: tokens.radius.medium,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
       color: colors.m3.onSurface,
@@ -453,7 +454,7 @@ function createStyles(colors: ColorPalette) {
       ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     messageInputFocused: {
-      borderColor: colors.action,
+      borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
       borderWidth: 1.5,
     },
     loadingContainer: {
@@ -481,9 +482,11 @@ function createStyles(colors: ColorPalette) {
     bookOption: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 44 : undefined,
       gap: tokens.spacing[10],
       padding: tokens.spacing[10],
       borderRadius: tokens.radius.cardSmall,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.background,

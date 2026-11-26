@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -580,6 +581,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       overflow: "hidden",
     },
     rowCardPendingReceived: {
@@ -610,7 +612,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.errorContainer,
-      minHeight: tokens.spacing[32],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[32],
       justifyContent: "center",
     },
     cancelRequestText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },

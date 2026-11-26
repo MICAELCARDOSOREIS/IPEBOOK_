@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
 import { HelpContactLinks } from "@/view/help/HelpContactLinks";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -95,9 +96,11 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
           <TextField
             label="Buscar dúvida"
+            labelBackgroundColor={colors.background}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Ex: ponto de encontro, doação, senha..."
+            returnKeyType="search"
           />
 
           <View style={styles.filterContainer}>
@@ -232,6 +235,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[20],
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[12],
     alignItems: "center",
   },
@@ -241,6 +245,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[16],
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[8],
   },
   question: {

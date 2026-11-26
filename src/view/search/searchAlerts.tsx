@@ -387,16 +387,17 @@ function createStyles(colors: ColorPalette) {
   input: {
     minHeight: tokens.accessibility.touchTarget,
     borderWidth: 1,
-    borderColor: colors.m3.outline,
-    backgroundColor: colors.surface,
+    borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
+    backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.surface,
     borderRadius: tokens.radius.small,
+    ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
     paddingHorizontal: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
     color: colors.text,
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
   },
   inputFocused: {
-    borderColor: colors.action,
+    borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
     borderWidth: 2,
   },
   inputError: {

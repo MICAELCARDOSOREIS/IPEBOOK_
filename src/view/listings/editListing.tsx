@@ -428,6 +428,8 @@ export default function EditListing({
                     editable={!state.saving}
                     placeholder="Ex: 3, 5, 7"
                     keyboardType="number-pad"
+                    iosKeyboardDone
+                    returnKeyType="done"
                     helperText="De 2 a 100 volumes componentes da coleção"
                   />
                 </View>

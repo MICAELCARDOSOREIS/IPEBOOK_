@@ -17,6 +17,7 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
   const [state, actions] = makeAuthViewModel();
   const { colors } = useTheme();
   const [failed, setFailed] = useState(false);
+  const [missingUrlTimedOut, setMissingUrlTimedOut] = useState(false);
 
   // Mantém as dependências mais recentes sem reexecutar o efeito: cada renderização recria
   // `actions` e `onSuccess`, e reprocessar a URL descartaria o resultado em andamento.
@@ -31,6 +32,17 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
       mounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (url) {
+      setMissingUrlTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (mounted.current) setMissingUrlTimedOut(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [url]);
 
   useEffect(() => {
     if (!url || processedUrl.current === url) return;
@@ -54,7 +66,11 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
 
   // O ViewModel só publica o motivo depois de concluir a tentativa: ler o estado no instante da
   // falha devolveria o valor anterior e esconderia a mensagem real.
-  const errorMessage = failed ? (state.error ?? "Não foi possível concluir o login.") : null;
+  const errorMessage = failed
+    ? (state.error ?? "Não foi possível concluir o login.")
+    : missingUrlTimedOut
+      ? "Link de autenticação ausente ou expirado."
+      : null;
 
   return (
     <ScreenContainer
@@ -70,8 +86,13 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
           ) : null}
         </View>
       ) : (
-        <View style={styles.content}>
-          <ActivityIndicator size="large" color={colors.action} />
+        <View style={styles.content} accessibilityLiveRegion="polite">
+          <ActivityIndicator
+            size="large"
+            color={colors.action}
+            accessibilityRole="progressbar"
+            accessibilityLabel="Concluindo autenticação"
+          />
           <Text style={[styles.loadingText, { color: colors.secondaryText }]}>
             Concluindo autenticação...
           </Text>

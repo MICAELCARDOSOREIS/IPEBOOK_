@@ -644,7 +644,7 @@ function createStyles(colors: ColorPalette, insets?: EdgeInsets) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[10],
-      paddingBottom: Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
+      paddingBottom: Platform.OS === "ios" ? tokens.spacing[12] : Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
     },
     guestCard: {
       gap: tokens.spacing[16],

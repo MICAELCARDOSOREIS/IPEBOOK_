@@ -232,6 +232,7 @@ function createStyles(colors: ColorPalette) {
     },
     footerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[6],

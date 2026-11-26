@@ -39,8 +39,8 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.container, focused && styles.containerFocused, isIos && styles.containerIos]}>
-        <AppIcon name="search" size={isIos ? 20 : 24} color={focused ? colors.m3.primary : colors.secondaryText} />
+      <View style={[styles.container, isIos && styles.containerIos, focused && styles.containerFocused, isIos && focused && styles.containerFocusedIos]}>
+        <AppIcon name="search" size={isIos ? 20 : 24} color={focused ? (isIos ? colors.m3.focusRing : colors.m3.primary) : colors.secondaryText} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -50,6 +50,8 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
           placeholder={placeholder}
           placeholderTextColor={colors.secondaryText}
           accessibilityLabel="Buscar livros"
+          returnKeyType={isIos ? "search" : undefined}
+          maxFontSizeMultiplier={1.3}
           style={styles.input}
           clearButtonMode={isIos ? "never" : undefined}
         />
@@ -76,7 +78,7 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
           onPress={handleCancel}
           style={styles.cancelButton}
         >
-          <Text style={styles.cancelText}>Cancelar</Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.cancelText}>Cancelar</Text>
         </Pressable>
       ) : null}
     </View>
@@ -105,13 +107,20 @@ function createStyles(colors: ColorPalette) {
     },
     containerIos: {
       minHeight: 44,
+      backgroundColor: tokens.ios.cell,
+      borderColor: tokens.ios.separator,
       borderRadius: tokens.radius.cardSmall,
+      borderCurve: "continuous",
       paddingHorizontal: tokens.spacing[12],
       gap: tokens.spacing[8],
     },
     containerFocused: {
       backgroundColor: colors.m3.surfaceContainerHighest,
       borderColor: colors.m3.primary,
+    },
+    containerFocusedIos: {
+      backgroundColor: tokens.ios.cell,
+      borderColor: colors.m3.focusRing,
     },
     input: {
       flex: 1,

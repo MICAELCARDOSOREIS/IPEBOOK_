@@ -363,7 +363,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
     },
-    chipCompact: { width: 52, paddingHorizontal: 0, alignItems: "center" },
+    chipCompact: { minWidth: 52, paddingHorizontal: tokens.spacing[8], alignItems: "center" },
     chipWithCheck: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[4] },
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,

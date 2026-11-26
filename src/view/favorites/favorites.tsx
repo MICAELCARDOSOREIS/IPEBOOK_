@@ -347,6 +347,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
+      minHeight: Platform.OS === "ios" ? 44 : undefined,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,

@@ -469,7 +469,13 @@ export function Chat({
             <View accessibilityRole="alert" style={styles.sendErrorCard}>
               <AppIcon name="error" size={18} color={colors.error} />
               <Text style={styles.sendErrorText}>{state.sendError}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Reenviar mensagem" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Reenviar mensagem"
+                onPress={() => void actions.retryLastMessage()}
+                hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
+              >
                 <Text style={styles.retryText}>Reenviar</Text>
               </Pressable>
             </View>

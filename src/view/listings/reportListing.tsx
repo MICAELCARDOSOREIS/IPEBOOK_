@@ -343,18 +343,19 @@ function createStyles(colors: ColorPalette) {
   },
   textInput: {
     borderWidth: 1,
-    borderColor: colors.m3.outline,
+    borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
     borderRadius: tokens.radius.medium,
+    ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
     padding: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
     color: colors.text,
-    backgroundColor: colors.surface,
+    backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.surface,
     minHeight: tokens.spacing[64],
     textAlignVertical: "top",
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
   },
   textInputFocused: {
-    borderColor: colors.action,
+    borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
     borderWidth: 2,
   },
   errorText: {

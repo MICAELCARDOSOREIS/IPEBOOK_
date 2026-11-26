@@ -450,6 +450,9 @@ export function Settings({
                       return (
                         <Pressable
                           key={key}
+                          accessibilityRole="switch"
+                          accessibilityLabel={category.label}
+                          accessibilityState={{ checked: notifPrefs.enabled[key] }}
                           onPress={() => {
                             if (Platform.OS === "ios") triggerHaptic("selection");
                             void notifActions.setEnabled(key, !notifPrefs.enabled[key]);

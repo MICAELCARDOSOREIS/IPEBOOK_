@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { RequestStatus } from "@/model/entities/bookRequest";
@@ -364,7 +364,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
       paddingVertical: tokens.spacing[6],
       paddingHorizontal: tokens.spacing[10],
-      minHeight: 40,
+      minHeight: Platform.OS === "ios" ? 44 : 40,
     },
     actionButtonPrimaryCompact: {
       paddingHorizontal: tokens.spacing[12],
@@ -373,8 +373,8 @@ function createStyles(colors: ColorPalette) {
       fontSize: 13,
     },
     moreOptionsButton: {
-      width: 38,
-      height: 38,
+      width: Platform.OS === "ios" ? 44 : 38,
+      height: Platform.OS === "ios" ? 44 : 38,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,
       borderWidth: 1,

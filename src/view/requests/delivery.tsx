@@ -22,6 +22,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { formatPrice } from "@/view/formatPrice";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { QrCode } from "@/view/components/QrCode";
 import { Tag } from "@/view/components/Tag";
@@ -290,7 +291,11 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
             <View style={styles.permission}>
               <AppIcon name="camera" size={28} color={colors.m3.primary} />
               <Text style={styles.bodyCompact}>Permita a câmera para ler o QR ou alterne para digitar o código.</Text>
-              <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
+              {Platform.OS === "ios" && permission?.canAskAgain === false ? (
+                <OpenAppSettingsButton />
+              ) : (
+                <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
+              )}
             </View>
           )
         ) : (
