@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,12 +15,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
 import type { Book } from "@/model/entities/book";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
+import { formatPrice } from "@/view/formatPrice";
 import { withPress } from "@/view/pressFeedback";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -71,9 +73,18 @@ function ProposalSheetContent({
   const styles = getProposalSheetStyles(colors);
 
   const [message, setMessage] = useState("");
+  const [messageFocused, setMessageFocused] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
   const isTrade = targetBook.modality === "trade";
+  const headerIcon: AppIconName =
+    targetBook.modality === "trade"
+      ? "swap"
+      : targetBook.modality === "donation"
+        ? "heart"
+        : "category";
+  const salePriceLabel =
+    targetBook.modality === "sale" && targetBook.price != null ? formatPrice(targetBook.price) : null;
   const availableUserBooks = useMemo(
     () => userBooks.filter((b) => b.status === "available" && b.id !== targetBook.id),
     [userBooks, targetBook.id],
@@ -121,7 +132,7 @@ function ProposalSheetContent({
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBox}>
-                <AppIcon name="swap" size={20} color={colors.action} />
+                <AppIcon name={headerIcon} size={20} color={colors.action} />
               </View>
               <Text accessibilityRole="header" style={styles.title}>
                 {sheetTitle}
@@ -161,6 +172,9 @@ function ProposalSheetContent({
                 </Text>
                 <View style={styles.tagWrapper}>
                   <Tag variant={targetBook.modality} />
+                  {salePriceLabel ? (
+                    <Text style={styles.targetBookPrice}>{salePriceLabel}</Text>
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -168,19 +182,25 @@ function ProposalSheetContent({
             {/* Campo de mensagem opcional */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionLabel}>Mensagem para o leitor (opcional)</Text>
+                <Text style={styles.sectionLabel}>Mensagem para quem anunciou (opcional)</Text>
                 <Text style={styles.charCounter}>{message.length}/500</Text>
               </View>
               <TextInput
                 value={message}
                 onChangeText={(text) => setMessage(text.slice(0, 500))}
-                onFocus={() => scrollRef.current?.scrollTo({ y: 96, animated: true })}
-                placeholder="Escreva uma mensagem para quem anunciou (opcional)"
+                onFocus={() => {
+                  setMessageFocused(true);
+                  if (Platform.OS !== "web") {
+                    scrollRef.current?.scrollTo({ y: 96, animated: true });
+                  }
+                }}
+                onBlur={() => setMessageFocused(false)}
+                placeholder="Ex.: Olá! Tenho interesse, podemos combinar no IFPI ou na Praça da Bandeira?"
                 placeholderTextColor={colors.m3.onSurfaceVariant}
                 multiline
                 numberOfLines={3}
                 maxLength={500}
-                style={styles.messageInput}
+                style={[styles.messageInput, messageFocused && styles.messageInputFocused]}
                 accessibilityLabel="Mensagem inicial da proposta"
               />
             </View>
@@ -385,8 +405,16 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     tagWrapper: {
-      alignSelf: "flex-start",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
       marginTop: tokens.spacing[2],
+    },
+    targetBookPrice: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
+      fontVariant: ["tabular-nums"],
     },
     section: {
       gap: tokens.spacing[8],
@@ -414,11 +442,19 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outline,
       borderRadius: tokens.radius.medium,
-      padding: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
       color: colors.m3.onSurface,
-      ...tokens.typography.bodyMedium,
-      minHeight: 80,
+      ...tokens.typography.bodyLarge,
+      fontSize: 16,
+      lineHeight: 22,
+      minHeight: 96,
       textAlignVertical: "top",
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+    },
+    messageInputFocused: {
+      borderColor: colors.action,
+      borderWidth: 1.5,
     },
     loadingContainer: {
       flexDirection: "row",
