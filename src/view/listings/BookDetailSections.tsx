@@ -275,13 +275,6 @@ export function BookDetailHeroSection({
                 ))}
               </View>
             ) : null}
-            {photos.length > 1 && !wideWeb ? (
-              <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
-                {photos.map((_, idx) => (
-                  <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
-                ))}
-              </View>
-            ) : null}
           </View>
         ) : null}
       </View>
@@ -412,18 +405,6 @@ function createStyles(colors: ColorPalette) {
     thumb: { width: 56, height: 72, borderRadius: tokens.radius.small, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
     thumbActive: { borderColor: colors.m3.primary },
     thumbImage: { width: "100%", height: "100%" },
-    photoDots: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      marginTop: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-    },
-    dot: { width: 6, height: 6, borderRadius: tokens.radius.micro, backgroundColor: colors.m3.outlineVariant },
-    dotActive: { backgroundColor: colors.m3.onSurface },
     detailRow: {
       flexDirection: "row",
       alignItems: "center",

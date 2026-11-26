@@ -27,6 +27,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { Dialog } from "@/view/components/Dialog";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
@@ -61,6 +62,9 @@ export function RequestDetail({
   focusKey,
 }: RequestDetailProps) {
   const [state, actions] = makeRequestDetailViewModel(requestId, sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void (actions.refresh ?? actions.reload)();
+  });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;

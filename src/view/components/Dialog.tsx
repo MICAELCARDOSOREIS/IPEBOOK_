@@ -310,9 +310,11 @@ function createStyles(colors: ColorPalette) {
     },
     actions: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "flex-end",
       alignItems: "center",
       gap: tokens.spacing[8],
+      rowGap: tokens.spacing[8],
       marginTop: tokens.spacing[8],
     },
     cancelButton: {

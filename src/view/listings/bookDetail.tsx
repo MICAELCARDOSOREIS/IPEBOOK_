@@ -28,7 +28,8 @@ import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { AppIcon } from "@/view/components/AppIcon";
-import { BookDetailHeroSection, DetailRow, SellerCard, ShareListingFeedback } from "@/view/listings/BookDetailSections";
+import { Avatar } from "@/view/components/Avatar";
+import { BookDetailHeroSection, DetailRow, ShareListingFeedback } from "@/view/listings/BookDetailSections";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
@@ -435,7 +436,7 @@ export default function BookDetail({
           {
             paddingBottom:
               !wideWeb && actionBar
-                ? scrollBottomPadding.withBottomBar
+                ? tokens.spacing[24]
                 : scrollBottomPadding.withoutBottomBar + insets.bottom,
           },
         ]}
@@ -496,24 +497,47 @@ export default function BookDetail({
               <Text style={styles.author}>{book.author}</Text>
             </View>
             <View style={styles.priceRow}>
-              <Text style={styles.priceValue}>{formattedPrice}</Text>
-              <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
-                <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
-                  {modalityTag[book.modality].label}
-                </Text>
-              </View>
-              {book.isBox ? (
-                <View
-                  style={[
-                    styles.tag,
-                    { backgroundColor: colors.m3.secondaryContainer, marginLeft: 8 },
-                  ]}
-                >
-                  <Text style={[styles.tagText, { color: colors.m3.onSecondaryContainer }]}>
-                    {book.boxVolumesCount ? `Box (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+              <View style={styles.priceRowMain}>
+                <Text style={styles.priceValue}>{formattedPrice}</Text>
+                <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
+                  <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
+                    {modalityTag[book.modality].label}
                   </Text>
                 </View>
-              ) : null}
+                {book.isBox ? (
+                  <View
+                    style={[
+                      styles.tag,
+                      { backgroundColor: colors.m3.secondaryContainer },
+                    ]}
+                  >
+                    <Text style={[styles.tagText, { color: colors.m3.onSecondaryContainer }]}>
+                      {book.boxVolumesCount ? `Box (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  ownerProfileState.profile?.name?.trim()
+                    ? `Anunciado por ${ownerProfileState.profile.name.trim()}`
+                    : "Anunciado por outro membro da comunidade"
+                }
+                hitSlop={4}
+                onPress={() => guardedNavigateToUserProfile(book.ownerId)}
+                style={withPress(styles.inlineSellerPill)}
+              >
+                <Avatar
+                  name={ownerProfileState.profile?.name?.trim() || "Comunidade"}
+                  photoUrl={ownerProfileState.profile?.photoUrl}
+                  size={28}
+                />
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.inlineSellerName}>
+                  {ownerProfileState.profile?.name?.trim() || "Anunciante"}
+                </Text>
+                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
             </View>
 
             {wideWeb ? actionBar : null}
@@ -536,6 +560,13 @@ export default function BookDetail({
                       : "Sem cobrança pelo exemplar. Retirada em local público, combinada pelo chat."}
                   </Text>
                 </View>
+              </View>
+            ) : null}
+
+            {book.synopsis ? (
+              <View style={styles.synopsisSection}>
+                <Text accessibilityRole="header" style={styles.synopsisTitle}>Sinopse</Text>
+                <Text style={styles.synopsisText}>{book.synopsis}</Text>
               </View>
             ) : null}
 
@@ -562,16 +593,6 @@ export default function BookDetail({
             {book.description ? (
               <Text style={styles.descriptionText}>{book.description}</Text>
             ) : null}
-
-            {book.synopsis ? (
-              <View style={styles.synopsisSection}>
-                <Text accessibilityRole="header" style={styles.synopsisTitle}>Sinopse</Text>
-                <Text style={styles.synopsisText}>{book.synopsis}</Text>
-              </View>
-            ) : null}
-
-            {/* 5. Anunciante */}
-            <SellerCard profile={ownerProfileState.profile} onPress={() => guardedNavigateToUserProfile(book.ownerId)} />
 
             {/* Banner de negociação em andamento quando o usuário já solicitou o livro */}
             {isRequested && !isOwner ? (
@@ -816,7 +837,10 @@ function createStyles(colors: ColorPalette) {
     titleSection: { gap: tokens.spacing[4] },
     title: { ...tokens.typography.brandSection, color: colors.brandBrown, },
     author: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    priceRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    priceRowMain: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: tokens.spacing[8] },
+    inlineSellerPill: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], flexShrink: 1, minHeight: 40, paddingLeft: tokens.spacing[6], paddingRight: tokens.spacing[10], paddingVertical: tokens.spacing[4], borderRadius: tokens.radius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.book.paperEdge },
+    inlineSellerName: { flexShrink: 1, ...tokens.typography.labelLarge, fontFamily: fontFamily.medium, color: colors.m3.onSurface },
     priceValue: { ...tokens.typography.titleBar, fontWeight: tokens.fontWeight.bold, color: colors.m3.onSurface },
     tag: { borderRadius: tokens.radius.full, paddingHorizontal: tokens.spacing[10], paddingVertical: tokens.spacing[3] },
     tagText: { ...tokens.typography.labelMedium },
@@ -824,38 +848,20 @@ function createStyles(colors: ColorPalette) {
     modalityCardText: { flex: 1, gap: tokens.spacing[2] },
     modalityCardTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold },
     modalityCardBody: { ...tokens.typography.bodyMedium },
-    detailList: {
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[4],
-    },
+    detailList: { backgroundColor: colors.surface, borderRadius: tokens.radius.card, borderWidth: 1, borderColor: colors.book.paperEdge, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4] },
     synopsisSection: { gap: tokens.spacing[8] },
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
     synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
     descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     reportSection: { paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[16], },
-    reportCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      minHeight: 56,
-    },
+    reportCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: tokens.radius.card, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12], gap: tokens.spacing[12], borderWidth: 1, borderColor: colors.book.paperEdge, minHeight: 56 },
     reportIconBox: { width: tokens.spacing[32], height: tokens.spacing[32], borderRadius: tokens.radius.cardSmall, backgroundColor: colors.m3.errorContainerM3 ?? colors.errorContainer ?? "#F9DEDC", alignItems: "center", justifyContent: "center", },
     reportContent: { flex: 1, gap: tokens.spacing[2], },
     reportTitle: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface, },
     reportSubtitle: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, },
     reportButton: { minHeight: tokens.accessibility.touchTarget, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], },
     reportText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
-    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer },
+    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.book.paperEdge },
     bottomBar: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12], },
     primarySlot: { flex: 1 },
     statusButton: { flex: 1, minHeight: 52, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", paddingHorizontal: tokens.spacing[16], },
@@ -868,16 +874,7 @@ function createStyles(colors: ColorPalette) {
     statusTextDelivered: { color: colors.m3.onSurfaceVariant, },
     statusTextRequested: { ...tokens.typography.bodyMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurfaceVariant, },
     statusTextAccepted: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onPrimary, },
-    activeNegotiationBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.nature.sprout,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-    },
+    activeNegotiationBanner: { flexDirection: "row", alignItems: "center", backgroundColor: colors.nature.sprout, borderRadius: tokens.radius.card, padding: tokens.spacing[16], gap: tokens.spacing[12], borderWidth: 1, borderColor: colors.nature.foliage },
     activeNegotiationIconBox: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.nature.onFoliage, alignItems: "center", justifyContent: "center", },
     activeNegotiationContent: { flex: 1, gap: tokens.spacing[2], },
     activeNegotiationTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.bold, color: colors.nature.foliageDeep, },

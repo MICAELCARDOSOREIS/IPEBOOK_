@@ -1,7 +1,7 @@
 import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import {
@@ -31,7 +31,7 @@ import {
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { scrollBottomPadding } from "@/view/scrollProps";
 import { IpeMark } from "@/view/components/IpeMark";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import {
@@ -63,6 +63,8 @@ export type HomeProps = {
   onNavigateToSearch?: (filter?: { modality?: BookModality; neighborhood?: string }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
+  /** Incrementado ao tocar na aba Início já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 export { resetAppLaunchCelebrationForTesting };
 
@@ -93,7 +95,14 @@ export default function Home({
   onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
+  scrollToTopTick = 0,
 }: HomeProps = {}) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const neighborhoodHook = useActiveNeighborhood("all");
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
@@ -103,7 +112,7 @@ export default function Home({
   const [profileState] = makeProfileViewModel(authState.user?.id ?? null);
   // Mantém refresh em segundo plano para manter estado atualizado ao puxar para atualizar
   const [, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
-  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, "home");
+  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, String(focusKey ?? "home"));
   const conversationsBadgeCount = explicitConversationsBadgeCount ?? navBadges.conversations;
   const { isOnline } = makeNetworkStatus();
   useReloadOnReconnect(isOnline, actions.reload);
@@ -465,61 +474,29 @@ export default function Home({
       </View>
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      {wideWeb ? (
-        <View style={styles.chipsContainerWide} testID="home-quick-filter-chips">
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone =
-              mod === "all"
-                ? isIos
-                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
-                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
-                : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          {...standardHorizontalScrollProps}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
-          style={styles.chipsScrollView}
-        >
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone =
-              mod === "all"
-                ? isIos
-                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
-                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
-                : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </ScrollView>
-      )}
+      <View style={wideWeb ? styles.chipsContainerWide : styles.chipsRow} testID="home-quick-filter-chips">
+        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+          const isSelected = selectedModality === mod;
+          const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+          const tone =
+            mod === "all"
+              ? isIos
+                ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
+                : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+              : colors.badge[mod];
+          return (
+            <Chip
+              key={mod}
+              size="compact"
+              label={label}
+              accessibilityLabel={`Filtrar por ${label}`}
+              selected={isSelected}
+              tone={tone}
+              onPress={() => setSelectedModality(mod)}
+            />
+          );
+        })}
+      </View>
 
       <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
@@ -582,6 +559,7 @@ export default function Home({
 
   return (
     <ScreenContainer
+      scrollRef={scrollRef}
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
@@ -782,7 +760,6 @@ function createStyles(colors: ColorPalette) {
 
     // 3. Chips de Filtro
     chipsContainer: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
-    chipsScrollView: { marginBottom: tokens.spacing[20], marginHorizontal: -tokens.spacing[16], },
-    chipsScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[16], },
+    chipsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4], marginBottom: tokens.spacing[20], },
   });
 }

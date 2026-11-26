@@ -4,7 +4,7 @@
     "slug": "ipebook",
     "owner": "ipebook",
     "scheme": "ipebook",
-    "version": "0.2.2",
+    "version": "0.2.4",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FCFAF5",
     "assetBundlePatterns": [
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.ipebook.app",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 19,
+      "versionCode": 21,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#FCEFCB",
@@ -29,6 +29,10 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "ios": {
@@ -37,9 +41,10 @@
       "supportsTablet": false,
       "infoPlist": {
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["whatsapp"],
         "NSCameraUsageDescription": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro, ler QR Codes de entrega e tirar a foto do seu perfil.",
-        "NSPhotoLibraryUsageDescription": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o livro ou para o seu perfil.",
-        "NSLocationWhenInUseUsageDescription": "O IpêBook usa a localização apenas para sugerir pontos públicos seguros em Piripiri."
+        "NSPhotoLibraryUsageDescription": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o livro ou para o seu perfil."
       }
     },
     "web": {
@@ -87,14 +92,6 @@
         }
       ],
       "expo-web-browser",
-      [
-        "@sentry/react-native",
-        {
-          "organization": "usermicael",
-          "project": "ipebook",
-          "url": "https://sentry.io/"
-        }
-      ],
       "@react-native-google-signin/google-signin",
       [
         "@sentry/react-native/expo",

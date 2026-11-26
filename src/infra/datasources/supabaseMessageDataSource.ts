@@ -2,11 +2,13 @@ import type {
   IMessageDataSource,
   CreateNegotiationMessageDTO,
   MessageSubscriptionCallback,
+  MessageSubscriptionStatusCallback,
 } from "@/model/datasources/iMessageDataSource";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { subscribePostgresChanges } from "@/infra/supabaseRealtime";
 
 type MessageRow = {
   id: string;
@@ -27,9 +29,6 @@ function mapMessage(row: MessageRow): NegotiationMessage {
     createdAt: row.created_at,
   };
 }
-
-/** Sequência para nomes de canal únicos: o mesmo tópico não aceita novos `.on()` depois de `subscribe()`. */
-let channelSeq = 0;
 
 /**
  * Persistência de mensagens de negociação em `v2_negotiation_messages` (Spec 061 / ADR 0044).
@@ -91,47 +90,37 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
 
   subscribeToMessages(
     requestId: string,
-    onMessage: MessageSubscriptionCallback
+    onMessage: MessageSubscriptionCallback,
+    onStatus?: MessageSubscriptionStatusCallback,
   ): () => void {
-    const channel = this.client
-      .channel(`negotiation-messages:${requestId}:${++channelSeq}`)
-      .on(
-        "postgres_changes" as any,
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "v2_negotiation_messages",
-          filter: `request_id=eq.${requestId}`,
-        },
-        (payload: { new: MessageRow }) => {
-          if (payload?.new) {
-            onMessage(mapMessage(payload.new));
-          }
+    return subscribePostgresChanges<MessageRow>(this.client, {
+      channelPrefix: `negotiation-messages:${requestId}`,
+      event: "INSERT",
+      table: "v2_negotiation_messages",
+      filter: `request_id=eq.${requestId}`,
+      onPayload: (payload) => {
+        if (payload?.new) {
+          onMessage(mapMessage(payload.new));
         }
-      )
-      .subscribe();
-
-    return () => {
-      this.client.removeChannel(channel);
-    };
+      },
+      onStatus,
+    });
   }
 
-  subscribeToAllMessages(onMessage: MessageSubscriptionCallback): () => void {
-    const channel = this.client
-      .channel(`negotiation-messages:all:${++channelSeq}`)
-      .on(
-        "postgres_changes" as any,
-        { event: "INSERT", schema: "public", table: "v2_negotiation_messages" },
-        (payload: { new: MessageRow }) => {
-          if (payload?.new) {
-            onMessage(mapMessage(payload.new));
-          }
+  subscribeToAllMessages(
+    onMessage: MessageSubscriptionCallback,
+    onStatus?: MessageSubscriptionStatusCallback,
+  ): () => void {
+    return subscribePostgresChanges<MessageRow>(this.client, {
+      channelPrefix: "negotiation-messages:all",
+      event: "INSERT",
+      table: "v2_negotiation_messages",
+      onPayload: (payload) => {
+        if (payload?.new) {
+          onMessage(mapMessage(payload.new));
         }
-      )
-      .subscribe();
-
-    return () => {
-      this.client.removeChannel(channel);
-    };
+      },
+      onStatus,
+    });
   }
 }

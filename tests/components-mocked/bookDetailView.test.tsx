@@ -229,7 +229,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
     expect(screen.getByLabelText("Anunciado por Joana Lima")).toBeDefined();
-    expect(screen.getByText("Joana Lima")).toBeDefined();
+    expect(screen.getAllByText("Joana Lima").length).toBeGreaterThanOrEqual(1);
   });
 
   it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {

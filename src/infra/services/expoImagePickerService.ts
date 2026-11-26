@@ -38,7 +38,11 @@ export class ExpoImagePickerService implements IImagePickerService {
     if (!asset) return null;
 
     const context = ImageManipulator.manipulate(asset.uri);
-    if (asset.width > MAX_SIDE) context.resize({ width: MAX_SIDE });
+    if (asset.width > MAX_SIDE) {
+      context.resize({ width: MAX_SIDE });
+    } else if (asset.height > MAX_SIDE) {
+      context.resize({ height: MAX_SIDE });
+    }
     const reduced = await (await context.renderAsync()).saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
 
     return { bytes: new Uint8Array(await readBytes(reduced.uri)), fileName: asset.fileName ?? "foto.jpg" };

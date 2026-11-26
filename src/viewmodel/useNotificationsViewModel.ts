@@ -8,6 +8,7 @@ import type { IPushNotificationService } from "@/model/services/iPushNotificatio
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh } from "@/viewmodel/useRealtimeSync";
 
 export type NotificationFilter = "all" | "unread";
 
@@ -156,6 +157,10 @@ export function useNotificationsViewModel(
     if (!sessionUserId || !useCases.subscribe) return;
     return useCases.subscribe(sessionUserId, () => void load(true));
   }, [sessionUserId, useCases, load]);
+
+  useAppForegroundRefresh(() => {
+    void load(true);
+  }, Boolean(sessionUserId));
 
   const markAsRead = useCallback(
     async (notificationId: string) => {

@@ -29,12 +29,14 @@ export const Chip = memo(function Chip({ label, selected, onPress, disabled = fa
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => getChipStyles(colors), [colors]);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
-  const dotColor = useMemo(() => {
+  const dotColors = useMemo(() => {
     if (!tone) return undefined;
     const surface = colors.m3.surfaceContainerLowest;
-    return contrastRatio(tone.background, surface) >= contrastRatio(tone.text, surface)
-      ? tone.background
-      : tone.text;
+    const border =
+      contrastRatio(tone.background, surface) >= contrastRatio(tone.text, surface)
+        ? tone.background
+        : tone.text;
+    return { fill: tone.background, border };
   }, [tone, colors.m3.surfaceContainerLowest]);
 
   return (
@@ -74,7 +76,9 @@ export const Chip = memo(function Chip({ label, selected, onPress, disabled = fa
             color={tone?.text ?? (isIos ? colors.m3.onSurface : colors.nature.onFoliage)}
           />
         ) : null}
-        {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
+        {dotColors && !selected ? (
+          <View style={[styles.dot, { backgroundColor: dotColors.fill, borderColor: dotColors.border }]} />
+        ) : null}
         <Text
           numberOfLines={1}
           style={[

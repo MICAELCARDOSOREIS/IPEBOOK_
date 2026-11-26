@@ -1,7 +1,7 @@
 import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { BlurView } from "expo-blur";
-import { useEffect, useMemo, useState } from "react";
+import { type ComponentRef, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/di/container";
 import type { BookModality } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -55,6 +56,8 @@ export type MyListingsProps = {
   /** Abre a negociação aceita (`06.05`). */
   onNavigateToNegotiationDetail?: (requestId: string) => void;
   focusKey?: number;
+  /** Incrementado ao tocar na aba Estante já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 
 type ShelfTab = "listings" | "proposals" | "concluded";
@@ -73,7 +76,14 @@ export function MyListings({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
   focusKey,
+  scrollToTopTick = 0,
 }: MyListingsProps) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
   const reduceTransparency = useReduceTransparency();
@@ -91,6 +101,7 @@ export function MyListings({
   useReloadOnReconnect(isOnline, actions.reload);
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
 
   const handleShareBook = (book: (typeof state.books)[number]) => {
@@ -172,66 +183,44 @@ export function MyListings({
   const navBarDockHeight = 80; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
   const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
-  type ShelfFilterKey = "all" | "active" | "paused" | "reserved" | "proposals" | "concluded";
+  const availableCount = activeBooks.filter((b) => b.status === "available").length;
+  const pausedCount = activeBooks.filter((b) => b.status === "paused").length;
+  const reservedCount = activeBooks.filter((b) => b.status === "reserved").length;
+  const concludedCount = concludedProposals.length + deliveredBooks.length;
+  const distinctListingStatuses =
+    (availableCount > 0 ? 1 : 0) + (pausedCount > 0 ? 1 : 0) + (reservedCount > 0 ? 1 : 0);
+  const showStatusSubfilters =
+    activeTab === "listings" && (distinctListingStatuses > 1 || statusFilter !== "all");
 
-  const shelfChips: {
-    key: ShelfFilterKey;
+  const STATUS_DROPDOWN_LABELS: Record<"all" | "active" | "paused" | "reserved", string> = {
+    all: "Todos",
+    active: "Ativos",
+    paused: "Pausados",
+    reserved: "Reservados",
+  };
+
+  const primaryTabs: {
+    key: ShelfTab;
     label: string;
     a11y: string;
-    tone?: { background: string; text: string };
-    selected: boolean;
+    tone: { background: string; text: string };
+    visible: boolean;
     onPress: () => void;
   }[] = [
     {
-      key: "all",
-      label: `Todos (${activeBooks.length})`,
-      a11y: "Filtrar por Todos",
+      key: "listings",
+      label: "Anúncios",
+      a11y: "Anúncios",
       tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
-      selected: activeTab === "listings" && statusFilter === "all",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("all");
-      },
-    },
-    {
-      key: "active",
-      label: `Ativos (${activeBooks.filter((b) => b.status === "available").length})`,
-      a11y: "Filtrar por Ativos",
-      tone: colors.badge.available,
-      selected: activeTab === "listings" && statusFilter === "active",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("active");
-      },
-    },
-    {
-      key: "paused",
-      label: `Pausados (${activeBooks.filter((b) => b.status === "paused").length})`,
-      a11y: "Filtrar por Pausados",
-      tone: colors.badge.paused,
-      selected: activeTab === "listings" && statusFilter === "paused",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("paused");
-      },
-    },
-    {
-      key: "reserved",
-      label: `Reservados (${activeBooks.filter((b) => b.status === "reserved").length})`,
-      a11y: "Filtrar por Reservados",
-      tone: colors.badge.reserved,
-      selected: activeTab === "listings" && statusFilter === "reserved",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("reserved");
-      },
+      visible: true,
+      onPress: () => setActiveTab("listings"),
     },
     {
       key: "proposals",
-      label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
-      a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
+      label: pendingProposals.length > 0 ? `Propostas (${pendingProposals.length})` : "Propostas",
+      a11y: pendingProposals.length > 0 ? `Propostas, ${pendingProposals.length} em aberto` : "Propostas",
       tone: colors.badge.trade,
-      selected: activeTab === "proposals",
+      visible: true,
       onPress: () => {
         setModalityFilter("all");
         setActiveTab("proposals");
@@ -239,14 +228,62 @@ export function MyListings({
     },
     {
       key: "concluded",
-      label: `Concluídos (${concludedProposals.length + deliveredBooks.length})`,
+      label: concludedCount > 0 ? `Concluídos (${concludedCount})` : "Concluídos",
       a11y: "Concluídos",
       tone: colors.badge.completed,
-      selected: activeTab === "concluded",
+      visible: concludedCount > 0 || activeTab === "concluded",
       onPress: () => {
         setModalityFilter("all");
         setActiveTab("concluded");
       },
+    },
+  ];
+
+  // Subfiltros de status só aparecem dentro da aba Anúncios quando há mais de um status.
+  const statusChips: {
+    key: "all" | "active" | "paused" | "reserved";
+    label: string;
+    a11y: string;
+    tone: { background: string; text: string };
+    selected: boolean;
+    visible: boolean;
+    onPress: () => void;
+  }[] = [
+    {
+      key: "all",
+      label: `Todos (${activeBooks.length})`,
+      a11y: "Filtrar por Todos",
+      tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
+      selected: statusFilter === "all",
+      visible: true,
+      onPress: () => setStatusFilter("all"),
+    },
+    {
+      key: "active",
+      label: `Ativos (${availableCount})`,
+      a11y: "Filtrar por Ativos",
+      tone: colors.badge.available,
+      selected: statusFilter === "active",
+      visible: availableCount > 0 || statusFilter === "active",
+      onPress: () => setStatusFilter("active"),
+    },
+    {
+      key: "paused",
+      label: `Pausados (${pausedCount})`,
+      a11y: "Filtrar por Pausados",
+      tone: colors.badge.paused,
+      selected: statusFilter === "paused",
+      visible: pausedCount > 0 || statusFilter === "paused",
+      onPress: () => setStatusFilter("paused"),
+    },
+    {
+      key: "reserved",
+      label: `Reservados (${reservedCount})`,
+      a11y: "Filtrar por Reservados",
+      tone: colors.badge.reserved,
+      selected: statusFilter === "reserved",
+      visible: reservedCount > 0 || statusFilter === "reserved",
+      onPress: () => setStatusFilter("reserved"),
     },
   ];
 
@@ -325,6 +362,7 @@ export function MyListings({
           />
         ) : (
           <ScrollView
+            ref={scrollRef}
             {...standardVerticalScrollProps}
             contentContainerStyle={[
               styles.scroll,
@@ -413,16 +451,9 @@ export function MyListings({
                       </>
                     ) : (
                       <>
-                        <View style={styles.statContentRow}>
-                          <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
-                            {stat.count}
-                          </Text>
-                          {isSelected ? (
-                            <View style={[styles.statCheckBadge, { backgroundColor: badgeTone.text }]}>
-                              <AppIcon name="check" size={12} color={badgeTone.background} />
-                            </View>
-                          ) : null}
-                        </View>
+                        <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
+                          {stat.count}
+                        </Text>
                         <Text
                           style={[styles.statLabelMobile, { color: badgeTone.text }]}
                           numberOfLines={1}
@@ -436,23 +467,114 @@ export function MyListings({
               })}
             </View>
 
-            {/* No celular os chips quebram em linhas para caberem inteiros, sem corte nem rolagem. */}
+            {/* Chips de seção em 1 linha fixa sem arraste (sem bolinha extra nos inativos para caber tudo) */}
             <View
+              accessibilityRole="tablist"
               testID="my-listings-tablist"
-              style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+              style={isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid}
             >
-              {shelfChips.map((chip) => (
-                <Chip
-                  key={chip.key}
-                  size="compact"
-                  label={chip.label}
-                  accessibilityLabel={chip.a11y}
-                  tone={chip.tone}
-                  selected={chip.selected}
-                  onPress={chip.onPress}
-                />
-              ))}
+              {primaryTabs
+                .filter((tab) => tab.visible)
+                .map((tab) => (
+                  <View key={tab.key} style={{ flexShrink: 1 }}>
+                    <Chip
+                      size="compact"
+                      label={tab.label}
+                      accessibilityLabel={tab.a11y}
+                      tone={activeTab === tab.key ? tab.tone : undefined}
+                      selected={activeTab === tab.key}
+                      onPress={tab.onPress}
+                    />
+                  </View>
+                ))}
             </View>
+
+            {activeTab === "listings" ? (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>
+                  {`${displayedBooks.length} ${displayedBooks.length === 1 ? "anúncio" : "anúncios"}`}
+                </Text>
+                {showStatusSubfilters ? (
+                  <Pressable
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      statusFilter === "all"
+                        ? "Filtrar anúncios por situação"
+                        : `Filtro ativo: ${STATUS_DROPDOWN_LABELS[statusFilter]}`
+                    }
+                    hitSlop={8}
+                    onPress={() => setFilterMenuOpen(true)}
+                    style={[
+                      styles.statusDropdownButton,
+                      statusFilter !== "all" && styles.statusDropdownButtonActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusDropdownText,
+                        statusFilter !== "all" && styles.statusDropdownTextActive,
+                      ]}
+                    >
+                      {STATUS_DROPDOWN_LABELS[statusFilter]}
+                    </Text>
+                    <AppIcon
+                      name="chevronDown"
+                      size={14}
+                      color={statusFilter !== "all" ? colors.action : colors.m3.onSurfaceVariant}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <BottomSheet
+              visible={filterMenuOpen}
+              onClose={() => setFilterMenuOpen(false)}
+              title="Filtrar anúncios"
+              testID="my-listings-filter-sheet"
+            >
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Filtrar anúncios"
+                style={styles.filterSheetList}
+              >
+                {statusChips
+                  .filter((chip) => chip.visible)
+                  .map((chip) => (
+                    <Pressable
+                      key={chip.key}
+                      accessible={true}
+                      accessibilityRole="radio"
+                      accessibilityLabel={chip.a11y}
+                      accessibilityState={{ checked: chip.selected }}
+                      onPress={() => {
+                        chip.onPress();
+                        setFilterMenuOpen(false);
+                      }}
+                      style={({ pressed }) => [
+                        styles.filterSheetRow,
+                        chip.selected && styles.filterSheetRowSelected,
+                        pressed && styles.filterSheetRowPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.filterSheetLabel,
+                          chip.selected && styles.filterSheetLabelSelected,
+                        ]}
+                      >
+                        {chip.label}
+                      </Text>
+                      <AppIcon
+                        name={chip.selected ? "radioOn" : "radioOff"}
+                        size={22}
+                        color={chip.selected ? colors.m3.primary : colors.m3.outline}
+                      />
+                    </Pressable>
+                  ))}
+              </View>
+            </BottomSheet>
 
             {/* Gatilho de acessibilidade mantido para compatibilidade com rotinas de teste */}
             <Pressable
@@ -649,6 +771,7 @@ export function MyListings({
 
 export type MyListingsScreenProps = {
   focusKey?: number;
+  scrollToTopTick?: number;
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
@@ -662,6 +785,7 @@ export type MyListingsScreenProps = {
 
 export default function MyListingsScreen({
   focusKey,
+  scrollToTopTick,
   onBack,
   onRequireSignIn,
   onNavigateToCreateListing,
@@ -713,6 +837,7 @@ export default function MyListingsScreen({
       onNavigateToReceivedRequests={onNavigateToReceivedRequests}
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
       focusKey={focusKey}
+      scrollToTopTick={scrollToTopTick}
     />
   );
 }

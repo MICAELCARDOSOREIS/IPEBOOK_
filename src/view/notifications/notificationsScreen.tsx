@@ -2,6 +2,7 @@ import { makeAuthViewModel } from "@/di/container";
 import Notifications from "@/view/notifications/notifications";
 
 export type NotificationsScreenProps = {
+  focusKey?: number;
   onBack: () => void;
   onNavigateToLogin: () => void;
   onNavigateToAction: (actionUrl: string) => void;
@@ -10,6 +11,7 @@ export type NotificationsScreenProps = {
 };
 
 export default function NotificationsScreen({
+  focusKey,
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
@@ -21,6 +23,7 @@ export default function NotificationsScreen({
     <Notifications
       sessionUserId={authState.user?.id ?? null}
       sessionLoading={authState.loading}
+      focusKey={focusKey}
       onBack={onBack}
       onNavigateToLogin={onNavigateToLogin}
       onNavigateToAction={onNavigateToAction}

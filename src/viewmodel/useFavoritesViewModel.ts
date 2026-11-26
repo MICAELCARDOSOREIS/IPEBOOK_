@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
-import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { notifyFavoriteChanged, registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh } from "@/viewmodel/useRealtimeSync";
 
 export type FavoritesState = {
   books: readonly Book[];
@@ -71,6 +72,7 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
     }));
     try {
       await useCases.toggleFavorite(userId, bookId);
+      notifyFavoriteChanged(userId, bookId, false);
       setState((prev) => ({
         ...prev,
         removingId: null,
@@ -78,6 +80,7 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
       return true;
     } catch (error) {
       if (!isTest) sessionFavoritesCache.set(userId, previousBooks);
+      notifyFavoriteChanged(userId, bookId, true);
       setState((prev) => ({
         ...prev,
         books: previousBooks,
@@ -93,5 +96,6 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
   }, []);
 
   useEffect(() => { void reload(); }, [reload]);
+  useAppForegroundRefresh(() => { void reload(); }, Boolean(userId));
   return [state, { reload, removeFavorite, clearActionError }];
 }

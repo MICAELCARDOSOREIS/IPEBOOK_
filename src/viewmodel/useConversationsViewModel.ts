@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 import { useRequestList } from "@/viewmodel/useSentRequestsViewModel";
 
 export type ConversationKind = "accepted" | "pendingReceived" | "pendingSent";
@@ -188,10 +189,18 @@ export function useConversationsViewModel(
     sessionUserId ? `conversations:${sessionUserId}` : undefined,
   );
 
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
   useEffect(() => {
     if (!sessionUserId || !deps.subscribe) return;
-    return deps.subscribe(sessionUserId, () => void reload());
-  }, [sessionUserId, deps, reload]);
+    return deps.subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, deps, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   const deleteConversation = useCallback(
     async (requestId: string) => {

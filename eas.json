@@ -12,6 +12,9 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
       },
+      "ios": {
+        "simulator": true
+      },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
         "EXPO_PUBLIC_AUTH_REDIRECT_URL": "http://localhost:8081/redefinir-senha",

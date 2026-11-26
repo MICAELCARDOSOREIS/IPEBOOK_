@@ -7,6 +7,8 @@ export type CreateNegotiationMessageDTO = Readonly<{
 }>;
 
 export type MessageSubscriptionCallback = (message: NegotiationMessage) => void;
+export type MessageSubscriptionStatus = "SUBSCRIBED" | "TIMED_OUT" | "CLOSED" | "CHANNEL_ERROR";
+export type MessageSubscriptionStatusCallback = (status: MessageSubscriptionStatus) => void;
 
 export interface IMessageDataSource {
   /**
@@ -23,12 +25,19 @@ export interface IMessageDataSource {
    * Assina o fluxo de novas mensagens em tempo real para um pedido de negociação.
    * Retorna uma função de cancelamento da assinatura.
    */
-  subscribeToMessages?(requestId: string, onMessage: MessageSubscriptionCallback): () => void;
+  subscribeToMessages?(
+    requestId: string,
+    onMessage: MessageSubscriptionCallback,
+    onStatus?: MessageSubscriptionStatusCallback,
+  ): () => void;
 
   /**
    * Assina todas as mensagens novas que a pessoa pode ver (a RLS filtra), para a lista de conversas (Spec 086).
    */
-  subscribeToAllMessages?(onMessage: MessageSubscriptionCallback): () => void;
+  subscribeToAllMessages?(
+    onMessage: MessageSubscriptionCallback,
+    onStatus?: MessageSubscriptionStatusCallback,
+  ): () => void;
 
   /**
    * Oculta a conversa só para esta pessoa (Spec 090); mensagem posterior a esse momento a traz de volta.

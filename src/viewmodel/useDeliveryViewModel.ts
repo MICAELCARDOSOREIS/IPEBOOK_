@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Delivery, DeliveryCode } from "@/model/entities/delivery";
 import { DomainError } from "@/model/errors";
 import type { DeliveryRole, IDeliveryUseCases } from "@/usecase/iDeliveryUseCases";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type DeliveryState = {
   loading: boolean;
@@ -40,6 +41,7 @@ export function useDeliveryViewModel(
   sessionUserId: string | null,
   useCases: IDeliveryUseCases,
   pollMs: number = POLL_MS,
+  subscribe?: (requestId: string, sessionUserId: string, onChange: () => void) => () => void,
 ): [DeliveryState, DeliveryActions] {
   const [state, setState] = useState<DeliveryState>({
     loading: true,
@@ -84,20 +86,30 @@ export function useDeliveryViewModel(
     };
   }, [load]);
 
-  // O anunciante espera a leitura: confere se a entrega já foi concluída.
+  // O anunciante espera a leitura: recebe em tempo real e mantém polling de segurança.
   const waiting = state.role === "giver" && !state.completed && state.code !== null;
+  const checkCompleted = useCallback(() => {
+    useCases
+      .getDelivery(requestId, sessionUserId)
+      .then((completed) => {
+        if (active.current && completed) setState((s) => ({ ...s, completed }));
+      })
+      .catch(() => {});
+  }, [requestId, sessionUserId, useCases]);
+  const debouncedCheck = useDebouncedRealtimeCallback(checkCompleted);
+
+  useEffect(() => {
+    if (!waiting || !sessionUserId || !subscribe) return;
+    return subscribe(requestId, sessionUserId, debouncedCheck);
+  }, [waiting, requestId, sessionUserId, subscribe, debouncedCheck]);
+
   useEffect(() => {
     if (!waiting || pollMs <= 0) return;
-    const timer = setInterval(() => {
-      useCases
-        .getDelivery(requestId, sessionUserId)
-        .then((completed) => {
-          if (active.current && completed) setState((s) => ({ ...s, completed }));
-        })
-        .catch(() => {});
-    }, pollMs);
+    const timer = setInterval(checkCompleted, pollMs);
     return () => clearInterval(timer);
-  }, [waiting, pollMs, requestId, sessionUserId, useCases]);
+  }, [waiting, pollMs, checkCompleted]);
+
+  useAppForegroundRefresh(checkCompleted, waiting);
 
   const confirm = useCallback(
     async (code: string) => {
@@ -119,28 +131,48 @@ export function useDeliveryViewModel(
 
 export type DeliveryStatus = { loading: boolean; role: DeliveryRole | null; completed: Delivery | null };
 
-/** Só consulta o papel e se a entrega já foi concluída (sem gerar código), para o cartão da negociação. */
+/** Só consulta o papel e se a entrega já foi concluída (sem gerar código), com tempo real para o cartão da negociação. */
 export function useDeliveryStatus(
   requestId: string,
   sessionUserId: string | null,
   refreshKey: number = 0,
   useCases: IDeliveryUseCases,
+  subscribe?: (requestId: string, sessionUserId: string, onChange: () => void) => () => void,
 ): DeliveryStatus {
   const [status, setStatus] = useState<DeliveryStatus>({ loading: true, role: null, completed: null });
+  const activeRef = useRef(true);
+
+  const loadStatus = useCallback(async () => {
+    if (!requestId || !sessionUserId) return;
+    try {
+      const role = await useCases.getRole(requestId, sessionUserId);
+      const completed = await useCases.getDelivery(requestId, sessionUserId);
+      if (activeRef.current) setStatus({ loading: false, role, completed });
+    } catch {
+      if (activeRef.current) setStatus((prev) => ({ ...prev, loading: false }));
+    }
+  }, [requestId, sessionUserId, useCases]);
+
+  const debouncedLoad = useDebouncedRealtimeCallback(() => {
+    void loadStatus();
+  });
+
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const role = await useCases.getRole(requestId, sessionUserId);
-        const completed = await useCases.getDelivery(requestId, sessionUserId);
-        if (active) setStatus({ loading: false, role, completed });
-      } catch {
-        if (active) setStatus({ loading: false, role: null, completed: null });
-      }
-    })();
+    activeRef.current = true;
+    void loadStatus();
     return () => {
-      active = false;
+      activeRef.current = false;
     };
-  }, [requestId, sessionUserId, refreshKey, useCases]);
+  }, [loadStatus, refreshKey]);
+
+  useEffect(() => {
+    if (!requestId || !sessionUserId || !subscribe) return;
+    return subscribe(requestId, sessionUserId, debouncedLoad);
+  }, [requestId, sessionUserId, subscribe, debouncedLoad]);
+
+  useAppForegroundRefresh(() => {
+    void loadStatus();
+  }, Boolean(requestId && sessionUserId));
+
   return status;
 }

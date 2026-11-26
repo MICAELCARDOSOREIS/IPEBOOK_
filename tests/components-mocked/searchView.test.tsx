@@ -329,16 +329,16 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(setSortBy).toHaveBeenCalledWith("price_asc");
   });
 
-  it("mostra os filtros aplicados como chips removíveis (Figma 02.04)", async () => {
+  it("mostra os filtros aplicados como chips removíveis sem duplicar modalidade no mobile (Figma 02.04)", async () => {
     const { removeActiveFilter } = setup([book({})], "", { modality: "sale", condition: "good", priceRange: "under50" });
     const screen = await renderSearch();
 
-    expect(screen.getByLabelText("Remover filtro Venda")).toBeDefined();
+    expect(screen.queryByLabelText("Remover filtro Venda")).toBeNull();
     expect(screen.getByLabelText("Remover filtro Bom estado")).toBeDefined();
     expect(screen.getByLabelText("Remover filtro Até R$ 50")).toBeDefined();
 
-    await act(async () => { fireEvent.press(screen.getByLabelText("Remover filtro Venda")); });
-    expect(removeActiveFilter).toHaveBeenCalledWith("modality");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Remover filtro Bom estado")); });
+    expect(removeActiveFilter).toHaveBeenCalledWith("condition");
   });
 
   it("resume a faixa de resultados e troca a ordenação pela folha de ordenação (Figma 02.04)", async () => {

@@ -49,17 +49,17 @@ export function MeetingCard({
   useEffect(() => {
     if (!state.loading) onMeetingChange?.(state.meeting ?? null);
   }, [state.loading, state.meeting, onMeetingChange]);
-  const { reload } = actions;
+  const { reload, refresh } = actions;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
+  // A primeira carga já vem do ViewModel; recarrega silenciosamente quando a tela volta ao foco depois.
   const lastFocusKey = useRef(focusKey);
   useEffect(() => {
     if (focusKey === lastFocusKey.current) return;
     lastFocusKey.current = focusKey;
-    void reload();
-  }, [focusKey, reload]);
+    void (refresh ?? reload)();
+  }, [focusKey, refresh, reload]);
 
   if (state.loading) {
     return (

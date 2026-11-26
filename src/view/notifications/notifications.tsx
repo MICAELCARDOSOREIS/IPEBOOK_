@@ -25,12 +25,14 @@ import { meetingNotificationDisplay, notificationDateSections, notificationRows 
 import { formatMeetingWhen } from "@/view/meetingFormat";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { createNotificationsStyles, withWebInteractive } from "./notificationsStyles";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
   sessionLoading?: boolean;
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToAction?: (actionUrl: string) => void;
@@ -61,6 +63,7 @@ const TYPE_CONFIG: Record<
 export default function Notifications({
   sessionUserId,
   sessionLoading = false,
+  focusKey,
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
@@ -71,6 +74,9 @@ export default function Notifications({
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
   const [state, actions] = makeNotificationsViewModel(sessionUserId, true);
+  useOnRefocus(focusKey, () => {
+    void actions.refresh();
+  });
   const [prompt, promptActions] = makeNotificationsPromptViewModel();
   const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();

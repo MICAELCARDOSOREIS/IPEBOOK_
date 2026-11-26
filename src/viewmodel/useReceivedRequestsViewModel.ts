@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { IBookRequestUseCases, RequestResponse } from "@/usecase/iBookRequestUseCases";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 import { messageOf, type RequestListState, useRequestList } from "@/viewmodel/useSentRequestsViewModel";
 
 export type ReceivedRequestsState = RequestListState & {
@@ -19,6 +20,7 @@ const RESPOND_ERROR = "Não foi possível responder ao pedido. Tente novamente."
 export function useReceivedRequestsViewModel(
   sessionUserId: string | null,
   useCases: IBookRequestUseCases,
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void,
 ): [ReceivedRequestsState, ReceivedRequestsActions] {
   const load = useCallback(() => useCases.listReceivedRequests(sessionUserId), [useCases, sessionUserId]);
   const [listState, reload, active] = useRequestList(
@@ -26,6 +28,18 @@ export function useReceivedRequestsViewModel(
     undefined,
     sessionUserId ? `received:${sessionUserId}` : undefined,
   );
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
+  useEffect(() => {
+    if (!sessionUserId || !subscribe) return;
+    return subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, subscribe, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<{ id: string; message: string } | null>(null);
 

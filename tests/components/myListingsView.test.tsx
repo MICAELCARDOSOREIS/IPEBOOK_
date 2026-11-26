@@ -4,6 +4,7 @@ import { Platform, Share, StyleSheet } from "react-native";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsState, MyListingsActions } from "@/viewmodel/useMyListingsViewModel";
 import MyListingsScreen, { MyListings } from "@/view/listings/myListings";
+import { MyListingsListingsTab } from "@/view/listings/myListingsListingsTab";
 
 jest.mock("expo-linking", () => ({
   createURL: jest.fn((path: string) => `https://ipebook.app${path}`),
@@ -193,7 +194,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
 
     expect(screen.queryByText("Cada livro, uma conversa.")).toBeNull();
     expect(
-      screen.getByText("Toque em um livro para editar, pausar ou marcar como concluído."),
+      screen.getByText("Toque em um livro para gerenciar, pausar ou abrir a conversa."),
     ).toBeDefined();
   });
 
@@ -535,10 +536,16 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar anúncios por situação"));
+    });
+
     expect(screen.getByText("Todos (2)")).toBeDefined();
     expect(screen.getByText("Ativos (1)")).toBeDefined();
     expect(screen.getByText("Pausados (1)")).toBeDefined();
-    expect(screen.getByText("Reservados (0)")).toBeDefined();
+    // Chips sem itens somem para não poluir a Estante.
+    expect(screen.queryByText("Reservados (0)")).toBeNull();
+    expect(screen.queryByText("Concluídos (0)")).toBeNull();
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Filtrar por Pausados"));
@@ -547,15 +554,47 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.queryByText("Dom Casmurro")).toBeNull();
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Reservados"));
+      fireEvent.press(screen.getByLabelText("Filtro ativo: Pausados"));
     });
-    expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
-
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Ver todos os anúncios" }));
+      fireEvent.press(screen.getByLabelText("Filtrar por Todos"));
     });
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("O Quinze")).toBeDefined();
+  });
+
+  it("mostra estado vazio contextual e volta para Todos quando o filtro não tem anúncios (Issue #161)", async () => {
+    const books: Book[] = [
+      { id: "b1", title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 25, ownerId: "user-1", status: "available" },
+    ];
+    const onStatusFilterChange = jest.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListingsListingsTab books={books} statusFilter="reserved" onStatusFilterChange={onStatusFilterChange} />,
+      );
+    });
+    expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver todos os anúncios" }));
+    });
+    expect(onStatusFilterChange).toHaveBeenCalledWith("all");
+  });
+
+  it("tocar em livro reservado leva direto à negociação ativa sem faixa extra", async () => {
+    const book: Book = { id: "b-res", title: "O alquimista", author: "Paulo Coelho", modality: "sale", price: 5, ownerId: "user-1", status: "reserved" };
+    const onOpen = jest.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListingsListingsTab books={[book]} statusFilter="all" onStatusFilterChange={jest.fn()} onNavigateToNegotiationForBook={onOpen} />,
+      );
+    });
+    expect(screen.queryByLabelText("Abrir conversa sobre O alquimista")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver negociação de O alquimista"));
+    });
+    expect(onOpen).toHaveBeenCalledWith("b-res");
   });
 
   it("renderiza a aba Concluídos e exibe estado vazio ou livros finalizados (Spec 064, Figma 05.01)", async () => {

@@ -1,5 +1,5 @@
 import { memo, useRef, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -10,8 +10,9 @@ import { formatPrice } from "@/view/formatPrice";
 import { formatBookLocation } from "@/model/entities/location";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { isMainTabsSwipeActive } from "@/view/mainTabsState";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useGuardedPress } from "@/view/useGuardedPress";
+import { getTouchOrigin, isDragPressRelease, type TouchOrigin, useGuardedPress } from "@/view/useGuardedPress";
 import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 
@@ -95,6 +96,11 @@ function CatalogCarouselComponent({
   const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
   const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
   const guardedNavigateToBookDetail = useGuardedPress((id: string) => onNavigateToBookDetail?.(id));
+  const cardPressOriginRef = useRef<TouchOrigin | null>(null);
+
+  const handleCardPressIn = (event?: GestureResponderEvent) => {
+    cardPressOriginRef.current = getTouchOrigin(event);
+  };
 
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
@@ -109,7 +115,13 @@ function CatalogCarouselComponent({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={() => {
+        onPressIn={handleCardPressIn}
+        onPress={(event) => {
+          const origin = cardPressOriginRef.current;
+          cardPressOriginRef.current = null;
+          if (isMainTabsSwipeActive() || isDragPressRelease(origin, event)) {
+            return;
+          }
           if (isIos) triggerHaptic("light");
           guardedNavigateToBookDetail(item.id);
         }}

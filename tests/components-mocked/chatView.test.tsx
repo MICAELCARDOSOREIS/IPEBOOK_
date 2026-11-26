@@ -371,6 +371,9 @@ describe("Chat em tela cheia (Spec 082)", () => {
       expect(Linking.openURL).toHaveBeenCalled();
 
       await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Mais opções do encontro" }));
+      });
+      await act(async () => {
         fireEvent.press(screen.getByRole("button", { name: "Adicionar à agenda" }));
       });
       expect(addMeetingToCalendar).toHaveBeenCalled();
@@ -491,6 +494,9 @@ describe("Chat em tela cheia (Spec 082)", () => {
       });
       await act(async () => {
         fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Entrega do livro" }));
+        fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Mais opções do encontro" }));
+      });
+      await act(async () => {
         fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Adicionar à agenda" }));
         fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Reagendar encontro" }));
       });

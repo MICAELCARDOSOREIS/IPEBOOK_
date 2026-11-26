@@ -69,8 +69,7 @@ function createSearchStyles(colors: ColorPalette) {
     heroSection: { gap: tokens.spacing[6], marginTop: tokens.spacing[4], marginBottom: tokens.spacing[4] },
     heading: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, letterSpacing: tokens.letterSpacing.brandTighter },
     subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4] },
-    quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[2] },
+    quickModalitiesRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4], marginBottom: tokens.spacing[4], paddingVertical: tokens.spacing[2] },
     clearFiltersButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",

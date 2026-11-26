@@ -7,8 +7,10 @@ import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
 export type ListingPhotoState = { uploading: boolean; error: string | null; permissionDenied?: boolean };
 
 const UPLOAD_ERROR = "Não foi possível enviar a foto. Tente novamente.";
-/** Capa de livro: retrato 5:8, a mesma proporção da capa ilustrativa. */
+/** Capa e verso do livro: retrato 5:8, a mesma proporção da capa ilustrativa. */
 const COVER_ASPECT = [5, 8] as const;
+/** Lombada do livro: faixa vertical estreita 1:6 proporcional ao Book3D. */
+const SPINE_ASPECT = [1, 6] as const;
 
 /**
  * Foto do anúncio pela câmera ou galeria (Spec 092): abre o seletor com recorte de capa, envia e
@@ -38,7 +40,8 @@ export function useListingPhotoViewModel(
       busy.current = true;
       setState({ uploading: false, error: null });
       try {
-        const image = await picker.pickImage(source, COVER_ASPECT);
+        const aspect = side === "spine" ? SPINE_ASPECT : COVER_ASPECT;
+        const image = await picker.pickImage(source, aspect);
         if (!image) return null;
         if (active.current) setState({ uploading: true, error: null });
         const file = side ? { ...image, side } : image;

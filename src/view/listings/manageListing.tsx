@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { PIRIPIRI_POLICE_CONTACT } from "@/model/helpContent";
@@ -7,6 +7,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
+import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
@@ -27,6 +28,7 @@ export type ManageListingProps = {
   focusKey?: number;
   onEdit?: (bookId: string) => void;
   onViewPublicListing?: (bookId: string) => void;
+  onOpenChat?: (requestId: string) => void;
   onRemoved?: () => void;
   onBack?: () => void;
 };
@@ -38,12 +40,14 @@ export default function ManageListing({
   focusKey,
   onEdit,
   onViewPublicListing,
+  onOpenChat,
   onRemoved,
   onBack,
 }: ManageListingProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedEdit = useGuardedPress(onEdit);
   const guardedViewPublic = useGuardedPress(onViewPublicListing);
+  const guardedOpenChat = useGuardedPress(onOpenChat);
   const guardedRemoved = useGuardedPress(onRemoved);
   const [state, actions] = makeManageListingViewModel(bookId, sessionUserId);
   useOnRefocus(focusKey, () => {
@@ -53,6 +57,7 @@ export default function ManageListing({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
   const wide = useIsWideWeb();
 
   const handleRemove = async () => {
@@ -129,8 +134,35 @@ export default function ManageListing({
   const { book } = state;
   const paused = book.status === "paused";
   const delivered = book.status === "delivered";
-  const locked = book.status === "reserved" || delivered;
+  const reserved = book.status === "reserved";
+  const locked = reserved || delivered;
+  const canOpenAcceptedChat = reserved && Boolean(state.acceptedRequestId) && Boolean(onOpenChat);
   const location = [book.neighborhood, book.city, book.state].filter(Boolean).join(" · ");
+
+  const modalityTheme =
+    book.modality === "donation"
+      ? {
+          accentBg: colors.badge.donation.background,
+          accentText: colors.badge.donation.text,
+          outlineAccent: colors.badge.donation.text,
+          softBg: colors.ipe.petalSoft,
+          softBorder: colors.badge.donation.background,
+        }
+      : book.modality === "trade"
+      ? {
+          accentBg: colors.badge.trade.background,
+          accentText: colors.badge.trade.text,
+          outlineAccent: colors.badge.trade.background,
+          softBg: colors.m3.secondaryContainer,
+          softBorder: colors.badge.trade.background,
+        }
+      : {
+          accentBg: colors.badge.sale.background,
+          accentText: colors.badge.sale.text,
+          outlineAccent: colors.badge.sale.background,
+          softBg: colors.nature.sprout,
+          softBorder: colors.nature.foliage,
+        };
 
   const statusConfig: {
     title: string;
@@ -154,8 +186,8 @@ export default function ManageListing({
         hint: "A entrega foi concluída.",
         icon: "checkCircle",
         tone: "delivered",
-        iconColor: colors.nature.foliage,
-        badgeBg: colors.nature.sprout,
+        iconColor: modalityTheme.outlineAccent,
+        badgeBg: modalityTheme.softBg,
       }
     : locked
     ? {
@@ -171,8 +203,8 @@ export default function ManageListing({
         hint: "Visível no catálogo de Piripiri.",
         icon: "checkCircle",
         tone: "active",
-        iconColor: colors.nature.foliage,
-        badgeBg: colors.nature.sprout,
+        iconColor: modalityTheme.outlineAccent,
+        badgeBg: modalityTheme.softBg,
       };
 
   const bookSummaryA11y = `Resumo do anúncio: ${book.title}, de ${book.author}. Modalidade: ${
@@ -185,11 +217,121 @@ export default function ManageListing({
     location ? ` Localização: ${location}.` : ""
   }`;
 
+  const safetyHeaderButton = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Segurança em Piripiri"
+      accessibilityHint="Mostra os números de emergência e orientações de segurança em Piripiri."
+      hitSlop={8}
+      onPress={() => setSafetyOpen(true)}
+      style={({ pressed }) => [
+        styles.headerSafetyButton,
+        { borderColor: modalityTheme.outlineAccent },
+        pressed && styles.actionCardPressed,
+      ]}
+    >
+      <AppIcon name="shield" size={16} color={modalityTheme.outlineAccent} />
+      <Text style={[styles.headerSafetyText, { color: modalityTheme.outlineAccent }]}>Segurança</Text>
+    </Pressable>
+  );
+
   return (
     <ScreenContainer
       maxWidth={contentMaxWidth}
-      header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />}
+      header={
+        <TopAppBar
+          contentMaxWidth={contentMaxWidth}
+          title="Gerenciar anúncio"
+          onBack={guardedBack}
+          rightAction={safetyHeaderButton}
+        />
+      }
       contentStyle={styles.containerContent}
+      overlay={
+        <>
+          <View style={styles.bottomBar}>
+            <View style={[styles.bottomBarInner, { maxWidth: contentMaxWidth }]}>
+              <FilledButton
+                label={canOpenAcceptedChat ? "Ir para a conversa" : paused ? "Retomar anúncio" : "Pausar anúncio"}
+                accessibilityHint={
+                  canOpenAcceptedChat
+                    ? "Abre a conversa da negociação aceita para combinar o encontro."
+                    : paused
+                      ? "Reativa este anúncio para voltar a ser encontrado pelos leitores."
+                      : "Oculta temporariamente este livro das buscas e do catálogo sem apagá-lo."
+                }
+                backgroundColor={canOpenAcceptedChat ? undefined : modalityTheme.accentBg}
+                textColor={canOpenAcceptedChat ? undefined : modalityTheme.accentText}
+                disabled={canOpenAcceptedChat ? state.busy : state.busy || locked}
+                loading={state.busy}
+                onPress={() => {
+                  if (canOpenAcceptedChat && state.acceptedRequestId) {
+                    guardedOpenChat(state.acceptedRequestId);
+                    return;
+                  }
+                  void actions.togglePause();
+                }}
+              />
+            </View>
+          </View>
+          <Dialog
+            visible={confirmingRemoval}
+            title="Excluir anúncio?"
+            message={`${book.title} sai do catálogo e esta ação não pode ser desfeita.`}
+            confirmLabel="Excluir"
+            cancelLabel="Manter anúncio"
+            destructive
+            loading={state.busy}
+            onConfirm={() => void handleRemove()}
+            onCancel={() => setConfirmingRemoval(false)}
+          />
+          <Modal
+            visible={safetyOpen}
+            transparent
+            accessibilityViewIsModal
+            animationType="fade"
+            onRequestClose={() => setSafetyOpen(false)}
+          >
+            <View style={styles.safetyModalBackdrop}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Fechar segurança em Piripiri"
+                onPress={() => setSafetyOpen(false)}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.safetyModalCard}>
+                <View style={styles.safetyModalHeader}>
+                  <View style={styles.safetyModalTitleRow}>
+                    <AppIcon name="shield" size={20} color={modalityTheme.outlineAccent} />
+                    <Text accessibilityRole="header" style={styles.safetyModalTitle}>
+                      Segurança em Piripiri
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Fechar"
+                    hitSlop={8}
+                    onPress={() => setSafetyOpen(false)}
+                    style={styles.toastCloseButton}
+                  >
+                    <AppIcon name="close" size={20} color={colors.secondaryText} />
+                  </Pressable>
+                </View>
+                <View style={styles.securityTipBox} accessible accessibilityRole="text">
+                  <AppIcon name="info" size={16} color={colors.nature.foliage} />
+                  <Text style={styles.securityTipText}>
+                    Combine o encontro só pelo chat do IpêBook, em local público de Piripiri, com confirmação por QR Code.
+                  </Text>
+                </View>
+                <Text style={styles.safetyModalAnswer}>{PIRIPIRI_POLICE_CONTACT.answer}</Text>
+                <View style={styles.safetyCard}>
+                  <HelpContactLinks links={PIRIPIRI_POLICE_CONTACT.links} />
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </>
+      }
     >
       <View style={styles.content}>
         {shareState.linkCopied ? (
@@ -243,7 +385,9 @@ export default function ManageListing({
                   <View style={styles.tagRow}>
                     <Tag variant={book.modality} />
                     {book.price !== undefined ? (
-                      <Text style={styles.price}>{formatPrice(book.price)}</Text>
+                      <Text style={[styles.price, { color: modalityTheme.outlineAccent }]}>
+                        {formatPrice(book.price)}
+                      </Text>
                     ) : null}
                   </View>
 
@@ -276,7 +420,10 @@ export default function ManageListing({
                 wide && styles.statusBoxWide,
                 statusConfig.tone === "paused" && styles.statusBoxPaused,
                 statusConfig.tone === "reserved" && styles.statusBoxReserved,
-                (statusConfig.tone === "active" || delivered) && styles.statusBoxActive,
+                (statusConfig.tone === "active" || delivered) && {
+                  backgroundColor: modalityTheme.softBg,
+                  borderColor: modalityTheme.softBorder,
+                },
               ]}
             >
               <View style={styles.statusHeader}>
@@ -303,11 +450,28 @@ export default function ManageListing({
               accessibilityState={{ disabled: locked }}
               disabled={locked}
               onPress={() => guardedEdit(book.id)}
-              style={locked ? [styles.shortcut, styles.primaryShortcut, styles.actionCardDisabled]
-                : withPress([styles.shortcut, styles.primaryShortcut])}
+              style={
+                locked
+                  ? [
+                      styles.shortcut,
+                      styles.primaryShortcut,
+                      { backgroundColor: modalityTheme.accentBg, borderColor: modalityTheme.accentBg },
+                      styles.actionCardDisabled,
+                    ]
+                  : withPress([
+                      styles.shortcut,
+                      styles.primaryShortcut,
+                      { backgroundColor: modalityTheme.accentBg, borderColor: modalityTheme.accentBg },
+                    ])
+              }
             >
-              <AppIcon name="edit" size={18} color={colors.m3.onPrimary} />
-              <Text style={styles.primaryShortcutText}>Editar anúncio</Text>
+              <AppIcon name="edit" size={18} color={modalityTheme.accentText} />
+              <Text
+                numberOfLines={1}
+                style={[styles.primaryShortcutText, { color: modalityTheme.accentText }]}
+              >
+                Editar anúncio
+              </Text>
             </Pressable>
             {onViewPublicListing ? (
               <Pressable
@@ -315,13 +479,46 @@ export default function ManageListing({
                 accessibilityLabel="Ver anúncio como leitor"
                 accessibilityHint="Abre a visualização pública do anúncio."
                 onPress={() => guardedViewPublic(book.id)}
-                style={withPress(styles.shortcut)}
+                style={withPress([styles.shortcut, { borderColor: modalityTheme.outlineAccent }])}
               >
-                <AppIcon name="visibility" size={18} color={colors.action} />
-                <Text style={styles.shortcutText}>Ver anúncio como leitor</Text>
+                <AppIcon name="visibility" size={18} color={modalityTheme.outlineAccent} />
+                <Text
+                  numberOfLines={1}
+                  style={[styles.shortcutText, { color: modalityTheme.outlineAccent }]}
+                >
+                  Ver anúncio
+                </Text>
               </Pressable>
             ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Excluir anúncio"
+              accessibilityHint="Abre o diálogo de confirmação para remover definitivamente este anúncio da sua estante."
+              accessibilityState={{ disabled: state.busy || locked }}
+              disabled={state.busy || locked}
+              onPress={() => setConfirmingRemoval(true)}
+              style={
+                state.busy || locked
+                  ? [styles.deleteShortcutRow, styles.actionCardDisabled]
+                  : withPress(styles.deleteShortcutRow)
+              }
+            >
+              <AppIcon name="delete" size={18} color={locked ? colors.secondaryText : colors.error} />
+              <Text style={[styles.deleteShortcutText, (state.busy || locked) && styles.textDisabled]}>
+                Excluir anúncio
+              </Text>
+            </Pressable>
           </View>
+          {locked ? (
+            <View style={styles.reservedWarningBox}>
+              <AppIcon name="info" size={16} color={colors.actionDeep} />
+              <Text style={styles.deleteHint}>
+                {delivered
+                  ? "O anúncio de um livro entregue fica no histórico."
+                  : "A exclusão fica indisponível enquanto houver uma negociação em andamento."}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={[styles.actionGroups, wide && styles.actionGroupsWide]}>
@@ -370,141 +567,9 @@ export default function ManageListing({
               <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
             </Pressable>
           </View>
-
-          <View style={[styles.actionGroup, wide && styles.actionGroupWide]}>
-            <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
-              Disponibilidade no catálogo
-            </Text>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={paused ? "Retomar anúncio" : "Pausar anúncio"}
-              accessibilityHint={
-                paused
-                  ? "Reativa este anúncio para voltar a ser encontrado pelos leitores."
-                  : "Oculta temporariamente este livro das buscas e do catálogo sem apagá-lo."
-              }
-              accessibilityState={{ disabled: state.busy || locked }}
-              disabled={state.busy || locked}
-              onPress={() => void actions.togglePause()}
-              style={({ pressed }) => [
-                styles.actionCard,
-                (state.busy || locked) && styles.actionCardDisabled,
-                pressed && !(state.busy || locked) && styles.actionCardPressed,
-              ]}
-            >
-              <View
-                style={[
-                  styles.actionIconWrapper,
-                  {
-                    backgroundColor: paused
-                      ? colors.nature.sprout
-                      : colors.m3.surfaceContainerHigh,
-                  },
-                ]}
-              >
-                {state.busy ? (
-                  <ActivityIndicator size="small" color={colors.action} />
-                ) : (
-                  <AppIcon
-                    name={paused ? "unarchive" : "archive"}
-                    size={22}
-                    color={locked ? colors.secondaryText : paused ? colors.nature.foliage : colors.secondaryText}
-                  />
-                )}
-              </View>
-              <View style={styles.actionTexts}>
-                <Text style={[styles.actionTitle, (state.busy || locked) && styles.textDisabled]}>
-                  {paused ? "Retomar anúncio" : "Pausar anúncio"}
-                </Text>
-                <Text style={styles.actionHint}>
-                  {delivered
-                    ? "A entrega encerrou a publicação."
-                    : locked
-                      ? "O anúncio está reservado para uma negociação."
-                      : paused
-                        ? "O livro volta ao catálogo e às buscas."
-                        : "Oculta temporariamente o livro do catálogo."}
-                </Text>
-              </View>
-              <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-            </Pressable>
-          </View>
         </View>
 
-        <View style={styles.actionGroup}>
-          <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
-            Segurança em Piripiri
-          </Text>
-          <View style={styles.safetyCard}>
-            <HelpContactLinks links={PIRIPIRI_POLICE_CONTACT.links} horizontal={wide} />
-          </View>
-        </View>
-
-        <View style={styles.actionGroup}>
-          <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
-            Exclusão
-          </Text>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Excluir anúncio"
-            accessibilityHint="Abre o diálogo de confirmação para remover definitivamente este anúncio da sua estante."
-            accessibilityState={{ disabled: state.busy || locked }}
-            disabled={state.busy || locked}
-            onPress={() => setConfirmingRemoval(true)}
-            style={({ pressed }) => [
-              styles.actionCard,
-              (state.busy || locked) && styles.actionCardDisabled,
-              pressed && !(state.busy || locked) && styles.actionCardPressed,
-            ]}
-          >
-            <View style={styles.deleteIconWrapper}>
-              <AppIcon
-                name="delete"
-                size={22}
-                color={locked ? colors.secondaryText : colors.error}
-              />
-            </View>
-            <View style={styles.actionTexts}>
-              <Text style={[styles.deleteActionTitle, (state.busy || locked) && styles.textDisabled]}>
-                Excluir anúncio
-              </Text>
-              <Text style={styles.deleteActionHint}>
-                Cancela a publicação e remove o livro da sua estante.
-              </Text>
-            </View>
-            <AppIcon
-              name="chevronRight"
-              size={20}
-              color={locked ? colors.secondaryText : colors.error}
-            />
-          </Pressable>
-
-          {locked ? (
-            <View style={styles.reservedWarningBox}>
-              <AppIcon name="info" size={16} color={colors.actionDeep} />
-              <Text style={styles.deleteHint}>
-                {delivered
-                  ? "O anúncio de um livro entregue fica no histórico."
-                  : "A exclusão fica indisponível enquanto houver uma negociação em andamento."}
-              </Text>
-            </View>
-          ) : null}
-        </View>
       </View>
-
-      <Dialog
-        visible={confirmingRemoval}
-        title="Excluir anúncio?"
-        message={`${book.title} sai do catálogo e esta ação não pode ser desfeita.`}
-        confirmLabel="Excluir"
-        cancelLabel="Manter anúncio"
-        destructive
-        loading={state.busy}
-        onConfirm={() => void handleRemove()}
-        onCancel={() => setConfirmingRemoval(false)}
-      />
     </ScreenContainer>
   );
 }
@@ -512,17 +577,91 @@ export default function ManageListing({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     loadingContainer: { flex: 1, padding: tokens.spacing[16], justifyContent: "center" },
-    containerContent: { paddingBottom: tokens.spacing[40] },
-    content: { gap: tokens.spacing[24] },
+    containerContent: { paddingBottom: tokens.spacing[24] },
+    headerSafetyButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      minHeight: 36,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      backgroundColor: colors.surface,
+    },
+    headerSafetyText: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+    },
+    safetyModalBackdrop: {
+      flex: 1,
+      backgroundColor: colors.m3.scrim,
+      justifyContent: "center",
+      padding: tokens.spacing[16],
+    },
+    safetyModalCard: {
+      width: "100%",
+      maxWidth: 460,
+      alignSelf: "center",
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[12],
+      elevation: 4,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    safetyModalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
+    safetyModalTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      flex: 1,
+    },
+    safetyModalTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.text,
+    },
+    safetyModalAnswer: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      lineHeight: 20,
+    },
+    bottomBar: {
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.book.paperEdge,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      elevation: 4,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: -2 },
+    },
+    bottomBarInner: {
+      width: "100%",
+      alignSelf: "center",
+    },
+    content: { gap: tokens.spacing[16] },
     overview: {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
       padding: tokens.spacing[16],
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[14],
     },
-    overviewDetails: { gap: tokens.spacing[16] },
+    overviewDetails: { gap: tokens.spacing[14] },
     overviewDetailsWide: { flexDirection: "row", alignItems: "center" },
     bookSummary: { flex: 1, minWidth: 0 },
     shortcuts: {
@@ -534,6 +673,8 @@ function createStyles(colors: ColorPalette) {
       borderTopColor: colors.book.paperEdge,
     },
     shortcut: {
+      flexGrow: 1,
+      flexBasis: 150,
       maxWidth: "100%",
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
@@ -543,12 +684,28 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outline,
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[14],
       paddingVertical: tokens.spacing[8],
     },
     primaryShortcut: { backgroundColor: colors.action, borderColor: colors.action },
-    shortcutText: { ...tokens.typography.labelLarge, color: colors.action, flexShrink: 1 },
-    primaryShortcutText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, flexShrink: 1 },
+    deleteShortcutRow: {
+      flexBasis: "100%",
+      width: "100%",
+      minHeight: tokens.accessibility.touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.errorContainer,
+      backgroundColor: colors.surface,
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[8],
+    },
+    shortcutText: { ...tokens.typography.labelLarge, color: colors.action, flexShrink: 1, textAlign: "center" },
+    primaryShortcutText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, flexShrink: 1, textAlign: "center" },
+    deleteShortcutText: { ...tokens.typography.labelLarge, color: colors.error, flexShrink: 1, textAlign: "center" },
     toastBanner: {
       flexDirection: "row",
       alignItems: "center",
@@ -570,8 +727,23 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
-    actionGroups: { gap: tokens.spacing[20] },
+    actionGroups: { gap: tokens.spacing[16] },
     actionGroupsWide: { flexDirection: "row", alignItems: "flex-start" },
+    securityTipBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[8],
+      backgroundColor: colors.nature.sprout,
+      borderRadius: tokens.radius.cardSmall,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[10],
+    },
+    securityTipText: {
+      flex: 1,
+      ...tokens.typography.footnote,
+      color: colors.nature.foliageDeep,
+      lineHeight: 18,
+    },
     bookRow: {
       flexDirection: "row",
       gap: tokens.spacing[14],
@@ -623,50 +795,17 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.book.paperEdge,
     },
     statusBoxWide: { width: 320 },
-    statusBoxActive: {
-      backgroundColor: colors.nature.sprout,
-      borderColor: colors.nature.foliage,
-      borderLeftWidth: 4,
-    },
     statusBoxPaused: {
       borderColor: colors.m3.outline,
-      borderLeftWidth: 4,
     },
-    statusBoxReserved: {
-      backgroundColor: colors.ipe.petalSoft,
-      borderColor: colors.action,
-      borderLeftWidth: 4,
-    },
-    statusHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
-    },
-    statusIconBadge: {
-      width: 36,
-      height: 36,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    statusTitleGroup: {
-      flex: 1,
-    },
-    statusTitle: {
-      ...tokens.typography.titleMedium,
-      color: colors.text,
-      fontFamily: fontFamily.semiBold,
-    },
-    statusHint: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      lineHeight: 20,
-    },
+    statusBoxReserved: { backgroundColor: colors.ipe.petalSoft, borderColor: colors.action },
+    statusHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[10] },
+    statusIconBadge: { width: 36, height: 36, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
+    statusTitleGroup: { flex: 1 },
+    statusTitle: { ...tokens.typography.titleMedium, color: colors.text, fontFamily: fontFamily.semiBold },
+    statusHint: { ...tokens.typography.bodyMedium, color: colors.secondaryText, lineHeight: 20 },
     actionGroupWide: { flex: 1 },
-    actionGroup: {
-      minWidth: 0,
-      gap: tokens.spacing[8],
-    },
+    actionGroup: { minWidth: 0, gap: tokens.spacing[8] },
     sectionHeaderTitle: {
       ...tokens.typography.labelMedium,
       color: colors.secondaryText,
@@ -677,14 +816,7 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
       marginBottom: tokens.spacing[2],
     },
-    safetyCard: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[4],
-    },
+    safetyCard: { backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.book.paperEdge, borderRadius: tokens.radius.card, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4] },
     actionCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -701,66 +833,14 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 3,
       shadowOffset: { width: 0, height: 1 },
     },
-    actionCardPressed: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.98 }],
-    },
-    actionCardDisabled: {
-      opacity: 0.45,
-    },
-    actionIconWrapper: {
-      width: 44,
-      height: 44,
-      borderRadius: tokens.radius.cardSmall,
-      alignItems: "center",
-      justifyContent: "center",
-    },
+    actionCardPressed: { backgroundColor: colors.m3.surfaceContainerLow, transform: [{ scale: 0.98 }] },
+    actionCardDisabled: { opacity: 0.45 },
+    actionIconWrapper: { width: 44, height: 44, borderRadius: tokens.radius.cardSmall, alignItems: "center", justifyContent: "center" },
     actionTexts: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
-    actionTitle: {
-      ...tokens.typography.bodyLarge,
-      fontFamily: fontFamily.semiBold,
-      color: colors.text,
-    },
-    actionHint: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      lineHeight: 18,
-    },
-    textDisabled: {
-      color: colors.secondaryText,
-    },
-    deleteIconWrapper: {
-      width: 44,
-      height: 44,
-      borderRadius: tokens.radius.cardSmall,
-      backgroundColor: colors.errorContainer,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    deleteActionTitle: {
-      ...tokens.typography.bodyLarge,
-      fontFamily: fontFamily.semiBold,
-      color: colors.error,
-    },
-    deleteActionHint: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      lineHeight: 18,
-    },
-    reservedWarningBox: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      backgroundColor: colors.ipe.petalSoft,
-      padding: tokens.spacing[10],
-      borderRadius: tokens.radius.cardSmall,
-      marginTop: tokens.spacing[4],
-    },
-    deleteHint: {
-      ...tokens.typography.footnote,
-      color: colors.secondaryText,
-      flex: 1,
-      lineHeight: 18,
-    },
+    actionTitle: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.semiBold, color: colors.text },
+    actionHint: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 18 },
+    textDisabled: { color: colors.secondaryText },
+    reservedWarningBox: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], backgroundColor: colors.ipe.petalSoft, padding: tokens.spacing[10], borderRadius: tokens.radius.cardSmall, marginTop: tokens.spacing[4] },
+    deleteHint: { ...tokens.typography.footnote, color: colors.secondaryText, flex: 1, lineHeight: 18 },
   });
 }

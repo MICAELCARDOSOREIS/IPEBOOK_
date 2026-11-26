@@ -53,7 +53,7 @@ export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
           <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
         </View>
       ) : null}
-      <AppIcon name="add" size={26} color={isIos ? colors.m3.onSurface : colors.nature.foliage} />
+      <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
     </Pressable>
   );
 }
@@ -70,9 +70,7 @@ function createStyles(colors: ColorPalette) {
       width: 56,
       height: 56,
       borderRadius: tokens.radius.card,
-      backgroundColor: isWeb ? webFabBg : colors.nature.sprout,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      backgroundColor: isWeb ? webFabBg : colors.m3.primaryContainer,
       alignItems: "center",
       justifyContent: "center",
       elevation: 6,

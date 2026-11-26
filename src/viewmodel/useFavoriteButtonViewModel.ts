@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
-import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import {
+  notifyFavoriteChanged,
+  registerSessionMemoryCache,
+  subscribeFavoriteChanged,
+} from "@/viewmodel/sessionCacheRegistry";
 
 export type FavoriteButtonState = { selected: boolean; loading: boolean; error: string | null };
 export type FavoriteButtonActions = { toggle: () => Promise<boolean> };
@@ -61,22 +65,38 @@ export function useFavoriteButtonViewModel(bookId: string, userId: string | null
     return () => { current = false; active.current = false; };
   }, [userId, bookId, useCases, isTest]);
 
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeFavoriteChanged((event) => {
+      if (event.userId !== userId || event.bookId !== bookId) return;
+      setCachedFavoriteState(userId, bookId, event.selected, isTest);
+      setState((prev) =>
+        prev.selected === event.selected && !prev.loading && prev.error === null
+          ? prev
+          : { selected: event.selected, loading: false, error: null },
+      );
+    });
+  }, [userId, bookId, isTest]);
+
   const toggle = useCallback(async (): Promise<boolean> => {
     const seq = ++toggleSeq.current;
     const previousSelected = selectedRef.current;
     const optimisticSelected = userId ? !previousSelected : previousSelected;
     // Caminho feliz otimista: atualiza o coração na hora e persiste no banco em segundo plano.
     setCachedFavoriteState(userId, bookId, optimisticSelected, isTest);
+    if (userId) notifyFavoriteChanged(userId, bookId, optimisticSelected);
     setState({ selected: optimisticSelected, loading: true, error: null });
     try {
       const selected = await useCases.toggleFavorite(userId, bookId);
       setCachedFavoriteState(userId, bookId, selected, isTest);
+      if (userId) notifyFavoriteChanged(userId, bookId, selected);
       if (active.current && toggleSeq.current === seq) {
         setState({ selected, loading: false, error: null });
       }
       return true;
     } catch (error) {
       setCachedFavoriteState(userId, bookId, previousSelected, isTest);
+      if (userId) notifyFavoriteChanged(userId, bookId, previousSelected);
       if (active.current && toggleSeq.current === seq) {
         setState({
           selected: previousSelected,

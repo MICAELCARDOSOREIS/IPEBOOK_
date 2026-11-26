@@ -17,13 +17,15 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type MeetingHistoryProps = {
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
 };
 
-export default function MeetingHistory({ onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
+export default function MeetingHistory({ focusKey, onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
   const { colors } = useTheme();
@@ -33,6 +35,9 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
   const [state, actions] = makeUserMeetingsViewModel(userId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const { isOnline } = makeNetworkStatus();
 
   function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {

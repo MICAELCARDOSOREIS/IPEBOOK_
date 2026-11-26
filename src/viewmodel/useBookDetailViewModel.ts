@@ -3,9 +3,14 @@ import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
-import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import {
+  notifyFavoriteChanged,
+  registerBooksMemoryCache,
+  subscribeFavoriteChanged,
+} from "@/viewmodel/sessionCacheRegistry";
 import { getCachedCatalogBookById } from "@/viewmodel/useHomeViewModel";
 import { getCachedMyListingById } from "@/viewmodel/useMyListingsViewModel";
+import { useAppForegroundRefresh } from "@/viewmodel/useRealtimeSync";
 
 export type BookDetailState = {
   book: Book | null;
@@ -104,10 +109,12 @@ export function useBookDetailViewModel(
     }));
     try {
       const isFavorite = await favorites.toggleFavorite(sessionUserId, bookId);
+      if (sessionUserId) notifyFavoriteChanged(sessionUserId, bookId, isFavorite);
       if (active.current && favoriteSeq.current === seq) {
         setState((prev) => ({ ...prev, isFavorite, favoriteLoading: false }));
       }
     } catch (error) {
+      if (sessionUserId) notifyFavoriteChanged(sessionUserId, bookId, previousIsFavorite);
       if (active.current && favoriteSeq.current === seq) {
         setState((prev) => ({
           ...prev,
@@ -118,6 +125,20 @@ export function useBookDetailViewModel(
       }
     }
   }, [favorites, bookId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeFavoriteChanged((event) => {
+      if (event.userId !== userId || event.bookId !== bookId) return;
+      setState((prev) =>
+        prev.isFavorite === event.selected ? prev : { ...prev, isFavorite: event.selected },
+      );
+    });
+  }, [userId, bookId]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(bookId));
 
   useEffect(() => {
     active.current = true;
