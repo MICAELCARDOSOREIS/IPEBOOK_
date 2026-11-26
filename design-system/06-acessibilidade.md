@@ -103,3 +103,7 @@ do Android ou Web:
   Ações significativas (favoritar, aplicar filtros, tocar em botões principais e fechar folhas) disparam
   micro-vibrações táteis (`triggerHaptic` com `selection`, `light` ou `success`) via `expo-haptics`,
   oferecendo confirmação multissensorial independente da pista visual.
+
+## Critérios da revisão visual iPhone e Web
+
+Na especificação iOS, alvo de toque recomendado de 44 pt; na Web, preferir 44 CSS px e observar WCAG 2.2 AA (24 CSS px mínimo com exceções). Texto normal 4,5:1, texto grande e controles essenciais 3:1. Rótulos persistentes, erros textuais e foco visível; respeitar VoiceOver, Dynamic Type, redução de movimento e de transparência. Os critérios são requisitos de validação, não certificação de conformidade. Consulte o [guia no Figma](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1344-2&m=dev) e a [especificação iPhone](iphone-liquid-glass.md).

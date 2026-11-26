@@ -62,6 +62,7 @@ genérico em `src/view/components/`; essa classificação está descrita na seç
 | [telas-android-figma.md](telas-android-figma.md) | Inventário dos 52 quadros atuais do Android, com links para o modo Dev |
 | [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário do canvas atual de iPhone/iOS 26, incluindo telas, protótipo, estados e pranchas |
 | [telas-web-figma.md](telas-web-figma.md) | Inventário das 126 telas Web do Figma (Desktop/Tablet/Celular) |
+| [iphone-liquid-glass.md](iphone-liquid-glass.md) | Especificação visual iOS 26, botões, filtros, navegação e links dos componentes |
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
 | [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 

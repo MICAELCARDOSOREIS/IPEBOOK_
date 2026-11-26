@@ -1,6 +1,6 @@
 # Inventário de telas — iPhone · iOS 26 (Figma)
 
-> Inventário extraído diretamente do Figma (canvas `APP · 20 · iPhone · iOS 26`, arquivo [IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook), node `31:2`) via MCP em 2026-11-19. Substitui a extração anterior de 2026-10-15 (144 telas antigas).
+> Inventário extraído diretamente do Figma (canvas `APP · 20 · iPhone · iOS 26`, arquivo [IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook), node `31:2`) via MCP em 2026-11-19. Substitui a extração anterior de 2026-10-15 (144 telas antigas). Consulte também [a especificação visual iPhone](iphone-liquid-glass.md).
 
 Veja as [referências locais de iPhone](referencias-figma/README.md#componentes-de-iphone) para pranchas, componentes e imagens das telas atuais consultadas em 2026-11-24.
 
