@@ -14,6 +14,21 @@ export type AddPhotoCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+function buildPreviewAccessibilityLabel(label: string): string {
+  const lower = label.trim().toLowerCase();
+  if (lower === "verso") return "Pré-visualização do verso";
+  return `Pré-visualização da ${lower}`;
+}
+
+function buildShortSideLabel(label: string): string {
+  const trimmed = label.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === "foto da capa") return "Capa";
+  if (lower === "foto do verso") return "Verso";
+  if (lower === "foto da lombada") return "Lombada";
+  return trimmed;
+}
+
 /**
  * Cartão de adicionar foto (Anunciar livro, etapa 1): quadrado ao lado dos campos de
  * título/autor, com "+" e rótulo empilhados ao centro (conferido contra o screenshot real da
@@ -31,8 +46,9 @@ export function AddPhotoCard({
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (photoUrl) {
+    const shortLabel = buildShortSideLabel(label);
     return (
-      <View style={[styles.card, style]}>
+      <View style={[styles.card, styles.cardFilled, style]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Alterar ${label.toLowerCase()}`}
@@ -42,13 +58,15 @@ export function AddPhotoCard({
         >
           <Image
             source={{ uri: photoUrl }}
-            accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
+            accessibilityLabel={buildPreviewAccessibilityLabel(label)}
             style={styles.previewImage}
             resizeMode="cover"
           />
           <View style={styles.changeBadge}>
-            <AppIcon name="camera" color={colors.surface} size={14} />
-            <Text style={styles.changeBadgeText}>Alterar</Text>
+            <AppIcon name="camera" color={colors.surface} size={12} />
+            <Text numberOfLines={1} style={styles.changeBadgeText}>
+              {shortLabel}
+            </Text>
           </View>
         </Pressable>
         {onRemovePhoto ? (
@@ -97,6 +115,11 @@ function createStyles(colors: ColorPalette) {
       overflow: "hidden",
       position: "relative",
     },
+    cardFilled: {
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
     cardPressed: {
       borderRadius: tokens.shapeMorph.cardPressed,
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -125,19 +148,21 @@ function createStyles(colors: ColorPalette) {
       position: "absolute",
       bottom: tokens.spacing[6],
       left: tokens.spacing[6],
-      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      maxWidth: "85%",
+      backgroundColor: "rgba(0, 0, 0, 0.68)",
       borderRadius: tokens.radius.full,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
+      paddingVertical: 3,
     },
     changeBadgeText: {
       ...tokens.typography.labelSmall,
       color: colors.surface,
       fontSize: 11,
-      fontWeight: tokens.fontWeight.medium,
+      fontWeight: tokens.fontWeight.semiBold,
+      flexShrink: 1,
     },
     removeButton: {
       position: "absolute",

@@ -283,7 +283,16 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Fechar ao tocar fora" }));
     });
+    // Campo de URL da capa fica recolhido por padrão mesmo quando já existe foto
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Editar link da capa" }));
+    });
     expect(screen.getByLabelText("URL da foto da capa")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ocultar link da capa" }));
+    });
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
 
     await act(async () => {
       fireEvent(screen.getByLabelText("Título do livro"), "focus");
