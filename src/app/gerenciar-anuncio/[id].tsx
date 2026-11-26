@@ -15,6 +15,7 @@ export default function GerenciarAnuncioRoute() {
         focusKey={focusKey}
         onEdit={(bookId) => pushOnce(`/editar-anuncio/${bookId}`)}
         onViewPublicListing={(bookId) => pushOnce(`/livro/${bookId}`)}
+        onOpenChat={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
         onRemoved={() => replaceOnce("/meus-anuncios")}
         onBack={() => backOnce()}
         onRequireSignIn={() => replaceOnce("/entrar")}

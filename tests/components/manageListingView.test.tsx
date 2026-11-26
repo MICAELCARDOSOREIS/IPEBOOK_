@@ -76,6 +76,9 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByLabelText("Editar anúncio")).toBeDefined();
     expect(screen.getByLabelText("Pausar anúncio")).toBeDefined();
 
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Segurança em Piripiri" }));
+    });
     expect(screen.getByRole("header", { name: "Segurança em Piripiri" })).toBeDefined();
     const emergency = screen.getByRole("link", { name: "Emergência policial · Ligar 190" });
     const civilPolice = screen.getByRole("link", { name: "Polícia Civil do Piauí · Ligar 197" });
@@ -143,6 +146,17 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
     expect(screen.getByText("O anúncio de um livro entregue fica no histórico.")).toBeDefined();
     expect(screen.queryByText(/enquanto houver uma negociação em andamento/)).toBeNull();
+  });
+
+  it("transforma o botão inferior em 'Ir para a conversa' quando reservado com negociação aceita", async () => {
+    const onOpenChat = jest.fn();
+    mockViewModel({ book: { ...book, status: "reserved" }, acceptedRequestId: "req-99" });
+    const screen = await renderScreen({ onOpenChat });
+
+    const chatButton = screen.getByRole("button", { name: "Ir para a conversa" });
+    expect(chatButton.props.accessibilityState.disabled).toBe(false);
+    await act(async () => { fireEvent.press(chatButton); });
+    expect(onOpenChat).toHaveBeenCalledWith("req-99");
   });
 
   it("aciona a edição do anúncio", async () => {
@@ -257,8 +271,8 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     // Seções organizadas com cabeçalhos acessíveis para navegação semântica
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
     expect(headers).toContain("Divulgação");
-    expect(headers).toContain("Exclusão");
-    expect(headers).toContain("Disponibilidade no catálogo");
+    expect(screen.getByRole("button", { name: "Pausar anúncio" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Excluir anúncio" })).toBeDefined();
 
     // Resumo acessível do livro para leitores de tela
     const bookSummary = screen.getByLabelText(/Resumo do anúncio: O Pequeno Príncipe/);
@@ -284,5 +298,27 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
     const pauseBtn = screen.getByLabelText("Pausar anúncio");
     expect(pauseBtn.props.accessibilityHint).toContain("Oculta temporariamente");
+  });
+
+  it("aplica a cor temática correspondente à modalidade do anúncio (doação, troca e venda)", async () => {
+    const { tokens } = await import("@/view/tokens");
+
+    mockViewModel({ book: { ...book, modality: "donation", price: undefined } });
+    const donationScreen = await renderScreen();
+    expect(donationScreen.getByLabelText("Editar anúncio").props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ backgroundColor: tokens.colors.badge.donation.background })]),
+    );
+
+    mockViewModel({ book: { ...book, modality: "trade", price: undefined } });
+    const tradeScreen = await renderScreen();
+    expect(tradeScreen.getByLabelText("Editar anúncio").props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ backgroundColor: tokens.colors.badge.trade.background })]),
+    );
+
+    mockViewModel({ book: { ...book, modality: "sale", price: 25 } });
+    const saleScreen = await renderScreen();
+    expect(saleScreen.getByLabelText("Editar anúncio").props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ backgroundColor: tokens.colors.badge.sale.background })]),
+    );
   });
 });

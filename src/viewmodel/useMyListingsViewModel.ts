@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
-import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { notifyBooksCatalogMutated, registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type MyListingsState = {
   books: readonly Book[];
@@ -36,6 +37,7 @@ export function getCachedMyListingById(bookId: string, userId?: string | null): 
 export function useMyListingsViewModel(
   sessionUserId: string | null,
   books: IBookUseCases,
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void,
 ): [MyListingsState, MyListingsActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialCached = !isTest && sessionUserId ? (sessionMyListingsCache.get(sessionUserId) ?? null) : null;
@@ -115,6 +117,7 @@ export function useMyListingsViewModel(
             };
           });
         }
+        notifyBooksCatalogMutated();
         return true;
       } catch (error) {
         if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, previousBooks);
@@ -170,6 +173,7 @@ export function useMyListingsViewModel(
             };
           });
         }
+        notifyBooksCatalogMutated();
         return true;
       } catch (error) {
         if (canOptimisticallyFlip && !isTest && sessionUserId) {
@@ -192,6 +196,10 @@ export function useMyListingsViewModel(
     [books, sessionUserId, isTest],
   );
 
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -200,6 +208,15 @@ export function useMyListingsViewModel(
       request.current += 1;
     };
   }, [reload]);
+
+  useEffect(() => {
+    if (!sessionUserId || !subscribe) return;
+    return subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, subscribe, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   return [state, { reload, cancelListing, togglePauseListing }];
 }

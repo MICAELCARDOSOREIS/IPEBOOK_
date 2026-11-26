@@ -14,6 +14,8 @@ import { useReduceTransparency } from "@/view/useReduceTransparency";
 export type TopAppBarProps = {
   title: string;
   onBack: () => void;
+  /** Ação opcional exibida à direita da barra superior (ex.: atalho de segurança). */
+  rightAction?: React.ReactNode;
   /** Barra M3 sobre conteúdo em tela cheia (mapa): cobre a barra de status e sobe um nível de elevação. */
   floating?: boolean;
   /** Largura da coluna de conteúdo da tela, para alinhar a barra a ela na web larga. */
@@ -31,7 +33,7 @@ export type TopAppBarProps = {
  * Na web larga vira uma trilha discreta ("← Voltar | Título") de 48 px, sem faixa própria, para não
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
-export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
+export function TopAppBar({ title, onBack, rightAction, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
   const handleBack = useCallback(() => {
     if (Platform.OS === "ios") triggerHaptic("light");
     onBack();
@@ -67,7 +69,8 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
           <Text style={styles.crumbBackText}>Voltar</Text>
         </Pressable>
         <View accessible={false} aria-hidden={true} style={styles.crumbDivider} />
-        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.crumbTitle}>{title}</Text>
+        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={[styles.crumbTitle, { flex: 1 }]}>{title}</Text>
+        {rightAction ?? null}
       </View>
     );
   }
@@ -114,7 +117,7 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
       >
         {title}
       </Text>
-      {isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
+      {rightAction ? rightAction : isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
     </View>
   );
 }

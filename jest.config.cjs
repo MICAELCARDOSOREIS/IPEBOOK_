@@ -38,6 +38,7 @@ module.exports = {
     "^expo-blur$": "<rootDir>/tests/mocks/expo-blur.ts",
     "^@react-native-google-signin/google-signin$": "<rootDir>/tests/mocks/google-signin.ts",
     "^@sentry/react-native$": "<rootDir>/tests/mocks/sentry-react-native.ts",
+    "^react-native-pager-view$": "<rootDir>/tests/mocks/react-native-pager-view.tsx",
   },
   coverageProvider: "v8",
   coverageReporters: ["text", "json", "html"],

@@ -52,6 +52,7 @@ export function NegotiationStatusCard({
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [now, setNow] = useState(Date.now);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const proposalTime = meeting?.status === "proposed" ? Date.parse(meeting.scheduledAt) : null;
   const expired = proposalTime !== null && proposalTime <= now;
 
@@ -124,9 +125,12 @@ export function NegotiationStatusCard({
               accessibilityLabel="Entrega do livro"
               hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDelivery}
-              style={withPress([styles.actionButtonPrimary, embedded && styles.actionButtonCompact])}
+              style={withPress([styles.actionButtonPrimary, embedded && styles.actionButtonCompact, embedded && styles.actionButtonPrimaryCompact])}
             >
-              <Text style={styles.actionButtonPrimaryText}>Entrega do livro</Text>
+              <AppIcon name="checkCircle" size={embedded ? 15 : 16} color={colors.nature.onFoliage} />
+              <Text numberOfLines={1} style={[styles.actionButtonPrimaryText, embedded && styles.actionButtonCompactText]}>
+                Confirmar entrega
+              </Text>
             </Pressable>
           ) : null}
 
@@ -138,12 +142,27 @@ export function NegotiationStatusCard({
               onPress={onOpenDirections}
               style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
-              <AppIcon name="place" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>Como chegar</Text>
+              <AppIcon name="place" size={embedded ? 15 : 16} color={colors.m3.onSurface} />
+              <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
+                Como chegar
+              </Text>
             </Pressable>
           ) : null}
 
-          {onAddToCalendar ? (
+          {embedded && (onAddToCalendar || onRescheduleMeeting) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Mais opções do encontro"
+              accessibilityState={{ expanded: showMoreOptions }}
+              hitSlop={4}
+              onPress={() => setShowMoreOptions((prev) => !prev)}
+              style={withPress(styles.moreOptionsButton)}
+            >
+              <AppIcon name="more" size={18} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          ) : null}
+
+          {(!embedded || showMoreOptions) && onAddToCalendar ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Adicionar à agenda"
@@ -158,7 +177,7 @@ export function NegotiationStatusCard({
             </Pressable>
           ) : null}
 
-          {onRescheduleMeeting ? (
+          {(!embedded || showMoreOptions) && onRescheduleMeeting ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Reagendar encontro"
@@ -340,9 +359,28 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[2],
     },
     actionButtonCompact: {
+      flexGrow: 1,
+      justifyContent: "center",
+      gap: tokens.spacing[4],
       paddingVertical: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[10],
       minHeight: 40,
+    },
+    actionButtonPrimaryCompact: {
+      paddingHorizontal: tokens.spacing[12],
+    },
+    actionButtonCompactText: {
+      fontSize: 13,
+    },
+    moreOptionsButton: {
+      width: 38,
+      height: 38,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      alignItems: "center",
+      justifyContent: "center",
     },
     actionButtonPrimary: {
       flexDirection: "row",

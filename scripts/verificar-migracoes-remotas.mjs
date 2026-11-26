@@ -747,6 +747,11 @@ export const MAPEAMENTO_MIGRACOES = {
       ),
     detalhe: 'Máquina de estados v2_books, webhook_secret, delete_user_account/v2_beta_testers, bloqueio bilateral e limites de alertas (Spec 143 / ADR 0119)',
   },
+  '202611260001_tempo_real_encontros_entregas.sql': {
+    titulo: 'Tempo real para encontros e entregas',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_meetings?.existe && ctx.tabelas.v2_deliveries?.existe),
+    detalhe: 'v2_meetings e v2_deliveries na publicação supabase_realtime com REPLICA IDENTITY FULL',
+  },
 };
 
 /**

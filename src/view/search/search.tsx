@@ -31,7 +31,7 @@ import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters
 import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useOnRefocus } from "@/view/useRefocusKey";
-import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
 import { triggerHaptic } from "@/view/haptics";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
@@ -48,6 +48,8 @@ export type SearchProps = {
   /** Pré-aplica o termo digitado no campo de busca do cabeçalho web. */
   initialTerm?: string;
   focusKey?: number;
+  /** Incrementado ao tocar na aba Explorar já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
@@ -89,6 +91,7 @@ export default function Search({
   initialCategory,
   initialTerm,
   focusKey,
+  scrollToTopTick = 0,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
   const [selectedNeighborhoodOverride, setSelectedNeighborhoodOverride] = useState<string | null>(null);
@@ -120,6 +123,11 @@ export default function Search({
   const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialFilters = useRef(false);
   const flatListRef = useRef<FlatList>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      flatListRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [snackbarAction, setSnackbarAction] = useState<{ label: string; onPress: () => void } | null>(null);
@@ -308,7 +316,9 @@ export default function Search({
 
   // A categoria já aparece selecionada na fileira de chips do catálogo; repeti-la nos chips
   // removíveis duplicaria o mesmo estado em dois lugares da tela.
-  const visibleActiveFilters = state.activeFilters.filter((filter) => filter.key !== "category");
+  const visibleActiveFilters = state.activeFilters.filter(
+    (filter) => filter.key !== "category" && (wideWeb || filter.key !== "modality"),
+  );
 
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
@@ -398,33 +408,29 @@ export default function Search({
       />
 
       {/* 4. Modalidades em chips rápidos. Na web larga o painel "Filtros" já tem o grupo Modalidade. */}
-      {wideWeb ? null : <ScrollView
-        horizontal
-        {...standardHorizontalScrollProps}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickModalitiesScroll}
-        style={styles.quickModalitiesScrollView}
-      >
-        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-          const isSelected = state.modality === mod;
-          const label = mod === "all" ? "Todas" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-          const tone =
-            mod === "all"
-              ? { background: colors.nature.foliage, text: colors.nature.onFoliage }
-              : colors.badge[mod];
-          return (
-            <Chip
-              key={mod}
-              size="compact"
-              label={label}
-              accessibilityLabel={`Filtrar por ${label}`}
-              selected={isSelected}
-              tone={tone}
-              onPress={() => actions.setModality(mod)}
-            />
-          );
-        })}
-      </ScrollView>}
+      {wideWeb ? null : (
+        <View style={styles.quickModalitiesRow}>
+          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+            const isSelected = state.modality === mod;
+            const label = mod === "all" ? "Todas" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+            const tone =
+              mod === "all"
+                ? { background: colors.nature.foliage, text: colors.nature.onFoliage }
+                : colors.badge[mod];
+            return (
+              <Chip
+                key={mod}
+                size="compact"
+                label={label}
+                accessibilityLabel={`Filtrar por ${label}`}
+                selected={isSelected}
+                tone={tone}
+                onPress={() => actions.setModality(mod)}
+              />
+            );
+          })}
+        </View>
+      )}
 
       {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
       {visibleActiveFilters.length > 0 ? (

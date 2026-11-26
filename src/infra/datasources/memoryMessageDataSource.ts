@@ -12,6 +12,7 @@ export class MemoryMessageDataSource implements IMessageDataSource {
   private messages: NegotiationMessage[] = [];
   private hidden = new Map<string, string>();
   private listeners = new Map<string, Set<MessageSubscriptionCallback>>();
+  private allListeners = new Set<MessageSubscriptionCallback>();
 
   constructor(initialMessages: NegotiationMessage[] = []) {
     this.messages = [...initialMessages];
@@ -45,6 +46,14 @@ export class MemoryMessageDataSource implements IMessageDataSource {
       }
     }
 
+    for (const callback of this.allListeners) {
+      try {
+        callback(message);
+      } catch {
+        // Ignora falhas de execução no listener para isolar o fluxo
+      }
+    }
+
     return message;
   }
 
@@ -70,6 +79,13 @@ export class MemoryMessageDataSource implements IMessageDataSource {
     };
   }
 
+  subscribeToAllMessages(onMessage: MessageSubscriptionCallback): () => void {
+    this.allListeners.add(onMessage);
+    return () => {
+      this.allListeners.delete(onMessage);
+    };
+  }
+
   async hideConversation(requestId: string, userId: string): Promise<void> {
     this.hidden.set(`${userId}:${requestId}`, new Date().toISOString());
   }
@@ -87,5 +103,6 @@ export class MemoryMessageDataSource implements IMessageDataSource {
     this.messages = [];
     this.hidden.clear();
     this.listeners.clear();
+    this.allListeners.clear();
   }
 }

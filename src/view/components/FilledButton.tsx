@@ -12,6 +12,7 @@ export type FilledButtonProps = {
   disabled?: boolean;
   loadingLabel?: string;
   accessibilityLabel?: string;
+  accessibilityHint?: string;
   backgroundColor?: string;
   textColor?: string;
 };
@@ -24,6 +25,7 @@ export function FilledButton({
   disabled = false,
   loadingLabel,
   accessibilityLabel,
+  accessibilityHint,
   backgroundColor,
   textColor,
 }: FilledButtonProps) {
@@ -37,6 +39,7 @@ export function FilledButton({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={accessibilityHint}
         accessibilityState={loading ? { disabled: isDisabled, busy: true } : { disabled: isDisabled }}
         disabled={isDisabled}
         onPress={guardedPress}

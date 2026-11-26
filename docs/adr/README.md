@@ -119,5 +119,6 @@
 - [0117 — PKCE e privacidade do cache web](0117-pkce-e-privacidade-do-cache-web.md)
 - [0118 — Última cópia para leitura sem conexão](0118-leitura-sem-conexao.md)
 - [0119 — Endurecimento de segurança, RLS e LGPD](0119-endurecimento-seguranca-rls-lgpd.md)
+- [0120 — Navegação por arraste entre abas (`react-native-pager-view`) e transições direcionais no Stack](0120-navegacao-por-arraste-entre-abas-e-transicoes-direcionais.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

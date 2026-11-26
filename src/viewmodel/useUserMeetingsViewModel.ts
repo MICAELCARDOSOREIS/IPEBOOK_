@@ -3,6 +3,7 @@ import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type UserMeetingsState = {
   meetings: readonly Meeting[];
@@ -25,6 +26,7 @@ registerSessionMemoryCache(() => {
 export function useUserMeetingsViewModel(
   sessionUserId: string | null,
   meetingUseCases: IMeetingUseCases,
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void,
 ): [UserMeetingsState, UserMeetingsActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialCached =
@@ -62,6 +64,10 @@ export function useUserMeetingsViewModel(
     }
   }, [sessionUserId, meetingUseCases, isTest]);
 
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -69,6 +75,15 @@ export function useUserMeetingsViewModel(
       active.current = false;
     };
   }, [reload]);
+
+  useEffect(() => {
+    if (!sessionUserId || !subscribe) return;
+    return subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, subscribe, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   return [state, { reload }];
 }

@@ -201,10 +201,13 @@ export function createMyListingsStyles(colors: ColorPalette) {
     statsRowWide: { gap: tokens.spacing[16] },
     statCardMobile: {
       flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[2],
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[10],
+      gap: tokens.spacing[6],
       elevation: 1,
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.08,
@@ -255,7 +258,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       ...tokens.typography.labelSmall,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    statContentRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4] },
+    statContentRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     statCheckBadge: { width: 18, height: 18, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
     statCount: {
       ...tokens.typography.brandTitle,
@@ -266,8 +269,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
     },
     statCountMobile: {
       ...tokens.typography.brandTitle,
-      fontSize: 22,
-      lineHeight: 26,
+      fontSize: 20,
+      lineHeight: 24,
       fontVariant: ["tabular-nums"],
     },
     statLabel: {
@@ -280,23 +283,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
       opacity: 0.95,
     },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
     summaryRowWide: {
       paddingVertical: tokens.spacing[8],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
     },
     sortButton: {
       flexDirection: "row",
@@ -312,15 +300,87 @@ export function createMyListingsStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     // Abas em pílulas que quebram linha (no celular, sem rolagem horizontal que corta o último chip).
-    segmentRowAndroid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    segmentRowAndroid: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+    },
+    summaryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      paddingBottom: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[4],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.book.paperEdge,
+    },
+    summaryText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    statusDropdownButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+      height: 36,
+      paddingHorizontal: tokens.spacing[14],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    statusDropdownButtonActive: {
+      borderColor: colors.action,
+      backgroundColor: colors.nature.sprout,
+    },
+    statusDropdownText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    statusDropdownTextActive: {
+      color: colors.action,
+    },
+    filterSheetList: {
+      gap: tokens.spacing[4],
+    },
+    filterSheetRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.shapeMorph.chipUnselected,
+    },
+    filterSheetRowSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    filterSheetRowPressed: {
+      transform: [{ scale: 0.98 }],
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    filterSheetLabel: {
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurface,
+    },
+    filterSheetLabelSelected: {
+      color: colors.m3.primary,
+      fontFamily: tokens.typography.labelLarge.fontFamily,
+    },
     filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
     hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
     // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
     segmentTrackIOS: {
       flexDirection: "row",
-      flexWrap: "wrap",
+      alignItems: "center",
       padding: tokens.spacing[2],
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[4],
       borderRadius: tokens.radius.segmentOuter,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },

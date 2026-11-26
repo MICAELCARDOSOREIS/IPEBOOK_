@@ -12,6 +12,7 @@ import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
+import { hasPhotoPermission } from "@/view/listings/photoPermission";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -132,8 +133,15 @@ export function CreateListingStep2({
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
-          // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
-          if (slot) setPendingPhoto({ ...slot, source });
+          if (!slot) return;
+          void hasPhotoPermission(source).then((granted) => {
+            if (granted) {
+              onChoosePhoto?.(slot.slot, source, slot.index);
+            } else {
+              // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
+              setPendingPhoto({ ...slot, source });
+            }
+          });
         }}
         onClose={() => setSheetSlot(null)}
       />

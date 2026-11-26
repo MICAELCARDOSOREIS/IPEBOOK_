@@ -19,4 +19,8 @@ export interface IMeetingDataSource {
    * `actorId` é quem fez a mudança; a outra pessoa da negociação é avisada (Spec 052, RN-08).
    */
   update(id: string, patch: MeetingUpdate, expectedStatus: MeetingStatus, actorId: string): Promise<Meeting>;
+  /** Assina mudanças em tempo real nos encontros de uma negociação específica. */
+  subscribeToRequest?(requestId: string, onChange: () => void): () => void;
+  /** Assina mudanças em tempo real em qualquer encontro visível pela sessão atual (RLS). */
+  subscribeToAll?(onChange: () => void): () => void;
 }

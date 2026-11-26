@@ -21,6 +21,7 @@ import {
 } from "@/di/container";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
@@ -96,11 +97,25 @@ export function Chat({
   const [state, actions] = makeNegotiationChatViewModel(requestId, sessionUserId);
   const [meetingState, meetingActions] = makeMeetingViewModel(requestId, sessionUserId);
 
-  useOnRefocus(focusKey, () => {
-    void detailActions.reload();
-    void actions.reload();
-    void meetingActions.reload();
-  });
+  const syncAllSilently = () => {
+    void (detailActions.refresh ?? detailActions.reload)();
+    void (actions.refresh ?? actions.reload)();
+    void (meetingActions.refresh ?? meetingActions.reload)();
+  };
+
+  useOnRefocus(focusKey, syncAllSilently);
+  useReloadOnReconnect(isOnline, syncAllSilently);
+
+  // Quando o anunciante aceita a proposta enquanto o leitor está na tela, libera mensagens e encontro ao vivo.
+  const prevRequestStatusRef = useRef(detailState.detail?.request.status);
+  useEffect(() => {
+    const nextStatus = detailState.detail?.request.status;
+    if (prevRequestStatusRef.current === "pending" && nextStatus === "accepted") {
+      void (actions.refresh ?? actions.reload)();
+      void (meetingActions.refresh ?? meetingActions.reload)();
+    }
+    prevRequestStatusRef.current = nextStatus;
+  }, [detailState.detail?.request.status, actions, meetingActions]);
   const [conversationOptionsOpen, setConversationOptionsOpen] = useState(false);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
@@ -140,8 +155,8 @@ export function Chat({
     }
   };
 
-  // Entrega concluída por QR (Spec 095): não há mais o que combinar.
-  const delivery = makeDeliveryStatus(requestId, sessionUserId);
+  // Entrega concluída por QR (Spec 095): passa focusKey e assina tempo real para atualizar sem sair da conversa.
+  const delivery = makeDeliveryStatus(requestId, sessionUserId, focusKey ?? 0);
   const listRef = useRef<FlatList<ChatTimelineItem>>(null);
 
   const detail = detailState.detail;
@@ -301,7 +316,12 @@ export function Chat({
                 style={withPress(styles.headerBookLink, colors.m3.focusRing)}
               >
                 <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
-                {modalityLabel ? <Text style={styles.headerSubtitle}>{modalityLabel}</Text> : null}
+                {modalityLabel ? (
+                  <>
+                    <Text style={styles.headerSubtitle}>·</Text>
+                    <Text style={styles.headerSubtitle}>{modalityLabel}</Text>
+                  </>
+                ) : null}
                 <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
               </Pressable>
             ) : embedded && modalityLabel ? (
@@ -488,6 +508,27 @@ export function Chat({
                   <Text style={styles.offlineNoticeText}>Sem conexão para enviar mensagens</Text>
                 </View>
               ) : null}
+              {detail?.request.status === "accepted" &&
+              meetingState.meeting &&
+              meetingState.meeting.status !== "cancelled" &&
+              state.messages.length === 0 &&
+              !state.inputText.trim() &&
+              isOnline &&
+              !state.isSending ? (
+                <View style={styles.quickRepliesRow}>
+                  {["Estou chegando", "Já estou aqui", "Qual ponto?"].map((reply) => (
+                    <Pressable
+                      key={reply}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Sugestão de mensagem: ${reply}`}
+                      onPress={() => actions.setInputText(reply)}
+                      style={withPress(styles.quickReplyChip)}
+                    >
+                      <Text style={styles.quickReplyText}>{reply}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
               <View
                 style={[styles.composer, wideWeb && styles.composerWide, wideWeb && embedded && styles.composerEmbeddedWide]}
                 testID={wideWeb && embedded ? "conversation-chat-footer" : undefined}
@@ -521,7 +562,7 @@ export function Chat({
                     if (!canSend) return;
                     void actions.sendMessage();
                   }}
-                  style={withPress([styles.send, canSend ? styles.sendActive : null])}
+                  style={withPress([styles.send, canSend ? styles.sendActive : styles.sendDisabled])}
                 >
                   {state.isSending ? (
                     <ActivityIndicator color={colors.m3.onPrimary} />

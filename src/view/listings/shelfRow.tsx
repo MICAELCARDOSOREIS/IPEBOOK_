@@ -235,6 +235,18 @@ function ShelfRowComponent({ book, summary, accessibilityLabel, onPress, onShare
           <AppIcon name="share" size={16} color={colors.nature.foliage} />
         </Pressable>
       ) : null}
+      {book.status === "reserved" && onNavigateToNegotiation ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir conversa sobre ${book.title}`}
+          onPress={onNavigateToNegotiation}
+          style={({ pressed }) => [styles.openChatButton, pressed && styles.rowPressed]}
+        >
+          <AppIcon name="chat" size={16} color={colors.nature.foliageDeep} />
+          <Text style={styles.openChatText}>Abrir conversa e combinar encontro</Text>
+          <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -244,6 +256,22 @@ ShelfRow.displayName = "ShelfRow";
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    openChatButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.nature.sprout,
+    },
+    openChatText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.nature.foliageDeep,
+    },
     mobileCardContainer: {
       position: "relative",
       backgroundColor: colors.m3.surfaceContainerLowest,

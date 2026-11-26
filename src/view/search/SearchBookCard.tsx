@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
@@ -8,9 +8,11 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { triggerHaptic } from "@/view/haptics";
 import { formatPrice } from "@/view/formatPrice";
+import { isMainTabsSwipeActive } from "@/view/mainTabsState";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { getTouchOrigin, isDragPressRelease, type TouchOrigin } from "@/view/useGuardedPress";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { webColumnWidth } from "@/view/webLayout";
 
@@ -49,6 +51,21 @@ function SearchBookCardComponent({
   const iosGlass = isIos && !reduceTransparency;
   const styles = getCardStyles(colors);
   const [isHovered, setIsHovered] = useState(false);
+  const pressOriginRef = useRef<TouchOrigin | null>(null);
+
+  const handlePressIn = (event?: GestureResponderEvent) => {
+    pressOriginRef.current = getTouchOrigin(event);
+  };
+
+  const handleCardPress = (event?: GestureResponderEvent, withHaptic = true) => {
+    const origin = pressOriginRef.current;
+    pressOriginRef.current = null;
+    if (isMainTabsSwipeActive() || isDragPressRelease(origin, event)) {
+      return;
+    }
+    if (withHaptic && isIos) triggerHaptic("light");
+    onPress(item.id);
+  };
 
   const priceOrCondition =
     item.price != null
@@ -82,10 +99,8 @@ function SearchBookCardComponent({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={() => {
-          if (isIos) triggerHaptic("light");
-          onPress(item.id);
-        }}
+        onPressIn={handlePressIn}
+        onPress={(event) => handleCardPress(event, true)}
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
         style={({ pressed }) => [
@@ -150,7 +165,8 @@ function SearchBookCardComponent({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${item.title}`}
-            onPress={() => onPress(item.id)}
+            onPressIn={handlePressIn}
+            onPress={(event) => handleCardPress(event, false)}
             style={styles.chevronButton}
           >
             <AppIcon name="chevronRight" size={18} color={colors.nature.foliage} />

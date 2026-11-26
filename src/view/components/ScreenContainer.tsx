@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from "react";
+import { type ComponentRef, type ReactNode, type RefObject, useMemo } from "react";
 import {
   type RefreshControlProps,
   ScrollView,
@@ -29,6 +29,8 @@ export type ScreenContainerProps = {
   paddingBottom?: number;
   /** Se a coluna rola (ScrollView). Padrão `true`. Use `false` em telas com layout próprio. */
   scroll?: boolean;
+  /** Referência opcional ao ScrollView interno (ex.: voltar ao topo ao tocar na aba ativa). */
+  scrollRef?: RefObject<ComponentRef<typeof ScrollView> | null>;
   /** Bordas respeitadas pelo SafeAreaView. Padrão: todas. */
   edges?: Edge[];
   /** Nós renderizados após a coluna, ainda dentro do SafeAreaView (modais, snackbars, barras
@@ -55,6 +57,7 @@ export function ScreenContainer({
   paddingTop = tokens.spacing[8],
   paddingBottom = tokens.spacing[24],
   scroll = true,
+  scrollRef,
   edges,
   overlay,
   contentStyle,
@@ -75,6 +78,7 @@ export function ScreenContainer({
 
   const body = scroll ? (
     <ScrollView
+      ref={scrollRef}
       {...standardVerticalScrollProps}
       style={styles.scroll}
       contentContainerStyle={columnStyle}

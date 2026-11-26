@@ -190,76 +190,6 @@ export function ProfileIdentityCard({
   );
 }
 
-export type ProfileCommunityBadgesProps = {
-  neighborhood?: string | null;
-  completedTrocas: number;
-  totalPublications: number;
-  wideWeb?: boolean;
-};
-
-/**
- * Selos Comunitários de Piripiri (Spec 122).
- */
-export function ProfileCommunityBadges({
-  neighborhood,
-  completedTrocas,
-  totalPublications,
-  wideWeb = false,
-}: ProfileCommunityBadgesProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={[styles.badgesSection, wideWeb && styles.badgesSectionWide]} testID="profile-badges-section">
-      <View style={styles.badgesHeaderRow}>
-        <View style={styles.sectionBloom} />
-        <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
-      </View>
-      <View style={styles.badgesRow}>
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Leitor de Piripiri: ${neighborhood || "Comunidade"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
-            <AppIcon name="place" size={20} color={colors.nature.foliage} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>{neighborhood || "Comunidade"}</Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Ponto recomendado: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
-            <AppIcon name="checkCircle" size={20} color={colors.action} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Ponto recomendado</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
-          </Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
-            <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
 export type ProfileMenuSectionProps = {
   title: string;
   items: readonly ProfileMenuItem[];
@@ -447,7 +377,6 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.primaryContainer,
     },
-    badgesSectionWide: { width: "100%", marginTop: 0 },
     sectionWide: { flex: 1, minWidth: 300 },
     identityRow: {
       minHeight: 100,
@@ -533,52 +462,6 @@ function createStyles(colors: ColorPalette) {
       alignItems: "stretch",
       gap: tokens.spacing[8],
     },
-    badgesSection: {
-      width: "100%",
-      marginTop: tokens.spacing[8],
-    },
-    badgesRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[8],
-    },
-    badgeItem: {
-      flex: 1,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingVertical: tokens.spacing[14],
-      paddingHorizontal: tokens.spacing[6],
-      minHeight: 110,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      elevation: 1,
-      shadowColor: colors.ipe.trunk,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-    },
-    badgeIconBox: {
-      width: 42,
-      height: 42,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[4],
-    },
-    badgeTitle: {
-      ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    badgeDesc: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      textAlign: "center",
-    },
     statsContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -645,14 +528,6 @@ function createStyles(colors: ColorPalette) {
     },
     section: {
       gap: tokens.spacing[4],
-    },
-    badgesHeaderRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
     },
     sectionHeaderRow: {
       flexDirection: "row",
