@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { networkStatusDataSource as defaultNetworkStatusDataSource } from "@/di/container";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -22,7 +23,9 @@ export function ConnectionStatusBanner({
 }: ConnectionStatusBannerProps) {
   const { isOnline } = useNetworkStatus(dataSource);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const iosTopPadding = Platform.OS === "ios" ? Math.max(tokens.spacing[8], insets.top + tokens.spacing[4]) : undefined;
 
   if (isOnline) return null;
 
@@ -31,7 +34,7 @@ export function ConnectionStatusBanner({
       testID="connection-status-banner"
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={styles.banner}
+      style={[styles.banner, iosTopPadding !== undefined && { paddingTop: iosTopPadding }]}
     >
       <AppIcon name="wifiOff" size={18} color={colors.error} />
       <Text style={styles.text}>{message}</Text>

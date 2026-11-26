@@ -100,6 +100,7 @@ function createStyles(colors: ColorPalette) {
     },
     iosGlassButton: {
       borderRadius: tokens.radius.full,
+      borderWidth: 1,
       backgroundColor: tokens.glass.fill,
       borderColor: tokens.glass.stroke,
       shadowColor: "#302e24",
@@ -110,6 +111,7 @@ function createStyles(colors: ColorPalette) {
     },
     iosOpaqueButton: {
       borderRadius: tokens.radius.full,
+      borderWidth: 1,
       backgroundColor: colors.m3.surfaceContainer,
       borderColor: colors.m3.outlineVariant,
     },

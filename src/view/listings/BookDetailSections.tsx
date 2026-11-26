@@ -1,5 +1,6 @@
 import { useMemo, useRef, type ComponentRef, type RefObject } from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { BlurView } from "expo-blur";
 import { extractBookSidePhotos } from "@/model/bookPhotos";
 import type { Book } from "@/model/entities/book";
 import type { PublicProfile } from "@/model/entities/publicProfile";
@@ -12,6 +13,7 @@ import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { triggerHaptic } from "@/view/haptics";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 
 /** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
@@ -93,6 +95,9 @@ export function HeroIconButton({
   buttonRef?: RefObject<ComponentRef<typeof View> | null>;
 }) {
   const { colors } = useTheme();
+  const reduceTransparency = useReduceTransparency();
+  const isIos = Platform.OS === "ios";
+  const iosGlass = isIos && !reduceTransparency;
   const styles = getDetailSectionStyles(colors);
   return (
     <Pressable
@@ -103,14 +108,20 @@ export function HeroIconButton({
       disabled={disabled}
       hitSlop={4}
       onPress={() => {
-        if (Platform.OS === "ios") triggerHaptic("selection");
+        if (isIos) triggerHaptic("selection");
         onPress();
       }}
       style={({ pressed }) => [
         styles.heroIconButton,
+        isIos && (iosGlass ? styles.iosHeroIconGlass : styles.iosHeroIconOpaque),
         pressed && !disabled && styles.heroIconButtonPressed,
       ]}
     >
+      {iosGlass ? (
+        <View pointerEvents="none" style={styles.iosHeroIconBlurClip}>
+          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+        </View>
+      ) : null}
       <AppIcon name={icon} size={22} color={iconColor ?? colors.m3.onSurface} />
     </Pressable>
   );
@@ -373,6 +384,28 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    iosHeroIconGlass: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: tokens.glass.fill,
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
+      shadowRadius: 10,
+      overflow: "hidden",
+    },
+    iosHeroIconOpaque: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosHeroIconBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
     },
     heroIconButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

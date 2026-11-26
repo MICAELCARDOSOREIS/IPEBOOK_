@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
@@ -23,7 +23,9 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { BookCover } from "@/view/components/BookCover";
+import { SegmentedControl } from "@/view/components/SegmentedControl";
 import { Tag } from "@/view/components/Tag";
+import { TopAppBar } from "@/view/components/TopAppBar";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -231,31 +233,35 @@ export function Conversations({
   return (
     <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.page}>
       <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
-        {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader) */}
-        <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
-          {!wideWeb && onBack ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-              onPress={guardedBack}
-              style={withPress(styles.backButton)}
+        {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader; no iOS usa TopAppBar Liquid Glass) */}
+        {Platform.OS === "ios" && !wideWeb && onBack ? (
+          <TopAppBar title="Conversas" onBack={guardedBack} />
+        ) : (
+          <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
+            {!wideWeb && onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+                onPress={guardedBack}
+                style={withPress(styles.backButton)}
+              >
+                <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
+            <Text
+              accessibilityRole="header"
+              style={[styles.title, wideWeb && styles.titleWide, !wideWeb && Boolean(onBack) && styles.titleWithBack]}
             >
-              <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-            </Pressable>
-          ) : null}
-          <Text
-            accessibilityRole="header"
-            style={[styles.title, wideWeb && styles.titleWide, !wideWeb && Boolean(onBack) && styles.titleWithBack]}
-          >
-            Conversas
-          </Text>
-          {wideWeb ? (
-            <Text style={styles.subtitleWide}>
-              Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
+              Conversas
             </Text>
-          ) : null}
-        </View>
+            {wideWeb ? (
+              <Text style={styles.subtitleWide}>
+                Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         {state.loading && state.items.length === 0 ? (
           wideWeb ? (
@@ -381,18 +387,32 @@ export function Conversations({
                   </Text>
                 </View>
               ) : null}
-              <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
-                <Chip
-                  label={`Ativas (${activeItems.length})`}
-                  selected={filter === "active"}
-                  onPress={() => setFilter("active")}
-                />
-                <Chip
-                  label={`Concluídas (${completedItems.length})`}
-                  selected={filter === "completed"}
-                  onPress={() => setFilter("completed")}
-                />
-              </View>
+              {Platform.OS === "ios" && !wideWeb ? (
+                <View style={styles.filterBar}>
+                  <SegmentedControl
+                    accessibilityLabel="Filtrar conversas"
+                    value={filter}
+                    onChange={setFilter}
+                    options={[
+                      { value: "active", label: `Ativas (${activeItems.length})` },
+                      { value: "completed", label: `Concluídas (${completedItems.length})` },
+                    ]}
+                  />
+                </View>
+              ) : (
+                <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
+                  <Chip
+                    label={`Ativas (${activeItems.length})`}
+                    selected={filter === "active"}
+                    onPress={() => setFilter("active")}
+                  />
+                  <Chip
+                    label={`Concluídas (${completedItems.length})`}
+                    selected={filter === "completed"}
+                    onPress={() => setFilter("completed")}
+                  />
+                </View>
+              )}
               <FlatList
                 style={styles.flexOne}
                 {...standardVerticalScrollProps}

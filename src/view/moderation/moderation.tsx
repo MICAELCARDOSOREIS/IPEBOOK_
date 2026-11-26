@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } from "@/model/entities/moderation";
 import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
@@ -215,7 +215,7 @@ function createStyles(colors: ColorPalette) {
     detail: { ...tokens.typography.bodyMedium, color: colors.text, fontStyle: "italic" },
     actions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginTop: tokens.spacing[4] },
     secondary: {
-      minHeight: 40,
+      minHeight: Platform.OS === "ios" ? 44 : 40,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,

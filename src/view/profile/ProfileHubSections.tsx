@@ -84,6 +84,7 @@ export function ProfileIdentityCard({
                 accessibilityRole="link"
                 accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
               >
                 <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
@@ -93,6 +94,7 @@ export function ProfileIdentityCard({
                 accessibilityRole="button"
                 accessibilityLabel="Adicionar Instagram ao perfil"
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={onEditProfile}
               >
                 <Text style={styles.identityHandleMuted}>Adicionar Instagram</Text>

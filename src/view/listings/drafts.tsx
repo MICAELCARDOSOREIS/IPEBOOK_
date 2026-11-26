@@ -83,7 +83,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.page}>
       {wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>

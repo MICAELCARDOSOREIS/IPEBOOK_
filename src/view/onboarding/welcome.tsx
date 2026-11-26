@@ -405,7 +405,7 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
   },
   iosModality: {
-    minHeight: 40,
+    minHeight: accessibility.touchTarget,
     borderRadius: 22,
   },
   modalityDot: {

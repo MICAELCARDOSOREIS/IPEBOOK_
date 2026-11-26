@@ -80,7 +80,7 @@ export function createChatStyles(colors: ColorPalette) {
       alignItems: "center",
       alignSelf: "flex-start",
       maxWidth: "100%",
-      minHeight: 28,
+      minHeight: Platform.OS === "ios" ? 44 : 28,
       gap: tokens.spacing[6],
     },
     linkBookTitle: { flexShrink: 1 },
@@ -251,8 +251,8 @@ export function createChatStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[10],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.book.paperEdge,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.m3.surfaceContainerLow,
       color: colors.m3.onSurface,
       // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
       ...tokens.typography.bodyLarge,
@@ -281,7 +281,7 @@ export function createChatStyles(colors: ColorPalette) {
     quickReplyChip: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
-      minHeight: 36,
+      minHeight: Platform.OS === "ios" ? 44 : 36,
       justifyContent: "center",
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,

@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -327,7 +327,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[4],
-      height: 36,
+      minHeight: Platform.OS === "ios" ? 44 : 36,
       paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,

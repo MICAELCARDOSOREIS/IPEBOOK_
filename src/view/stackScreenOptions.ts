@@ -73,11 +73,13 @@ export function getStackScreenOptions(
   }
 
   if (!routeName || FADE_ROUTES.has(routeName)) {
+    const iosBackEnabled = Platform.OS === "ios" && (routeName === "esqueci-senha" || routeName === "sobre");
     return {
       ...base,
       animation: "fade",
       animationDuration: 160,
-      gestureEnabled: false,
+      gestureEnabled: iosBackEnabled,
+      ...(iosBackEnabled ? { fullScreenGestureEnabled: true } : {}),
     };
   }
 

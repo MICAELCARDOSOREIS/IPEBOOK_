@@ -153,7 +153,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     filterChip: {
-      minHeight: tokens.spacing[40],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[40],
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[8],
@@ -213,7 +213,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       borderLeftColor: colors.m3.outlineVariant,
     },
     actionBtn: {
-      minHeight: tokens.spacing[40],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[40],
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
