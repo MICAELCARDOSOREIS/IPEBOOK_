@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { triggerHaptic } from "@/view/haptics";
@@ -48,6 +48,7 @@ export default function SearchAlerts({ userId, sessionLoading = false, initialQu
   // Web larga: coluna mais ampla e dois alertas por linha.
   const wide = useIsWideWeb();
   const listColumns = useWebColumns(2, 3);
+  const [queryFocused, setQueryFocused] = useState(false);
   const errorId = useId();
   const loadError = state.loadError ?? null;
   const formError = loadError ? null : state.error;
@@ -138,7 +139,9 @@ export default function SearchAlerts({ userId, sessionLoading = false, initialQu
               aria-describedby={hasError ? errorId : undefined}
               placeholder="Título ou autor"
               placeholderTextColor={colors.secondaryText}
-              style={[styles.input, hasError && styles.inputError]}
+              onFocus={() => setQueryFocused(true)}
+              onBlur={() => setQueryFocused(false)}
+              style={[styles.input, queryFocused && !hasError && styles.inputFocused, hasError && styles.inputError]}
               maxLength={100}
             />
             {hasError ? (
@@ -390,6 +393,11 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
     color: colors.text,
+    ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+  },
+  inputFocused: {
+    borderColor: colors.action,
+    borderWidth: 2,
   },
   inputError: {
     borderColor: colors.error,

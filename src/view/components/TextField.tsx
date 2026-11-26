@@ -225,6 +225,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[8],
       color: colors.m3.onSurface,
       ...tokens.typography.bodyLarge,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     inputMultiline: {
       minHeight: tokens.spacing[64] + tokens.spacing[24],

@@ -188,6 +188,8 @@ export function Chat({
   const canSend = state.inputText.trim().length > 0 && !state.isSending && isOnline;
   const isWebStandalone = wideWeb && !embedded;
   const effectiveModality = detail?.book.modality ?? initialModality;
+  const pendingProposalIcon: AppIconName =
+    effectiveModality === "sale" ? "category" : effectiveModality === "donation" ? "heart" : "swap";
   const modalityLabel = effectiveModality
     ? effectiveModality === "trade"
       ? "Troca"
@@ -376,6 +378,7 @@ export function Chat({
               counterpartName={name}
               initialMessage={detail.request.initialMessage}
               offeredBook={detail.offeredBook}
+              modality={effectiveModality}
               isWebStandalone={isWebStandalone}
               responding={respondingProposal}
               error={proposalError}
@@ -401,7 +404,7 @@ export function Chat({
           ) : detail?.request.status === "pending" ? (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <AppIcon name="swap" size={28} color={colors.nature.foliage} />
+                <AppIcon name={pendingProposalIcon} size={28} color={colors.nature.foliage} />
               </View>
               <Text style={styles.emptyTitle}>Proposta em análise</Text>
               <Text style={styles.emptyBody}>

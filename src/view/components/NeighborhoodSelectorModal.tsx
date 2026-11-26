@@ -98,6 +98,7 @@ function NeighborhoodSelectorModalContent({
   const insets = useSafeAreaInsets();
   const styles = getNeighborhoodModalStyles(colors);
   const [filterText, setFilterText] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const wideWeb = useIsWideWeb();
 
   const baseItems = useMemo(() => {
@@ -179,8 +180,8 @@ function NeighborhoodSelectorModalContent({
           </View>
 
           {/* Campo de busca rápida */}
-          <View style={styles.searchBox}>
-            <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
+          <View style={[styles.searchBox, searchFocused && styles.searchBoxFocused]}>
+            <AppIcon name="search" size={20} color={searchFocused ? colors.m3.primary : colors.m3.onSurfaceVariant} />
             <TextInput
               ref={searchInputRef as never}
               style={styles.searchInput}
@@ -189,6 +190,8 @@ function NeighborhoodSelectorModalContent({
               accessibilityLabel="Buscar ponto de encontro em Piripiri"
               value={filterText}
               onChangeText={setFilterText}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="search"
@@ -360,16 +363,24 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.cardSmall,
+      borderWidth: 1.5,
+      borderColor: "transparent",
       paddingHorizontal: tokens.spacing[12],
       minHeight: tokens.accessibility.touchTarget,
       marginBottom: tokens.spacing[12],
     },
+    searchBoxFocused: {
+      borderColor: colors.m3.primary,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
     searchInput: {
       flex: 1,
-      ...tokens.typography.subheadline,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      ...tokens.typography.bodyLarge,
       color: colors.text,
       marginLeft: tokens.spacing[8],
       paddingVertical: tokens.spacing[8],
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     clearSearchButton: {
       padding: tokens.spacing[4],

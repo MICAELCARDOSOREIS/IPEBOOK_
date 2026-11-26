@@ -235,7 +235,8 @@ export default function CreateListing({
   };
 
   const handleFocusField = (_fieldName: string, yOffset: number) => {
-    if (wideWeb) return;
+    // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
+    if (wideWeb || Platform.OS === "web") return;
     // No mobile, rola para posicionar o campo com 20dp de respiro na área visível
     setTimeout(() => {
       scrollRef.current?.scrollTo({

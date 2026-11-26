@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -42,6 +42,7 @@ export default function ReportListing({
   // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [detailsFocused, setDetailsFocused] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
 
   const guardedBack = useGuardedPress(onBack);
@@ -176,18 +177,24 @@ export default function ReportListing({
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.field}>
-            <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
+            <View style={styles.inputLabelRow}>
+              <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
+              <Text style={styles.inputCounter}>{`${state.details.length}/500`}</Text>
+            </View>
             <TextInput
               accessibilityLabel="Detalhes adicionais da denúncia"
               value={state.details}
               onChangeText={actions.setDetails}
               editable={!state.loading}
-              style={styles.textInput}
+              style={[styles.textInput, detailsFocused && styles.textInputFocused]}
               placeholder="Descreva o problema com mais detalhes para nos ajudar..."
               placeholderTextColor={colors.secondaryText}
               multiline
               numberOfLines={3}
+              textAlignVertical="top"
               maxLength={500}
+              onFocus={() => setDetailsFocused(true)}
+              onBlur={() => setDetailsFocused(false)}
             />
           </View>
 
@@ -320,9 +327,19 @@ function createStyles(colors: ColorPalette) {
   field: {
     gap: tokens.spacing[6],
   },
+  inputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: tokens.spacing[8],
+  },
   inputLabel: {
     ...tokens.typography.labelMedium,
     color: colors.text,
+  },
+  inputCounter: {
+    ...tokens.typography.labelSmall,
+    color: colors.secondaryText,
   },
   textInput: {
     borderWidth: 1,
@@ -334,6 +351,11 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.surface,
     minHeight: tokens.spacing[64],
     textAlignVertical: "top",
+    ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+  },
+  textInputFocused: {
+    borderColor: colors.action,
+    borderWidth: 2,
   },
   errorText: {
     ...tokens.typography.bodyMedium,
