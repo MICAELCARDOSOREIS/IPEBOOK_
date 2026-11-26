@@ -165,3 +165,7 @@ opaca quando a pessoa ativa Reduzir Transparência. Consulte a
 A fonte canônica legível por máquina fica em [`tokens.json`](tokens.json) e o espelho da aplicação
 em [`src/view/tokens.ts`](../src/view/tokens.ts)
 (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md) e [ADR 0104](../docs/adr/0104-cores-canonicas-modalidades-e-vitrine-home.md)).
+
+## Referência visual iOS 26
+
+Os tokens de cor compartilhados permanecem canônicos. A [especificação iPhone](iphone-liquid-glass.md) documenta os parâmetros de vidro, dimensões, SF Pro e as variações de botões observadas no Figma. Esses parâmetros são de planejamento visual e não substituem o contrato TypeScript nem removem valores históricos de tema escuro.
