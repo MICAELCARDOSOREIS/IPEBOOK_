@@ -1,8 +1,8 @@
 import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
-import { BlurView } from "expo-blur";
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
@@ -38,7 +38,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
 import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 export { ShelfRow } from "@/view/listings/shelfRow";
@@ -86,7 +86,7 @@ export function MyListings({
   }, [scrollToTopTick]);
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
@@ -181,7 +181,9 @@ export function MyListings({
   // Posiciona o FAB harmoniosamente logo acima da barra de navegação flutuante seguindo os tokens
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
   const navBarDockHeight = 80; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
-  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const fabBottom = isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   const availableCount = activeBooks.filter((b) => b.status === "available").length;
   const pausedCount = activeBooks.filter((b) => b.status === "paused").length;
@@ -287,66 +289,74 @@ export function MyListings({
     },
   ];
 
-  return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {/* Cabeçalho do Figma `05.04`–`05.08`: título em serifa, subtítulo e "+" para anunciar. */}
-      <View style={[styles.header, wideWeb && styles.headerWide]}>
-        {onBack ? (
+  const header = (
+    <View style={[styles.header, wideWeb && styles.headerWide]}>
+      {onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          hitSlop={12}
+          onPress={onBack}
+          style={withPress(styles.iconButton)}
+        >
+          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        </Pressable>
+      ) : null}
+      <View style={styles.headerText}>
+        <Text accessibilityRole="header" style={styles.heroTitle}>
+          Estante
+        </Text>
+        <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
+      </View>
+      <View style={styles.headerActions}>
+        {/* Botão Rascunhos no topo ao lado do título da Estante */}
+        {onNavigateToDrafts ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Voltar"
+            accessibilityLabel={
+              draftsState.drafts.length > 0
+                ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
+                : "Ver rascunhos"
+            }
             hitSlop={12}
-            onPress={onBack}
-            style={withPress(styles.iconButton)}
+            onPress={guardedDrafts}
+            style={({ pressed }) => [
+              styles.draftsLink,
+              isIos && (iosGlass ? styles.iosDraftsGlass : styles.iosDraftsOpaque),
+              pressed && styles.draftsLinkPressed,
+            ]}
           >
-            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+            {isIos && iosGlass ? <IosGlassBackdrop style={styles.iosDraftsGlassShape} /> : null}
+            <AppIcon name="document" size={18} color={isIos ? colors.m3.primary : colors.m3.onSecondaryContainer} />
+            <Text style={[styles.draftsLinkText, isIos && { color: colors.m3.onSurface }]}>
+              {draftsState.drafts.length > 0
+                ? `Rascunhos (${draftsState.drafts.length})`
+                : "Rascunhos"}
+            </Text>
           </Pressable>
         ) : null}
-        <View style={styles.headerText}>
-          <Text accessibilityRole="header" style={styles.heroTitle}>
-            Estante
-          </Text>
-          <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
-        </View>
-        <View style={styles.headerActions}>
-          {/* Botão Rascunhos no topo ao lado do título da Estante */}
-          {onNavigateToDrafts ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                draftsState.drafts.length > 0
-                  ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
-                  : "Ver rascunhos"
-              }
-              hitSlop={12}
-              onPress={guardedDrafts}
-              style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
-            >
-              <AppIcon name="document" size={18} color={colors.m3.onSecondaryContainer} />
-              <Text style={styles.draftsLinkText}>
-                {draftsState.drafts.length > 0
-                  ? `Rascunhos (${draftsState.drafts.length})`
-                  : "Rascunhos"}
-              </Text>
-            </Pressable>
-          ) : null}
-          {wideWeb && onNavigateToCreateListing ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Anunciar livro no topo da estante"
-              hitSlop={12}
-              onPress={guardedCreateListing}
-              style={withPress(styles.announceButtonHeader)}
-            >
-              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
-              <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        {wideWeb && onNavigateToCreateListing ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Anunciar livro no topo da estante"
+            hitSlop={12}
+            onPress={guardedCreateListing}
+            style={withPress(styles.announceButtonHeader)}
+          >
+            <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+            <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
+          </Pressable>
+        ) : null}
       </View>
+    </View>
+  );
+  const hasScrollableShelf = !state.loading && !state.error && state.books.length > 0;
+  const scrollCachedNotice = isIos && hasScrollableShelf;
 
+  return (
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={header} scrolling={hasScrollableShelf}>
       <View style={[styles.content, wideWeb && styles.contentWide]}>
-        <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />
+        {scrollCachedNotice ? null : <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />}
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (
@@ -361,19 +371,22 @@ export function MyListings({
             onNavigateToHelp={guardedHelp}
           />
         ) : (
-          <ScrollView
+          <ScrollEdgeScrollView
             ref={scrollRef}
             {...standardVerticalScrollProps}
             contentContainerStyle={[
               styles.scroll,
               {
-                paddingBottom:
+                paddingBottom: isIos
+                  ? (onNavigateToCreateListing ? scrollBottomPadding.nativeTabWithFab : tokens.spacing[24])
+                  :
                   hasBooks && onNavigateToCreateListing && !wideWeb
                     ? scrollBottomPadding.withBottomBarAndFab + insets.bottom
                     : scrollBottomPadding.withBottomBar + insets.bottom,
               },
             ]}
           >
+            {scrollCachedNotice ? <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" /> : null}
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
             <View style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
@@ -387,6 +400,7 @@ export function MyListings({
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={`${stat.count} ${stat.label}`}
                     onPress={() => {
+                      if (isIos) triggerHaptic("selection");
                       setActiveTab("listings");
                       setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key));
                     }}
@@ -457,6 +471,8 @@ export function MyListings({
                         <Text
                           style={[styles.statLabelMobile, { color: badgeTone.text }]}
                           numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.8}
                         >
                           {stat.label}
                         </Text>
@@ -467,7 +483,7 @@ export function MyListings({
               })}
             </View>
 
-            {/* Chips de seção em 1 linha fixa sem arraste (sem bolinha extra nos inativos para caber tudo) */}
+            {/* Chips de seção em 1 linha limpa (igual Todos/Venda/Troca), sem faixa cinza atrás */}
             <View
               accessibilityRole="tablist"
               testID="my-listings-tablist"
@@ -504,12 +520,19 @@ export function MyListings({
                         : `Filtro ativo: ${STATUS_DROPDOWN_LABELS[statusFilter]}`
                     }
                     hitSlop={8}
-                    onPress={() => setFilterMenuOpen(true)}
+                    onPress={() => {
+                      if (isIOS) triggerHaptic("light");
+                      setFilterMenuOpen(true);
+                    }}
                     style={[
                       styles.statusDropdownButton,
+                      isIOS && statusFilter === "all" && (iosGlass ? styles.iosDropdownGlass : styles.iosDropdownOpaque),
                       statusFilter !== "all" && styles.statusDropdownButtonActive,
                     ]}
                   >
+                    {isIOS && iosGlass && statusFilter === "all" ? (
+                      <IosGlassBackdrop style={styles.iosDropdownGlassShape} />
+                    ) : null}
                     <Text
                       style={[
                         styles.statusDropdownText,
@@ -734,7 +757,7 @@ export function MyListings({
                 </Pressable>
               </View>
             ) : null}
-          </ScrollView>
+          </ScrollEdgeScrollView>
         )}
       </View>
       {/* FAB do Material 3 (56 dp, primary container) no canto inferior direito, acima da barra de navegação. */}
@@ -755,9 +778,7 @@ export function MyListings({
           ]}
         >
           {iosGlass ? (
-            <View pointerEvents="none" style={styles.iosBlurClip}>
-              <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-            </View>
+            <IosGlassBackdrop style={styles.iosGlassShape} />
           ) : null}
           <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
         </Pressable>
@@ -765,7 +786,7 @@ export function MyListings({
       {shareFeedback ? (
         <Snackbar visible message={shareFeedback} onDismiss={dismissShareFeedback} />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

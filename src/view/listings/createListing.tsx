@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Keyboard, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeCreateListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import type { Book } from "@/model/entities/book";
@@ -9,9 +9,11 @@ import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Dialog } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { StepProgress } from "@/view/components/StepProgress";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
@@ -72,6 +74,9 @@ export default function CreateListing({
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
@@ -82,6 +87,7 @@ export default function CreateListing({
   const [basicsTouched, setBasicsTouched] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const focusScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(false);
 
   const hasDraftContent = Boolean(
@@ -216,6 +222,38 @@ export default function CreateListing({
     scrollRef.current?.scrollToEnd?.({ animated: true });
   }, [published, state.error]);
 
+  const scrollFocusedFieldIntoView = useCallback(() => {
+    if (wideWeb || Platform.OS === "web") return;
+    if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+    focusScrollTimerRef.current = setTimeout(() => {
+      const focused = (TextInput as unknown as { State?: { currentlyFocusedInput?: () => unknown } }).State?.currentlyFocusedInput?.();
+      const scrollNode = scrollRef.current as
+        | (React.ComponentRef<typeof ScrollView> & {
+            scrollResponderScrollNativeHandleToKeyboard?: (
+              nodeHandle: unknown,
+              additionalOffset?: number,
+              preventNegativeScrollOffset?: boolean,
+            ) => void;
+          })
+        | null;
+      if (focused && scrollNode?.scrollResponderScrollNativeHandleToKeyboard) {
+        scrollNode.scrollResponderScrollNativeHandleToKeyboard(focused, 96, true);
+      }
+    }, 80);
+  }, [wideWeb]);
+
+  useEffect(() => {
+    if (wideWeb || Platform.OS === "web") return undefined;
+    const subs = [
+      Keyboard.addListener("keyboardDidShow", scrollFocusedFieldIntoView),
+      ...(Platform.OS === "ios" ? [Keyboard.addListener("keyboardWillShow", scrollFocusedFieldIntoView)] : []),
+    ];
+    return () => {
+      if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+      for (const sub of subs) sub.remove();
+    };
+  }, [wideWeb, scrollFocusedFieldIntoView]);
+
   if (published) {
     return (
       <CreateListingSuccess
@@ -237,6 +275,10 @@ export default function CreateListing({
   const handleFocusField = (_fieldName: string, yOffset: number) => {
     // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
     if (wideWeb || Platform.OS === "web") return;
+    if (Platform.OS === "ios") {
+      scrollFocusedFieldIntoView();
+      return;
+    }
     // No mobile, rola para posicionar o campo com 20dp de respiro na área visível
     setTimeout(() => {
       scrollRef.current?.scrollTo({
@@ -247,10 +289,10 @@ export default function CreateListing({
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
-      <ScrollView
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title={STEP_TITLES[step]} onBack={handleBack} />}>
+      <ScrollEdgeScrollView
         ref={scrollRef}
+        style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -511,17 +553,22 @@ export default function CreateListing({
                 <Text style={styles.previewNoteTitle}>Privacidade</Text>
               </View>
               <Text style={styles.previewNote}>
-                Privacidade garantida: Só o bairro aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
+                Privacidade garantida: Só o local de retirada aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
               </Text>
             </View>
           </View>
         ) : null}
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       {/* Barra de ação: oculta no mobile enquanto o teclado estiver aberto para não encobrir os inputs */}
       {!wideWeb && isKeyboardVisible ? null : (
-        <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[styles.actionBar, isIos && (iosGlass ? styles.iosActionBarGlass : styles.iosActionBarOpaque)]}
+          testID="create-listing-action-bar"
+        >
+          {isIos && iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
           <View style={styles.actionBarInner}>
             {localDraftSavedNotice ? (
               <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
@@ -624,13 +671,14 @@ export default function CreateListing({
           onCancel={() => setConfirmSaveForLater(false)}
         />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
 function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    scroll: { flex: 1, width: "100%" },
     scrollContent: {
       padding: wideWeb ? 0 : tokens.spacing[16],
       paddingBottom: wideWeb ? 140 : tokens.spacing[24],
@@ -783,13 +831,24 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       shadowRadius: 6,
       elevation: 4,
     },
+    iosActionBarGlass: {
+      backgroundColor: "transparent",
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: tokens.glass.stroke,
+      overflow: "hidden",
+    },
+    iosActionBarOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: tokens.ios.separator,
+    },
     actionBarInner: {
       width: "100%",
       maxWidth: wideWeb ? WEB_MAX_WIDTH : 560,
       alignSelf: "center",
       paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[12],
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[10] : tokens.spacing[16],
+      paddingBottom: Platform.OS === "ios" ? tokens.spacing[2] : tokens.spacing[12],
     },
     webActionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", },
     webSecondaryActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, Text, View } from "react-native";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
@@ -73,7 +73,8 @@ export function Conversations({
   const styles = useMemo(() => createConversationsStyles(colors), [colors]);
   const [state, actions] = makeConversationsViewModel(sessionUserId);
   const { isOnline } = makeNetworkStatus();
-
+  const hasIosHeader = Platform.OS === "ios" && Boolean(onBack);
+  const hasList = state.items.length > 0 && !state.error;
   // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
   const { reload } = actions;
   const lastFocusKey = useRef(focusKey);
@@ -143,6 +144,21 @@ export function Conversations({
   const pendingReceivedCount = useMemo(
     () => activeItems.filter((item) => item.kind === "pendingReceived").length,
     [activeItems],
+  );
+
+  const showPendingBanner = filter === "active" && pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests);
+  const iosFilters = (
+    <View style={styles.filterBar}>
+      <SegmentedControl
+        accessibilityLabel="Filtrar conversas"
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: "active", label: `Ativas (${activeItems.length})` },
+          { value: "completed", label: `Concluídas (${completedItems.length})` },
+        ]}
+      />
+    </View>
   );
 
   const open = (item: ConversationItem) => {
@@ -231,12 +247,13 @@ export function Conversations({
   };
 
   return (
-    <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.page}>
+    <ScrollEdgeScreen
+      style={styles.page}
+      header={hasIosHeader ? <TopAppBar title="Conversas" onBack={guardedBack} /> : null}
+      scrolling={hasList}
+    >
       <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
-        {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader; no iOS usa TopAppBar Liquid Glass) */}
-        {Platform.OS === "ios" && !wideWeb && onBack ? (
-          <TopAppBar title="Conversas" onBack={guardedBack} />
-        ) : (
+        {hasIosHeader ? null : (
           <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
             {!wideWeb && onBack ? (
               <Pressable
@@ -387,18 +404,8 @@ export function Conversations({
                   </Text>
                 </View>
               ) : null}
-              {Platform.OS === "ios" && !wideWeb ? (
-                <View style={styles.filterBar}>
-                  <SegmentedControl
-                    accessibilityLabel="Filtrar conversas"
-                    value={filter}
-                    onChange={setFilter}
-                    options={[
-                      { value: "active", label: `Ativas (${activeItems.length})` },
-                      { value: "completed", label: `Concluídas (${completedItems.length})` },
-                    ]}
-                  />
-                </View>
+              {Platform.OS === "ios" ? (
+                hasIosHeader ? null : iosFilters
               ) : (
                 <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
                   <Chip
@@ -413,35 +420,42 @@ export function Conversations({
                   />
                 </View>
               )}
-              <FlatList
+              <ScrollEdgeFlatList
+                testID="conversation-list"
                 style={styles.flexOne}
                 {...standardVerticalScrollProps}
                 data={visibleItems}
                 keyExtractor={(item) => item.requestId}
-                contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-                ListHeaderComponent={
-                  filter === "active" && pendingReceivedCount > 0 && onOpenReceivedRequests ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
-                      onPress={guardedOpenReceivedRequests}
-                      style={withPress([styles.pendingBanner, wideWeb && styles.pendingBannerWide])}
-                    >
-                      <View style={styles.pendingBannerIcon}>
-                        <AppIcon name="swap" size={18} color={colors.nature.foliage} />
-                      </View>
-                      <View style={styles.pendingBannerContent}>
-                        <Text style={styles.pendingBannerTitle}>
-                          {`${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}`}
-                        </Text>
-                        <Text style={styles.pendingBannerSubtitle}>
-                          Toque para gerenciar e aceitar na lista de pedidos
-                        </Text>
-                      </View>
-                      <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
-                    </Pressable>
-                  ) : undefined
-                }
+                contentContainerStyle={wideWeb ? styles.wideList : [
+                  styles.list,
+                  { paddingBottom: scrollBottomPadding.withoutBottomBar },
+                ]}
+                ListHeaderComponent={hasIosHeader || showPendingBanner ? (
+                  <>
+                    {hasIosHeader ? iosFilters : null}
+                    {showPendingBanner ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
+                        onPress={guardedOpenReceivedRequests}
+                        style={withPress([styles.pendingBanner, wideWeb && styles.pendingBannerWide])}
+                      >
+                        <View style={styles.pendingBannerIcon}>
+                          <AppIcon name="swap" size={18} color={colors.nature.foliage} />
+                        </View>
+                        <View style={styles.pendingBannerContent}>
+                          <Text style={styles.pendingBannerTitle}>
+                            {`${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}`}
+                          </Text>
+                          <Text style={styles.pendingBannerSubtitle}>
+                            Toque para gerenciar e aceitar na lista de pedidos
+                          </Text>
+                        </View>
+                        <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
+                      </Pressable>
+                    ) : null}
+                  </>
+                ) : undefined}
                 ListEmptyComponent={
                   <View style={styles.filteredEmpty}>
                     <Text style={styles.filteredEmptyTitle}>
@@ -495,7 +509,7 @@ export function Conversations({
                         />
                         <View style={styles.rowText}>
                           <View style={styles.rowHeader}>
-                            <Text style={[styles.about, isSelected && styles.nameSelected]} numberOfLines={1}>
+                            <Text style={[styles.about, isSelected && styles.nameSelected]} numberOfLines={2}>
                               {item.listing.title}
                             </Text>
                             {isCompleted ? (
@@ -646,7 +660,7 @@ export function Conversations({
           onCancel={() => setToCancel(null)}
         />
       </View>
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

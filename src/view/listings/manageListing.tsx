@@ -1,15 +1,18 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { IosBlurBottomBar } from "@/view/components/IosBlurBottomBar";
 import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { PIRIPIRI_POLICE_CONTACT } from "@/model/helpContent";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -55,10 +58,15 @@ export default function ManageListing({
   });
   const [shareState, shareActions] = makeShareListingViewModel();
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const wide = useIsWideWeb();
+  const { width, fontScale } = useWindowDimensions();
+  const compactSafetyAction = Platform.OS === "ios" && (width <= 390 || fontScale > 1.2);
 
   const handleRemove = async () => {
     const removed = await actions.remove();
@@ -226,18 +234,24 @@ export default function ManageListing({
       onPress={() => setSafetyOpen(true)}
       style={({ pressed }) => [
         styles.headerSafetyButton,
+        compactSafetyAction && styles.headerSafetyCompact,
         { borderColor: modalityTheme.outlineAccent },
+        isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
         pressed && styles.actionCardPressed,
       ]}
     >
+      {iosGlass ? <IosGlassBackdrop style={styles.iosSafetyGlassShape} /> : null}
       <AppIcon name="shield" size={16} color={modalityTheme.outlineAccent} />
-      <Text style={[styles.headerSafetyText, { color: modalityTheme.outlineAccent }]}>Segurança</Text>
+      {compactSafetyAction ? null : (
+        <Text style={[styles.headerSafetyText, { color: modalityTheme.outlineAccent }]}>Segurança</Text>
+      )}
     </Pressable>
   );
 
   return (
     <ScreenContainer
       maxWidth={contentMaxWidth}
+      paddingBottom={tokens.spacing[96]}
       header={
         <TopAppBar
           contentMaxWidth={contentMaxWidth}
@@ -249,8 +263,7 @@ export default function ManageListing({
       contentStyle={styles.containerContent}
       overlay={
         <>
-          <View style={styles.bottomBar}>
-            <View style={[styles.bottomBarInner, { maxWidth: contentMaxWidth }]}>
+          <IosBlurBottomBar style={styles.bottomBar} innerStyle={{ maxWidth: contentMaxWidth }}>
               <FilledButton
                 label={canOpenAcceptedChat ? "Ir para a conversa" : paused ? "Retomar anúncio" : "Pausar anúncio"}
                 accessibilityHint={
@@ -272,8 +285,7 @@ export default function ManageListing({
                   void actions.togglePause();
                 }}
               />
-            </View>
-          </View>
+          </IosBlurBottomBar>
           <Dialog
             visible={confirmingRemoval}
             title="Excluir anúncio?"
@@ -299,7 +311,7 @@ export default function ManageListing({
                 onPress={() => setSafetyOpen(false)}
                 style={StyleSheet.absoluteFill}
               />
-              <View style={styles.safetyModalCard}>
+              <ModalGlassSurface radius={tokens.radius.card} style={styles.safetyModalCard}>
                 <View style={styles.safetyModalHeader}>
                   <View style={styles.safetyModalTitleRow}>
                     <AppIcon name="shield" size={20} color={modalityTheme.outlineAccent} />
@@ -324,10 +336,8 @@ export default function ManageListing({
                   </Text>
                 </View>
                 <Text style={styles.safetyModalAnswer}>{PIRIPIRI_POLICE_CONTACT.answer}</Text>
-                <View style={styles.safetyCard}>
-                  <HelpContactLinks links={PIRIPIRI_POLICE_CONTACT.links} />
-                </View>
-              </View>
+                <HelpContactLinks links={PIRIPIRI_POLICE_CONTACT.links} />
+              </ModalGlassSurface>
             </View>
           </Modal>
         </>
@@ -468,6 +478,8 @@ export default function ManageListing({
               <AppIcon name="edit" size={18} color={modalityTheme.accentText} />
               <Text
                 numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
                 style={[styles.primaryShortcutText, { color: modalityTheme.accentText }]}
               >
                 Editar anúncio
@@ -479,11 +491,18 @@ export default function ManageListing({
                 accessibilityLabel="Ver anúncio como leitor"
                 accessibilityHint="Abre a visualização pública do anúncio."
                 onPress={() => guardedViewPublic(book.id)}
-                style={withPress([styles.shortcut, { borderColor: modalityTheme.outlineAccent }])}
+                style={withPress([
+                  styles.shortcut,
+                  { borderColor: modalityTheme.outlineAccent },
+                  isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
+                ])}
               >
+                {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosSafetyGlassShape} /> : null}
                 <AppIcon name="visibility" size={18} color={modalityTheme.outlineAccent} />
                 <Text
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
                   style={[styles.shortcutText, { color: modalityTheme.outlineAccent }]}
                 >
                   Ver anúncio
@@ -499,10 +518,20 @@ export default function ManageListing({
               onPress={() => setConfirmingRemoval(true)}
               style={
                 state.busy || locked
-                  ? [styles.deleteShortcutRow, styles.actionCardDisabled]
-                  : withPress(styles.deleteShortcutRow)
+                  ? [
+                      styles.deleteShortcutRow,
+                      isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
+                      styles.actionCardDisabled,
+                    ]
+                  : withPress([
+                      styles.deleteShortcutRow,
+                      isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
+                    ])
               }
             >
+              {iosGlass && !(state.busy || locked) ? (
+                <IosGlassBackdrop isInteractive style={styles.iosSafetyGlassShape} />
+              ) : null}
               <AppIcon name="delete" size={18} color={locked ? colors.secondaryText : colors.error} />
               <Text style={[styles.deleteShortcutText, (state.busy || locked) && styles.textDisabled]}>
                 Excluir anúncio
@@ -592,6 +621,31 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelMedium,
       fontFamily: fontFamily.semiBold,
     },
+    headerSafetyCompact: {
+      width: 44,
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: 0,
+    },
+    iosSafetyGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosSafetyOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
+    },
+    iosSafetyGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     safetyModalBackdrop: {
       flex: 1,
       backgroundColor: colors.m3.scrim,
@@ -637,20 +691,8 @@ function createStyles(colors: ColorPalette) {
       lineHeight: 20,
     },
     bottomBar: {
-      backgroundColor: colors.surface,
-      borderTopWidth: 1,
-      borderTopColor: colors.book.paperEdge,
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
-      elevation: 4,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: -2 },
-    },
-    bottomBarInner: {
-      width: "100%",
-      alignSelf: "center",
     },
     content: { gap: tokens.spacing[16] },
     overview: {
@@ -674,17 +716,17 @@ function createStyles(colors: ColorPalette) {
     },
     shortcut: {
       flexGrow: 1,
-      flexBasis: 150,
+      flexBasis: 135,
       maxWidth: "100%",
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[6],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outline,
-      paddingHorizontal: tokens.spacing[14],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
     },
     primaryShortcut: { backgroundColor: colors.action, borderColor: colors.action },
@@ -816,7 +858,6 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
       marginBottom: tokens.spacing[2],
     },
-    safetyCard: { backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.book.paperEdge, borderRadius: tokens.radius.card, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4] },
     actionCard: {
       flexDirection: "row",
       alignItems: "center",

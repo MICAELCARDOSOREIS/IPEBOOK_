@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, Switch, Text, View, type ScrollViewInstance } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, Switch, Text, View, type ScrollViewInstance } from "react-native";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import { triggerHaptic } from "@/view/haptics";
 import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { InstagramIcon } from "@/view/components/InstagramIcon";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -14,6 +14,7 @@ import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextButton } from "@/view/components/TextButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { makeAuthViewModel, makeIsModerator, makeNotificationPreferencesViewModel, makePublicProfileViewModel, makeSettingsViewModel } from "@/di/container";
 import { ALL_PIRIPIRI_LOCATIONS_LABEL, DEFAULT_PIRIPIRI_LOCATION } from "@/model/entities/location";
 import { NOTIFICATION_PREFERENCE_CATEGORIES, type NotificationPreferenceKey } from "@/viewmodel/useNotificationPreferencesViewModel";
@@ -106,6 +107,9 @@ export function Settings({
   const { colors } = useTheme();
   // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const scrollRef = useRef<ScrollViewInstance>(null);
   const mainY = useRef(0);
   const sectionY = useRef<Record<string, number>>({});
@@ -297,7 +301,7 @@ export function Settings({
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               {label}
             </Text>
-            <Text numberOfLines={1} style={styles.sectionSubtitle}>
+            <Text numberOfLines={2} style={styles.sectionSubtitle}>
               {subtitle}
             </Text>
           </View>
@@ -332,12 +336,21 @@ export function Settings({
           <Text numberOfLines={1} style={styles.accountName}>
             {accountDisplayName}
           </Text>
-          <Text numberOfLines={1} style={styles.linkDescription}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.linkDescription}>
             {accountEmail ?? "E-mail não informado"}
           </Text>
         </View>
       </View>
-      <View style={[styles.accountAction, wide && styles.accountActionWide]}>
+      <View
+        style={[
+          styles.accountAction,
+          wide && styles.accountActionWide,
+          isIos && (iosGlass
+            ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+            : { backgroundColor: colors.m3.surfaceContainerHigh }),
+        ]}
+      >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: 999 }} /> : null}
         <AppIcon name="edit" size={16} color={colors.m3.onSecondaryContainer} />
         <Text style={styles.accountActionText}>Editar</Text>
       </View>
@@ -345,8 +358,7 @@ export function Settings({
   ) : null;
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} header={wide ? (
         <View style={styles.wideTopHeader}>
           <View style={styles.wideTopHeaderLeft}>
             <Pressable
@@ -369,8 +381,8 @@ export function Settings({
         </View>
       ) : (
         <TopAppBar title="Configurações" onBack={guardedBack} contentMaxWidth={undefined} />
-      )}
-      <ScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
+      )}>
+      <ScrollEdgeScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
             <View style={styles.sidebar}>
@@ -578,7 +590,7 @@ export function Settings({
           </Text>
           </View>
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       <NeighborhoodSelectorModal
         visible={neighborhood.isSelectorOpen}
@@ -613,7 +625,7 @@ export function Settings({
           setSignOutError(null);
         }}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

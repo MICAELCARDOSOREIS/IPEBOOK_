@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import {
   makeAuthViewModel,
@@ -18,6 +19,7 @@ import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
@@ -56,6 +58,9 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const guardedReportUser = useGuardedPress(onReportUser);
   const guardedOpenBook = useGuardedPress(onOpenBook);
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const [state, actions] = makePublicProfileViewModel(userId);
   const [auth] = makeAuthViewModel();
   // No próprio perfil não faz sentido conversar consigo nem se denunciar
@@ -90,11 +95,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   }, [profile?.name]);
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <ScrollEdgeScreen edges={["top", "bottom", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />}>
       {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
-      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />
 
-      <ScrollView
+      <ScrollEdgeScrollView
         ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
@@ -120,10 +124,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 style={styles.breadcrumb}
               />
             ) : null}
-            {/* 2. Identidade (Avatar 72px + Moldura Ipê + Nome em Serifa + Badges) */}
+            {/* 2. Identidade (Avatar 112px + Moldura Ipê + Nome em Serifa + Badges) */}
             <View style={styles.identitySection}>
-              <View style={styles.avatarWrapper}>
-                <Avatar name={profile.name} photoUrl={profile.photoUrl} size={72} />
+              <View style={[styles.avatarWrapper, isIos && styles.iosAvatarShadow]}>
+                <Avatar name={profile.name} photoUrl={profile.photoUrl} size={112} />
               </View>
               <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
               {isOwnProfile ? (
@@ -230,11 +234,15 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                   accessibilityRole="button"
                   accessibilityLabel="Denunciar ou bloquear"
                   onPress={() => {
-                    if (Platform.OS === "ios") triggerHaptic("light");
+                    if (isIos) triggerHaptic("light");
                     setSafetyOpen(true);
                   }}
-                  style={withPress(styles.safetyButton)}
+                  style={withPress([
+                    styles.safetyButton,
+                    isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
+                  ])}
                 >
+                  {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
                   <AppIcon name="flag" size={18} color={colors.error} />
                   <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
                 </Pressable>
@@ -260,7 +268,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             )}
           </View>
         ) : null}
-      </ScrollView>
+      </ScrollEdgeScrollView>
       {profile ? (
         <ProfileSafetySheet
           visible={safetyOpen}
@@ -286,7 +294,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
           }}
         />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -346,11 +354,17 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingVertical: tokens.spacing[6],
     },
     avatarWrapper: {
-      padding: 3,
+      padding: 4,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.petalSoft,
-      borderWidth: 1.5,
+      borderWidth: 2.5,
       borderColor: colors.ipe.bloom,
+    },
+    iosAvatarShadow: {
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.14,
+      shadowRadius: 14,
     },
     name: {
       ...tokens.typography.brandTitle,
@@ -376,8 +390,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     locationBadge: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 38 : undefined,
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.nature.sprout,
@@ -392,8 +407,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     socialBadge: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 38 : undefined,
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,
@@ -417,6 +433,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       padding: tokens.spacing[12],
       gap: tokens.spacing[8],
       justifyContent: "space-between",
@@ -447,6 +464,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[10],
     },
@@ -581,6 +599,16 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderColor: colors.book.paperEdge,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
+    },
+    iosSafetyGlass: {
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      overflow: "hidden",
+    },
+    iosSafetyOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
     },
     safetyButtonText: {
       ...tokens.typography.labelLarge,

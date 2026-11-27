@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -8,6 +9,8 @@ import { formatPrice } from "@/view/formatPrice";
 import { Manchete } from "@/view/components/Manchete";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -33,7 +36,11 @@ export function CreateListingSuccess({
   const guardedViewMyListings = useGuardedPress(onViewMyListings);
   const guardedGoHome = useGuardedPress(onGoHome);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [shareState, shareActions] = makeShareListingViewModel();
 
@@ -68,10 +75,70 @@ export function CreateListingSuccess({
     void shareActions.share(published.id, shareableListing);
   }, [published.id, shareableListing, shareActions]);
 
+  const fixedFooter = !wideWeb ? (
+    <View
+      style={[
+        styles.fixedFooter,
+        { paddingBottom: Math.max(insets.bottom, tokens.spacing[12]) },
+        isIos && (iosGlass ? styles.iosFixedFooterGlass : styles.iosFixedFooterOpaque),
+      ]}
+    >
+      {isIos && iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
+      <View style={styles.fixedFooterRow}>
+        <View style={styles.fixedFooterCol}>
+          <OutlinedButton
+            label="Voltar ao início"
+            accessibilityLabel="Voltar ao início"
+            onPress={guardedGoHome}
+          />
+        </View>
+        <Animated.View
+          style={[
+            styles.fixedFooterCol,
+            { transform: [{ scale: whatsappScale }] },
+            isIos && styles.iosWhatsappShadow,
+          ]}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Divulgar no WhatsApp"
+            accessibilityHint="Abre o WhatsApp para divulgar o anúncio em grupos ou status de Piripiri."
+            onPress={handleShareWhatsApp}
+            onPressIn={whatsappPressIn}
+            onPressOut={whatsappPressOut}
+            style={[
+              styles.whatsappPrimaryButton,
+              styles.whatsappCompactButton,
+              isIos && iosGlass && styles.iosWhatsappGlass,
+              isWhatsappPressed && styles.whatsappButtonPressed,
+            ]}
+          >
+            {isIos && iosGlass ? (
+              <IosGlassBackdrop
+                tintColor={colors.nature.foliage}
+                isInteractive
+                style={{ borderRadius: tokens.radius.full }}
+              />
+            ) : null}
+            <AppIcon name="whatsapp" size={18} color={colors.nature.onFoliage} />
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              style={styles.whatsappPrimaryButtonText}
+            >
+              Divulgar
+            </Text>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </View>
+  ) : null;
+
   return (
-    <SafeAreaView style={styles.page}>
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={null} overlay={fixedFooter}>
       <IpePetalsCelebration />
-      <ScrollView
+      <ScrollEdgeScrollView
         contentContainerStyle={styles.scrollContent}
         {...standardVerticalScrollProps}
       >
@@ -167,73 +234,107 @@ export function CreateListingSuccess({
             </View>
           </View>
 
-          {/* Ações com hierarquia clara (Lei de Hick & Fitts) */}
-          <View style={styles.actionsBlock}>
-            {shareState.error ? <InlineErrorCard message={shareState.error} /> : null}
-            {/* WhatsApp Hero Button */}
-            <Animated.View style={{ transform: [{ scale: whatsappScale }] }}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Divulgar no WhatsApp"
-                accessibilityHint="Abre o WhatsApp para divulgar o anúncio em grupos ou status de Piripiri."
-                onPress={handleShareWhatsApp}
-                onPressIn={whatsappPressIn}
-                onPressOut={whatsappPressOut}
-                style={[
-                  styles.whatsappPrimaryButton,
-                  isWhatsappPressed && styles.whatsappButtonPressed,
-                ]}
-              >
-                <AppIcon name="whatsapp" size={20} color={colors.nature.onFoliage} />
-                <Text style={styles.whatsappPrimaryButtonText}>Divulgar no WhatsApp</Text>
-              </Pressable>
-            </Animated.View>
+          {/* Ações secundárias no scroll no mobile (Estante / Compartilhar); no desktop ficam todas aqui */}
+          {wideWeb ? (
+            <View style={styles.actionsBlock}>
+              {shareState.error ? <InlineErrorCard message={shareState.error} /> : null}
+              <Animated.View style={{ transform: [{ scale: whatsappScale }] }}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Divulgar no WhatsApp"
+                  accessibilityHint="Abre o WhatsApp para divulgar o anúncio em grupos ou status de Piripiri."
+                  onPress={handleShareWhatsApp}
+                  onPressIn={whatsappPressIn}
+                  onPressOut={whatsappPressOut}
+                  style={[
+                    styles.whatsappPrimaryButton,
+                    isWhatsappPressed && styles.whatsappButtonPressed,
+                  ]}
+                >
+                  <AppIcon name="whatsapp" size={20} color={colors.nature.onFoliage} />
+                  <Text style={styles.whatsappPrimaryButtonText}>Divulgar no WhatsApp</Text>
+                </Pressable>
+              </Animated.View>
 
-            <FilledButton
-              label="Ver estante"
-              onPress={guardedViewMyListings}
-            />
+              <FilledButton
+                label="Ver estante"
+                onPress={guardedViewMyListings}
+              />
 
-            {/* Ações secundárias agrupadas em linha (clean e minimalista) */}
-            <View style={styles.secondaryActionsRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Compartilhar anúncio"
-                accessibilityHint="Abre opções para copiar link ou enviar anúncio por outros apps."
-                onPress={handleShare}
-                style={({ pressed }) => [
-                  styles.secondaryLinkButton,
-                  pressed && styles.secondaryLinkPressed,
-                ]}
-              >
-                <AppIcon name="share" size={16} color={colors.action} />
-                <Text style={styles.secondaryLinkText}>Compartilhar anúncio</Text>
-              </Pressable>
+              <View style={styles.secondaryActionsRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Compartilhar anúncio"
+                  accessibilityHint="Abre opções para copiar link ou enviar anúncio por outros apps."
+                  onPress={handleShare}
+                  style={({ pressed }) => [
+                    styles.secondaryLinkButton,
+                    pressed && styles.secondaryLinkPressed,
+                  ]}
+                >
+                  <AppIcon name="share" size={16} color={colors.action} />
+                  <Text style={styles.secondaryLinkText}>Compartilhar anúncio</Text>
+                </Pressable>
 
-              <View style={styles.secondaryDivider} />
+                <View style={styles.secondaryDivider} />
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Voltar ao início"
-                accessibilityHint="Retorna para a tela inicial do aplicativo."
-                onPress={guardedGoHome}
-                style={({ pressed }) => [
-                  styles.secondaryLinkButton,
-                  pressed && styles.secondaryLinkPressed,
-                ]}
-              >
-                <Text style={styles.secondaryLinkText}>Voltar ao início</Text>
-              </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Voltar ao início"
+                  accessibilityHint="Retorna para a tela inicial do aplicativo."
+                  onPress={guardedGoHome}
+                  style={({ pressed }) => [
+                    styles.secondaryLinkButton,
+                    pressed && styles.secondaryLinkPressed,
+                  ]}
+                >
+                  <Text style={styles.secondaryLinkText}>Voltar ao início</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={styles.mobileSecondaryBlock}>
+              {shareState.error ? <InlineErrorCard message={shareState.error} /> : null}
+              <View style={styles.secondaryActionsRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver estante"
+                  onPress={guardedViewMyListings}
+                  style={({ pressed }) => [
+                    styles.secondaryLinkButton,
+                    pressed && styles.secondaryLinkPressed,
+                  ]}
+                >
+                  <AppIcon name="shelf" size={16} color={colors.action} />
+                  <Text style={styles.secondaryLinkText}>Ver estante</Text>
+                </Pressable>
+
+                <View style={styles.secondaryDivider} />
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Compartilhar anúncio"
+                  accessibilityHint="Abre opções para copiar link ou enviar anúncio por outros apps."
+                  onPress={handleShare}
+                  style={({ pressed }) => [
+                    styles.secondaryLinkButton,
+                    pressed && styles.secondaryLinkPressed,
+                  ]}
+                >
+                  <AppIcon name="share" size={16} color={colors.action} />
+                  <Text style={styles.secondaryLinkText}>Compartilhar anúncio</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
       <Snackbar
         visible={shareState.linkCopied}
         message="Link do anúncio copiado para a área de transferência!"
         onDismiss={shareActions.dismissLinkCopied}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -471,6 +572,59 @@ function createStyles(colors: ColorPalette) {
       width: 1,
       height: 16,
       backgroundColor: colors.m3.outlineVariant,
+    },
+    mobileSecondaryBlock: {
+      gap: tokens.spacing[8],
+    },
+    fixedFooter: {
+      width: "100%",
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.book.paperEdge,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    iosFixedFooterGlass: {
+      backgroundColor: "transparent",
+      borderTopColor: tokens.glass.stroke,
+      overflow: "hidden",
+    },
+    iosFixedFooterOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    fixedFooterRow: {
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[10],
+    },
+    fixedFooterCol: {
+      flex: 1,
+      minWidth: 0,
+    },
+    whatsappCompactButton: {
+      minHeight: 52,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      gap: tokens.spacing[6],
+    },
+    iosWhatsappShadow: {
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+    },
+    iosWhatsappGlass: {
+      backgroundColor: "transparent",
+      overflow: "hidden",
+      borderCurve: "continuous",
     },
   });
 }

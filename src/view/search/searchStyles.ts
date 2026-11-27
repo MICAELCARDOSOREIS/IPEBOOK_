@@ -166,6 +166,27 @@ function createSearchStyles(colors: ColorPalette) {
     historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16] },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
     snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20 },
+    iosGlassPill: {
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+    },
+    iosOpaquePill: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
   });
 }
 

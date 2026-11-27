@@ -13,6 +13,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 
@@ -282,6 +283,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       gap: tokens.spacing[12],
     },
     headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },

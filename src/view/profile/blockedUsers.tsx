@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel, makeBlockedUsersViewModel, makeNetworkStatus } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
@@ -9,6 +8,7 @@ import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -49,8 +49,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!authState.loading && !state.loading && !state.error && state.blockedUsers.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             <Pressable
@@ -73,7 +72,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
-      )}
+      )}>
       {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
@@ -110,7 +109,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-blocked-2" : "list-blocked-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -173,7 +172,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         message={state.actionMessage ?? ""}
         onDismiss={actions.clearActionMessage}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

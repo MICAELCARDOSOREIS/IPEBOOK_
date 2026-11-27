@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -51,9 +52,8 @@ export default function ReportListing({
 
   if (state.success) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
+      <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+        <ScrollEdgeScrollView
           {...standardVerticalScrollProps}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
           keyboardShouldPersistTaps="handled"
@@ -73,8 +73,8 @@ export default function ReportListing({
               </View>
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </ScrollEdgeScrollView>
+      </ScrollEdgeScreen>
     );
   }
 
@@ -91,9 +91,8 @@ export default function ReportListing({
 
   if (!sessionUserId) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
+      <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+        <ScrollEdgeScrollView
           {...standardVerticalScrollProps}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
           keyboardShouldPersistTaps="handled"
@@ -114,15 +113,14 @@ export default function ReportListing({
               ) : null}
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </ScrollEdgeScrollView>
+      </ScrollEdgeScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
@@ -218,8 +216,8 @@ export default function ReportListing({
           </View>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 

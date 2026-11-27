@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Keyboard, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import type { BookCondition, BookModality } from "@/model/entities/book";
@@ -25,6 +25,7 @@ import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
@@ -36,6 +37,7 @@ import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { makeEditListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -82,15 +84,15 @@ export default function EditListing({
   } | null>(null);
   // Web larga: foto e identificação de um lado, descrição e venda do outro.
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const isKeyboardVisible = useKeyboardVisible();
   const scrollRef = useRef<any>(null);
+  const focusScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authorInputRef = useRef<any>(null);
   const descInputRef = useRef<any>(null);
   const priceInputRef = useRef<any>(null);
-  const titleY = useRef(140);
-  const authorY = useRef(220);
-  const descY = useRef(320);
-  const priceY = useRef(460);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
   const parsedPrice = Number(state.price.trim().replace(",", "."));
@@ -107,18 +109,32 @@ export default function EditListing({
     return CATEGORIES;
   }, [state.category]);
 
-  const handleFocusField = (yOffset: number) => {
+  const scrollFocusedFieldIntoView = useCallback(() => {
     // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
     if (wide || Platform.OS === "web") return;
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, yOffset - 24),
-        animated: true,
-      });
-    }, 100);
-  };
+    if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+    focusScrollTimerRef.current = setTimeout(() => {
+      const focused = (TextInput as unknown as { State?: { currentlyFocusedInput?: () => unknown } }).State?.currentlyFocusedInput?.();
+      if (focused && scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard) {
+        scrollRef.current.scrollResponderScrollNativeHandleToKeyboard(focused, 96, true);
+      }
+    }, 80);
+  }, [wide]);
+
+  useEffect(() => {
+    if (wide || Platform.OS === "web") return undefined;
+    const subs = [
+      Keyboard.addListener("keyboardDidShow", scrollFocusedFieldIntoView),
+      ...(Platform.OS === "ios" ? [Keyboard.addListener("keyboardWillShow", scrollFocusedFieldIntoView)] : []),
+    ];
+    return () => {
+      if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+      for (const sub of subs) sub.remove();
+    };
+  }, [wide, scrollFocusedFieldIntoView]);
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
     const result = await actions.submit();
     if (result) guardedSaved();
   };
@@ -186,9 +202,8 @@ export default function EditListing({
   }
 
   return (
-    <SafeAreaView edges={wide ? ["top", "left", "right", "bottom"] : ["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
-      <ScrollView
+    <ScrollEdgeScreen edges={wide ? ["top", "left", "right", "bottom"] : ["top", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />}>
+      <ScrollEdgeScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
@@ -196,7 +211,7 @@ export default function EditListing({
             paddingBottom: wide
               ? tokens.spacing[48]
               : isKeyboardVisible
-                ? 300
+                ? tokens.spacing[32]
                 : scrollBottomPadding.withBottomBar,
           },
         ]}
@@ -272,6 +287,7 @@ export default function EditListing({
                   editable={!state.saving}
                   placeholder="https://exemplo.com/capa.jpg"
                   autoCapitalize="none"
+                  onFocus={scrollFocusedFieldIntoView}
                 />
                 <View style={styles.photoLinkToggleRow}>
                   <TextButton
@@ -329,42 +345,30 @@ export default function EditListing({
               <Text style={styles.sectionHint}>Título, autor e estado do exemplar</Text>
             </View>
 
-            <View
-              onLayout={(event) => {
-                titleY.current = event.nativeEvent.layout.y;
-              }}
-            >
-              <TextField
-                label="Título do livro"
-                labelBackgroundColor={sectionFieldBg}
-                value={state.title}
-                onChangeText={actions.setTitle}
-                editable={!state.saving}
-                placeholder="Ex: Dom Casmurro"
-                returnKeyType="next"
-                onSubmitEditing={() => authorInputRef.current?.focus?.()}
-                onFocus={() => handleFocusField(titleY.current)}
-              />
-            </View>
+            <TextField
+              label="Título do livro"
+              labelBackgroundColor={sectionFieldBg}
+              value={state.title}
+              onChangeText={actions.setTitle}
+              editable={!state.saving}
+              placeholder="Ex: Dom Casmurro"
+              returnKeyType="next"
+              onSubmitEditing={() => authorInputRef.current?.focus?.()}
+              onFocus={scrollFocusedFieldIntoView}
+            />
 
-            <View
-              onLayout={(event) => {
-                authorY.current = event.nativeEvent.layout.y;
-              }}
-            >
-              <TextField
-                inputRef={authorInputRef}
-                label="Autor do livro"
-                labelBackgroundColor={sectionFieldBg}
-                value={state.author}
-                onChangeText={actions.setAuthor}
-                editable={!state.saving}
-                placeholder="Ex: Machado de Assis"
-                returnKeyType="next"
-                onSubmitEditing={() => descInputRef.current?.focus?.()}
-                onFocus={() => handleFocusField(authorY.current)}
-              />
-            </View>
+            <TextField
+              inputRef={authorInputRef}
+              label="Autor do livro"
+              labelBackgroundColor={sectionFieldBg}
+              value={state.author}
+              onChangeText={actions.setAuthor}
+              editable={!state.saving}
+              placeholder="Ex: Machado de Assis"
+              returnKeyType="next"
+              onSubmitEditing={() => descInputRef.current?.focus?.()}
+              onFocus={scrollFocusedFieldIntoView}
+            />
 
             <View style={styles.field}>
               <View style={styles.fieldHeaderRow}>
@@ -431,6 +435,7 @@ export default function EditListing({
                     iosKeyboardDone
                     returnKeyType="done"
                     helperText="De 2 a 100 volumes componentes da coleção"
+                    onFocus={scrollFocusedFieldIntoView}
                   />
                 </View>
               ) : null}
@@ -444,29 +449,23 @@ export default function EditListing({
               <Text style={styles.sectionTitle}>Descrição e detalhes</Text>
               <Text style={styles.sectionHint}>Conte sobre marcas de uso, edição ou grifos</Text>
             </View>
-            <View
-              onLayout={(event) => {
-                descY.current = event.nativeEvent.layout.y;
-              }}
-            >
-              <TextField
-                inputRef={descInputRef}
-                label="Descrição"
-                labelBackgroundColor={sectionFieldBg}
-                value={state.description}
-                onChangeText={actions.setDescription}
-                editable={!state.saving}
-                placeholder="Ex: Marcas leves de uso, páginas completas."
-                maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
-                multiline
-                onFocus={() => handleFocusField(descY.current)}
-                error={
-                  descriptionTooLong
-                    ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
-                    : undefined
-                }
-              />
-            </View>
+            <TextField
+              inputRef={descInputRef}
+              label="Descrição"
+              labelBackgroundColor={sectionFieldBg}
+              value={state.description}
+              onChangeText={actions.setDescription}
+              editable={!state.saving}
+              placeholder="Ex: Marcas leves de uso, páginas completas."
+              maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
+              multiline
+              onFocus={scrollFocusedFieldIntoView}
+              error={
+                descriptionTooLong
+                  ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
+                  : undefined
+              }
+            />
             <View style={styles.descriptionFooterRow}>
               <Text style={[styles.photoHelperText, descriptionTooLong && styles.descriptionCounterError]}>
                 {remainingDescriptionChars >= 0
@@ -503,26 +502,20 @@ export default function EditListing({
             </View>
 
             {state.modality === "sale" && (
-              <View
-                onLayout={(event) => {
-                  priceY.current = event.nativeEvent.layout.y;
-                }}
-              >
-                <TextField
-                  inputRef={priceInputRef}
-                  label="Preço do livro"
-                  labelBackgroundColor={sectionFieldBg}
-                  value={state.price}
-                  onChangeText={actions.setPrice}
-                  editable={!state.saving}
-                  keyboardType="decimal-pad"
-                  iosKeyboardDone
-                  placeholder="Ex: 29,90"
-                  helperText={priceHelperText}
-                  returnKeyType="done"
-                  onFocus={() => handleFocusField(priceY.current)}
-                />
-              </View>
+              <TextField
+                inputRef={priceInputRef}
+                label="Preço do livro"
+                labelBackgroundColor={sectionFieldBg}
+                value={state.price}
+                onChangeText={actions.setPrice}
+                editable={!state.saving}
+                keyboardType="decimal-pad"
+                iosKeyboardDone
+                placeholder="Ex: 29,90"
+                helperText={priceHelperText}
+                returnKeyType="done"
+                onFocus={scrollFocusedFieldIntoView}
+              />
             )}
 
             <View style={styles.field}>
@@ -592,10 +585,15 @@ export default function EditListing({
           </View>
           </View>
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       {!wide && !isKeyboardVisible ? (
-        <SafeAreaView edges={["bottom"]} style={styles.actionBar} testID="edit-listing-action-bar">
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[styles.actionBar, isIos && (iosGlass ? styles.iosActionBarGlass : styles.iosActionBarOpaque)]}
+          testID="edit-listing-action-bar"
+        >
+          {isIos && iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
           <View style={styles.actionBarInner}>
             {state.error ? (
               <Text accessibilityRole="alert" style={styles.errorText}>
@@ -632,7 +630,7 @@ export default function EditListing({
           </View>
         </SafeAreaView>
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -726,6 +724,14 @@ function createStyles(colors: ColorPalette) {
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 4,
+  },
+  iosActionBarGlass: {
+    backgroundColor: "transparent",
+    borderTopColor: tokens.glass.stroke,
+    overflow: "hidden",
+  },
+  iosActionBarOpaque: {
+    backgroundColor: colors.m3.surfaceContainer,
   },
   actionBarInner: {
     width: "100%",

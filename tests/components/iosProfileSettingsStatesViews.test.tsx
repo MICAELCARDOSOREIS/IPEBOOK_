@@ -76,7 +76,7 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
       </View>,
     );
 
-    expect(view.getAllByTestId("blur-view").length).toBeGreaterThanOrEqual(2);
+    expect(view.getAllByTestId("ios-native-glass", { includeHiddenElements: true }).length).toBeGreaterThanOrEqual(2);
     await fireEvent.press(view.getByLabelText("Editar perfil"));
     await fireEvent.press(view.getByLabelText("Publicar um livro"));
     await fireEvent.press(view.getByLabelText("Minhas publicações"));
@@ -103,12 +103,12 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
     const networkDataSource = new MemoryNetworkStatusDataSource(false);
 
     const offline = await render(<OfflineState onRetry={onRetryOffline} networkDataSource={networkDataSource} />);
-    expect(offline.getByTestId("ios-card-blur")).toBeDefined();
+    expect(offline.getByTestId("ios-card-glass", { includeHiddenElements: true })).toBeDefined();
     await fireEvent.press(offline.getByRole("button", { name: "Tentar novamente" }));
     expect(onRetryOffline).toHaveBeenCalledTimes(1);
 
     const error = await render(<ErrorState message="Falha ao carregar." onRetry={onRetryError} />);
-    expect(error.getByTestId("ios-card-blur")).toBeDefined();
+    expect(error.getByTestId("ios-card-glass", { includeHiddenElements: true })).toBeDefined();
     await fireEvent.press(error.getByRole("button", { name: "Tentar novamente" }));
     expect(onRetryError).toHaveBeenCalledTimes(1);
     expect(impactSpy).toHaveBeenCalledTimes(2);
