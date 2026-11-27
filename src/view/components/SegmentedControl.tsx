@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
@@ -31,6 +32,8 @@ export function SegmentedControl<T extends string>({
 }: SegmentedControlProps<T>) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const opaqueIos = useOpaqueIosSurfaces();
+  const nativeGlass = Platform.OS === "ios" && !opaqueIos;
 
   return (
     <View
@@ -55,10 +58,11 @@ export function SegmentedControl<T extends string>({
             }}
             style={({ pressed }) => [
               styles.segment,
-              selected && styles.segmentActive,
+              selected && (nativeGlass ? styles.segmentGlass : styles.segmentActive),
               pressed && !selected && styles.segmentPressed,
             ]}
           >
+            {selected && nativeGlass ? <IosGlassBackdrop style={styles.segmentGlass} /> : null}
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.3}
@@ -106,6 +110,7 @@ function createStyles(colors: ColorPalette) {
           }
         : { elevation: 1 }),
     },
+    segmentGlass: { borderRadius: tokens.radius.segmentInner },
     segmentPressed: {
       opacity: 0.78,
     },

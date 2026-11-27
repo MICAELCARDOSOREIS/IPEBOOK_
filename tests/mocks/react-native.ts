@@ -76,16 +76,17 @@ FlatList.displayName = "FlatList";
 
 export const SectionList = React.forwardRef<any, any>((props: any, ref: any) => {
   const sections = props.sections || [];
+  const passthrough = pickPassthroughProps(props);
+  const header = renderListSlot(props.ListHeaderComponent);
+  const footer = renderListSlot(props.ListFooterComponent);
   const hasItems = sections.some((section: any) => (section.data || []).length > 0);
   if (!hasItems && props.ListEmptyComponent) {
-    const empty = typeof props.ListEmptyComponent === "function"
-      ? React.createElement(props.ListEmptyComponent)
-      : props.ListEmptyComponent;
-    return React.createElement(View, { ref }, empty);
+    return React.createElement(View, { ref, ...passthrough }, header, renderListSlot(props.ListEmptyComponent), footer);
   }
   return React.createElement(
     View,
-    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
+    { ref, ...passthrough, onRefresh: props.onRefresh, refreshing: props.refreshing },
+    header,
     sections.map((section: any, sectionIndex: number) =>
       React.createElement(
         React.Fragment,
@@ -96,7 +97,8 @@ export const SectionList = React.forwardRef<any, any>((props: any, ref: any) => 
           return React.createElement(React.Fragment, { key }, props.renderItem({ item, index, section }));
         })
       )
-    )
+    ),
+    footer,
   );
 });
 SectionList.displayName = "SectionList";

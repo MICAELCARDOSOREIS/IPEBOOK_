@@ -1,9 +1,10 @@
 import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
 import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
-import { InputAccessoryView, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useScrollFocusedInput } from "@/view/components/ScreenContainer";
 import { TextButton } from "@/view/components/TextButton";
 
 import { withPress } from "@/view/pressFeedback";
@@ -83,8 +84,16 @@ export function TextField({
   const [revealed, setRevealed] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
-  const accessoryId = Platform.OS === "ios" && iosKeyboardDone ? `teclado-${errorId}` : undefined;
+  const needsDoneBar =
+    iosKeyboardDone ??
+    (multiline ||
+      keyboardType === "numeric" ||
+      keyboardType === "decimal-pad" ||
+      keyboardType === "number-pad" ||
+      keyboardType === "phone-pad");
+  const showIosDoneAction = Platform.OS === "ios" && needsDoneBar && focused;
   const { colors } = useTheme();
+  const scrollFocusedInput = useScrollFocusedInput();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const hasValue = value.length > 0;
   const floating = focused || hasValue;
@@ -117,7 +126,6 @@ export function TextField({
           autoComplete={autoComplete}
           textContentType={textContentType}
           returnKeyType={returnKeyType}
-          inputAccessoryViewID={accessoryId}
           onSubmitEditing={onSubmitEditing}
           autoCorrect={secureTextEntry ? false : undefined}
           autoCapitalize={autoCapitalize}
@@ -131,13 +139,19 @@ export function TextField({
           textAlignVertical={multiline ? "top" : "center"}
           onFocus={() => {
             setFocused(true);
+            scrollFocusedInput?.();
             onFocus?.();
           }}
           onBlur={() => {
             setFocused(false);
             onBlur?.();
           }}
-          style={[styles.input, multiline && styles.inputMultiline, secureTextEntry && styles.inputWithToggle]}
+          style={[
+            styles.input,
+            Platform.OS === "ios" && floating && styles.iosInputFloating,
+            multiline && styles.inputMultiline,
+            secureTextEntry && styles.inputWithToggle,
+          ]}
         />
         {secureTextEntry ? (
           <Pressable
@@ -154,9 +168,18 @@ export function TextField({
         {floating ? (
           <View
             pointerEvents="none"
-            style={[styles.notch, { backgroundColor: labelBackgroundColor ?? (Platform.OS === "ios" ? colors.m3.surfaceContainerLow : colors.background) }]}
+            style={[
+              styles.notch,
+              Platform.OS === "ios"
+                ? styles.iosNotch
+                : { backgroundColor: labelBackgroundColor ?? colors.background },
+            ]}
           >
-            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.floatingLabel, { color: accentColor }]}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.floatingLabel, Platform.OS === "ios" && styles.iosFloatingLabel, { color: accentColor }]}
+            >
               {label}
             </Text>
           </View>
@@ -175,30 +198,35 @@ export function TextField({
           </Text>
         )}
       </View>
-      {accessoryId ? (
-        <InputAccessoryView nativeID={accessoryId} backgroundColor={colors.m3.surfaceContainerLow}>
-          <View style={styles.keyboardActions}>
-            <TextButton label="Concluir" onPress={() => {
-              Keyboard.dismiss();
-              onSubmitEditing?.();
-            }} />
+      {hasError || helperText || showIosDoneAction ? (
+        <View style={styles.supportingRow}>
+          <View style={styles.supportingTextWrap}>
+            {hasError ? (
+              <Text
+                nativeID={errorId}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+                aria-live="polite"
+                style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
+              >
+                {error}
+              </Text>
+            ) : helperText ? (
+              <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
+                {helperText}
+              </Text>
+            ) : null}
           </View>
-        </InputAccessoryView>
-      ) : null}
-      {hasError ? (
-        <Text
-          nativeID={errorId}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          aria-live="polite"
-          style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
-        >
-          {error}
-        </Text>
-      ) : helperText ? (
-        <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
-          {helperText}
-        </Text>
+          {showIosDoneAction ? (
+            <TextButton
+              label="Concluir"
+              onPress={() => {
+                Keyboard.dismiss();
+                onSubmitEditing?.();
+              }}
+            />
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -207,7 +235,8 @@ export function TextField({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[4] },
-    keyboardActions: { alignItems: "flex-end", paddingHorizontal: tokens.spacing[16] },
+    supportingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    supportingTextWrap: { flex: 1 },
     container: {
       minHeight: tokens.spacing[56],
       justifyContent: "center",
@@ -231,6 +260,19 @@ function createStyles(colors: ColorPalette) {
     inputMultiline: {
       minHeight: tokens.spacing[64] + tokens.spacing[24],
       paddingTop: tokens.spacing[16],
+    },
+    iosInputFloating: {
+      paddingTop: tokens.spacing[20],
+      paddingBottom: tokens.spacing[6],
+    },
+    iosNotch: {
+      top: tokens.spacing[6],
+      left: tokens.spacing[12],
+      backgroundColor: "transparent",
+    },
+    iosFloatingLabel: {
+      fontSize: tokens.fontSize[11],
+      lineHeight: tokens.lineHeight[14],
     },
     inputWithToggle: { paddingRight: tokens.spacing[48] },
     toggle: {

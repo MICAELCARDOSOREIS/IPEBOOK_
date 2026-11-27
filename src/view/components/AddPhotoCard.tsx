@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 
 import { withPress } from "@/view/pressFeedback";
 export type AddPhotoCardProps = {
@@ -88,7 +89,10 @@ export function AddPhotoCard({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Adicionar ${label.toLowerCase()}`}
-      onPress={onPress}
+      onPress={() => {
+        if (Platform.OS === "ios") triggerHaptic("light");
+        onPress();
+      }}
       style={({ pressed }) => [styles.card, style, pressed && styles.cardPressed]}
     >
       <View style={styles.addIconCircle}>
@@ -108,10 +112,11 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       gap: tokens.spacing[6],
       borderRadius: tokens.radius.large,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       borderWidth: 1.5,
       borderStyle: "dashed",
-      borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.surface,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outlineVariant,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.surface,
       overflow: "hidden",
       position: "relative",
     },

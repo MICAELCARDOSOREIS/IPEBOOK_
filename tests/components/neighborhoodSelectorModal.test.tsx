@@ -49,7 +49,7 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
       />,
     );
 
-    const input = getByPlaceholderText("Buscar ponto de encontro em Piripiri...");
+    const input = getByPlaceholderText("Buscar ponto de encontro");
     await React.act(async () => {
       fireEvent.changeText(input, "bandeira");
     });
@@ -112,9 +112,13 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
       };
 
       expect(readPaddingBottom()).toBe(0);
-      __emitKeyboardEvent("keyboardDidShow", 300);
+      await React.act(async () => {
+        __emitKeyboardEvent("keyboardDidShow", 300);
+      });
       expect(readPaddingBottom()).toBe(300);
-      __emitKeyboardEvent("keyboardDidHide", undefined);
+      await React.act(async () => {
+        __emitKeyboardEvent("keyboardDidHide", undefined);
+      });
       expect(readPaddingBottom()).toBe(0);
     } finally {
       Platform.OS = originalPlatform;

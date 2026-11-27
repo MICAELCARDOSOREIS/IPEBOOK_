@@ -1,5 +1,5 @@
 
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { AccessibilityInfo, StyleSheet } from "react-native";
 import DeleteAccount from "@/view/auth/deleteAccount";
 import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
@@ -182,7 +182,8 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
     const submitBtn = screen.getByRole("button", { name: "Confirmar e excluir minha conta" });
     const submitBtnStyle = StyleSheet.flatten(submitBtn.props.style);
     const submitTextStyle = StyleSheet.flatten(screen.getByText("Confirmar e excluir minha conta").props.style);
-    expect(submitBtnStyle.backgroundColor).toBe(colors.error);
+    expect(submitBtnStyle.backgroundColor).toBe("transparent");
+    expect(within(submitBtn).getByTestId("filled-button-glass", { includeHiddenElements: true }).props.tintColor).toBe(colors.error);
     expect(submitTextStyle.color).toBe(colors.surface);
 
     await act(async () => {
