@@ -26,6 +26,8 @@ import { BookCover } from "@/view/components/BookCover";
 import { SegmentedControl } from "@/view/components/SegmentedControl";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { triggerHaptic } from "@/view/haptics";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -74,6 +76,10 @@ export function Conversations({
   const [state, actions] = makeConversationsViewModel(sessionUserId);
   const { isOnline } = makeNetworkStatus();
   const hasIosHeader = Platform.OS === "ios" && Boolean(onBack);
+  const isIos = Platform.OS === "ios";
+  // Liquid Glass nativo (ADR 0123) com alternativa opaca quando o material não está disponível.
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const hasList = state.items.length > 0 && !state.error;
   // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
   const { reload } = actions;
@@ -551,10 +557,24 @@ export function Conversations({
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Cancelar pedido de ${item.listing.title}`}
-                            onPress={() => setToCancel(item)}
+                            onPress={() => {
+                              if (isIos) triggerHaptic("light");
+                              setToCancel(item);
+                            }}
                             hitSlop={8}
-                            style={withPress(styles.cancelRequest)}
+                            style={({ pressed }) => [
+                              styles.cancelRequest,
+                              isIos && (iosGlass ? styles.iosCancelRequestGlass : styles.iosCancelRequestOpaque),
+                              pressed && (isIos ? styles.iosCancelRequestPressed : styles.cancelRequestPressed),
+                            ]}
                           >
+                            {iosGlass ? (
+                              <IosGlassBackdrop
+                                testID="conversations-cancel-request-glass"
+                                tintColor={colors.errorContainer}
+                                style={styles.iosGlassPillShape}
+                              />
+                            ) : null}
                             <Text style={styles.cancelRequestText}>Cancelar pedido</Text>
                           </Pressable>
                         </View>

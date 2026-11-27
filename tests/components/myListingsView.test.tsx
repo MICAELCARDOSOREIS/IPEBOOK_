@@ -673,6 +673,13 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
     const style = StyleSheet.flatten(screen.getByTestId("my-listings-tablist").props.style);
     expect(style.borderRadius).toBe(trackRadius);
+    expect(style.justifyContent).not.toBe("space-between");
+
+    const statsRowStyle = StyleSheet.flatten(screen.getByTestId("my-listings-stats-row").props.style);
+    expect(statsRowStyle.marginTop ?? 0).toBeGreaterThanOrEqual(0);
+
+    const headerStyle = StyleSheet.flatten(screen.getByTestId("my-listings-header").props.style);
+    expect(headerStyle.paddingBottom).toBeGreaterThanOrEqual(12);
     Platform.OS = originalOS;
   });
 

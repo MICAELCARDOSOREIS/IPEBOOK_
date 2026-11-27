@@ -233,7 +233,7 @@ export function MyListings({
       label: concludedCount > 0 ? `Concluídos (${concludedCount})` : "Concluídos",
       a11y: "Concluídos",
       tone: colors.badge.completed,
-      visible: concludedCount > 0 || activeTab === "concluded",
+      visible: true,
       onPress: () => {
         setModalityFilter("all");
         setActiveTab("concluded");
@@ -290,7 +290,7 @@ export function MyListings({
   ];
 
   const header = (
-    <View style={[styles.header, wideWeb && styles.headerWide]}>
+    <View testID="my-listings-header" style={[styles.header, wideWeb && styles.headerWide]}>
       {onBack ? (
         <Pressable
           accessibilityRole="button"
@@ -388,7 +388,7 @@ export function MyListings({
           >
             {scrollCachedNotice ? <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" /> : null}
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
-            <View style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
+            <View testID="my-listings-stats-row" style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
                 const isSelected = activeTab === "listings" && modalityFilter === stat.key;
                 const isDimmed = activeTab === "listings" && modalityFilter !== "all" && !isSelected;
