@@ -44,9 +44,9 @@ describe("Spec 144 — Navegação por arraste estilo Instagram e transições d
       expect(iosOpts.fullScreenGestureEnabled).toBe(true);
     });
 
-    it("usa slide_from_bottom em fluxos modais (anunciar, editar, denunciar)", () => {
+    it("usa slide_from_bottom em fluxos modais (denunciar) e slide_from_right em anunciar/editar", () => {
       Platform.OS = "android";
-      expect(getStackScreenOptions("anunciar", "#FCFAF5", false).animation).toBe("slide_from_bottom");
+      expect(getStackScreenOptions("anunciar", "#FCFAF5", false).animation).toBe("slide_from_right");
       expect(getStackScreenOptions("editar-anuncio/[id]", "#FCFAF5", false).animation).toBe("slide_from_right");
       expect(getStackScreenOptions("denunciar/[id]", "#FCFAF5", false).animation).toBe("slide_from_bottom");
     });

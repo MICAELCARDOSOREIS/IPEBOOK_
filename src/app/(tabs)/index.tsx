@@ -44,9 +44,17 @@ export default function Index() {
   );
 
   // Na Web, o catálogo comunitário é livre para qualquer visitante navegar sem exigir login prévio.
-  // No app móvel nativo, mantém o fluxo da Spec 092 e habilita o arraste 1:1 entre abas (Spec 144).
   if (Platform.OS === "web") {
     return homeContent;
+  }
+
+  // No iOS, `NativeTabs` (`src/app/(tabs)/_layout.tsx`) gerencia as 3 abas nativas com Liquid Glass.
+  if (Platform.OS === "ios") {
+    return (
+      <RequireAuth onRequireSignIn={() => replaceOnce("/bem-vindo")}>
+        {homeContent}
+      </RequireAuth>
+    );
   }
 
   const searchContent = (
