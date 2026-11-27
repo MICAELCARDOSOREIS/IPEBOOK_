@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import * as Haptics from "expo-haptics";
+import { isAvailableAsync } from "expo-apple-authentication";
 import { AccessibilityInfo, Platform, StyleSheet } from "react-native";
 import AuthCallback from "@/view/auth/authCallback";
 import SignIn from "@/view/auth/signIn";
@@ -60,6 +61,18 @@ describe("Acesso e Onboarding iOS 26 (Spec 137 · #228)", () => {
     expect(screen.getByTestId("outlined-button-blur")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
+  });
+
+  it("abre o login Apple quando o botão nativo está disponível e navega ao autenticar", async () => {
+    jest.mocked(isAvailableAsync).mockResolvedValueOnce(true);
+    const signInWithApple = jest.fn().mockResolvedValue(true);
+    const onAuthenticated = jest.fn();
+    mockAuth(undefined, { signInWithApple });
+    const screen = await render(<SignIn onAuthenticated={onAuthenticated} />);
+    const button = await screen.findByRole("button", { name: "Continuar com a Apple" });
+    await act(async () => { fireEvent.press(button); });
+    expect(signInWithApple).toHaveBeenCalledTimes(1);
+    expect(onAuthenticated).toHaveBeenCalledTimes(1);
   });
 
   it("mantém botão voltar acessível com alvo >= 44pt no erro de AuthCallback", async () => {
