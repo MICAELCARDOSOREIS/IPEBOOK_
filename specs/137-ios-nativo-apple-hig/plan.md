@@ -46,3 +46,22 @@
 - **#236 (`T011`):** Build iOS (`eas.json`), `PrivacyInfo.xcprivacy` e TestFlight.
 - **#237 (`T012`):** Auditoria visual lado a lado contra todas as seções de [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md).
 - **#238 (`T013`):** Verificação final no iPhone e regressão zero em Android (MD3) e Web (`npm run validate`).
+
+## Correções da auditoria de iPhone
+
+A auditoria registrada no Obsidian Mind e a lição sobre o recorte quadrado do Expo ImagePicker orientam o trabalho. Validar primeiro o seletor de fotos e o Info.plist efetivo. Em seguida, verificar escala de texto, autenticação e configuração de distribuição. Manter homologação física separada das verificações locais.
+
+- Fotos retangulares de anúncio no iOS preservam o enquadramento capturado, com redução pelo maior lado. O avatar mantém recorte quadrado. Verificar no teste do serviço e em aparelho com câmera e galeria.
+- O Info.plist efetivo explica todos os usos de câmera e fotos em português e dispensa finalidade de microfone para fluxos que usam apenas imagens. Conferir com `expo config --type introspect`.
+- Busca e abas acomodam a escala de acessibilidade do sistema. Checar texto ampliado, teclado, alvos de toque e ordem de foco em iPhone compacto e com Dynamic Island.
+- Build para iPhone físico e produção têm configuração explícita. Validar assinatura, privacidade, acesso por e-mail, login Apple e APNs em TestFlight antes de marcar a homologação.
+
+## Material Liquid Glass nativo
+
+A folha de exemplar reservado ou entregue usa o `BottomSheet` compartilhado no iOS, com `GlassView` para o Liquid Glass e o `Modal` do React Native para a apresentação. A troca corrige a falha de montagem do host experimental em aparelho. As demais folhas e diálogos customizados aplicam `GlassView` nas superfícies de apresentação. Validar abertura, fechamento, navegação pelas ações, rolagem com texto ampliado e fundos sólidos quando a transparência estiver reduzida ou indisponível.
+
+Migrar as superfícies de vidro do iOS para `GlassView`, que usa `UIGlassEffect`. A barra do iPhone usa `NativeTabs` e o pager da Spec 144 segue no Android. Controles flutuantes e folhas usam o material do sistema quando disponível. Cartões estáticos de conteúdo usam superfície sólida. Proteger iOS anterior, módulos ausentes e a preferência Reduzir Transparência com superfícies opacas. A Spec 137 e o ADR 0115 registram o vidro anterior. A nota `IpeBook` do Obsidian Mind registra a plataforma e a homologação pendente em aparelho.
+
+Critérios de aceite. Cada superfície que usa efeito de vidro chama apenas a implementação nativa, com alternativa opaca sem a API. O UIKit apresenta as três abas e gerencia a seleção no iOS. Os endereços públicos permanecem estáveis. O efeito decorativo preserva toque, foco e leitores de tela. Android e Web seguem os componentes existentes. Validar seleção de plataforma, acessibilidade, exportações Expo e refração em iPhone com iOS 26 ou superior.
+
+Em Conversas, a barra superior mantém o título centralizado e o botão Voltar na área segura. Ao rolar a lista no iOS, o material de fundo desfoca o conteúdo que passa sob a barra, incluindo a região atrás da barra de status. Ao retornar ao topo ou ativar Reduzir Transparência, o fundo fica sólido. A verificação automatizada cobre a troca de material e a ação Voltar. Em iPhone, conferir a área da Dynamic Island ou do notch, a legibilidade e a navegação com VoiceOver. A nota `Gotchas` do Obsidian Mind orientou a conferência da API na versão instalada. [Documentação do BlurView no Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/blur-view/).

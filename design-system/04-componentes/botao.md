@@ -106,9 +106,6 @@ rótulo que diga para onde se volta, como "Voltar à etapa anterior" (ver `creat
 
 - `FilledButton` mantém o verde IpêBook e a altura de 52 pt; no iOS recebe cantos
   contínuos e elevação suave sem transparência no texto principal.
-- `OutlinedButton` usa superfície Liquid Glass somente no **iOS**, com
-  `glass.fill` e `glass.stroke`, desfoque do `expo-blur` e rótulo legível.
-- A opção **Reduzir Transparência** substitui o vidro por
-  `surface-container-low` opaco. Estados de carregamento e desabilitado não
-  exibem desfoque.
+- `OutlinedButton` usa Liquid Glass nativo no **iOS**, via `IosGlassBackdrop`.
+- O botão habilitado usa `surface-container-low` opaco com **Reduzir Transparência** ou quando o vidro está indisponível. Carregamento e desabilitado usam o contorno do estado inativo.
 - Android (M3 Expressive) e Web mantêm seus estilos e comportamentos existentes.
