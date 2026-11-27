@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { TextButton } from "@/view/components/TextButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { makeInviteFriendsViewModel } from "@/di/container";
@@ -49,15 +48,13 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   const contentMaxWidth = wide ? WEB_MAX_WIDTH : 560;
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={guardedBack} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={guardedBack} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
-            <IconBadge icon="shelf" tone="action" size="large" />
             <Text accessibilityRole="header" style={styles.title}>
               Livros ganham vida quando são lidos.
             </Text>
@@ -71,10 +68,12 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
           <InviteCard ref={cardRef} url={state.inviteUrl} />
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
-          <View style={styles.previewCard}>
-            <Text style={styles.previewLabel}>{Platform.OS === "ios" ? "Texto do convite" : "Texto que vai junto com a imagem"}</Text>
-            <Text style={styles.previewText}>{state.inviteMessage}</Text>
-          </View>
+          {wide ? (
+            <View style={styles.previewCard}>
+              <Text style={styles.previewLabel}>Texto que vai junto com a imagem</Text>
+              <Text style={styles.previewText}>{state.inviteMessage}</Text>
+            </View>
+          ) : null}
 
           {state.linkCopied ? (
             <View
@@ -113,18 +112,20 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               loading={state.sharing}
               onPress={() => void actions.shareImage(captureInvite)}
             />
+            <Text style={styles.actionsHint}>O link vai junto na mensagem.</Text>
             {Platform.OS === "ios" ? (
-              <>
-                <OutlinedButton label="Compartilhar texto" disabled={state.sharing} onPress={() => void actions.shareNative()} />
-                <OutlinedButton label="Copiar link" disabled={state.sharing} onPress={() => void actions.copyLink()} />
-              </>
+              <View style={styles.secondaryLinksRow}>
+                <TextButton label="Compartilhar texto" disabled={state.sharing} onPress={() => void actions.shareNative()} />
+                <View style={styles.secondaryDivider} />
+                <TextButton label="Copiar link" disabled={state.sharing} onPress={() => void actions.copyLink()} />
+              </View>
             ) : null}
           </View>
           </View>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -205,8 +206,24 @@ function createStyles(colors: ColorPalette) {
       color: colors.error,
     },
     actions: {
-      gap: tokens.spacing[12],
-      marginTop: tokens.spacing[8],
+      gap: tokens.spacing[10],
+      marginTop: tokens.spacing[4],
+    },
+    actionsHint: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+    },
+    secondaryLinksRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+    },
+    secondaryDivider: {
+      width: 1,
+      height: 16,
+      backgroundColor: colors.m3.outlineVariant,
     },
   });
 }
