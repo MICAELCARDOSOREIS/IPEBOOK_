@@ -299,6 +299,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_hidden_conversations: { existe: true },
           v2_user_reports: { existe: true },
           v2_deliveries: { existe: true },
+          v2_web_push_subscriptions: { existe: true },
         },
         storage: { ok: true, publico: true },
         rpc: {
@@ -310,8 +311,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(45);
-      expect(resultado.aplicadas).toBe(45);
+      expect(resultado.total).toBe(46);
+      expect(resultado.aplicadas).toBe(46);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -344,9 +345,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(45);
+      expect(resultado.total).toBe(46);
       expect(resultado.aplicadas).toBe(25);
-      expect(resultado.pendentes).toBe(20);
+      expect(resultado.pendentes).toBe(21);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -358,6 +359,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       expect(arquivosPendentes).toContain('202610230002_bloqueio_usuarios.sql');
       expect(arquivosPendentes).toContain('202610240001_mensagens_negociacao.sql');
       expect(arquivosPendentes).toContain('202610260001_push_token_preferencias.sql');
+      expect(arquivosPendentes).toContain('20261126212846_web_push_iphone.sql');
     });
   });
 
@@ -404,7 +406,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(45);
+      expect(parsed.migracoes.total).toBe(46);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {

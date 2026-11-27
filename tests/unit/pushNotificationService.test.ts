@@ -284,23 +284,18 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
       }
     });
 
-    it("no web com Notification, reflete a permissão concedida e negada (Spec 060)", async () => {
+    it("não pede permissão no navegador sem suporte a inscrição no serviço", async () => {
       const osAnterior = Platform.OS;
       const winAnterior = (globalThis as { window?: unknown }).window;
       const notifAnterior = (globalThis as { Notification?: unknown }).Notification;
       Platform.OS = "web";
       try {
-        const api = { permission: "granted", requestPermission: async () => "granted" };
+        const api = { permission: "granted", requestPermission: jest.fn(async () => "granted") };
         (globalThis as { Notification?: unknown }).Notification = api;
         (globalThis as { window?: unknown }).window = { Notification: api };
-        expect(await service.getPermissions()).toBe(true);
-        expect(await service.requestPermissions()).toBe(true);
-
-        const negado = { permission: "denied", requestPermission: async () => "denied" };
-        (globalThis as { Notification?: unknown }).Notification = negado;
-        (globalThis as { window?: unknown }).window = { Notification: negado };
         expect(await service.getPermissions()).toBe(false);
         expect(await service.requestPermissions()).toBe(false);
+        expect(api.requestPermission).not.toHaveBeenCalled();
       } finally {
         Platform.OS = osAnterior;
         (globalThis as { window?: unknown }).window = winAnterior;

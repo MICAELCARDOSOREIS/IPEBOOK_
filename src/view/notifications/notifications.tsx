@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, SectionList, Text, View } from "react-native";
+import { Platform, Pressable, SectionList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -17,6 +17,7 @@ import {
   makeNetworkStatus,
   makeNotificationsPromptViewModel,
   makeNotificationsViewModel,
+  makeWebPushViewModel,
 } from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -78,6 +79,7 @@ export default function Notifications({
     void actions.refresh();
   });
   const [prompt, promptActions] = makeNotificationsPromptViewModel();
+  const webPush = makeWebPushViewModel(sessionUserId);
   const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();
   const styles = useMemo(() => createNotificationsStyles(colors), [colors]);
@@ -221,7 +223,24 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       {renderHeader(true)}
       <View style={[styles.content, wide && styles.contentWide]}>
-        {state.systemPermissionGranted === false && !prompt.granted ? (
+        {Platform.OS === "web" ? (
+          <View style={styles.permissionBannerAction}>
+            {webPush.status === "active" || webPush.status === "inactive" ? (
+              <OutlinedButton
+                label={webPush.status === "active" ? "Desativar avisos neste iPhone" : "Ativar avisos neste iPhone"}
+                loading={webPush.busy}
+                onPress={() => void webPush.toggle()}
+              />
+            ) : (
+              <Text style={styles.permissionBannerDescription}>
+                {webPush.status === "requires-install"
+                  ? "Para receber avisos neste iPhone, adicione o IpêBook à Tela de Início e abra a central pelo ícone."
+                  : "Na versão web, acompanhe propostas e lembretes nesta central."}
+              </Text>
+            )}
+            {webPush.error ? <Text accessibilityRole="alert" style={styles.permissionBannerDescription}>{webPush.error}</Text> : null}
+          </View>
+        ) : state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
             accessible={true}
@@ -591,13 +610,13 @@ export default function Notifications({
       />
 
       {/* Reabrir o aviso explicativo: a pessoa pediu no botão da banner, então o prompt nativo vem depois. */}
-      <PermissionPromptDialog
+      {Platform.OS !== "web" ? <PermissionPromptDialog
         permission="notifications"
         status={prompt.status}
         onAllow={() => void promptActions.approve()}
         onLater={() => void promptActions.decline()}
         onDismiss={promptActions.dismiss}
-      />
+      /> : null}
     </SafeAreaView>
   );
 }
