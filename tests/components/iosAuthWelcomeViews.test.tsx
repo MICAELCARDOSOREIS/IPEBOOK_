@@ -49,7 +49,7 @@ describe("Acesso e Onboarding iOS 26 (Spec 137 · #228)", () => {
     const screen = await render(<Welcome onStart={() => {}} onSignIn={() => {}} />);
 
     expect(screen.getByText("PIRIPIRI · PIAUÍ")).toBeDefined();
-    expect(screen.getByTestId("outlined-button-blur")).toBeDefined();
+    expect(screen.getByTestId("outlined-button-glass", { includeHiddenElements: true })).toBeDefined();
 
     fireEvent.press(screen.getByLabelText("Venda: toque para ver detalhes"));
     expect(selectionSpy).toHaveBeenCalledTimes(1);
@@ -57,8 +57,8 @@ describe("Acesso e Onboarding iOS 26 (Spec 137 · #228)", () => {
 
   it("renderiza Entrar no iOS com barra Liquid Glass e botão Google em vidro", async () => {
     const screen = await render(<SignIn onBack={() => {}} />);
-    expect(screen.getByTestId("top-app-bar-back-blur")).toBeDefined();
-    expect(screen.getByTestId("outlined-button-blur")).toBeDefined();
+    expect(screen.getByTestId("top-app-bar-back-glass", { includeHiddenElements: true })).toBeDefined();
+    expect(screen.getByTestId("outlined-button-glass", { includeHiddenElements: true })).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
   });

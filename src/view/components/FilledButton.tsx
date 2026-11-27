@@ -2,8 +2,10 @@ import { useMemo } from "react";
 import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useExpressivePress } from "@/view/useExpressivePress";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type FilledButtonProps = {
   label: string;
@@ -30,10 +32,15 @@ export function FilledButton({
   textColor,
 }: FilledButtonProps) {
   const isDisabled = disabled || loading;
-  const guardedPress = useGuardedPress(onPress);
+  const guardedPress = useGuardedPress(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onPress();
+  });
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled: isDisabled });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = Platform.OS === "ios" && !opaqueIos && !isDisabled;
   return (
     <Animated.View style={[{ transform: [{ scale }] }, Platform.OS === "ios" && !isDisabled && styles.iosShadow]}>
       <Pressable
@@ -48,11 +55,20 @@ export function FilledButton({
         style={[
           styles.button,
           Platform.OS === "ios" && styles.iosButton,
-          backgroundColor && !isDisabled ? { backgroundColor } : null,
+          backgroundColor && !isDisabled && !iosGlass ? { backgroundColor } : null,
+          iosGlass && styles.iosGlass,
           isPressed && !isDisabled && Platform.OS !== "ios" && styles.pressedShape,
           isDisabled && styles.disabled,
         ]}
       >
+        {iosGlass ? (
+          <IosGlassBackdrop
+            tintColor={backgroundColor ?? colors.action}
+            isInteractive
+            style={styles.iosGlassShape}
+            testID="filled-button-glass"
+          />
+        ) : null}
         {loading ? (
           <ActivityIndicator color={textColor ?? colors.surface} accessibilityLabel={loadingLabel ?? label} />
         ) : (
@@ -77,6 +93,14 @@ function createStyles(colors: ColorPalette) {
     },
     iosButton: {
       borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+    },
+    iosGlass: {
+      backgroundColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
     },
     iosShadow: {

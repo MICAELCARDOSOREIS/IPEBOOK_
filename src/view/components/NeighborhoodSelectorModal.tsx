@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -10,22 +11,26 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import {
   ALL_PIRIPIRI_LOCATIONS_LABEL,
   PIRIPIRI_MEETING_POINT_NAMES,
   type PiripiriMeetingPointName,
 } from "@/model/entities/location";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { withPress } from "@/view/pressFeedback";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
-import { standardVerticalScrollProps } from "@/view/scrollProps";
-
-import { withPress } from "@/view/pressFeedback";
 
 export type LocationItem = {
   id: string;
@@ -84,7 +89,21 @@ function getNeighborhoodModalStyles(colors: ColorPalette) {
 
 export function NeighborhoodSelectorModal(props: NeighborhoodSelectorModalProps) {
   if (!props.visible) return null;
-  return <NeighborhoodSelectorModalContent {...props} />;
+  return (
+    <Modal
+      accessibilityViewIsModal
+      animationType="fade"
+      transparent
+      statusBarTranslucent
+      navigationBarTranslucent
+      visible={props.visible}
+      onRequestClose={props.onClose}
+    >
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <NeighborhoodSelectorModalContent {...props} />
+      </SafeAreaProvider>
+    </Modal>
+  );
 }
 
 function NeighborhoodSelectorModalContent({
@@ -99,7 +118,27 @@ function NeighborhoodSelectorModalContent({
   const styles = getNeighborhoodModalStyles(colors);
   const [filterText, setFilterText] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
+
+  useEffect(() => {
+    if (Platform.OS === "web") return undefined;
+    const showSub = Keyboard.addListener(
+      isIos ? "keyboardWillShow" : "keyboardDidShow",
+      () => setKeyboardOpen(true),
+    );
+    const hideSub = Keyboard.addListener(
+      isIos ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardOpen(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [isIos]);
 
   const baseItems = useMemo(() => {
     return allowAllNeighborhoods
@@ -126,15 +165,6 @@ function NeighborhoodSelectorModalContent({
   if (!visible) return null;
 
   return (
-    <Modal
-      accessibilityViewIsModal
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      navigationBarTranslucent
-      visible={visible}
-      onRequestClose={onClose}
-    >
       <Animated.View
         testID="neighborhood-selector-scrim"
         style={[
@@ -152,11 +182,24 @@ function NeighborhoodSelectorModalContent({
         <View
           style={[
             styles.sheetContainer,
+            !wideWeb && isIos && (iosGlass ? styles.iosSheetGlass : styles.iosSheetOpaque),
             wideWeb
               ? styles.dialogWide
-              : { paddingBottom: Math.max(tokens.spacing[24], insets.bottom + tokens.spacing[12]) },
+              : {
+                  paddingBottom: keyboardOpen
+                    ? tokens.spacing[12]
+                    : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]),
+                },
           ]}
         >
+          {!wideWeb && iosGlass ? (
+            <IosGlassBackdrop
+              style={{
+                borderTopLeftRadius: tokens.radius.extraLarge,
+                borderTopRightRadius: tokens.radius.extraLarge,
+              }}
+            />
+          ) : null}
           {/* Alça da folha (M3) */}
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
 
@@ -173,9 +216,16 @@ function NeighborhoodSelectorModalContent({
               accessibilityRole="button"
               accessibilityLabel="Fechar seletor de locais"
               onPress={onClose}
-              style={withPress(styles.closeButton)}
+              style={({ pressed }) => [
+                styles.closeButton,
+                isIos && styles.iosCloseButton,
+                isIos && opaqueIos && styles.iosCloseOpaque,
+                pressed && { transform: [{ scale: 0.96 }] },
+                pressed && !iosGlass && { opacity: 0.75 },
+              ]}
             >
-              <AppIcon name="close" size={24} color={colors.m3.onSurfaceVariant} />
+              {iosGlass ? <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} /> : null}
+              <AppIcon name="close" size={isIos ? 20 : 24} color={colors.m3.onSurfaceVariant} />
             </Pressable>
           </View>
 
@@ -185,7 +235,7 @@ function NeighborhoodSelectorModalContent({
             <TextInput
               ref={searchInputRef as never}
               style={styles.searchInput}
-              placeholder="Buscar ponto de encontro em Piripiri..."
+              placeholder="Buscar ponto de encontro"
               placeholderTextColor={colors.m3.onSurfaceVariant}
               accessibilityLabel="Buscar ponto de encontro em Piripiri"
               value={filterText}
@@ -215,10 +265,7 @@ function NeighborhoodSelectorModalContent({
             data={filteredItems}
             keyExtractor={(item) => item.id}
             style={styles.list}
-            contentContainerStyle={[
-              styles.listContent,
-              !wideWeb && { paddingBottom: Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
-            ]}
+            contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
@@ -280,7 +327,7 @@ function NeighborhoodSelectorModalContent({
                         {item.name}
                       </Text>
                       <Text
-                        numberOfLines={1}
+                        numberOfLines={2}
                         style={[
                           styles.itemSubtext,
                           isSelected && styles.itemSubtextSelected,
@@ -297,7 +344,6 @@ function NeighborhoodSelectorModalContent({
           />
         </View>
       </Animated.View>
-    </Modal>
   );
 }
 
@@ -327,12 +373,31 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderTopLeftRadius: tokens.radius.extraLarge,
       borderTopRightRadius: tokens.radius.extraLarge,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       maxHeight: "90%",
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
       paddingHorizontal: tokens.spacing[16],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+    },
+    iosSheetGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosSheetOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    iosCloseButton: {
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.full,
+      backgroundColor: "transparent",
+      borderCurve: "continuous",
+    },
+    iosCloseOpaque: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
     },
     header: {
       flexDirection: "row",
@@ -361,17 +426,18 @@ function createStyles(colors: ColorPalette) {
     searchBox: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.cardSmall,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       borderWidth: 1.5,
-      borderColor: "transparent",
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : "transparent",
       paddingHorizontal: tokens.spacing[12],
       minHeight: tokens.accessibility.touchTarget,
       marginBottom: tokens.spacing[12],
     },
     searchBoxFocused: {
-      borderColor: colors.m3.primary,
-      backgroundColor: colors.m3.surfaceContainerHighest,
+      borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.m3.primary,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.m3.surfaceContainerHighest,
     },
     searchInput: {
       flex: 1,
@@ -384,8 +450,8 @@ function createStyles(colors: ColorPalette) {
     },
     clearSearchButton: {
       padding: tokens.spacing[4],
-      minWidth: tokens.spacing[32],
-      minHeight: tokens.spacing[32],
+      minWidth: Platform.OS === "ios" ? 44 : tokens.spacing[32],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[32],
       justifyContent: "center",
       alignItems: "center",
     },

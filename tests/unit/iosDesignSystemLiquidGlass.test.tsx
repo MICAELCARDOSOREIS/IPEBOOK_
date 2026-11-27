@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import * as Haptics from "expo-haptics";
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from "react-native";
+import * as GlassEffect from "expo-glass-effect";
 import * as SafeAreaContext from "react-native-safe-area-context";
 import { BottomSheet } from "@/view/components/BottomSheet";
 import { NavigationBar } from "@/view/components/NavigationBar";
@@ -13,6 +14,10 @@ import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 0114, Issue #227)", () => {
   const originalPlatform = Platform.OS;
+
+  beforeEach(() => {
+    jest.mocked(GlassEffect.isGlassEffectAPIAvailable).mockReturnValue(true);
+  });
 
   afterEach(() => {
     cleanup();
@@ -179,7 +184,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
   });
 
   describe("NavigationBar (Liquid Glass e Apple HIG)", () => {
-    it("renderiza dock flutuante com acabamento Liquid Glass, BlurView e haptics de seleção no iOS", async () => {
+    it("renderiza dock flutuante com Liquid Glass nativo e haptics de seleção no iOS", async () => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
       jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
       const selectionSpy = jest.spyOn(Haptics, "selectionAsync").mockResolvedValue();
@@ -192,11 +197,15 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
 
       const dock = screen.getByTestId("navigation-bar-dock");
       const flatStyle = StyleSheet.flatten(dock.props.style);
-      expect(flatStyle.backgroundColor).toBe(tokens.glass.fill);
-      expect(flatStyle.borderColor).toBe(tokens.glass.stroke);
+      expect(flatStyle.backgroundColor).toBe("transparent");
+      expect(flatStyle.borderColor).toBe("transparent");
 
-      const blurView = screen.getByTestId("blur-view");
-      expect(blurView).toBeDefined();
+      const glassView = screen.getByTestId("ios-native-glass", { includeHiddenElements: true });
+      expect(glassView.props).toMatchObject({
+        glassEffectStyle: "regular",
+        pointerEvents: "none",
+        accessibilityElementsHidden: true,
+      });
 
       const activePill = screen.getByTestId("navigation-bar-active-pill");
       const pillStyle = StyleSheet.flatten(activePill.props.style);
@@ -212,9 +221,13 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       expect(onNavigate).toHaveBeenCalledWith("search");
     });
 
-    it("aplica fallback opaco surfaceContainer sem BlurView quando Reduzir Transparência estiver ativo no iOS", async () => {
+    it.each([
+      ["com Reduzir Transparência", true],
+      ["com API indisponível", false],
+    ])("aplica fallback opaco %s no iOS", async (_reason, reduceTransparency) => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
-      jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(true);
+      jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(reduceTransparency);
+      jest.mocked(GlassEffect.isGlassEffectAPIAvailable).mockReturnValue(reduceTransparency);
 
       const onNavigate = jest.fn();
       const screen = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
@@ -226,7 +239,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const flatStyle = StyleSheet.flatten(dock.props.style);
       expect(flatStyle.backgroundColor).toBe(colors.m3.surfaceContainer);
       expect(flatStyle.borderColor).toBe(colors.m3.outlineVariant);
-      expect(screen.queryByTestId("blur-view")).toBeNull();
+      expect(screen.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
     });
   });
 
@@ -262,7 +275,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       expect(screen.queryByText("Oculto")).toBeNull();
     });
 
-    it("renderiza com modal de acessibilidade, drag handle, BlurView no iOS, estilo Liquid Glass e cantos de 28 dp", async () => {
+    it("renderiza com modal de acessibilidade, drag handle, GlassView no iOS, estilo Liquid Glass e cantos de 28 dp", async () => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
       jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
 
@@ -282,14 +295,14 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
 
       const container = screen.getByTestId("modal-sheet-container");
       const flatStyle = StyleSheet.flatten(container.props.style);
-      expect(flatStyle.backgroundColor).toBe(tokens.glass.fill);
-      expect(flatStyle.borderColor).toBe(tokens.glass.stroke);
+      expect(flatStyle.backgroundColor).toBe("transparent");
+      expect(flatStyle.borderColor).toBe("transparent");
       expect(flatStyle.borderTopLeftRadius).toBe(tokens.radius.xxl);
       expect(flatStyle.borderTopRightRadius).toBe(tokens.radius.xxl);
 
       expect(screen.getByTestId("bottom-sheet-drag-area")).toBeDefined();
       expect(screen.getByTestId("bottom-sheet-handle")).toBeDefined();
-      expect(screen.getByTestId("blur-view")).toBeDefined();
+      expect(screen.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
       expect(screen.getByText("Opções do Livro")).toBeDefined();
       expect(screen.getByText("Conteúdo da folha")).toBeDefined();
 
@@ -312,7 +325,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const container = screen.getByTestId("modal-sheet-container");
       const flatStyle = StyleSheet.flatten(container.props.style);
       expect(flatStyle.backgroundColor).toBe(colors.m3.surfaceContainer);
-      expect(screen.queryByTestId("blur-view")).toBeNull();
+      expect(screen.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
     });
 
     it("respeita insets.bottom dinâmico somando à folga do Home Indicator", async () => {

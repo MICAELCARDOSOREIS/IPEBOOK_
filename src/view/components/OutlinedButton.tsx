@@ -1,11 +1,11 @@
-import { BlurView } from "expo-blur";
 import { useMemo, type ReactNode } from "react";
 import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useExpressivePress } from "@/view/useExpressivePress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -32,11 +32,14 @@ export function OutlinedButton({
   icon,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
-  const guardedPress = useGuardedPress(onPress);
+  const guardedPress = useGuardedPress(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onPress();
+  });
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled: isDisabled });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   return (
     <Animated.View style={[{ transform: [{ scale }] }, Platform.OS === "ios" && !isDisabled && styles.iosShadow]}>
       <Pressable
@@ -56,9 +59,7 @@ export function OutlinedButton({
         ]}
       >
         {Platform.OS === "ios" && !reduceTransparency && !isDisabled ? (
-          <View pointerEvents="none" style={styles.iosBlurClip}>
-            <BlurView testID="outlined-button-blur" intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-          </View>
+          <IosGlassBackdrop isInteractive style={styles.iosGlassShape} testID="outlined-button-glass" />
         ) : null}
         {loading ? (
           <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
@@ -100,8 +101,8 @@ function createStyles(colors: ColorPalette) {
     iosGlass: {
       borderRadius: tokens.radius.full,
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
     },
     iosOpaque: {
       borderRadius: tokens.radius.full,
@@ -115,7 +116,7 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.10,
       shadowRadius: 12,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       overflow: "hidden",
       borderRadius: tokens.radius.full,

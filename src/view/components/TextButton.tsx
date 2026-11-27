@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useExpressivePress } from "@/view/useExpressivePress";
 
@@ -24,7 +25,10 @@ export function TextButton({
   accessibilityLabel,
   tone = "default",
 }: TextButtonProps) {
-  const guardedPress = useGuardedPress(onPress);
+  const guardedPress = useGuardedPress(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onPress();
+  });
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -62,6 +66,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.shapeMorph.buttonRest,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     buttonPressed: {

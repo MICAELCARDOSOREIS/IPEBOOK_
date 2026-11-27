@@ -11,11 +11,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { spacing, radius, typography, accessibility } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -43,6 +44,9 @@ function BarcodeScannerModalContent({
   onScan,
 }: BarcodeScannerModalProps) {
   const { colors } = useTheme();
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = Platform.OS === "ios" && !opaqueIos;
+  const insets = useSafeAreaInsets();
   const [permission, requestPermission, getPermission] = useCameraPermissions();
   const canAskAgain = permission?.canAskAgain;
   const cameraGranted = permission?.granted;
@@ -93,7 +97,16 @@ function BarcodeScannerModalContent({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+          },
+        ]}
+      >
         {/* Barra Superior */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
@@ -103,8 +116,9 @@ function BarcodeScannerModalContent({
             accessibilityLabel="Fechar leitor de código de barras"
             onPress={onClose}
             hitSlop={12}
-            style={withPress(styles.closeButton)}
+            style={withPress([styles.closeButton, opaqueIos && { backgroundColor: colors.m3.surfaceContainerHigh }])}
           >
+            {iosGlass ? <IosGlassBackdrop style={{ borderRadius: radius.full }} /> : null}
             <AppIcon name="close" size={24} color={colors.text} />
           </Pressable>
         </View>
@@ -175,7 +189,7 @@ function BarcodeScannerModalContent({
             </View>
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -196,6 +210,7 @@ const styles = StyleSheet.create({
     ...typography.titleMedium,
   },
   closeButton: {
+    borderRadius: radius.full,
     minWidth: accessibility.touchTarget,
     minHeight: accessibility.touchTarget,
     alignItems: "center",

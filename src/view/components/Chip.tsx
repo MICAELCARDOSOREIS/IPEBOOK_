@@ -1,13 +1,13 @@
-import { BlurView } from "expo-blur";
 import { memo, useMemo } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { contrastRatio } from "@/view/theme/contrastRatio";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 import { webCheckableProps } from "@/view/pressFeedback";
 import { useExpressivePress } from "@/view/useExpressivePress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type ChipProps = {
   label: string;
@@ -25,7 +25,7 @@ export type ChipProps = {
 export const Chip = memo(function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => getChipStyles(colors), [colors]);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
@@ -48,7 +48,10 @@ export const Chip = memo(function Chip({ label, selected, onPress, disabled = fa
         {...webCheckableProps(selected, onPress, disabled)}
         disabled={disabled}
         hitSlop={8}
-        onPress={onPress}
+        onPress={() => {
+          if (isIos) triggerHaptic("selection");
+          onPress();
+        }}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         style={[
@@ -65,24 +68,25 @@ export const Chip = memo(function Chip({ label, selected, onPress, disabled = fa
         ]}
       >
         {iosGlass && !selected && !disabled ? (
-          <View pointerEvents="none" style={styles.iosBlurClip}>
-            <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
-          </View>
+          <IosGlassBackdrop style={styles.iosGlassShape} />
         ) : null}
         {selected ? (
           <AppIcon
             name="check"
-            size={18}
-            color={tone?.text ?? (isIos ? colors.m3.onSurface : colors.nature.onFoliage)}
+            size={isIos && size === "compact" ? 15 : 18}
+            color={tone?.text ?? (isIos ? colors.action : colors.nature.onFoliage)}
           />
         ) : null}
         {dotColors && !selected ? (
-          <View style={[styles.dot, { backgroundColor: dotColors.fill, borderColor: dotColors.border }]} />
+          <View style={[styles.dot, isIos && size === "compact" && styles.iosDotCompact, { backgroundColor: dotColors.fill, borderColor: dotColors.border }]} />
         ) : null}
         <Text
           numberOfLines={1}
+          adjustsFontSizeToFit={isIos && size === "compact"}
+          minimumFontScale={0.85}
           style={[
             styles.label,
+            isIos && size === "compact" && styles.iosLabelCompact,
             selected && styles.labelSelected,
             selected && !tone && isIos ? styles.iosLabelSelected : null,
             selected && tone ? { color: tone.text } : null,
@@ -118,7 +122,7 @@ function createStyles(colors: ColorPalette) {
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
-    chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[12] },
+    chipCompact: { height: tokens.spacing[32], paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[8] : tokens.spacing[12] },
     chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
     iosPill: {
       minHeight: 44,
@@ -133,8 +137,8 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 8,
     },
     iosUnselectedGlass: {
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
     },
     iosUnselectedOpaque: {
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -146,10 +150,10 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.primaryContainer,
     },
     iosLabelSelected: {
-      color: colors.m3.onSurface,
-      fontWeight: tokens.fontWeight.medium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
       overflow: "hidden",
@@ -163,8 +167,10 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.chipSelected,
     },
     unselected: { borderWidth: 1, borderColor: colors.m3.outline },
-    withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
+    withDot: { flexDirection: "row", alignItems: "center", gap: Platform.OS === "ios" ? tokens.spacing[4] : tokens.spacing[6] },
     dot: { width: 10, height: 10, borderRadius: tokens.radius.dot, borderWidth: 1 },
+    iosDotCompact: { width: 8, height: 8 },
+    iosLabelCompact: { fontSize: 13 },
     disabled: {
       opacity: 0.38,
       ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),

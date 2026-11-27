@@ -34,10 +34,10 @@ describe("iOS Nativo · Acessibilidade Digital Apple HIG (Spec 137, Issue #233, 
 
       expect(flatStyle.backgroundColor).toBe(colors.m3.surfaceContainer);
       expect(flatStyle.borderColor).toBe("transparent");
-      expect(screen.queryByTestId("blur-view")).toBeNull();
+      expect(screen.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
     });
 
-    it("BottomSheet adota tokens.glass.fill translúcido no iOS quando Reduzir Transparência está desativado", async () => {
+    it("BottomSheet renderiza Liquid Glass nativo no iOS quando Reduzir Transparência está desativado", async () => {
       jest.spyOn(UseReduceTransparencyModule, "useReduceTransparency").mockReturnValue(false);
 
       const screen = await render(
@@ -49,12 +49,12 @@ describe("iOS Nativo · Acessibilidade Digital Apple HIG (Spec 137, Issue #233, 
       const container = screen.getByTestId("test-sheet-container");
       const flatStyle = StyleSheet.flatten(container.props.style);
 
-      expect(flatStyle.backgroundColor).toBe(tokens.glass.fill);
-      expect(flatStyle.borderColor).toBe(tokens.glass.stroke);
-      expect(screen.getByTestId("blur-view")).toBeDefined();
+      expect(flatStyle.backgroundColor).toBe("transparent");
+      expect(flatStyle.borderColor).toBe("transparent");
+      expect(screen.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
     });
 
-    it("NavigationBar oculta BlurView e renderiza dock sólido sob Reduzir Transparência no iOS", async () => {
+    it("NavigationBar oculta GlassView e renderiza dock sólido sob Reduzir Transparência no iOS", async () => {
       jest.spyOn(UseReduceTransparencyModule, "useReduceTransparency").mockReturnValue(true);
 
       const screen = await render(
@@ -63,7 +63,7 @@ describe("iOS Nativo · Acessibilidade Digital Apple HIG (Spec 137, Issue #233, 
 
       const dock = screen.getByTestId("navigation-bar-dock");
       expect(dock).toBeDefined();
-      expect(screen.queryByTestId("blur-view")).toBeNull();
+      expect(screen.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
     });
   });
 
@@ -77,7 +77,7 @@ describe("iOS Nativo · Acessibilidade Digital Apple HIG (Spec 137, Issue #233, 
       expect(titleElement.props.accessibilityRole).toBe("header");
     });
 
-    it("NavigationBar define maxFontSizeMultiplier={1.2} nos rótulos de abas e badges para proteger a cápsula flutuante", async () => {
+    it("NavigationBar deixa os rótulos de abas crescerem e mantém o limite visual do selo", async () => {
       const screen = await render(
         <NavigationBar
           active="home"
@@ -87,8 +87,8 @@ describe("iOS Nativo · Acessibilidade Digital Apple HIG (Spec 137, Issue #233, 
       );
 
       const labelElement = screen.getByText("Início");
-      expect(labelElement.props.maxFontSizeMultiplier).toBe(1.2);
-      expect(labelElement.props.numberOfLines).toBe(1);
+      expect(labelElement.props.maxFontSizeMultiplier).toBe(0);
+      expect(labelElement.props.numberOfLines).toBeUndefined();
 
       const badgeElement = screen.getByText("3");
       expect(badgeElement.props.maxFontSizeMultiplier).toBe(1.2);

@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,7 +5,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type NavigationDestination = "home" | "search" | "shelf" | "conversations" | "profile";
 
@@ -66,7 +65,7 @@ export function NavigationBar({
 }: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const styles = useMemo(() => createStyles(colors, reduceTransparency), [colors, reduceTransparency]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
@@ -155,12 +154,7 @@ export function NavigationBar({
           }}
         >
           {Platform.OS === "ios" && !reduceTransparency ? (
-            <BlurView
-              pointerEvents="none"
-              tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
-              intensity={60}
-              style={StyleSheet.absoluteFill}
-            />
+            <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} />
           ) : null}
 
         {/* Pílula Deslizante Contínua (iOS 26 envolve ícone + rótulo; Android/Web segue M3 Expressive) */}
@@ -248,8 +242,8 @@ export function NavigationBar({
                     ) : null}
                   </View>
                   <Text
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={1.2}
+                    numberOfLines={isIos ? undefined : 1}
+                    maxFontSizeMultiplier={isIos ? 0 : 1.2}
                     style={[
                       styles.label,
                       isActive && styles.labelActive,
@@ -328,9 +322,9 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
 
   // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0115): vidro translúcido com fallback sólido ao reduzir transparência
   const dockBg = isIos
-    ? (reduceTransparency ? colors.m3.surfaceContainer : tokens.glass.fill)
+    ? (reduceTransparency ? colors.m3.surfaceContainer : "transparent")
     : (isWeb ? webDockBg : colors.surface);
-  const dockBorderColor = isIos && !reduceTransparency ? tokens.glass.stroke : colors.m3.outlineVariant;
+  const dockBorderColor = isIos && !reduceTransparency ? "transparent" : colors.m3.outlineVariant;
 
   return StyleSheet.create({
     floatingWrapper: {
@@ -437,6 +431,8 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
     itemPressed: { opacity: 0.8 },
     itemDisabled: { opacity: 0.38 },
     label: {
+      flexShrink: 1,
+      maxWidth: "100%",
       color: colors.m3.onSurfaceVariant,
       fontFamily: tokens.fontFamily.medium,
       fontSize: tokens.fontSize[12],
