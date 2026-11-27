@@ -36,6 +36,21 @@ describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () 
     expect(StyleSheet.flatten(vendaTitle.props.style).color).toBe(colors.badge.sale.text);
     expect(StyleSheet.flatten(trocaTitle.props.style).color).toBe(colors.badge.trade.text);
     expect(StyleSheet.flatten(doacaoTitle.props.style).color).toBe(colors.badge.donation.text);
+    expect(StyleSheet.flatten(screen.getByTestId("wide-card-Venda").props.style).backgroundColor).toBe(colors.badge.sale.background);
+    expect(StyleSheet.flatten(screen.getByTestId("wide-card-Troca").props.style).backgroundColor).toBe(colors.badge.trade.background);
+    expect(StyleSheet.flatten(screen.getByTestId("wide-card-Doação").props.style).backgroundColor).toBe(colors.badge.donation.background);
+    expect(screen.queryByText(/Acervo comunitário em Piripiri/)).toBeNull();
+  });
+
+  it("exibe apenas Começar agora e Explorar livros no hero quando onExplore está ativo", async () => {
+    const onExplore = jest.fn();
+    const screen = await render(<Welcome onStart={jest.fn()} onSignIn={jest.fn()} onExplore={onExplore} />);
+    expect(screen.getByLabelText("Entrar")).toBeDefined();
+    expect(screen.getByLabelText("Começar agora")).toBeDefined();
+    expect(screen.getByText("Explorar livros")).toBeDefined();
+    expect(screen.queryByLabelText("Já tenho conta")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByText("Explorar livros")); });
+    expect(onExplore).toHaveBeenCalledTimes(1);
   });
 });
 
