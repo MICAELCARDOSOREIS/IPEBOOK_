@@ -4,7 +4,7 @@ type: architecture-spine
 purpose: build-substrate
 altitude: initiative
 paradigm: 'MVVM em sete camadas, com portas e adaptadores no limite de dados'
-scope: 'Aplicativo IpêBook (Android e Web) de venda, troca e doação de livros em Piripiri, PI: os invariantes que as funcionalidades em aberto precisam compartilhar'
+scope: 'Aplicativo IpêBook (Android, iOS e Web) de venda, troca e doação de livros em Piripiri, PI: os invariantes que as funcionalidades em aberto precisam compartilhar'
 status: final
 created: '2026-10-17'
 updated: '2026-10-17'
@@ -24,7 +24,7 @@ vivem em `model` e cada tecnologia concreta é um adaptador em `infra`.
 
 | Camada | Diretório | Papel |
 | --- | --- | --- |
-| app | `src/app/` | Rotas do Expo Router; só reexporta View |
+| app | `src/app/` | Rotas, parâmetros e navegação do Expo Router |
 | view | `src/view/` | Renderização e captura de eventos |
 | viewmodel | `src/viewmodel/` | Estado e ações da tela |
 | usecase | `src/usecase/` | Operações e regras de negócio |
@@ -101,7 +101,7 @@ graph TD
 
 - **Binds:** `src/di/container.ts`, configuração de ambiente
 - **Prevents:** metade do aplicativo em memória e metade no Supabase
-- **Rule:** a escolha vem só de `EXPO_PUBLIC_BACKEND`, é resolvida uma vez na composição e falha na inicialização se a configuração estiver incompleta; nenhuma funcionalidade implementa fallback próprio. O padrão passou a ser `supabase` quando a issue #81 foi fechada; o modo em memória existe para teste e desenvolvimento, não como alternativa de produção
+- **Rule:** a escolha vem só de `EXPO_PUBLIC_BACKEND`, é resolvida uma vez na composição e falha na inicialização se a configuração estiver incompleta; nenhuma funcionalidade implementa fallback próprio. A implantação usa `EXPO_PUBLIC_BACKEND=supabase`. Testes e experiências locais podem usar o backend em memória
 
 ### AD-9 — Leitura do catálogo é anônima; escrita exige sessão
 
@@ -167,12 +167,12 @@ graph TD
 
 - **Binds:** rota de perfil (issue #88), perfil público (issue #73), `usecase/`, `viewmodel/`
 - **Prevents:** reaproveitar a ViewModel somente-leitura do perfil de terceiros para o perfil próprio, herdando a ausência de editar e sair — ou colidir uma rota estática `/perfil` com uma dinâmica `/perfil/[id]`
-- **Rule:** perfil próprio e perfil de outra pessoa têm caso de uso, ViewModel e rota separados e nomeados (`/perfil` e `/usuario/[id]`); o perfil público nunca expõe e-mail nem dado de contato, e nenhum dos dois herda o contrato do outro
+- **Rule:** perfil próprio e perfil de outra pessoa têm caso de uso, ViewModel e rota separados e nomeados (`/perfil` e `/perfil/[userId]`); o perfil público nunca expõe e-mail nem dado de contato, e nenhum dos dois herda o contrato do outro
 
-### AD-20 — Contrato de configuração igual nas duas plataformas
+### AD-20 — Contrato de configuração por plataforma
 
-- **Binds:** variáveis `EXPO_PUBLIC_*`, `app.json`, build Android e exportação Web
-- **Prevents:** Android e Web rodando com configurações incompatíveis — o caso concreto é a URL de retorno da recuperação de senha, que difere por plataforma (`ipebook://redefinir-senha` e a URL da Web) e, mal configurada, quebra o acesso só em uma delas
+- **Binds:** variáveis `EXPO_PUBLIC_*`, `app.json`, builds Android/iOS e exportação Web
+- **Prevents:** links de recuperação apontando para o destino errado. No Android, o retorno usa o esquema `ipebook://`. Na Web, o retorno permanece no navegador que iniciou o fluxo. No iOS nativo, o Universal Link usa `/redefinir-senha?origem=ios`. [ADR 0121](../../adr/0121-login-apple-e-retorno-nativo-de-recuperacao.md)
 - **Rule:** toda configuração entra por variável `EXPO_PUBLIC_*` documentada em `.env.example`, é lida uma única vez na composição e validada na inicialização; valor que legitimamente difere entre plataformas é resolvido por `Platform` dentro de `infra`, nunca por configuração duplicada ou por ramo de código em camada acima
 
 ## Consistency Conventions
