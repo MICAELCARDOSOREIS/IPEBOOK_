@@ -229,7 +229,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
     expect(screen.getByLabelText("Anunciado por Joana Lima")).toBeDefined();
-    expect(screen.getByText("Joana Lima")).toBeDefined();
+    expect(screen.getAllByText("Joana Lima").length).toBeGreaterThanOrEqual(1);
   });
 
   it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {
@@ -344,25 +344,28 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     await act(async () => {
       fireEvent.press(reservedScreen.getByText("Reservado"));
     });
+    const dismissCategory = reservedScreen.getByTestId("reserved-listing-sheet").props.onDismiss;
     await act(async () => {
       fireEvent.press(reservedScreen.getByLabelText("Buscar outros livros da categoria Ficção"));
     });
+    await act(async () => { dismissCategory(); });
     expect(onNavigateToCategorySearch).toHaveBeenCalledWith("Ficção");
 
     await act(async () => {
       fireEvent.press(reservedScreen.getByText("Reservado"));
     });
+    const dismissProfile = reservedScreen.getByTestId("reserved-listing-sheet").props.onDismiss;
     await act(async () => {
       fireEvent.press(reservedScreen.getByLabelText("Ver perfil e outros anúncios de Carlos"));
     });
+    await act(async () => { dismissProfile(); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("other");
 
     await act(async () => {
       fireEvent.press(reservedScreen.getByText("Reservado"));
     });
-    await act(async () => {
-      fireEvent.press(reservedScreen.getByLabelText("Fechar informações da reserva"));
-    });
+    await fireEvent.press(reservedScreen.getByLabelText("Fechar ao tocar fora"));
+    expect(reservedScreen.queryByTestId("reserved-listing-sheet")).toBeNull();
   });
 
   it("abre e fecha a folha de proposta sem enviar", async () => {

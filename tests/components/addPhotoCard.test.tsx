@@ -26,15 +26,28 @@ describe("AddPhotoCard (design-system/04-componentes/cartao-de-adicionar-foto.md
 
   it("exibe pré-visualização quando photoUrl é informado e permite remoção", async () => {
     const onRemove = jest.fn();
-    const { getByLabelText } = await render(
+    const { getByLabelText, getByText } = await render(
       <AddPhotoCard
         onPress={() => {}}
         photoUrl="https://imagens.ipebook.app/capa.jpg"
         onRemovePhoto={onRemove}
       />,
     );
+    expect(getByText("Capa")).toBeDefined();
     expect(getByLabelText("Pré-visualização da foto da capa")).toBeDefined();
     fireEvent.press(getByLabelText("Remover foto da capa"));
     expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
+  it("identifica lombada e corrige concordância de 'do verso' na pré-visualização", async () => {
+    const verso = await render(
+      <AddPhotoCard
+        label="Verso"
+        onPress={() => {}}
+        photoUrl="https://imagens.ipebook.app/foto-verso.jpg"
+      />,
+    );
+    expect(verso.getByText("Verso")).toBeDefined();
+    expect(verso.getByLabelText("Pré-visualização do verso")).toBeDefined();
   });
 });

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { AppleSignInButton } from "@/view/auth/AppleSignInButton";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { makeAuthViewModel } from "@/di/container";
@@ -51,21 +52,21 @@ export default function SignUp({
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const emailInputRef = useRef<TextInputInstance>(null);
   const passwordInputRef = useRef<TextInputInstance>(null);
-  const busy = submitting || googleLoading;
+  const busy = submitting || socialProvider !== null;
 
-  const handleGoogleSignIn = async () => {
+  const handleSocialSignIn = async (provider: "google" | "apple") => {
     if (busy) return;
-    setGoogleLoading(true);
+    setSocialProvider(provider);
     try {
-      onGoogleStart?.();
-      const success = await actions.signInWithGoogle?.();
+      if (provider === "google") onGoogleStart?.();
+      const success = await (provider === "apple" ? actions.signInWithApple?.() : actions.signInWithGoogle?.());
       if (success) guardedAuthenticated();
     } finally {
-      setGoogleLoading(false);
+      setSocialProvider(null);
     }
   };
 
@@ -130,10 +131,12 @@ export default function SignUp({
               label="Continuar com Google"
               accessibilityLabel="Continuar com Google"
               icon={<GoogleLogo size={20} />}
-              loading={googleLoading}
+              loading={socialProvider === "google"}
               disabled={busy}
-              onPress={() => void handleGoogleSignIn()}
+              onPress={() => void handleSocialSignIn("google")}
             />
+
+            <AppleSignInButton disabled={busy} onPress={() => void handleSocialSignIn("apple")} />
 
             <View accessibilityRole="none" style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -232,6 +235,7 @@ function createStyles(colors: ColorPalette) {
     },
     footerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[6],

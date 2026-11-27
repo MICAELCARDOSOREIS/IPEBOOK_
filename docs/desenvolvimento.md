@@ -82,6 +82,14 @@ automaticamente. A presença da URL e da chave publicável no `.env` não aplica
 configurar `EXPO_PUBLIC_AUTH_REDIRECT_URL` e `EXPO_PUBLIC_BACKEND=supabase`. Arquivos `.env*` são
 ignorados pelo Git, exceto `.env.example`.
 
+### Homologar iOS
+
+O perfil EAS `development` serve ao simulador, `preview` distribui uma build interna para iPhones cadastrados e `production` gera a build de loja para o TestFlight. O SDK é selecionado pela imagem `sdk-58`. Mudanças de dependências nativas no iOS alteram o runtime pelo fingerprint.
+
+Antes de distribuir, habilite Sign in with Apple e os domínios associados para `com.ipebook.app`, configure esse identificador no provedor Apple do Supabase e verifique as credenciais APNs do EAS. Use a versão revisada de `enviar-push` no ambiente de homologação. O login Apple nativo usa token de identidade e nonce. A tela pós-exclusão orienta a desvinculação manual na Apple.
+
+Em uma build assinada, entre com e-mail privado da Apple, cancele o login, saia e entre de novo. Abra no Mail um link de recuperação solicitado pelo app e confirme o retorno à tela de nova senha. Repita a recuperação solicitada no Safari e confirme que ela permanece no navegador. Teste push com o app aberto, em segundo plano e encerrado. Para ergonomia, use um iPhone compacto e um com Dynamic Island, VoiceOver e texto ampliado. Confira busca, cadastro, foto de capa/lombada/verso, publicação, chat com teclado, encontro, QR e exclusão de conta. No Safari e na Tela de Início, confira também links diretos e recuperação da conexão.
+
 ## Conferir a exportação local
 
 ```bash

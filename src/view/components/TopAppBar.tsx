@@ -1,19 +1,21 @@
-import { BlurView } from "expo-blur";
 import { useCallback, useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useScrollEdgeHeader } from "@/view/components/ScrollEdgeScreen";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { topBarInset } from "@/view/topBarInset";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type TopAppBarProps = {
   title: string;
   onBack: () => void;
+  /** Ação opcional exibida à direita da barra superior (ex.: atalho de segurança). */
+  rightAction?: React.ReactNode;
   /** Barra M3 sobre conteúdo em tela cheia (mapa): cobre a barra de status e sobe um nível de elevação. */
   floating?: boolean;
   /** Largura da coluna de conteúdo da tela, para alinhar a barra a ela na web larga. */
@@ -26,12 +28,51 @@ export type TopAppBarProps = {
 };
 
 /**
+ * Botão circular de voltar da barra superior (44 dp no iOS com Liquid Glass, 40 dp no Android).
+ */
+export function TopAppBarBackButton({ onBack }: { onBack: () => void }) {
+  const handleBack = useCallback(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onBack();
+  }, [onBack]);
+  const guardedBack = useGuardedPress(handleBack);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlassBack = isIos && !reduceTransparency;
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View style={isIos ? styles.iosBackShadow : undefined}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        hitSlop={8}
+        onPress={guardedBack}
+        style={({ pressed }) => [
+          styles.backButton,
+          isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
+          pressed && styles.backButtonPressed,
+        ]}
+      >
+        {iosGlassBack ? (
+          <IosGlassBackdrop testID="top-app-bar-back-glass" style={{ borderRadius: tokens.radius.full }} />
+        ) : null}
+        <View style={styles.backIconWrapper}>
+          <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+/**
  * Barra superior do design system (barra-superior.md), pequena do Material 3 como no Figma
  * (`01.06`, `01.10`, `04.08`): 64 dp de altura, título de 22 dp e botão voltar circular de 40 dp.
  * Na web larga vira uma trilha discreta ("← Voltar | Título") de 48 px, sem faixa própria, para não
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
-export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
+export function TopAppBar({ title, onBack, rightAction, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
   const handleBack = useCallback(() => {
     if (Platform.OS === "ios") triggerHaptic("light");
     onBack();
@@ -40,7 +81,7 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const usesSharedSurface = useScrollEdgeHeader();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const width = useHydratedWindowWidth();
   const wide = useIsWideWeb() && !floating;
@@ -67,54 +108,37 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
           <Text style={styles.crumbBackText}>Voltar</Text>
         </Pressable>
         <View accessible={false} aria-hidden={true} style={styles.crumbDivider} />
-        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.crumbTitle}>{title}</Text>
+        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={[styles.crumbTitle, { flex: 1 }]}>{title}</Text>
+        {rightAction ?? null}
       </View>
     );
   }
-  const iosGlassBack = isIos && !reduceTransparency;
   return (
     <View
       style={
         floating
           ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }]
-          : [styles.bar, isIos && styles.iosBar, alignToContent]
+          : [
+              styles.bar,
+              isIos && styles.iosBar,
+              alignToContent,
+              usesSharedSurface && styles.transparentBar,
+            ]
       }
     >
-      <View style={isIos ? styles.iosBackShadow : undefined}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-          hitSlop={8}
-          onPress={guardedBack}
-          style={({ pressed }) => [
-            styles.backButton,
-            isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
-            pressed && styles.backButtonPressed,
-          ]}
-        >
-          {iosGlassBack ? (
-            <BlurView
-              testID="top-app-bar-back-blur"
-              intensity={24}
-              tint="light"
-              style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.full }]}
-            />
-          ) : null}
-          <View style={styles.backIconWrapper}>
-            <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
-          </View>
-        </Pressable>
-      </View>
+      <TopAppBarBackButton onBack={onBack} />
       <Text
         accessibilityRole="header"
         accessibilityLabel={title}
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
         maxFontSizeMultiplier={1.3}
         style={[styles.title, isIos && !floating && styles.iosTitle]}
       >
         {title}
       </Text>
-      {isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
+      {rightAction ? rightAction : isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
     </View>
   );
 }
@@ -134,6 +158,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       justifyContent: "space-between",
     },
+    transparentBar: { backgroundColor: "transparent" },
     crumbBar: {
       minHeight: tokens.spacing[48],
       flexDirection: "row",
@@ -184,9 +209,10 @@ function createStyles(colors: ColorPalette) {
     },
     iosBackGlass: {
       overflow: "hidden",
-      backgroundColor: "rgba(255, 255, 255, 0.72)",
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: "rgba(255, 255, 255, 0.9)",
+      borderColor: "transparent",
     },
     iosBackOpaque: {
       backgroundColor: colors.m3.surfaceContainer,

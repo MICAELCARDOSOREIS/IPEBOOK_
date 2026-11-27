@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
 import { LoadingState } from "@/view/components/LoadingState";
 import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -42,8 +42,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
   const wide = useIsWideWeb();
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!state.loading && !state.error && state.ratings.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             <Pressable
@@ -66,7 +65,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Avaliações recebidas" onBack={guardedBack} />
-      )}
+      )}>
       {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando avaliações" />
@@ -98,7 +97,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-ratings-2" : "list-ratings-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -131,7 +130,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
           }}
         />
       )}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

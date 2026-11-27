@@ -1,11 +1,12 @@
-import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -42,6 +43,7 @@ export default function ReportListing({
   // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [detailsFocused, setDetailsFocused] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
 
   const guardedBack = useGuardedPress(onBack);
@@ -50,9 +52,8 @@ export default function ReportListing({
 
   if (state.success) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
+      <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+        <ScrollEdgeScrollView
           {...standardVerticalScrollProps}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
           keyboardShouldPersistTaps="handled"
@@ -72,8 +73,8 @@ export default function ReportListing({
               </View>
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </ScrollEdgeScrollView>
+      </ScrollEdgeScreen>
     );
   }
 
@@ -90,9 +91,8 @@ export default function ReportListing({
 
   if (!sessionUserId) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
+      <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+        <ScrollEdgeScrollView
           {...standardVerticalScrollProps}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
           keyboardShouldPersistTaps="handled"
@@ -113,15 +113,14 @@ export default function ReportListing({
               ) : null}
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </ScrollEdgeScrollView>
+      </ScrollEdgeScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
@@ -176,18 +175,24 @@ export default function ReportListing({
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.field}>
-            <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
+            <View style={styles.inputLabelRow}>
+              <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
+              <Text style={styles.inputCounter}>{`${state.details.length}/500`}</Text>
+            </View>
             <TextInput
               accessibilityLabel="Detalhes adicionais da denúncia"
               value={state.details}
               onChangeText={actions.setDetails}
               editable={!state.loading}
-              style={styles.textInput}
+              style={[styles.textInput, detailsFocused && styles.textInputFocused]}
               placeholder="Descreva o problema com mais detalhes para nos ajudar..."
               placeholderTextColor={colors.secondaryText}
               multiline
               numberOfLines={3}
+              textAlignVertical="top"
               maxLength={500}
+              onFocus={() => setDetailsFocused(true)}
+              onBlur={() => setDetailsFocused(false)}
             />
           </View>
 
@@ -211,8 +216,8 @@ export default function ReportListing({
           </View>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -320,20 +325,36 @@ function createStyles(colors: ColorPalette) {
   field: {
     gap: tokens.spacing[6],
   },
+  inputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: tokens.spacing[8],
+  },
   inputLabel: {
     ...tokens.typography.labelMedium,
     color: colors.text,
   },
+  inputCounter: {
+    ...tokens.typography.labelSmall,
+    color: colors.secondaryText,
+  },
   textInput: {
     borderWidth: 1,
-    borderColor: colors.m3.outline,
+    borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
     borderRadius: tokens.radius.medium,
+    ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
     padding: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
     color: colors.text,
-    backgroundColor: colors.surface,
+    backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.surface,
     minHeight: tokens.spacing[64],
     textAlignVertical: "top",
+    ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+  },
+  textInputFocused: {
+    borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
+    borderWidth: 2,
   },
   errorText: {
     ...tokens.typography.bodyMedium,

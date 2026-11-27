@@ -12,22 +12,27 @@ const PERMISSION_DENIED: Record<ImageSource, string> = {
 /** Lado máximo enviado: suficiente para a tela e reduz armazenamento e tráfego (Spec 087). */
 const MAX_SIDE = 1080;
 
-/** Seletor de imagens do Expo (ADR 0065): recorte 1:1, redução para 1080 px e compressão antes do envio. */
+/** Seletor de imagens do Expo com redução e compressão antes do envio. */
 export class ExpoImagePickerService implements IImagePickerService {
   pickSquareImage(source: ImageSource): Promise<PickedImage | null> {
     return this.pickImage(source, [1, 1]);
   }
 
   async pickImage(source: ImageSource, aspect: readonly [number, number]): Promise<PickedImage | null> {
-    const permission =
-      source === "camera"
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) throw new ImagePermissionDeniedError(PERMISSION_DENIED[source]);
-
+    // O editor nativo do iOS sempre recorta em quadrado. Fotos do livro mantêm o enquadramento original.
+    const allowsEditing = Platform.OS !== "ios" || aspect[0] === aspect[1];
+    const usesSystemPhotoPicker = Platform.OS === "ios" && source === "library" && !allowsEditing;
+    // O seletor web precisa abrir no gesto do usuário. O seletor iOS sem editor só entrega a foto escolhida.
+    if (Platform.OS !== "web" && !usesSystemPhotoPicker) {
+      const permission =
+        source === "camera"
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) throw new ImagePermissionDeniedError(PERMISSION_DENIED[source]);
+    }
     const options: ImagePicker.ImagePickerOptions = {
       mediaTypes: ["images"],
-      allowsEditing: true,
+      allowsEditing,
       aspect: [aspect[0], aspect[1]],
       // A compressão acontece uma só vez, depois de reduzir
       quality: 1,
@@ -37,8 +42,14 @@ export class ExpoImagePickerService implements IImagePickerService {
     const asset = result.canceled ? undefined : result.assets[0];
     if (!asset) return null;
 
-    const context = ImageManipulator.manipulate(asset.uri);
-    if (asset.width > MAX_SIDE) context.resize({ width: MAX_SIDE });
+    // No iPhone, reduzir na decodificação evita carregar fotos de alta resolução por inteiro na memória.
+    const ios = Platform.OS === "ios";
+    const context = ios
+      ? ImageManipulator.manipulate(asset.uri, { maxWidth: MAX_SIDE, maxHeight: MAX_SIDE })
+      : ImageManipulator.manipulate(asset.uri);
+    if (!ios && Math.max(asset.width, asset.height) > MAX_SIDE) {
+      context.resize(asset.width >= asset.height ? { width: MAX_SIDE } : { height: MAX_SIDE });
+    }
     const reduced = await (await context.renderAsync()).saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
 
     return { bytes: new Uint8Array(await readBytes(reduced.uri)), fileName: asset.fileName ?? "foto.jpg" };

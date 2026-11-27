@@ -21,10 +21,12 @@
 
 - [ ] **T005 (Issue #230) — Adequar Publicação (ISBN, Câmera, Fotos, Rascunhos), Minha Estante e Pedidos**
   - Implementação local entregue em `dcef8369` (`anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx`, `pedidos-recebidos.tsx`) com acesso aos Ajustes do iPhone, entrada manual de ISBN, ação Concluir no teclado numérico, salvamento de rascunho e diálogos destrutivos.
+  - Refinamento em 26/11/2026: aba "Concluídos" sempre visível e remoção da sobreposição negativa no iOS em `src/view/listings/myListings.tsx` e `myListingsStyles.ts`, com asserções de estilo em `tests/components/myListingsView.test.tsx`. `npm run validate` e `npm run test:e2e:build` aprovados (8/8); conferência visual em iPhone pendente.
   - *Pendências para fechamento:* homologação em iPhone pelo Eric e conferência visual contra os quadros `14`–`16`, `17`, `19`, `33`–`35`, `34B`, `55`, `58` e `997:2248`.
 
 - [x] **T006 (Issue #231) — Adequar Conversas, Negociação, Encontro, Entrega e Compartilhamento**
   - Implementação e validação em iPhone com Expo Go concluídas (`9eba578e`, `40aee97f`, `c71bed35`) cobrindo chat com teclado/safe area, leitor de QR Code, encontro/entrega e compartilhamento de texto/link.
+  - Refinamento em 26/11/2026: botão "Cancelar pedido" com `IosGlassBackdrop`, fallback opaco e haptic leve em `src/view/conversations/conversations.tsx`, com dois testes em `tests/components-mocked/conversationsView.test.tsx`. Contratos Jest aprovados; conferência visual da refração em iPhone pendente.
   - *Conferência pós-redesign Figma:* checar alinhamento visual com Seção `04` (`18`, `43`–`46`, `50`), `27`, `54` e protótipos `08` (`937:2829`, `3131`–`3391`) durante a auditoria #237.
 
 - [ ] **T007 (Issue #232) — Adequar Perfil, Conta, Notificações, Ajuda, Moderação e Estados Globais**
@@ -38,6 +40,7 @@
 
 - [ ] **T009 (Issue #234 — `@Eric2025gh`) — Sign in with Apple (obrigatório na App Store)**
   - Integrar login nativo com Apple (`expo-apple-authentication` + Supabase Auth + Service ID / provedor Apple no Supabase) isolado para iOS nas telas `02 · Entrar` (`915:434`) e `03 · Criar conta` (`916:119`).
+  - Cliente implementado com botão nativo, nonce e retorno pela rota. O provedor Apple, a assinatura e o teste de e-mail privado em iPhone seguem pendentes. Ver [ADR 0121](../../docs/adr/0121-login-apple-e-retorno-nativo-de-recuperacao.md).
 
 - [ ] **T010 (Issue #235 — `@Eric2025gh`) — Notificações Push no iOS (`APNs`)**
   - Implementação local entregue em `2a7a9d98` (atualização de selo/badge, abertura de conversa/negociação/central ao tocar e pedido de permissão).
@@ -45,10 +48,12 @@
 
 - [ ] **T011 (Issue #236 — `@Eric2025gh`) — Build iOS, `PrivacyInfo.xcprivacy`, `NativeTabs` / `expo-glass-effect` e TestFlight**
   - Adicionar perfis `ios` em `eas.json` (`development`, `preview`, `production`) compilados com **SDK iOS 26 (Xcode 26)**, `PrivacyInfo.xcprivacy` e distribuição via TestFlight/Dev Client.
-  - Avaliar adoção de `NativeTabs` (`expo-router/unstable-native-tabs`) nas 3 abas no iOS e `expo-glass-effect` (`GlassView`) para habilitar a refração física nativa do Liquid Glass (que não aparece apenas com `BlurView`).
+  - Adotados `NativeTabs` (`expo-router/native-tabs`) no iPhone e `GlassView` (`expo-glass-effect`, ADR 0123) nas superfícies que usam o material.
+  - Configurados ambiente EAS, manifesto, permissões efetivas e link universal de recuperação. A assinatura, a distribuição no TestFlight e a comparação do Liquid Glass em aparelho continuam pendentes.
 
 - [ ] **T012 (Issue #237 — `@Eric2025gh`) — Auditoria Visual Final × Figma (`APP · 20 · iPhone · iOS 26`)**
   - Conferir lado a lado no iPhone/build iOS 26 tipografia, refração Liquid Glass da barra e botões, contrastes, listas agrupadas e estados vazios/carregamento/erro contra [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md), incluindo os ajustes validados em `6f13603`.
+  - Conferir em aparelho o cabeçalho fixo de Início abaixo da barra de status. A área segura superior vem da aba nativa e abrange os controles de local, conversas e perfil.
 
 - [ ] **T013 (Issue #238 — `@Eric2025gh`) — Verificação final, QA iOS e regressão zero em Android e Web**
   - Validar todas as telas no iPhone físico/TestFlight e simulador (Safe Areas, Dynamic Island, teclado, *swipe back*, *Haptics*, `UISwitch`, VoiceOver, Dynamic Type e Reduzir Transparência) e executar `npm run validate`.

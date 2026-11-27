@@ -40,6 +40,12 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
 | `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/redefinir-senha` (retorno da recuperação de senha; entra no bundle durante o build) |
+| `APPLE_TEAM_ID` | Identificador público de 10 caracteres da equipe Apple Developer. Em produção, gera `/.well-known/apple-app-site-association` para os links de recuperação originados no app iOS. |
+| `EXPO_PUBLIC_WEB_PUSH_VAPID_KEY` | Chave pública opcional de Web Push. Habilite após preparar a migração e a função de envio no Supabase. |
+
+Verifique que `https://ipebook.app/.well-known/apple-app-site-association` responde com HTTP 200, JSON e sem redirecionamento. O arquivo associa somente `/redefinir-senha?origem=ios` ao app. Inclua essa URL entre os retornos permitidos no Supabase Auth. Solicitações feitas no Safari continuam usando a URL sem o marcador, no mesmo navegador que iniciou o fluxo PKCE.
+
+Para Web Push, aplique a migração `web_push_iphone` num ambiente de homologação, configure `WEB_PUSH_VAPID_PUBLIC_KEY` e `WEB_PUSH_VAPID_PRIVATE_KEY` como segredos da Edge Function `enviar-push` e implante a revisão da função. A variável pública do Pages recebe apenas a mesma chave pública. No iPhone, abra o IpêBook pela Tela de Início, ative avisos na central e verifique o recebimento com o app fechado. Confira também a remoção da inscrição ao desativar avisos ou sair da conta.
 
 ### 2.4 Configuração de Domínio Próprio (Custom Domain `ipebook.app`)
 Para vincular o domínio próprio ao projeto no Cloudflare Pages:

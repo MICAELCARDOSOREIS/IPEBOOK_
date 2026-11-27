@@ -29,17 +29,42 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "ios": {
       "bundleIdentifier": "com.ipebook.app",
       "buildNumber": "1",
+      "runtimeVersion": { "policy": "fingerprint" },
       "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "associatedDomains": ["applinks:ipebook.app"],
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1", "0A2A.1", "3B52.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1", "85F4.1"]
+          }
+        ]
+      },
       "infoPlist": {
+        "EXDevMenuShowFloatingActionButton": false,
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
-        "NSCameraUsageDescription": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro, ler QR Codes de entrega e tirar a foto do seu perfil.",
-        "NSPhotoLibraryUsageDescription": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o livro ou para o seu perfil.",
-        "NSLocationWhenInUseUsageDescription": "O IpêBook usa a localização apenas para sugerir pontos públicos seguros em Piripiri."
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["whatsapp"],
+        "NSCameraUsageDescription": "O IpêBook usa a câmera para ler o ISBN e QR Codes de entrega e tirar fotos de livros e do perfil.",
+        "NSPhotoLibraryUsageDescription": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para um anúncio ou para o seu perfil."
       }
     },
     "web": {
@@ -66,7 +91,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN e QR Codes de entrega e tirar fotos de livros e do perfil.",
+          "microphonePermission": false,
           "recordAudioAndroid": false
         }
       ],
@@ -81,20 +107,13 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o seu perfil.",
-          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
+          "photosPermission": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para um anúncio ou para o seu perfil.",
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN e QR Codes de entrega e tirar fotos de livros e do perfil.",
           "microphonePermission": false
         }
       ],
       "expo-web-browser",
-      [
-        "@sentry/react-native",
-        {
-          "organization": "usermicael",
-          "project": "ipebook",
-          "url": "https://sentry.io/"
-        }
-      ],
+      "expo-apple-authentication",
       "@react-native-google-signin/google-signin",
       [
         "@sentry/react-native/expo",

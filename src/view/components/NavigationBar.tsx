@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,13 +5,17 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type NavigationDestination = "home" | "search" | "shelf" | "conversations" | "profile";
 
 export type NavigationBarProps = {
   active: NavigationDestination;
   onNavigate: (destination: NavigationDestination) => void;
+  /** Chamado ao tocar na aba que já está ativa (ex.: rolar suave para o topo, Spec 144). */
+  onReselectActive?: (destination: NavigationDestination) => void;
+  /** Progresso contínuo (0..2) do pager nativo para deslizar a pílula 1:1 com o dedo (Spec 144). */
+  scrollProgress?: Animated.Value;
   disabledDestinations?: readonly NavigationDestination[];
   /** Selo numérico por destino (M3 badge); 0 ou ausente não mostra nada. */
   badges?: Partial<Record<NavigationDestination, number>>;
@@ -52,10 +55,17 @@ function getPillTargetX(
  * com física de mola espacial (`tokens.spring.spatialStandard`), ícones com micro-bounce na seleção,
  * rótulo abaixo, suporte a hover no desktop e transluscência web. Restrita a 3 destinos (ADR 0011).
  */
-export function NavigationBar({ active, onNavigate, disabledDestinations = [], badges = {} }: NavigationBarProps) {
+export function NavigationBar({
+  active,
+  onNavigate,
+  onReselectActive,
+  scrollProgress,
+  disabledDestinations = [],
+  badges = {},
+}: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const styles = useMemo(() => createStyles(colors, reduceTransparency), [colors, reduceTransparency]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
@@ -86,9 +96,9 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   );
   const slideAnim = useRef(new Animated.Value(initialX)).current;
 
-  // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda
+  // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda (fallback sem pager 1:1)
   useEffect(() => {
-    if (!hasActiveItem) return;
+    if (!hasActiveItem || scrollProgress) return;
     const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth);
     void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
       .then((reduced) => {
@@ -106,7 +116,20 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
       .catch(() => {
         slideAnim.setValue(targetX);
       });
-  }, [activeIndex, dockHorizontalPadding, dockWidth, hasActiveItem, pillWidth, slideAnim]);
+  }, [activeIndex, dockHorizontalPadding, dockWidth, hasActiveItem, pillWidth, scrollProgress, slideAnim]);
+
+  const pillTranslateX = useMemo(() => {
+    if (!scrollProgress) return slideAnim;
+    return scrollProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        getPillTargetX(0, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+        getPillTargetX(1, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+        getPillTargetX(2, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+      ],
+      extrapolate: "clamp",
+    });
+  }, [dockHorizontalPadding, dockWidth, pillWidth, scrollProgress, slideAnim]);
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
   // posiciona a cápsula com respiro sutil e ergonômico acima dos controles sem invadir a tela.
@@ -131,12 +154,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
           }}
         >
           {Platform.OS === "ios" && !reduceTransparency ? (
-            <BlurView
-              pointerEvents="none"
-              tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
-              intensity={60}
-              style={StyleSheet.absoluteFill}
-            />
+            <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} />
           ) : null}
 
         {/* Pílula Deslizante Contínua (iOS 26 envolve ícone + rótulo; Android/Web segue M3 Expressive) */}
@@ -148,7 +166,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
               styles.slidingPill,
               isIos && { width: pillWidth },
               {
-                transform: [{ translateX: slideAnim }],
+                transform: [{ translateX: pillTranslateX }],
               },
             ]}
           />
@@ -170,7 +188,12 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
               onHoverIn={() => setHoveredKey(item.key)}
               onHoverOut={() => setHoveredKey((prev) => (prev === item.key ? null : prev))}
               onPress={() => {
-                if (isDisabled || currentActive === item.key) return;
+                if (isDisabled) return;
+                if (currentActive === item.key) {
+                  triggerHaptic("light");
+                  onReselectActive?.(item.key);
+                  return;
+                }
                 const now = Date.now();
                 if (now - lastNavigateTime.current < DEBOUNCE_MS) {
                   return;
@@ -219,8 +242,8 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                     ) : null}
                   </View>
                   <Text
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={1.2}
+                    numberOfLines={isIos ? undefined : 1}
+                    maxFontSizeMultiplier={isIos ? 0 : 1.2}
                     style={[
                       styles.label,
                       isActive && styles.labelActive,
@@ -299,9 +322,9 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
 
   // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0115): vidro translúcido com fallback sólido ao reduzir transparência
   const dockBg = isIos
-    ? (reduceTransparency ? colors.m3.surfaceContainer : tokens.glass.fill)
+    ? (reduceTransparency ? colors.m3.surfaceContainer : "transparent")
     : (isWeb ? webDockBg : colors.surface);
-  const dockBorderColor = isIos && !reduceTransparency ? tokens.glass.stroke : colors.m3.outlineVariant;
+  const dockBorderColor = isIos && !reduceTransparency ? "transparent" : colors.m3.outlineVariant;
 
   return StyleSheet.create({
     floatingWrapper: {
@@ -321,11 +344,6 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       maxWidth: INITIAL_DOCK_MAX_WIDTH,
       borderRadius: tokens.radius.full,
       backgroundColor: "transparent",
-      elevation: 4,
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
     },
     dock: {
       position: "relative",
@@ -413,6 +431,8 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
     itemPressed: { opacity: 0.8 },
     itemDisabled: { opacity: 0.38 },
     label: {
+      flexShrink: 1,
+      maxWidth: "100%",
       color: colors.m3.onSurfaceVariant,
       fontFamily: tokens.fontFamily.medium,
       fontSize: tokens.fontSize[12],

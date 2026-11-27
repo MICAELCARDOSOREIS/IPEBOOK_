@@ -29,7 +29,7 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     const style = StyleSheet.flatten(screen.getByTestId("paper").props.style);
     expect(style.backgroundColor).toBe(colors.m3.surfaceContainerLowest);
     expect(style.borderRadius).toBe(tokens.radius.xl);
-    expect(screen.queryByTestId("ios-card-blur")).toBeNull();
+    expect(screen.queryByTestId("ios-card-glass", { includeHiddenElements: true })).toBeNull();
   });
 
   it("exibe desfoque no vidro e desativa-o ao reduzir a transparência", async () => {
@@ -41,7 +41,7 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     await waitFor(() => {
       const style = StyleSheet.flatten(screen.getByTestId("glass").props.style);
       expect(style.backgroundColor).toBe(colors.m3.surfaceContainerLow);
-      expect(screen.queryByTestId("ios-card-blur")).toBeNull();
+      expect(screen.queryByTestId("ios-card-glass", { includeHiddenElements: true })).toBeNull();
     });
   });
 
@@ -52,8 +52,8 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
       <IosCardSurface variant="glass" testID="glass"><Text>Conteúdo</Text></IosCardSurface>,
     );
     const style = StyleSheet.flatten(screen.getByTestId("glass").props.style);
-    expect(style.backgroundColor).toBe(tokens.glass.fill);
-    expect(screen.getByTestId("ios-card-blur")).toBeDefined();
+    expect(style.backgroundColor).toBe("transparent");
+    expect(screen.getByTestId("ios-card-glass", { includeHiddenElements: true })).toBeDefined();
   });
 
   it("não altera a superfície nem aplica blur no Android", async () => {
@@ -63,7 +63,7 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     );
     const style = StyleSheet.flatten(screen.getByTestId("native").props.style);
     expect(style?.backgroundColor).toBeUndefined();
-    expect(screen.queryByTestId("ios-card-blur")).toBeNull();
+    expect(screen.queryByTestId("ios-card-glass", { includeHiddenElements: true })).toBeNull();
   });
 
   it("preserva o cartão de leitor e a sua descrição acessível", async () => {
@@ -77,7 +77,7 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
     jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
     const secondary = await render(<OutlinedButton label="Ver detalhes" onPress={() => {}} />);
-    expect(secondary.getByTestId("outlined-button-blur")).toBeDefined();
+    expect(secondary.getByTestId("outlined-button-glass", { includeHiddenElements: true })).toBeDefined();
     const primary = await render(<FilledButton label="Continuar" onPress={() => {}} />);
     const style = StyleSheet.flatten(primary.getByRole("button").props.style);
     expect(style.minHeight).toBe(52);
@@ -100,14 +100,14 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
     jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
     const screen = await render(<TopAppBar title="Entrar com e-mail" onBack={() => {}} />);
-    expect(screen.getByTestId("top-app-bar-back-blur")).toBeDefined();
+    expect(screen.getByTestId("top-app-bar-back-glass", { includeHiddenElements: true })).toBeDefined();
     const titleStyle = StyleSheet.flatten(screen.getByRole("header").props.style);
     expect(titleStyle.textAlign).toBe("center");
     expect(titleStyle.fontSize).toBe(17);
 
     Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
     const androidScreen = await render(<TopAppBar title="Entrar com e-mail" onBack={() => {}} />);
-    expect(androidScreen.queryByTestId("top-app-bar-back-blur")).toBeNull();
+    expect(androidScreen.queryByTestId("top-app-bar-back-glass", { includeHiddenElements: true })).toBeNull();
   });
 
   it("usa Dialog Liquid Glass e botão destrutivo suave no iOS", async () => {
@@ -124,7 +124,7 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
         onCancel={() => {}}
       />,
     );
-    expect(screen.getByTestId("dialog-ios-blur")).toBeDefined();
+    expect(screen.getByTestId("dialog-ios-glass", { includeHiddenElements: true })).toBeDefined();
     const confirmStyle = StyleSheet.flatten(screen.getByLabelText("Excluir").props.style);
     expect(confirmStyle.backgroundColor).toBe(tokens.ios.destructiveFill);
   });
@@ -134,15 +134,15 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
 
     const snackbar = await render(<Snackbar visible message="Link copiado" />);
-    expect(snackbar.getByTestId("blur-view")).toBeDefined();
+    expect(snackbar.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
     expect(StyleSheet.flatten(snackbar.getByRole("alert").props.style).color).toBe(colors.m3.onSurface);
 
     const sheet = await render(<PhotoSourceSheet visible onChoose={() => {}} onClose={() => {}} />);
-    expect(sheet.getByTestId("blur-view")).toBeDefined();
+    expect(sheet.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
 
     Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
     const androidSnackbar = await render(<Snackbar visible message="Link copiado" />);
-    expect(androidSnackbar.queryByTestId("blur-view")).toBeNull();
+    expect(androidSnackbar.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
     expect(StyleSheet.flatten(androidSnackbar.getByRole("alert").props.style).color).toBe(colors.m3.inverseOnSurface);
   });
 });

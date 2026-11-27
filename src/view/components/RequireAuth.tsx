@@ -165,6 +165,8 @@ function createStyles(colors: ColorPalette) {
     },
     secondaryButton: {
       marginTop: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingHorizontal: tokens.spacing[20],
       paddingVertical: tokens.spacing[10],
       borderRadius: tokens.radius.full,

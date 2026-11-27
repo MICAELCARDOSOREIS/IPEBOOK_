@@ -7,6 +7,7 @@ import {
 } from "@/model/entities/delivery";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { subscribePostgresChanges } from "@/infra/supabaseRealtime";
 
 type DeliveryRow = { request_id: string; completed_by: string; completed_at: string };
 type CodeRow = { code: string; expires_at: string };
@@ -52,5 +53,24 @@ export class SupabaseDeliveryDataSource implements IDeliveryDataSource {
       throw new DataSourceError(DELIVERY_ATTEMPT_MESSAGES[row.resultado === "ok" ? "incorreto" : row.resultado]);
     }
     return { requestId, completedBy: actorId, completedAt: row.concluida_em };
+  }
+
+  subscribeToRequest(requestId: string, onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: `deliveries:${requestId}`,
+      event: "*",
+      table: "v2_deliveries",
+      filter: `request_id=eq.${requestId}`,
+      onPayload: () => onChange(),
+    });
+  }
+
+  subscribeToAll(onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: "deliveries:all",
+      event: "*",
+      table: "v2_deliveries",
+      onPayload: () => onChange(),
+    });
   }
 }

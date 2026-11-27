@@ -36,6 +36,20 @@ describe("useListingPhotoViewModel (Spec 092)", () => {
     expect(hook.current[0]).toEqual({ uploading: false, error: null });
   });
 
+  it("usa recorte 1:6 para lombada e 5:8 para verso", async () => {
+    const pickImage = jest.fn().mockResolvedValue(image);
+    const upload = jest.fn().mockResolvedValue("https://cdn/u1/anuncio/lado.jpg");
+    const hook = await renderHook({ pickSquareImage: jest.fn(), pickImage }, { uploadListingPhoto: upload });
+
+    await act(async () => { await hook.current[1].choose("library", "spine"); });
+    expect(pickImage).toHaveBeenLastCalledWith("library", [1, 6]);
+    expect(upload).toHaveBeenLastCalledWith("u1", { ...image, side: "spine" });
+
+    await act(async () => { await hook.current[1].choose("library", "back"); });
+    expect(pickImage).toHaveBeenLastCalledWith("library", [5, 8]);
+    expect(upload).toHaveBeenLastCalledWith("u1", { ...image, side: "back" });
+  });
+
   it("cancelar não envia nem mostra erro", async () => {
     const upload = jest.fn();
     const hook = await renderHook({ pickSquareImage: jest.fn(), pickImage: jest.fn().mockResolvedValue(null) }, { uploadListingPhoto: upload });

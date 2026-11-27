@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { GoogleLogo } from "@/view/components/GoogleLogo";
@@ -396,32 +396,35 @@ export function BetaInviteScreen({
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.page}>
-      <View style={[styles.topBar, wide && styles.topBarWide]}>
-        <View style={styles.topBarInner}>
+  const header = (
+    <View style={[styles.topBar, wide && styles.topBarWide, Platform.OS === "ios" && { backgroundColor: "transparent", borderBottomWidth: 0 }]}>
+      <View style={styles.topBarInner}>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Ir para a página inicial do IpêBook"
+          onPress={guardedNavigateHome}
+          style={withPress(styles.logoPressable)}
+        >
+          <Logotipo />
+        </Pressable>
+        <View style={styles.topBarActions}>
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel="Ir para a página inicial do IpêBook"
+            accessibilityLabel="Voltar para a página inicial"
             onPress={guardedNavigateHome}
-            style={withPress(styles.logoPressable)}
+            style={withPress(styles.homeLink)}
           >
-            <Logotipo />
+            <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.homeLinkText}>Início</Text>
           </Pressable>
-          <View style={styles.topBarActions}>
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel="Voltar para a página inicial"
-              onPress={guardedNavigateHome}
-              style={withPress(styles.homeLink)}
-            >
-              <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
-              <Text style={styles.homeLinkText}>Início</Text>
-            </Pressable>
-          </View>
         </View>
       </View>
-      <ScrollView
+    </View>
+  );
+
+  return (
+    <ScrollEdgeScreen style={styles.page} header={header}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[styles.scroll, wide && styles.scrollWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
@@ -437,8 +440,8 @@ export function BetaInviteScreen({
             {formCard}
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
@@ -37,26 +38,43 @@ export function ShelfEmptyState({
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  return (
-    <View style={styles.emptyState}>
+  const content = (
+    <>
       <View style={styles.emptyIcon}>
         <AppIcon name={icon} size={32} color={colors.m3.onSecondaryContainer} />
       </View>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      <Text style={styles.emptyBody}>{body}</Text>
+      <Text accessibilityRole="header" maxFontSizeMultiplier={1.4} style={styles.emptyTitle}>{title}</Text>
+      <Text maxFontSizeMultiplier={1.4} style={styles.emptyBody}>{body}</Text>
       <View style={styles.emptyAction}>
         <FilledButton label="Ver meus anúncios" onPress={onShowListings} />
       </View>
-    </View>
+    </>
   );
+
+  if (Platform.OS === "ios") {
+    return (
+      <View style={styles.iosOuter}>
+        <IosCardSurface variant="glass" style={styles.emptyState}>
+          {content}
+        </IosCardSurface>
+      </View>
+    );
+  }
+
+  return <View style={styles.emptyState}>{content}</View>;
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    iosOuter: {
+      paddingTop: tokens.spacing[24],
+      paddingHorizontal: tokens.spacing[16],
+    },
     emptyState: {
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[40],
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[24] : tokens.spacing[40],
+      paddingBottom: Platform.OS === "ios" ? tokens.spacing[24] : 0,
       paddingHorizontal: tokens.spacing[16],
     },
     emptyIcon: {

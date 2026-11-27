@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeScheduleMeetingViewModel } from "@/di/container";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -8,10 +8,13 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OptionChip, ScheduleMeetingWideLayout } from "@/view/requests/ScheduleMeetingWideLayout";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -39,6 +42,10 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const rescheduling = state.mode === "reschedule";
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const insets = useSafeAreaInsets();
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -96,8 +103,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
 
   return (
     <View style={styles.page}>
-      <SafeAreaView style={styles.safe} pointerEvents="box-none">
-      <TopAppBar contentMaxWidth={560} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
+      <ScrollEdgeScreen edges={isIos ? ["top", "left", "right"] : undefined} style={styles.safe} pointerEvents="box-none" scrolling={!state.loading && !state.loadError} header={<TopAppBar contentMaxWidth={560} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />}>
       {state.loading ? (
         <View style={styles.loadingContainer}>
           <LoadingState label="Carregando o encontro" variant="detail" />
@@ -109,7 +115,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
       ) : (
         <View style={styles.stage} pointerEvents="box-none">
           <View style={styles.sheetFull}>
-          <ScrollView
+          <ScrollEdgeScrollView
             ref={scrollRef}
             style={styles.sheetScroll}
             contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
@@ -136,9 +142,24 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                       accessibilityRole="radio"
                       accessibilityLabel={`Local ${point.name}, ${point.recommendedTime}`}
                       accessibilityState={{ checked: selected }}
-                      onPress={() => actions.selectPoint(point.name)}
-                      style={withPress([styles.place, selected && styles.placeSelected])}
+                      onPress={() => {
+                        if (isIos) triggerHaptic("selection");
+                        actions.selectPoint(point.name);
+                      }}
+                      style={withPress([
+                        styles.place,
+                        selected && styles.placeSelected,
+                        isIos && (iosGlass ? styles.iosPlaceGlass : styles.iosPlaceOpaque),
+                        isIos && selected && styles.iosPlaceSelected,
+                      ])}
                     >
+                      {iosGlass ? (
+                        <IosGlassBackdrop
+                          isInteractive
+                          tintColor={selected ? colors.m3.secondaryContainer : undefined}
+                          style={styles.iosPlaceGlassShape}
+                        />
+                      ) : null}
                       <View style={[styles.placeIconBox, selected && styles.placeIconBoxSelected]}>
                         {/* O número é o mesmo do pino no mapa. */}
                         <Text
@@ -209,9 +230,10 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                 </Text>
               ) : null}
             </View>
-          </ScrollView>
+          </ScrollEdgeScrollView>
           {/* Ação principal fixa no rodapé, como em `06.04`. */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, isIos && (iosGlass ? styles.iosFooterGlass : styles.iosFooterOpaque), isIos && { paddingBottom: Math.max(insets.bottom, tokens.spacing[16]) }]}>
+            {iosGlass ? <IosGlassBackdrop style={styles.iosFooterGlassShape} /> : null}
             <View style={styles.footerContent}>
               <View accessibilityLiveRegion="polite" style={styles.summary}>
                 <AppIcon name={summary.complete ? "check" : "info"} size={18} color={summary.complete ? colors.m3.primary : colors.m3.onSurfaceVariant} />
@@ -232,7 +254,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
           </View>
         </View>
       )}
-      </SafeAreaView>
+      </ScrollEdgeScreen>
     </View>
   );
 }
@@ -313,6 +335,24 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 2,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },
+    iosPlaceGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      overflow: "hidden",
+    },
+    iosPlaceOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderCurve: "continuous",
+    },
+    iosPlaceSelected: {
+      borderColor: colors.m3.primary,
+      borderWidth: 2,
+    },
+    iosPlaceGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.medium,
+    },
     placeIconBox: {
       width: 40,
       height: 40,
@@ -363,7 +403,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
     },
-    chipCompact: { width: 52, paddingHorizontal: 0, alignItems: "center" },
+    chipCompact: { minWidth: 52, paddingHorizontal: tokens.spacing[8], alignItems: "center" },
     chipWithCheck: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[4] },
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,
@@ -390,6 +430,17 @@ function createStyles(colors: ColorPalette) {
       borderTopColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLow,
       padding: tokens.spacing[16],
+    },
+    iosFooterGlass: {
+      backgroundColor: "transparent",
+      borderTopColor: tokens.glass.stroke,
+      overflow: "hidden",
+    },
+    iosFooterOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    iosFooterGlassShape: {
+      ...StyleSheet.absoluteFill,
     },
     footerContent: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[8] },
     closedNotice: {

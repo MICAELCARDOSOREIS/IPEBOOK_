@@ -6,6 +6,7 @@ import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/mode
 import { MIN_PASSWORD_LENGTH } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
+import type { IWebPushService } from "@/model/services/iWebPushService";
 
 /** Mensagens e limites de tempo para proteção contra requisições travadas sem internet. */
 export const AUTH_NETWORK_ERROR_MESSAGE = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
@@ -134,6 +135,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     private readonly client: SupabaseAppClient,
     private readonly recoveryRedirectUrl: string,
     private readonly nativeGoogle?: INativeGoogleSignIn,
+    private readonly webPush?: IWebPushService,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -302,6 +304,41 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     return { id: data.user.id, email: data.user.email ?? "", name: readFullName(data.user) };
   }
 
+  async signInWithApple(): Promise<User | null> {
+    if (Platform.OS !== "ios") throw new AuthError("Login com a Apple indisponível.");
+    const [apple, crypto] = await Promise.all([import("expo-apple-authentication"), import("expo-crypto")]);
+    const nonce = crypto.randomUUID();
+    const hashedNonce = await crypto.digestStringAsync(crypto.CryptoDigestAlgorithm.SHA256, nonce);
+    try {
+      const credential = await apple.signInAsync({
+        nonce: hashedNonce,
+        requestedScopes: [apple.AppleAuthenticationScope.FULL_NAME, apple.AppleAuthenticationScope.EMAIL],
+      });
+      if (!credential.identityToken) throw new AuthError("A Apple não enviou uma credencial válida.");
+      const { data, error } = await withAuthTimeout(this.client.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce,
+      }));
+      if (error || !data.user) {
+        if (isNetworkError(error)) throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+        throw new AuthError("Não foi possível autenticar com a Apple. Tente novamente.");
+      }
+
+      const name = [credential.fullName?.givenName, credential.fullName?.familyName].filter(Boolean).join(" ").trim();
+      if (name && !readFullName(data.user)) {
+        // A Apple só entrega o nome na primeira autorização. A sessão já é válida mesmo se a atualização falhar.
+        await withAuthTimeout(this.client.auth.updateUser({ data: { full_name: name } })).catch(() => undefined);
+      }
+      return { id: data.user.id, email: data.user.email ?? "", name: readFullName(data.user) ?? (name || undefined) };
+    } catch (error) {
+      if (typeof error === "object" && error && "code" in error && error.code === "ERR_REQUEST_CANCELED") return null;
+      if (error instanceof AuthError) throw error;
+      if (isNetworkError(error)) throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+      throw new AuthError("Não foi possível autenticar com a Apple. Tente novamente.");
+    }
+  }
+
   async setSessionFromUrl(url: string): Promise<User> {
     try {
       const parsed = new URL(url);
@@ -351,6 +388,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async signOut(): Promise<void> {
+    if (Platform.OS === "web" && this.webPush) {
+      await withAuthTimeout(this.webPush.disable(), 2000).catch(() => undefined);
+    }
     const { error } = await this.client.auth.signOut();
     if (error) throw new AuthError("Não foi possível sair. Tente novamente.");
     await this.nativeGoogle?.signOut();

@@ -21,3 +21,9 @@
 - [x] **T005 — Executar verificações e atualizar documentação**
   - Executar `npm run typecheck`, `npm run check:architecture` e `npm run test`.
   - Atualizar `docs/estado.md` e `README.md` com as métricas exatas e conferência com `npm run check:docs`.
+
+## Web Push para a Tela de Início
+
+- [x] Implementar inscrição e remoção com consentimento por dispositivo, persistência com RLS e chave VAPID pública opcional.
+- [x] Emitir avisos genéricos na função existente, respeitar preferências e abrir a central no Service Worker.
+- [ ] Validar RLS, ativação, recusa e saída localmente. Homologar o recebimento em iPhone instalado e o retorno em Safari.

@@ -54,7 +54,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
   const guardedHelp = useGuardedPress(onHelp);
   const guardedTerms = useGuardedPress(onTerms);
   const guardedExplore = useGuardedPress(onExplore);
-  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
+  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>("Venda");
   const labels = betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
     : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
@@ -405,7 +405,7 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
   },
   iosModality: {
-    minHeight: 40,
+    minHeight: accessibility.touchTarget,
     borderRadius: 22,
   },
   modalityDot: {

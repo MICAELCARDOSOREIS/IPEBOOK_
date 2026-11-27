@@ -21,6 +21,19 @@ const APP_SHELL_URLS = [
 
 const ACTIVE_CACHES = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, CATALOG_CACHE_NAME];
 
+self.addEventListener("push", (event) => {
+  event.waitUntil(self.registration.showNotification("IpêBook", {
+    body: "Há um novo aviso na sua Central de notificações.",
+    icon: "/icone-192.png",
+    tag: "ipebook-avisos",
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow(new URL("/notificacoes", self.location.origin).href));
+});
+
 // Instalação: Pré-cache do App Shell e ativação imediata
 self.addEventListener("install", (event) => {
   event.waitUntil(

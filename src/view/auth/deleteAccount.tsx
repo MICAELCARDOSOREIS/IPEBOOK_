@@ -71,6 +71,11 @@ export default function DeleteAccount({
           <Text style={styles.bodyCenter}>
             Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
           </Text>
+          {Platform.OS === "ios" ? (
+            <Text style={styles.bodyCenter}>
+              Se você usou Entrar com a Apple, abra Ajustes, toque no seu nome e vá a Iniciar Sessão com a Apple. Selecione IpêBook e toque em Apagar.
+            </Text>
+          ) : null}
           <View style={styles.fullWidthButton}>
             <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
           </View>
@@ -118,7 +123,9 @@ export default function DeleteAccount({
           <Text style={styles.bodyCenter}>
             {onNavigateToLogin
               ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
-              : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
+              : Platform.OS === "ios"
+                ? "No aplicativo do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o endereço cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."
+                : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
           </Text>
           {onNavigateToLogin ? (
             <View style={styles.fullWidthButton}>

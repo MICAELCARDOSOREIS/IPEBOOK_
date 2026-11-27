@@ -29,7 +29,7 @@ Origem no sistema base: Material 3 (Bottom Sheets) / Apple HIG (Sheets). Situaç
 | --- | --- | --- | --- |
 | **Android (M3)** | `colors.background` | Sem borda, elevação tonal | Nativo |
 | **Web** | `colors.background` | Centralizado em telas grandes com cantos totais | Tecla Esc fecha a folha |
-| **iOS (Apple HIG)** | `tokens.glass.fill` + `BlurView` nativo | `tokens.glass.stroke` (1 pt), `borderCurve: "continuous"` | `KeyboardAvoidingView` interno com `behavior="padding"` |
+| **iOS (Apple HIG)** | Liquid Glass nativo via `IosGlassBackdrop`, com fundo sólido quando indisponível ou com Reduzir Transparência | `borderCurve: "continuous"` | `KeyboardAvoidingView` interno com `behavior="padding"` |
 
 ## Estados
 

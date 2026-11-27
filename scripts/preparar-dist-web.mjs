@@ -4,7 +4,7 @@
 //    eram publicadas. Elas passam para `assets/vendor/` e as referências são reescritas.
 // 2. Sem `404.html`, o Pages responde 200 com o HTML do app para arquivos inexistentes, e o
 //    cabeçalho `immutable` de `/_expo/static/*` faz a borda guardar esse HTML no lugar do JS.
-import { copyFileSync, existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,26 @@ function listar(dir) {
 if (!existsSync(dist)) {
   console.error("dist/ não encontrado; rode `expo export --platform web` antes.");
   process.exit(1);
+}
+
+const appleTeamId = process.env.APPLE_TEAM_ID?.trim();
+if (appleTeamId) {
+  if (!/^[A-Z0-9]{10}$/.test(appleTeamId)) {
+    console.error("APPLE_TEAM_ID deve conter os 10 caracteres da equipe Apple Developer.");
+    process.exit(1);
+  }
+  const { expo } = JSON.parse(readFileSync(join(dist, "..", "app.json"), "utf8"));
+  const association = {
+    applinks: {
+      details: [{
+        appIDs: [`${appleTeamId}.${expo.ios.bundleIdentifier}`],
+        components: [{ "/": "/redefinir-senha", "?": { origem: "ios" } }],
+      }],
+    },
+  };
+  const pasta = join(dist, ".well-known");
+  mkdirSync(pasta, { recursive: true });
+  writeFileSync(join(pasta, "apple-app-site-association"), `${JSON.stringify(association)}\n`);
 }
 
 const pastaOrigem = join(dist, origem);

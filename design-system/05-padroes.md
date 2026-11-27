@@ -95,7 +95,7 @@ Referência editável no [Figma do iPhone](https://www.figma.com/design/cxEisNRz
 | --- | --- | --- |
 | Card de livro/leitor | Superfície opaca, raio 20 pt, borda suave e sombra discreta | `IosCardSurface variant="paper"`; aplicado ao `ReaderCard` |
 | Card de estado | `neutral`, `success`, `info` ou `donation`, sem vidro sobre conteúdo extenso | `IosCardSurface` |
-| Controle secundário | Pílula Liquid Glass, com `BlurView` e fallback opaco | `OutlinedButton` |
+| Controle secundário | Pílula com Liquid Glass nativo e fundo sólido alternativo | `OutlinedButton` |
 | Ação principal | Verde da marca, altura 52 pt, cantos contínuos e sombra suave | `FilledButton` |
 | Campo de formulário | Fundo sólido, raio 14 pt, foco e erro claramente identificados | `TextField` |
 | Chip de filtro | Pílula de no mínimo 44 pt, mantendo marcação acessível | `Chip` |

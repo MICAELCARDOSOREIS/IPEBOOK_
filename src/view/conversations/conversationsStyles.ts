@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -475,7 +476,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     rowText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
-    rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    rowHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[8] },
     rowAuthorGroup: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
     name: { flex: 1, ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurfaceVariant },
     nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },
@@ -580,6 +581,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       overflow: "hidden",
     },
     rowCardPendingReceived: {
@@ -610,8 +612,33 @@ export function createConversationsStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.errorContainer,
-      minHeight: tokens.spacing[32],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[32],
       justifyContent: "center",
+    },
+    iosCancelRequestGlass: {
+      backgroundColor: "transparent",
+      overflow: "hidden",
+      borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+    },
+    iosCancelRequestOpaque: {
+      borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosGlassPillShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    iosCancelRequestPressed: {
+      opacity: 0.78,
+      transform: [{ scale: 0.96 }],
+    },
+    cancelRequestPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.97 }],
     },
     cancelRequestText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
     pendingBanner: {

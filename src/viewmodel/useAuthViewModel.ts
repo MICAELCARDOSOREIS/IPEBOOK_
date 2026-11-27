@@ -18,6 +18,7 @@ export type AuthActions = {
   signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle?: () => Promise<boolean>;
+  signInWithApple?: () => Promise<boolean>;
   handleAuthCallback?: (url: string) => Promise<boolean>;
   signOut: () => Promise<boolean>;
   requestPasswordReset: (email: string) => Promise<boolean>;
@@ -97,10 +98,14 @@ export function useAuthViewModel(
     };
   }, [auth, isTest]);
 
-  const run = useCallback(async (action: () => Promise<User>) => {
+  const run = useCallback(async (action: () => Promise<User | null>) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       const user = await action();
+      if (!user) {
+        if (active.current) setState((previous) => ({ ...previous, loading: false }));
+        return false;
+      }
       if (!isTest) updateSessionAuthCache(user);
       if (active.current) setState({ user, loading: false, error: null });
       return true;
@@ -230,6 +235,11 @@ export function useAuthViewModel(
     }
   }, [auth, logger, isTest]);
 
+  const signInWithApple = useCallback(
+    () => run(() => auth.signInWithApple?.() ?? Promise.resolve(null)),
+    [auth, run],
+  );
+
   const handleAuthCallback = useCallback(async (url: string) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
@@ -308,8 +318,8 @@ export function useAuthViewModel(
   }, [auth, isTest]);
 
   const actions = useMemo<AuthActions>(
-    () => ({ signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),
-    [signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession],
+    () => ({ signUp, signIn, signInWithGoogle, signInWithApple, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),
+    [signUp, signIn, signInWithGoogle, signInWithApple, handleAuthCallback, signOut, requestPasswordReset, refreshSession],
   );
 
   return [state, actions];

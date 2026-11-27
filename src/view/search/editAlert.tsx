@@ -132,6 +132,7 @@ export default function EditAlert({ alertId, userId, sessionLoading = false, onB
         value={term}
         onChangeText={setTerm}
         maxLength={100}
+        returnKeyType="done"
       />
 
       <TextField

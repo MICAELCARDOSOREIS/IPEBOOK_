@@ -5,6 +5,7 @@ import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 
@@ -69,6 +70,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       elevation: 1,
       shadowColor: colors.ipe.trunk,
       shadowOpacity: 0.04,

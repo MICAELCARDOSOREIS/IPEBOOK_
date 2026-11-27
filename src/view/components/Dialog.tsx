@@ -1,9 +1,9 @@
-import { BlurView } from "expo-blur";
 import { useEffect, useRef } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { triggerHaptic } from "@/view/haptics";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -145,11 +145,25 @@ function DialogContent({
   const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = getDialogStyles(colors);
-  const guardedCancel = useGuardedPress(onCancel);
-  const guardedConfirm = useGuardedPress(onConfirm);
+  const guardedCancel = useGuardedPress(
+    onCancel
+      ? () => {
+          if (isIos) triggerHaptic("light");
+          onCancel();
+        }
+      : undefined,
+  );
+  const guardedConfirm = useGuardedPress(
+    onConfirm
+      ? () => {
+          if (isIos) triggerHaptic(destructive ? "warning" : "light");
+          onConfirm();
+        }
+      : undefined,
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -208,15 +222,10 @@ function DialogContent({
           ]}
         >
           {iosGlass ? (
-            <BlurView
-              testID="dialog-ios-blur"
-              intensity={30}
-              tint="light"
-              style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.xxl }]}
-            />
+            <IosGlassBackdrop testID="dialog-ios-glass" style={{ borderRadius: tokens.radius.xxl }} />
           ) : null}
-          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          <Text accessibilityRole="header" maxFontSizeMultiplier={1.4} style={styles.title}>{title}</Text>
+          <Text maxFontSizeMultiplier={1.4} style={styles.message}>{message}</Text>
           <View style={styles.actions}>
             {showCancel ? (
               <Pressable
@@ -228,7 +237,7 @@ function DialogContent({
                 onPress={guardedCancel}
                 style={withPress(styles.cancelButton)}
               >
-                <Text style={styles.cancelText}>{cancelLabel}</Text>
+                <Text maxFontSizeMultiplier={1.4} style={styles.cancelText}>{cancelLabel}</Text>
               </Pressable>
             ) : null}
             <Pressable
@@ -252,7 +261,7 @@ function DialogContent({
                   color={destructive && isIos ? colors.error : colors.surface}
                 />
               ) : (
-                <Text style={[styles.confirmText, destructive && isIos && styles.iosConfirmDestructiveText]}>
+                <Text maxFontSizeMultiplier={1.4} style={[styles.confirmText, destructive && isIos && styles.iosConfirmDestructiveText]}>
                   {confirmLabel}
                 </Text>
               )}
@@ -290,9 +299,9 @@ function createStyles(colors: ColorPalette) {
     iosCardGlass: {
       overflow: "hidden",
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: "transparent",
     },
     iosCardOpaque: {
       borderCurve: "continuous",
@@ -310,9 +319,11 @@ function createStyles(colors: ColorPalette) {
     },
     actions: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "flex-end",
       alignItems: "center",
       gap: tokens.spacing[8],
+      rowGap: tokens.spacing[8],
       marginTop: tokens.spacing[8],
     },
     cancelButton: {

@@ -5,7 +5,7 @@ import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "@/view/conversations/ChatProposalCards";
 import { CatalogCarousel, HomeEmptyCatalogSection, HomeShortcutsSection, carouselOffsetFor } from "@/view/home/CatalogCarousel";
 import { BookDetailHeroSection, DetailRow, HeroIconButton } from "@/view/listings/BookDetailSections";
-import { ProfileCommunityBadges, ProfileIdentityCard, ProfileMenuSection } from "@/view/profile/ProfileHubSections";
+import { ProfileIdentityCard, ProfileMenuSection } from "@/view/profile/ProfileHubSections";
 import { OptionChip, ScheduleMeetingWideLayout } from "@/view/requests/ScheduleMeetingWideLayout";
 
 afterEach(() => cleanup());
@@ -107,7 +107,7 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
     expect(onResetModality).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza ProfileIdentityCard, ProfileCommunityBadges e ProfileMenuSection", async () => {
+  it("renderiza ProfileIdentityCard e ProfileMenuSection", async () => {
     const onEditProfile = jest.fn();
     const onCreateListing = jest.fn();
     const onMyListings = jest.fn();
@@ -133,7 +133,6 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
             onMeetingHistory={onMeetingHistory}
             onRatings={onRatings}
           />
-          <ProfileCommunityBadges neighborhood="Centro" completedTrocas={2} totalPublications={4} />
           <ProfileMenuSection
             title="Conta"
             items={[{ key: "security", icon: "lock", label: "Segurança", onPress: onMenuAction, showChevron: true }]}

@@ -8,4 +8,8 @@ export interface IBookRequestDataSource {
   respond(id: string, status: RequestStatus): Promise<BookRequest>;
   /** Quando disponível, confirma o pedido e atualiza concorrentes e livro numa transação. */
   acceptAtomically?(id: string): Promise<BookRequest>;
+  /** Assina mudanças em tempo real no pedido específico (aceite, recusa, cancelamento). */
+  subscribeToRequest?(requestId: string, onChange: () => void): () => void;
+  /** Assina mudanças em tempo real em todos os pedidos visíveis pela sessão atual (RLS). */
+  subscribeToAll?(onChange: () => void): () => void;
 }

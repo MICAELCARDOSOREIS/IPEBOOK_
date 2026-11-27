@@ -23,8 +23,12 @@ describe("Boas-vindas do primeiro acesso (issue #98)", () => {
     expect(screen.getByLabelText("Encontros em locais públicos de Piripiri sem taxas")).toBeTruthy();
   });
 
-  it("permite interagir com as modalidades para ver detalhes de cada uma", async () => {
+  it("inicia com Venda selecionada e permite trocar ou fechar a explicação", async () => {
     const { screen } = await renderWelcome();
+
+    expect(
+      screen.getByText("Defina o preço em reais e combine a entrega no seu bairro."),
+    ).toBeTruthy();
 
     const trocaChip = screen.getByRole("button", { name: "Troca: toque para ver detalhes" });
     await act(async () => {

@@ -3,10 +3,59 @@ import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSour
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
 import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { signInAsync } from "expo-apple-authentication";
+
+jest.mock("expo-apple-authentication", () => ({
+  signInAsync: jest.fn(),
+  AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+}));
+
+jest.mock("expo-crypto", () => ({
+  randomUUID: () => "nonce-original",
+  digestStringAsync: jest.fn().mockResolvedValue("hash-do-nonce"),
+  CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+}));
 
 function fakeClient(auth: Record<string, unknown>): SupabaseAppClient {
   return { auth } as unknown as SupabaseAppClient;
 }
+
+describe("Login nativo com a Apple", () => {
+  let original: typeof Platform.OS;
+
+  beforeEach(() => {
+    original = Platform.OS;
+    Platform.OS = "ios";
+    jest.mocked(signInAsync).mockReset();
+  });
+
+  afterEach(() => { Platform.OS = original; });
+
+  it("envia o hash à Apple, o nonce original ao Supabase e guarda o nome inicial", async () => {
+    jest.mocked(signInAsync).mockResolvedValue({
+      identityToken: "token-apple", fullName: { givenName: "Ana", familyName: "Silva" },
+    } as Awaited<ReturnType<typeof signInAsync>>);
+    const signInWithIdToken = jest.fn().mockResolvedValue({
+      data: { user: { id: "u1", email: "relay@privaterelay.appleid.com" } }, error: null,
+    });
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+    const ds = new SupabaseAuthDataSource(fakeClient({ signInWithIdToken, updateUser }), "https://app/redefinir-senha");
+    await expect(ds.signInWithApple()).resolves.toEqual({
+      id: "u1", email: "relay@privaterelay.appleid.com", name: "Ana Silva",
+    });
+    expect(signInAsync).toHaveBeenCalledWith({ nonce: "hash-do-nonce", requestedScopes: [0, 1] });
+    expect(signInWithIdToken).toHaveBeenCalledWith({ provider: "apple", token: "token-apple", nonce: "nonce-original" });
+    expect(updateUser).toHaveBeenCalledWith({ data: { full_name: "Ana Silva" } });
+  });
+
+  it("deixa a sessão intacta quando a pessoa cancela a folha da Apple", async () => {
+    jest.mocked(signInAsync).mockRejectedValue({ code: "ERR_REQUEST_CANCELED" });
+    const signInWithIdToken = jest.fn();
+    const ds = new SupabaseAuthDataSource(fakeClient({ signInWithIdToken }), "https://app/redefinir-senha");
+    await expect(ds.signInWithApple()).resolves.toBeNull();
+    expect(signInWithIdToken).not.toHaveBeenCalled();
+  });
+});
 
 describe("SupabaseAuthDataSource (Issue #97)", () => {
   it("cria a conta quando o e-mail é novo", async () => {

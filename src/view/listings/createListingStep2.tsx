@@ -11,7 +11,9 @@ import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
+import { hasPhotoPermission } from "@/view/listings/photoPermission";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -132,8 +134,15 @@ export function CreateListingStep2({
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
-          // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
-          if (slot) setPendingPhoto({ ...slot, source });
+          if (!slot) return;
+          void hasPhotoPermission(source).then((granted) => {
+            if (granted) {
+              onChoosePhoto?.(slot.slot, source, slot.index);
+            } else {
+              // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
+              setPendingPhoto({ ...slot, source });
+            }
+          });
         }}
         onClose={() => setSheetSlot(null)}
       />
@@ -150,15 +159,27 @@ export function CreateListingStep2({
         onDismiss={() => setPendingPhoto(null)}
       />
 
-      <View style={wideWeb ? styles.webTipBox : styles.tipBox}>
-        <View style={styles.tipHeaderRow}>
-          <AppIcon name="info" size={18} color={colors.action} />
-          <Text style={styles.tipTitle}>Dica de foto</Text>
+      {wideWeb ? (
+        <View style={styles.webTipBox}>
+          <View style={styles.tipHeaderRow}>
+            <AppIcon name="info" size={18} color={colors.action} />
+            <Text style={styles.tipTitle}>Dica de foto</Text>
+          </View>
+          <Text style={styles.tipText}>
+            Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
+          </Text>
         </View>
-        <Text style={styles.tipText}>
-          Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
-        </Text>
-      </View>
+      ) : (
+        <IosCardSurface variant="glass" style={styles.tipBox}>
+          <View style={styles.tipHeaderRow}>
+            <AppIcon name="info" size={18} color={colors.action} />
+            <Text style={styles.tipTitle}>Dica de foto</Text>
+          </View>
+          <Text style={styles.tipText}>
+            Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
+          </Text>
+        </IosCardSurface>
+      )}
 
       {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>

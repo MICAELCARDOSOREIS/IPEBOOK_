@@ -4,9 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS, type MeetingPoint } from "@/model/entities/meetingPoint";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
+import { triggerHaptic } from "@/view/haptics";
 import { withPress } from "@/view/pressFeedback";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -26,14 +28,34 @@ export type OptionChipProps = {
 export function OptionChip({ label, accessibilityLabel, selected, onPress, compact }: OptionChipProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   return (
     <Pressable
       accessibilityRole="radio"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: selected }}
-      onPress={onPress}
-      style={withPress([styles.chip, compact && styles.chipCompact, selected && styles.chipSelected, selected && styles.chipWithCheck])}
+      onPress={() => {
+        if (isIos) triggerHaptic("selection");
+        onPress();
+      }}
+      style={withPress([
+        styles.chip,
+        compact && styles.chipCompact,
+        selected && styles.chipSelected,
+        selected && styles.chipWithCheck,
+        isIos && (iosGlass ? styles.iosChipGlass : styles.iosChipOpaque),
+        isIos && selected && styles.iosChipSelected,
+      ])}
     >
+      {iosGlass ? (
+        <IosGlassBackdrop
+          isInteractive
+          tintColor={selected ? colors.m3.secondaryContainer : undefined}
+          style={styles.iosChipGlassShape}
+        />
+      ) : null}
       {selected ? <AppIcon name="check" size={compact ? 16 : 18} color={colors.m3.onSecondaryContainer} /> : null}
       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
     </Pressable>
@@ -348,13 +370,33 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
     },
-    chipCompact: { width: 52, paddingHorizontal: 0, alignItems: "center" },
+    chipCompact: { minWidth: 52, paddingHorizontal: tokens.spacing[8], alignItems: "center" },
     chipWithCheck: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[4] },
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.m3.secondaryContainer,
       borderRadius: tokens.shapeMorph.chipSelected,
       borderWidth: 0,
+    },
+    iosChipGlass: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderColor: "transparent",
+      backgroundColor: "transparent",
+      overflow: "hidden",
+    },
+    iosChipOpaque: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    iosChipSelected: {
+      borderWidth: 1.5,
+      borderColor: colors.m3.primary,
+    },
+    iosChipGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
     },
     chipText: {
       ...tokens.typography.bodyMedium,

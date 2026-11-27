@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -13,6 +12,7 @@ import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { makeAuthViewModel, makeDraftsViewModel } from "@/di/container";
@@ -83,8 +83,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen edges={["top", "bottom", "left", "right"]} style={styles.page} scrolling={!state.loading && !state.error && state.drafts.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             {onBack ? (
@@ -110,7 +109,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
         </View>
       ) : (
         <TopAppBar contentMaxWidth={560} title="Rascunhos" onBack={guardedBack} />
-      )}
+      )}>
       <View style={[styles.content, wide && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando seus rascunhos" />
@@ -141,7 +140,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
             ) : null}
           </View>
         ) : (
-          <FlatList
+          <ScrollEdgeFlatList
             key={wide ? `grid-drafts-${columns}` : "list-drafts-1"}
             numColumns={wide ? columns : 1}
             columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -298,7 +297,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
         onConfirm={() => void confirmDiscard()}
         onCancel={() => setToDiscard(null)}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

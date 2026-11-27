@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -20,6 +20,8 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
   const isIos = Platform.OS === "ios";
+  const { fontScale } = useWindowDimensions();
+  const stackActions = isIos && fontScale >= 1.5;
 
   const handleClear = useGuardedPress(() => {
     if (isIos) {
@@ -38,9 +40,9 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
   });
 
   return (
-    <View style={styles.wrapper}>
-      <View style={[styles.container, focused && styles.containerFocused, isIos && styles.containerIos]}>
-        <AppIcon name="search" size={isIos ? 20 : 24} color={focused ? colors.m3.primary : colors.secondaryText} />
+    <View style={[styles.wrapper, stackActions && styles.wrapperLargeText]}>
+      <View style={[styles.container, isIos && styles.containerIos, focused && styles.containerFocused, isIos && focused && styles.containerFocusedIos]}>
+        <AppIcon name="search" size={isIos ? 20 : 24} color={focused ? (isIos ? colors.m3.focusRing : colors.m3.primary) : colors.secondaryText} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -50,6 +52,8 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
           placeholder={placeholder}
           placeholderTextColor={colors.secondaryText}
           accessibilityLabel="Buscar livros"
+          returnKeyType={isIos ? "search" : undefined}
+          maxFontSizeMultiplier={isIos ? 0 : 1.3}
           style={styles.input}
           clearButtonMode={isIos ? "never" : undefined}
         />
@@ -91,6 +95,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       width: "100%",
     },
+    wrapperLargeText: { flexDirection: "column", alignItems: "stretch" },
     container: {
       flex: 1,
       flexDirection: "row",
@@ -105,7 +110,10 @@ function createStyles(colors: ColorPalette) {
     },
     containerIos: {
       minHeight: 44,
+      backgroundColor: tokens.ios.cell,
+      borderColor: tokens.ios.separator,
       borderRadius: tokens.radius.cardSmall,
+      borderCurve: "continuous",
       paddingHorizontal: tokens.spacing[12],
       gap: tokens.spacing[8],
     },
@@ -113,7 +121,16 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHighest,
       borderColor: colors.m3.primary,
     },
-    input: { flex: 1, ...tokens.typography.bodyLarge, color: colors.text },
+    containerFocusedIos: {
+      backgroundColor: tokens.ios.cell,
+      borderColor: colors.m3.focusRing,
+    },
+    input: {
+      flex: 1,
+      ...tokens.typography.bodyLarge,
+      color: colors.text,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+    },
     clearButton: {
       minHeight: tokens.accessibility.touchTarget,
       minWidth: tokens.accessibility.touchTarget,
@@ -123,8 +140,8 @@ function createStyles(colors: ColorPalette) {
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     clearButtonIos: {
-      minHeight: 36,
-      minWidth: 36,
+      minHeight: 44,
+      minWidth: 44,
     },
     clearButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

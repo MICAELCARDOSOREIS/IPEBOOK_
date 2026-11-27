@@ -1,5 +1,7 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { Platform } from "react-native";
+import { isGlassEffectAPIAvailable } from "expo-glass-effect";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import BookDetail from "@/view/listings/bookDetail";
@@ -182,54 +184,89 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     expect(onNavigateToMyRequests).toHaveBeenCalled();
   });
 
-  it("folha ReservedListingSheet executa ações de favoritar, busca na categoria e perfil", async () => {
-    const onToggleFavorite = jest.fn();
-    const onSearchCategory = jest.fn();
-    const onViewOwnerProfile = jest.fn();
-    const onClose = jest.fn();
+  it("abre a folha compatível no iOS e navega depois do fechamento", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "ios";
+    try {
+      const onClose = jest.fn();
+      const onViewOwnerProfile = jest.fn();
+      const props = { status: "reserved" as const, onClose, onViewOwnerProfile, ownerName: "Carlos Silva" };
+      const screen = await renderComponent(<ReservedListingSheet visible {...props} />);
+      const onDismiss = screen.getByTestId("reserved-listing-sheet").props.onDismiss;
+      expect(screen.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
 
-    const screen = await renderComponent(
-      <ReservedListingSheet
-        visible={true}
-        onClose={onClose}
-        status="reserved"
-        category="Ficção Científica"
-        isFavorite={false}
-        onToggleFavorite={onToggleFavorite}
-        onSearchCategory={onSearchCategory}
-        onViewOwnerProfile={onViewOwnerProfile}
-        ownerName="Carlos Silva"
-      />,
-    );
+      await fireEvent.press(screen.getByLabelText("Ver perfil e outros anúncios de Carlos Silva"));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onViewOwnerProfile).not.toHaveBeenCalled();
+      await screen.rerender(<ReservedListingSheet visible={false} {...props} />);
+      await act(async () => { onDismiss(); });
+      expect(screen.queryByTestId("reserved-listing-sheet")).toBeNull();
+      expect(onViewOwnerProfile).toHaveBeenCalledTimes(1);
 
-    // 1. Favoritar
-    const favoriteBtn = screen.getByLabelText("Favoritar para ser avisado se a reserva for cancelada");
-    await act(async () => {
-      fireEvent.press(favoriteBtn);
-    });
-    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+      jest.mocked(isGlassEffectAPIAvailable).mockReturnValue(false);
+      await screen.rerender(<ReservedListingSheet visible {...props} />);
+      expect(screen.getByRole("header", { name: "Exemplar Reservado" })).toBeDefined();
+      expect(screen.queryByTestId("ios-native-glass", { includeHiddenElements: true })).toBeNull();
+    } finally {
+      jest.mocked(isGlassEffectAPIAvailable).mockReturnValue(true);
+      Platform.OS = originalPlatform;
+    }
+  });
 
-    // 2. Busca na categoria
-    const categoryBtn = screen.getByLabelText("Buscar outros livros da categoria Ficção Científica");
-    await act(async () => {
-      fireEvent.press(categoryBtn);
-    });
-    expect(onSearchCategory).toHaveBeenCalledWith("Ficção Científica");
-    expect(onClose).toHaveBeenCalled();
+  it("a folha compatível executa ações de favoritar, busca na categoria e perfil", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "android";
+    try {
+      const onToggleFavorite = jest.fn();
+      const onSearchCategory = jest.fn();
+      const onViewOwnerProfile = jest.fn();
+      const onClose = jest.fn();
 
-    // 3. Perfil do anunciante
-    const profileBtn = screen.getByLabelText("Ver perfil e outros anúncios de Carlos Silva");
-    await act(async () => {
-      fireEvent.press(profileBtn);
-    });
-    expect(onViewOwnerProfile).toHaveBeenCalledTimes(1);
+      const screen = await renderComponent(
+        <ReservedListingSheet
+          visible={true}
+          onClose={onClose}
+          status="reserved"
+          category="Ficção Científica"
+          isFavorite={false}
+          onToggleFavorite={onToggleFavorite}
+          onSearchCategory={onSearchCategory}
+          onViewOwnerProfile={onViewOwnerProfile}
+          ownerName="Carlos Silva"
+        />,
+      );
 
-    // 4. Fechar / Entendi
-    const dismissBtn = screen.getByText("Entendi");
-    await act(async () => {
-      fireEvent.press(dismissBtn);
-    });
-    expect(onClose).toHaveBeenCalled();
+      // 1. Favoritar
+      const favoriteBtn = screen.getByLabelText("Favoritar para ser avisado se a reserva for cancelada");
+      await act(async () => {
+        fireEvent.press(favoriteBtn);
+      });
+      expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+
+      // 2. Busca na categoria
+      const categoryBtn = screen.getByLabelText("Buscar outros livros da categoria Ficção Científica");
+      await act(async () => {
+        fireEvent.press(categoryBtn);
+      });
+      expect(onSearchCategory).toHaveBeenCalledWith("Ficção Científica");
+      expect(onClose).toHaveBeenCalled();
+
+      // 3. Perfil do anunciante
+      const profileBtn = screen.getByLabelText("Ver perfil e outros anúncios de Carlos Silva");
+      await act(async () => {
+        fireEvent.press(profileBtn);
+      });
+      expect(onViewOwnerProfile).toHaveBeenCalledTimes(1);
+
+      // 4. Fechar / Entendi
+      const dismissBtn = screen.getByText("Entendi");
+      await act(async () => {
+        fireEvent.press(dismissBtn);
+      });
+      expect(onClose).toHaveBeenCalled();
+    } finally {
+      Platform.OS = originalPlatform;
+    }
   });
 
   it("aplica as cores da modalidade de venda ao botão 'Reservado'", async () => {

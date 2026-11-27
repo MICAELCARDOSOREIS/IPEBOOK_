@@ -4,6 +4,7 @@ export interface IAuthUseCases {
   signUp(email: string, password: string, name: string): Promise<User>;
   signIn(email: string, password: string): Promise<User>;
   signInWithGoogle?(): Promise<User>;
+  signInWithApple?(): Promise<User | null>;
   setSessionFromUrl?(url: string): Promise<User>;
   signOut(): Promise<void>;
   getSession(): Promise<User | null>;

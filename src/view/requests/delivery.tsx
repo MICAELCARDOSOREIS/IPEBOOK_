@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { buildDeliveryPayload, normalizeDeliveryCode, parseDeliveryPayload } from "@/model/entities/delivery";
 import type { Book } from "@/model/entities/book";
 import {
@@ -22,10 +21,12 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { formatPrice } from "@/view/formatPrice";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { QrCode } from "@/view/components/QrCode";
 import { Tag } from "@/view/components/Tag";
 import { TextField } from "@/view/components/TextField";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
@@ -290,7 +291,11 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
             <View style={styles.permission}>
               <AppIcon name="camera" size={28} color={colors.m3.primary} />
               <Text style={styles.bodyCompact}>Permita a câmera para ler o QR ou alterne para digitar o código.</Text>
-              <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
+              {Platform.OS === "ios" && permission?.canAskAgain === false ? (
+                <OpenAppSettingsButton />
+              ) : (
+                <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
+              )}
             </View>
           )
         ) : (
@@ -329,8 +334,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
 
   const title = "Entrega do livro";
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={guardedBack} />
+    <ScrollEdgeScreen style={styles.page} scrolling={!state.loading && !state.loadError} header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={guardedBack} />}>
       {state.loading ? (
         <View style={styles.loadingContainer}>
           <LoadingState label="Carregando a entrega" variant="detail" />
@@ -340,7 +344,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
           <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
         </View>
       ) : (
-        <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
+        <ScrollEdgeScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
           <View style={[styles.content, wide && styles.contentWide]}>
             {wide ? (
               <View style={[styles.wideGrid, stackColumns && styles.wideGridStacked]}>
@@ -369,7 +373,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
               </>
             )}
           </View>
-        </ScrollView>
+        </ScrollEdgeScrollView>
       )}
       <NegotiationRatingModal
         visible={ratingModalVisible}
@@ -382,7 +386,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
         submitError={ratingState.submitError}
         isSuccess={ratingState.isSuccess}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

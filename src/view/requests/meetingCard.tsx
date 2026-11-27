@@ -8,10 +8,12 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { describeMeetingCountdown, formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
+import { buildDirectionsUrl } from "@/view/directionsUrl";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 
@@ -49,17 +51,17 @@ export function MeetingCard({
   useEffect(() => {
     if (!state.loading) onMeetingChange?.(state.meeting ?? null);
   }, [state.loading, state.meeting, onMeetingChange]);
-  const { reload } = actions;
+  const { reload, refresh } = actions;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
+  // A primeira carga já vem do ViewModel; recarrega silenciosamente quando a tela volta ao foco depois.
   const lastFocusKey = useRef(focusKey);
   useEffect(() => {
     if (focusKey === lastFocusKey.current) return;
     lastFocusKey.current = focusKey;
-    void reload();
-  }, [focusKey, reload]);
+    void (refresh ?? reload)();
+  }, [focusKey, refresh, reload]);
 
   if (state.loading) {
     return (
@@ -139,7 +141,7 @@ export function MeetingCard({
     setMapError(null);
     const query = point ? point.address : `${meeting!.pointName}, Piripiri`;
     try {
-      await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+      await Linking.openURL(buildDirectionsUrl(query));
     } catch {
       setMapError("Não foi possível abrir o mapa. Tente novamente.");
     }
@@ -281,6 +283,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       gap: tokens.spacing[12],
     },
     headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
