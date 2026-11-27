@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import {
   BOOK_CATEGORIES,
   BOOK_CONDITIONS,
@@ -16,6 +16,7 @@ import { categoryTone } from "@/view/categoryTone";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { TextField } from "@/view/components/TextField";
 
 /** Categorias canônicas sugeridas para publicação (ADR 0109). */
@@ -122,7 +123,7 @@ export function CreateListingStep3({
       </View>
 
       {/* 3. Formato do anúncio (Box ou Coleção) */}
-      <View style={styles.boxCard}>
+      <IosCardSurface variant="neutral" style={styles.boxCard}>
         <Checkbox
           label="Box ou coleção de livros"
           description="Marque se este anúncio reúne mais de um volume"
@@ -134,17 +135,19 @@ export function CreateListingStep3({
           <View style={styles.boxVolumesContainer}>
             <TextField
               label="Volumes (opcional)"
-              labelBackgroundColor={colors.surface}
+              labelBackgroundColor={Platform.OS === "ios" ? colors.m3.surfaceContainerLowest : colors.surface}
               value={boxVolumesCount}
               onChangeText={(text) => onSetBoxVolumesCount?.(text)}
               editable={!loading}
               placeholder="Ex: 3, 5, 7"
               keyboardType="number-pad"
+              iosKeyboardDone
+              returnKeyType="done"
               helperText="De 2 a 100 volumes componentes da coleção"
             />
           </View>
         ) : null}
-      </View>
+      </IosCardSurface>
 
       {/* 4. Local de retirada em Piripiri */}
       <View style={styles.field}>

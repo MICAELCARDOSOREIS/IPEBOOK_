@@ -1,4 +1,5 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -9,7 +10,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[8] : tokens.spacing[12],
       paddingBottom: tokens.spacing[12],
       gap: tokens.spacing[8],
     },
@@ -43,9 +44,9 @@ export function createMyListingsStyles(colors: ColorPalette) {
     },
     iosFabGlass: {
       borderRadius: tokens.radius.full,
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: "transparent",
       shadowColor: "#302e24",
       shadowOpacity: 0.14,
       shadowRadius: 10,
@@ -58,7 +59,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
       overflow: "hidden",
@@ -78,13 +79,31 @@ export function createMyListingsStyles(colors: ColorPalette) {
       gap: tokens.spacing[6],
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
-      minHeight: 36,
+      minHeight: Platform.OS === "ios" ? 44 : 36,
       borderRadius: tokens.radius.full,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       backgroundColor: colors.m3.secondaryContainer,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
     draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
+    iosDraftsGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosDraftsOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosDraftsGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     draftsLinkText: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSecondaryContainer,
@@ -196,15 +215,26 @@ export function createMyListingsStyles(colors: ColorPalette) {
       color: colors.m3.onPrimary,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
-    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    scroll: {
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[4] : 0,
+      paddingBottom: tokens.spacing[96] + tokens.spacing[64],
+      gap: tokens.spacing[16],
+    },
+    statsRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+    },
     statsRowWide: { gap: tokens.spacing[16] },
     statCardMobile: {
       flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[2],
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
+      paddingHorizontal: tokens.spacing[6],
+      paddingVertical: tokens.spacing[10],
+      gap: tokens.spacing[4],
       elevation: 1,
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.08,
@@ -255,7 +285,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       ...tokens.typography.labelSmall,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    statContentRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4] },
+    statContentRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     statCheckBadge: { width: 18, height: 18, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
     statCount: {
       ...tokens.typography.brandTitle,
@@ -266,8 +296,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
     },
     statCountMobile: {
       ...tokens.typography.brandTitle,
-      fontSize: 22,
-      lineHeight: 26,
+      fontSize: 20,
+      lineHeight: 24,
       fontVariant: ["tabular-nums"],
     },
     statLabel: {
@@ -280,23 +310,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
       opacity: 0.95,
     },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
     summaryRowWide: {
       paddingVertical: tokens.spacing[8],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
     },
     sortButton: {
       flexDirection: "row",
@@ -312,17 +327,104 @@ export function createMyListingsStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     // Abas em pílulas que quebram linha (no celular, sem rolagem horizontal que corta o último chip).
-    segmentRowAndroid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    segmentRowAndroid: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+    },
+    summaryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      paddingBottom: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[4],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.book.paperEdge,
+    },
+    summaryText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    statusDropdownButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+      minHeight: Platform.OS === "ios" ? 44 : 36,
+      paddingHorizontal: tokens.spacing[14],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    statusDropdownButtonActive: {
+      borderColor: colors.action,
+      backgroundColor: colors.nature.sprout,
+    },
+    iosDropdownGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      overflow: "hidden",
+    },
+    iosDropdownOpaque: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
+      borderCurve: "continuous",
+    },
+    iosDropdownGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    statusDropdownText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    statusDropdownTextActive: {
+      color: colors.action,
+    },
+    filterSheetList: {
+      gap: tokens.spacing[4],
+    },
+    filterSheetRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.shapeMorph.chipUnselected,
+    },
+    filterSheetRowSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    filterSheetRowPressed: {
+      transform: [{ scale: 0.98 }],
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    filterSheetLabel: {
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurface,
+    },
+    filterSheetLabelSelected: {
+      color: colors.m3.primary,
+      fontFamily: tokens.typography.labelLarge.fontFamily,
+    },
     filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
     hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
-    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
+    // iPhone: mesma fileira limpa de chips da Home/Explorar (sem faixa cinza nem sombra atrás).
     segmentTrackIOS: {
       flexDirection: "row",
-      flexWrap: "wrap",
-      padding: tokens.spacing[2],
+      alignItems: "center",
       gap: tokens.spacing[8],
       borderRadius: tokens.radius.segmentOuter,
-      backgroundColor: colors.m3.surfaceContainerHighest,
+      backgroundColor: "transparent",
     },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     concludedSectionTitle: {
@@ -334,6 +436,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
+      ...iosNeutralCardStyle(colors),
     },
     attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     attentionAvatar: {

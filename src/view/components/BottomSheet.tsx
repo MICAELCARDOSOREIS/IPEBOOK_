@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import {
@@ -13,16 +12,20 @@ import {
   View,
   type ViewStyle,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type BottomSheetProps = {
   visible: boolean;
@@ -43,7 +46,7 @@ export type BottomSheetProps = {
  * Componente BottomSheet unificado do design system (Apple HIG / Spec 137, Material 3):
  * - Cantos arredondados contínuos (tokens.radius.xxl = 28dp com borderCurve continuous no iOS)
  * - Drag handle superior acessível com gesto de arraste (swipe-down) para fechar, oculto no desktop
- * - No iOS, acabamento Liquid Glass com BlurView nativo e fallback sólido (surfaceContainer) quando Reduzir Transparência ativado
+ * - No iOS, acabamento Liquid Glass com UIGlassEffect e fallback sólido (surfaceContainer) quando Reduzir Transparência ativado
  * - Proteção de Safe Area (Home Indicator)
  * - Foco acessível com useModalFocusTrap, aria-modal e accessibilityViewIsModal
  * - Desvio de teclado interno com KeyboardAvoidingView próprio para superfícies modais
@@ -62,7 +65,7 @@ function BottomSheetContent({
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const keyboardInset = useAnimatedKeyboardInset();
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const isIos = Platform.OS === "ios";
   const styles = useMemo(
     () => createStyles(colors, reduceTransparency),
@@ -144,12 +147,7 @@ function BottomSheetContent({
         ]}
       >
         {isIos && !reduceTransparency ? (
-          <BlurView
-            pointerEvents="none"
-            tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
-            intensity={60}
-            style={StyleSheet.absoluteFill}
-          />
+          <IosGlassBackdrop style={{ borderTopLeftRadius: tokens.radius.xxl, borderTopRightRadius: tokens.radius.xxl }} />
         ) : null}
 
         {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar (oculto no desktop) */}
@@ -226,17 +224,19 @@ export function BottomSheet({
       onDismiss={onDismiss}
     >
       {visible ? (
-        <BottomSheetContent
-          visible={visible}
-          guardedClose={guardedClose}
-          title={title}
-          testID={testID}
-          style={style}
-          showCloseButton={showCloseButton}
-          initialFocusRef={initialFocusRef}
-        >
-          {children}
-        </BottomSheetContent>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+          <BottomSheetContent
+            visible={visible}
+            guardedClose={guardedClose}
+            title={title}
+            testID={testID}
+            style={style}
+            showCloseButton={showCloseButton}
+            initialFocusRef={initialFocusRef}
+          >
+            {children}
+          </BottomSheetContent>
+        </SafeAreaProvider>
       ) : null}
     </Modal>
   );
@@ -248,10 +248,10 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
 
   // Liquid Glass no iOS com fallback para surfaceContainer sob Reduzir Transparência (tokens.json:526)
   const sheetBg = isIos
-    ? (reduceTransparency ? colors.m3.surfaceContainer : tokens.glass.fill)
+    ? (reduceTransparency ? colors.m3.surfaceContainer : "transparent")
     : colors.background;
 
-  const sheetBorderColor = isIos && !reduceTransparency ? tokens.glass.stroke : "transparent";
+  const sheetBorderColor = isIos && !reduceTransparency ? "transparent" : "transparent";
 
   return StyleSheet.create({
     scrim: {

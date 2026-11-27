@@ -58,6 +58,18 @@ export function isExpoPushToken(value: unknown): value is string {
   return typeof value === "string" && EXPO_TOKEN.test(value);
 }
 
+/** A tabela recebe inscrições do cliente. O servidor só pode contatar hosts Web Push da Apple. */
+export function isApplePushEndpoint(value: string): boolean {
+  if (!/^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.push\.apple\.com\/[^\s]+$/.test(value)) return false;
+  try {
+    const endpoint = new URL(value);
+    return !endpoint.username && !endpoint.password && !endpoint.port
+      && endpoint.hostname.endsWith(".push.apple.com") && endpoint.pathname !== "/";
+  } catch {
+    return false;
+  }
+}
+
 export function channelOf(type: string): NotificationChannel {
   return NOTIFICATION_CHANNEL[type] ?? "updates";
 }

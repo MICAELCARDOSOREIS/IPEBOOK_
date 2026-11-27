@@ -111,8 +111,8 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
   });
 
   it("descreve a faixa de resultados como no Figma 02.04", () => {
-    expect(describeResults(0, DEFAULT_SEARCH_FILTERS)).toBe("0 livros");
-    expect(describeResults(1, DEFAULT_SEARCH_FILTERS)).toBe("1 livro");
+    expect(describeResults(0, DEFAULT_SEARCH_FILTERS)).toBe("0 livros disponíveis");
+    expect(describeResults(1, DEFAULT_SEARCH_FILTERS)).toBe("1 livro disponível");
     expect(describeResults(1, withFilters({ modality: "sale", category: "Literatura" }))).toBe(
       "1 livro à venda · Literatura",
     );
@@ -159,7 +159,7 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
 
   it("inclui 'Box/Coleção' na descrição resumida dos resultados (Spec 112)", () => {
     expect(describeResults(2, withFilters({ onlyBoxes: true }))).toBe(
-      "2 livros · Boxes e coleções",
+      "2 livros disponíveis · Boxes e coleções",
     );
     expect(describeResults(1, withFilters({ onlyBoxes: true, modality: "sale" }))).toBe(
       "1 livro à venda · Boxes e coleções",

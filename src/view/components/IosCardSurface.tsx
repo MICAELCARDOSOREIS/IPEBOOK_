@@ -1,9 +1,8 @@
-import { BlurView } from "expo-blur";
 import { type ReactNode, useMemo } from "react";
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 /** Superfícies iOS da biblioteca IpêBook no Figma (tema claro; Spec 137 / ADR 0115). */
 export type IosCardVariant = "neutral" | "paper" | "glass" | "success" | "info" | "donation";
@@ -31,7 +30,7 @@ export function IosCardSurface({
   accessibilityLabel,
 }: IosCardSurfaceProps) {
   const { colors } = useTheme();
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const ios = Platform.OS === "ios";
   const glassActive = ios && variant === "glass" && !reduceTransparency;
@@ -49,14 +48,7 @@ export function IosCardSurface({
       ]}
     >
       {glassActive ? (
-        <View pointerEvents="none" style={styles.blurClip}>
-          <BlurView
-            testID="ios-card-blur"
-            tint="light"
-            intensity={24}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
+        <IosGlassBackdrop style={styles.glassShape} testID="ios-card-glass" />
       ) : null}
       {children}
     </View>
@@ -83,8 +75,8 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.book.paperEdge,
     },
     glass: {
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
     },
     glassOpaque: {
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -102,7 +94,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.ipe.container,
       borderColor: colors.ipe.bloom,
     },
-    blurClip: {
+    glassShape: {
       ...StyleSheet.absoluteFill,
       overflow: "hidden",
       borderRadius: tokens.radius.xl,

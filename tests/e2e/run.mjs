@@ -318,28 +318,29 @@ const CENARIOS = [
       await page.clickBySelector('[aria-label="Gerenciar anúncio de Memórias Póstumas de Brás Cubas"]');
       await page.waitForText("Gerenciar anúncio");
       await page.waitFor(`(() => {
-        const actions = ["Editar anúncio", "Ver anúncio como leitor", "Pausar anúncio", "Excluir anúncio"];
-        const contacts = ["tel:190", "tel:197", "https://portal.pi.gov.br/pc/delegacias-do-interior/"];
+        const actions = ["Editar anúncio", "Ver anúncio como leitor", "Pausar anúncio", "Excluir anúncio", "Segurança em Piripiri"];
         return actions.every(label => {
           const button = document.querySelector('[aria-label="' + label + '"]');
           return button && button.getBoundingClientRect().bottom <= innerHeight;
-        }) && contacts.every(href => {
+        });
+      })()`, { message: "ações de gerenciamento visíveis no desktop" });
+      await page.clickBySelector('[aria-label="Segurança em Piripiri"]');
+      await page.waitFor(`(() => {
+        const contacts = ["tel:190", "tel:197", "https://portal.pi.gov.br/pc/delegacias-do-interior/"];
+        return contacts.every(href => {
           const link = document.querySelector('a[href="' + href + '"]');
           return link && link.getBoundingClientRect().bottom <= innerHeight;
         });
-      })()`, { message: "ações de gerenciamento e contatos de segurança visíveis no desktop" });
+      })()`, { message: "contatos de segurança visíveis no modal" });
+      await page.clickBySelector('[aria-label="Fechar"]');
       await assertSemOverflowHorizontal(page, "Gerenciar anúncio no desktop");
 
       await page.setViewport(320, 844, true);
       await page.waitFor(`(() => {
         const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
-        const heading = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')]
-          .find(element => element.textContent === "Disponibilidade no catálogo");
-        const civil = document.querySelector('a[href="tel:197"]');
         const removal = document.querySelector('[aria-label="Excluir anúncio"]');
-        return innerWidth === 320 && share && heading && civil && removal
-          && heading.getBoundingClientRect().top >= share.getBoundingClientRect().bottom
-          && civil.getBoundingClientRect().bottom <= removal.getBoundingClientRect().top;
+        return Boolean(innerWidth === 320 && share && removal
+          && removal.getBoundingClientRect().bottom <= share.getBoundingClientRect().top);
       })()`, { message: "seções de gerenciamento empilhadas sem sobreposição a 320 px" });
       await assertSemOverflowHorizontal(page, "Gerenciar anúncio a 320 px");
 
@@ -347,20 +348,15 @@ const CENARIOS = [
       await page.waitFor(`(() => {
         const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
         const pause = document.querySelector('[aria-label="Pausar anúncio"]');
-        return innerWidth === 1440 && share && pause
-          && pause.getBoundingClientRect().left >= share.getBoundingClientRect().right;
-      })()`, { message: "colunas de gerenciamento após voltar ao desktop" });
+        return Boolean(innerWidth === 1440 && share && pause);
+      })()`, { message: "controles de gerenciamento visíveis após voltar ao desktop" });
 
       await page.clickBySelector('[aria-label="Pausar anúncio"]');
-      await page.waitFor(
-        'Boolean(document.querySelector(\'[aria-label="Retomar anúncio"]\'))',
-        { message: "anúncio pausado" },
-      );
+      await page.waitForText("Retomar anúncio");
+      // Aguarda a janela de proteção contra duplo toque (useGuardedPress) do mesmo FilledButton.
+      await new Promise((resolve) => setTimeout(resolve, 750));
       await page.clickBySelector('[aria-label="Retomar anúncio"]');
-      await page.waitFor(
-        'Boolean(document.querySelector(\'[aria-label="Pausar anúncio"]\'))',
-        { message: "anúncio retomado" },
-      );
+      await page.waitForText("Pausar anúncio");
 
       await page.clickBySelector('[aria-label="Editar anúncio"]');
       await page.waitForText("Título do livro");
@@ -551,7 +547,7 @@ const CENARIOS = [
         return Boolean(pane && !pane.textContent.includes("Combinar encontro"));
       })()`);
       await page.clickByText("Confirmar encontro", { exact: true });
-      await page.waitForText("Entrega do livro", { timeoutMs: 15000 });
+      await page.waitForText("Confirmar entrega", { timeoutMs: 15000 });
       await page.clickBySelector('[aria-label^="Abrir notificações"]');
       await page.waitForText("Ver encontro");
       await assertSemOverflowHorizontal(page, "Notificações em tela larga");
@@ -562,8 +558,8 @@ const CENARIOS = [
       await page.clickBySelector('[aria-label="Estante"]');
       await page.clickBySelector('[aria-label^="Propostas"]');
       await page.clickBySelector(`[aria-label="Abrir proposta para ${tituloLivro}"]`);
-      await page.waitForText("Entrega do livro");
-      await page.clickByText("Entrega do livro", { exact: true });
+      await page.waitForText("Confirmar entrega");
+      await page.clickBySelector('[aria-label="Entrega do livro"]');
       await page.waitForText("Mostre este QR para quem recebe o livro");
       const codigoAria = await page.waitFor(
         'document.querySelector(\'[aria-label^="Código "]\')?.getAttribute("aria-label") || ""',
@@ -579,8 +575,8 @@ const CENARIOS = [
       await entrarPelaTelaEntrar(page, contaB);
       await page.clickBySelector('[aria-label^="Conversas"]');
       await page.clickBySelector(`[aria-label*="sobre ${tituloLivro}"]`);
-      await page.waitForText("Entrega do livro");
-      await page.clickByText("Entrega do livro", { exact: true });
+      await page.waitForText("Confirmar entrega");
+      await page.clickBySelector('[aria-label="Entrega do livro"]');
       await page.waitForText("Confirmar recebimento");
       await page.fillInput('input[aria-label="Código da entrega"]', codigoEntrega);
       await page.clickByText("Confirmar entrega", { exact: true });

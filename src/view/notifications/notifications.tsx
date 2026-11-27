@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Pressable, SectionList, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeSectionList } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -7,6 +8,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -17,6 +19,7 @@ import {
   makeNetworkStatus,
   makeNotificationsPromptViewModel,
   makeNotificationsViewModel,
+  makeWebPushViewModel,
 } from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -25,12 +28,14 @@ import { meetingNotificationDisplay, notificationDateSections, notificationRows 
 import { formatMeetingWhen } from "@/view/meetingFormat";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { createNotificationsStyles, withWebInteractive } from "./notificationsStyles";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
   sessionLoading?: boolean;
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToAction?: (actionUrl: string) => void;
@@ -61,6 +66,7 @@ const TYPE_CONFIG: Record<
 export default function Notifications({
   sessionUserId,
   sessionLoading = false,
+  focusKey,
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
@@ -71,11 +77,18 @@ export default function Notifications({
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
   const [state, actions] = makeNotificationsViewModel(sessionUserId, true);
+  useOnRefocus(focusKey, () => {
+    void actions.refresh();
+  });
   const [prompt, promptActions] = makeNotificationsPromptViewModel();
+  const webPush = makeWebPushViewModel(sessionUserId);
   const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();
   const styles = useMemo(() => createNotificationsStyles(colors), [colors]);
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
@@ -211,22 +224,37 @@ export default function Notifications({
     );
   }
 
-  return (
-    <SafeAreaView style={styles.page}>
-      {renderHeader(true)}
-      <View style={[styles.content, wide && styles.contentWide]}>
-        {state.systemPermissionGranted === false && !prompt.granted ? (
+  const hasScrollableNotifications = !state.loading && !state.error && sections.length > 0;
+  const scrollControls = isIos && hasScrollableNotifications;
+  const controls = (
+    <>
+        {Platform.OS === "web" ? (
+          <View style={styles.permissionBannerAction}>
+            {webPush.status === "active" || webPush.status === "inactive" ? (
+              <OutlinedButton
+                label={webPush.status === "active" ? "Desativar avisos neste iPhone" : "Ativar avisos neste iPhone"}
+                loading={webPush.busy}
+                onPress={() => void webPush.toggle()}
+              />
+            ) : (
+              <Text style={styles.permissionBannerDescription}>
+                {webPush.status === "requires-install"
+                  ? "Para receber avisos neste iPhone, adicione o IpêBook à Tela de Início e abra a central pelo ícone."
+                  : "Na versão web, acompanhe propostas e lembretes nesta central."}
+              </Text>
+            )}
+            {webPush.error ? <Text accessibilityRole="alert" style={styles.permissionBannerDescription}>{webPush.error}</Text> : null}
+          </View>
+        ) : state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
-            accessible={true}
-            accessibilityRole="alert"
             testID="permission-alert"
           >
             <View style={styles.permissionIconCircle}>
               <AppIcon name="info" size={20} color={colors.highlight} />
             </View>
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionBannerTitle}>Notificações desativadas</Text>
+              <Text accessibilityRole="alert" style={styles.permissionBannerTitle}>Notificações desativadas</Text>
               <Text style={styles.permissionBannerDescription}>
                 Ative as notificações do IpêBook nas configurações do aparelho para não perder propostas nem lembretes de encontros presenciais.
               </Text>
@@ -258,11 +286,20 @@ export default function Notifications({
                       aria-pressed={selected}
                       onPress={() => actions.setFilter(filter)}
                       style={withWebInteractive(
-                        [styles.filterChip, selected && styles.filterChipActive],
+                        [
+                          styles.filterChip,
+                          selected && styles.filterChipActive,
+                          isIos && !selected && (iosGlass
+                            ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                            : { backgroundColor: colors.m3.surfaceContainer }),
+                        ],
                         selected ? styles.filterChipActiveHover : styles.filterChipHover,
                         colors.m3.focusRing,
                       )}
                     >
+                      {isIos && iosGlass && !selected ? (
+                        <IosGlassBackdrop style={{ borderRadius: 999 }} />
+                      ) : null}
                       <Text style={[styles.filterChipText, selected && styles.filterChipTextActive]}>{label}</Text>
                     </Pressable>
                   );
@@ -286,8 +323,18 @@ export default function Notifications({
                   accessibilityRole="button"
                   accessibilityState={{ expanded: manageOpen }}
                   onPress={() => setManageOpen((open) => !open)}
-                  style={withWebInteractive(styles.actionBtn, styles.actionBtnHover, colors.m3.focusRing)}
+                  style={withWebInteractive(
+                    [
+                      styles.actionBtn,
+                      isIos && (iosGlass
+                        ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                        : { backgroundColor: colors.m3.surfaceContainer }),
+                    ],
+                    styles.actionBtnHover,
+                    colors.m3.focusRing,
+                  )}
                 >
+                  {isIos && iosGlass ? <IosGlassBackdrop style={{ borderRadius: 999 }} /> : null}
                   <AppIcon name="more" size={18} color={colors.secondaryText} />
                   <Text style={styles.actionBtnSecondaryText}>Gerenciar notificações</Text>
                 </Pressable>
@@ -315,6 +362,14 @@ export default function Notifications({
             ) : null}
           </View>
         ) : null}
+
+    </>
+  );
+
+  return (
+    <ScrollEdgeScreen style={styles.page} header={renderHeader(true)} scrolling={hasScrollableNotifications}>
+      <View style={[styles.content, wide && styles.contentWide]}>
+        {scrollControls ? null : controls}
 
         <View
           testID="notifications-main"
@@ -370,10 +425,11 @@ export default function Notifications({
               </View>
             </View>
           ) : (
-            <SectionList
+            <ScrollEdgeSectionList
               testID="notifications-list"
               style={styles.flexOne}
               sections={sections}
+              ListHeaderComponent={scrollControls ? controls : undefined}
               keyExtractor={({ item }) => item.id}
               contentContainerStyle={[
                 styles.listContent,
@@ -585,13 +641,13 @@ export default function Notifications({
       />
 
       {/* Reabrir o aviso explicativo: a pessoa pediu no botão da banner, então o prompt nativo vem depois. */}
-      <PermissionPromptDialog
+      {Platform.OS !== "web" ? <PermissionPromptDialog
         permission="notifications"
         status={prompt.status}
         onAllow={() => void promptActions.approve()}
         onLater={() => void promptActions.decline()}
         onDismiss={promptActions.dismiss}
-      />
-    </SafeAreaView>
+      /> : null}
+    </ScrollEdgeScreen>
   );
 }

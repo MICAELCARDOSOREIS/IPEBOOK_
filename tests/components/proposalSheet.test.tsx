@@ -60,7 +60,12 @@ describe("ProposalSheet (Spec 113)", () => {
     });
 
     expect(screen.getByRole("header", { name: "Solicitar Negociação" })).toBeDefined();
-    expect(screen.getByLabelText("Mensagem inicial da proposta")).toBeDefined();
+    expect(screen.getByText("R$ 30,00")).toBeDefined();
+    expect(screen.getByText("Mensagem para quem anunciou (opcional)")).toBeDefined();
+    const input = screen.getByLabelText("Mensagem inicial da proposta");
+    expect(input.props.placeholder).not.toMatch(/opcional/i);
+    const inputStyle = StyleSheet.flatten(input.props.style);
+    expect(inputStyle.fontSize).toBeGreaterThanOrEqual(16);
     expect(screen.queryByText(/oferecer um livro/i)).toBeNull();
   });
 

@@ -283,7 +283,16 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Fechar ao tocar fora" }));
     });
+    // Campo de URL da capa fica recolhido por padrão mesmo quando já existe foto
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Editar link da capa" }));
+    });
     expect(screen.getByLabelText("URL da foto da capa")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ocultar link da capa" }));
+    });
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
 
     await act(async () => {
       fireEvent(screen.getByLabelText("Título do livro"), "focus");
@@ -361,5 +370,19 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     } finally {
       photoSpy.mockRestore();
     }
+  });
+
+  it("exibe prévia formatada do preço, barra fixa de ações no mobile e remove caixa falsa de localidade", async () => {
+    mockViewModel({ ...loadedState, price: "5" });
+
+    const screen = await render(
+      <EditListing bookId="b1" sessionUserId="user-1" onCancel={jest.fn()} />,
+    );
+
+    expect(screen.getByText("Será exibido como R$ 5,00")).toBeDefined();
+    expect(screen.getByTestId("edit-listing-action-bar")).toBeDefined();
+    expect(screen.getByText("Retirada presencial em Piripiri, PI")).toBeDefined();
+    expect(screen.queryByText("Localidade da beta")).toBeNull();
+    expect(screen.queryByText(/Beta exclusiva/i)).toBeNull();
   });
 });

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Animated, Platform, Pressable, Text, View } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import { makeFavoriteButtonViewModel } from "@/di/container";
 
@@ -25,6 +26,9 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "def
     pressedScale: 0.88,
   });
   const isOverlay = variant === "overlay";
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlassOverlay = isOverlay && isIos && !reduceTransparency;
 
   useEffect(() => {
     if (!showToggleError || !state.error) return;
@@ -73,11 +77,17 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "def
                     width: 36,
                     height: 36,
                     borderRadius: tokens.radius.full,
+                    ...(isIos ? { borderCurve: "continuous" as const } : {}),
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: isPressed || isHovered ? colors.m3.surfaceContainerHigh : colors.m3.surfaceContainerLowest,
+                    overflow: "hidden",
+                    backgroundColor: iosGlassOverlay
+                      ? "transparent"
+                      : isPressed || isHovered
+                        ? colors.m3.surfaceContainerHigh
+                        : colors.m3.surfaceContainerLowest,
                     borderWidth: 1,
-                    borderColor: colors.m3.outlineVariant,
+                    borderColor: iosGlassOverlay ? "transparent" : colors.m3.outlineVariant,
                     elevation: 2,
                     shadowColor: colors.m3.shadow,
                     shadowOffset: { width: 0, height: 2 },
@@ -87,6 +97,9 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "def
                 : undefined
             }
           >
+            {iosGlassOverlay ? (
+              <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} />
+            ) : null}
             <AppIcon
               name={state.selected ? "heartFill" : "heart"}
               size={isOverlay ? 20 : 24}

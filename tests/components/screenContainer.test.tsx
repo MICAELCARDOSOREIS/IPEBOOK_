@@ -1,5 +1,5 @@
-import { cleanup, render } from "@testing-library/react-native";
-import { StyleSheet, Text, View } from "react-native";
+import { cleanup, fireEvent, render } from "@testing-library/react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/view/tokens";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
@@ -17,8 +17,11 @@ const estiloDaColuna = (coluna: No) =>
   StyleSheet.flatten((coluna.type === "ScrollView" ? coluna.props.contentContainerStyle : coluna.props.style) as never);
 
 describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layout responsivo)", () => {
+  const originalPlatform = Platform.OS;
+
   afterEach(() => {
     cleanup();
+    Platform.OS = originalPlatform;
   });
 
   it("renderiza o conteúdo numa coluna centralizada que rola", async () => {
@@ -83,7 +86,8 @@ describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layou
     expect(tela.queryByText("Layout próprio")).not.toBeNull();
   });
 
-  it("mostra o cabeçalho fixo antes da área que rola", async () => {
+  it("mostra o cabeçalho fixo antes da área que rola na web", async () => {
+    Platform.OS = "web";
     const { tela, raiz } = await montar(
       <ScreenContainer header={<View testID="cabecalho" />}>
         <Text>Conteúdo</Text>
@@ -93,6 +97,34 @@ describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layou
     expect(primeiro.props.testID).toBe("cabecalho");
     expect(segundo.type).toBe("ScrollView");
     expect(tela.queryByTestId("cabecalho")).not.toBeNull();
+  });
+
+  it("desenha o cabeçalho sobre a rolagem e aplica desfoque no iOS", async () => {
+    Platform.OS = "ios";
+    const { tela, raiz } = await montar(
+      <ScreenContainer header={<Text accessibilityRole="header">Cabeçalho</Text>}>
+        <Text>Conteúdo</Text>
+      </ScreenContainer>,
+    );
+    const [rolagem, cabecalho] = filhos(raiz);
+    expect(estiloDaColuna(rolagem)).toMatchObject({ paddingTop: 72 });
+    expect(StyleSheet.flatten(cabecalho.props.style as never)).toMatchObject({ position: "absolute", top: 0 });
+    expect(tela.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true })).toBeNull();
+
+    const scrollElement = ((tela.root?.children ?? []) as { type?: unknown }[]).find((child) => child.type === "ScrollView");
+    await fireEvent.scroll(scrollElement as never, { nativeEvent: { contentOffset: { y: 72 } } });
+    expect(tela.getByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true })).toBeDefined();
+    expect(tela.getByRole("header", { name: "Cabeçalho" })).toBeDefined();
+  });
+
+  it("usa a tela inteira sem recorte superior ou inferior na rolagem do iOS", async () => {
+    Platform.OS = "ios";
+    const { raiz } = await montar(
+      <ScreenContainer testID="tela-ios">
+        <Text>Conteúdo</Text>
+      </ScreenContainer>,
+    );
+    expect(raiz.props.edges).toEqual(["left", "right"]);
   });
 
   it("renderiza o overlay depois da coluna, ainda dentro da área segura", async () => {
@@ -108,7 +140,7 @@ describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layou
 
   it("repassa edges e testID à área segura", async () => {
     const { tela } = await montar(
-      <ScreenContainer testID="tela" edges={["top", "left", "right"]}>
+      <ScreenContainer testID="tela" scroll={false} edges={["top", "left", "right"]}>
         <Text>Conteúdo</Text>
       </ScreenContainer>,
     );

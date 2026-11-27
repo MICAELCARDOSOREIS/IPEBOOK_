@@ -80,7 +80,7 @@ export function createChatStyles(colors: ColorPalette) {
       alignItems: "center",
       alignSelf: "flex-start",
       maxWidth: "100%",
-      minHeight: 28,
+      minHeight: Platform.OS === "ios" ? 44 : 28,
       gap: tokens.spacing[6],
     },
     linkBookTitle: { flexShrink: 1 },
@@ -251,10 +251,11 @@ export function createChatStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[10],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.book.paperEdge,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.m3.surfaceContainerLow,
       color: colors.m3.onSurface,
-      ...tokens.typography.bodyMedium,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      ...tokens.typography.bodyLarge,
       ...(typeof Platform !== "undefined" && Platform.OS === "web"
         ? ({ outlineStyle: "none", resize: "none" } as never)
         : {}),
@@ -268,6 +269,29 @@ export function createChatStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     sendActive: { backgroundColor: colors.m3.primary },
+    sendDisabled: { opacity: 0.45 },
+    quickRepliesRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[4],
+    },
+    quickReplyChip: {
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
+      minHeight: Platform.OS === "ios" ? 44 : 36,
+      justifyContent: "center",
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    quickReplyText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+    },
     eventRow: {
       alignItems: "center",
       marginVertical: tokens.spacing[8],

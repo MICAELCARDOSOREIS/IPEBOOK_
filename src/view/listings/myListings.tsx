@@ -1,8 +1,8 @@
 import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
-import { BlurView } from "expo-blur";
-import { useEffect, useMemo, useState } from "react";
+import { type ComponentRef, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
@@ -14,6 +14,7 @@ import {
 } from "@/di/container";
 import type { BookModality } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -37,7 +38,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
 import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 export { ShelfRow } from "@/view/listings/shelfRow";
@@ -55,6 +56,8 @@ export type MyListingsProps = {
   /** Abre a negociação aceita (`06.05`). */
   onNavigateToNegotiationDetail?: (requestId: string) => void;
   focusKey?: number;
+  /** Incrementado ao tocar na aba Estante já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 
 type ShelfTab = "listings" | "proposals" | "concluded";
@@ -73,10 +76,17 @@ export function MyListings({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
   focusKey,
+  scrollToTopTick = 0,
 }: MyListingsProps) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
@@ -91,6 +101,7 @@ export function MyListings({
   useReloadOnReconnect(isOnline, actions.reload);
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
 
   const handleShareBook = (book: (typeof state.books)[number]) => {
@@ -170,68 +181,48 @@ export function MyListings({
   // Posiciona o FAB harmoniosamente logo acima da barra de navegação flutuante seguindo os tokens
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
   const navBarDockHeight = 80; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
-  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const fabBottom = isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
-  type ShelfFilterKey = "all" | "active" | "paused" | "reserved" | "proposals" | "concluded";
+  const availableCount = activeBooks.filter((b) => b.status === "available").length;
+  const pausedCount = activeBooks.filter((b) => b.status === "paused").length;
+  const reservedCount = activeBooks.filter((b) => b.status === "reserved").length;
+  const concludedCount = concludedProposals.length + deliveredBooks.length;
+  const distinctListingStatuses =
+    (availableCount > 0 ? 1 : 0) + (pausedCount > 0 ? 1 : 0) + (reservedCount > 0 ? 1 : 0);
+  const showStatusSubfilters =
+    activeTab === "listings" && (distinctListingStatuses > 1 || statusFilter !== "all");
 
-  const shelfChips: {
-    key: ShelfFilterKey;
+  const STATUS_DROPDOWN_LABELS: Record<"all" | "active" | "paused" | "reserved", string> = {
+    all: "Todos",
+    active: "Ativos",
+    paused: "Pausados",
+    reserved: "Reservados",
+  };
+
+  const primaryTabs: {
+    key: ShelfTab;
     label: string;
     a11y: string;
-    tone?: { background: string; text: string };
-    selected: boolean;
+    tone: { background: string; text: string };
+    visible: boolean;
     onPress: () => void;
   }[] = [
     {
-      key: "all",
-      label: `Todos (${activeBooks.length})`,
-      a11y: "Filtrar por Todos",
+      key: "listings",
+      label: "Anúncios",
+      a11y: "Anúncios",
       tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
-      selected: activeTab === "listings" && statusFilter === "all",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("all");
-      },
-    },
-    {
-      key: "active",
-      label: `Ativos (${activeBooks.filter((b) => b.status === "available").length})`,
-      a11y: "Filtrar por Ativos",
-      tone: colors.badge.available,
-      selected: activeTab === "listings" && statusFilter === "active",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("active");
-      },
-    },
-    {
-      key: "paused",
-      label: `Pausados (${activeBooks.filter((b) => b.status === "paused").length})`,
-      a11y: "Filtrar por Pausados",
-      tone: colors.badge.paused,
-      selected: activeTab === "listings" && statusFilter === "paused",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("paused");
-      },
-    },
-    {
-      key: "reserved",
-      label: `Reservados (${activeBooks.filter((b) => b.status === "reserved").length})`,
-      a11y: "Filtrar por Reservados",
-      tone: colors.badge.reserved,
-      selected: activeTab === "listings" && statusFilter === "reserved",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("reserved");
-      },
+      visible: true,
+      onPress: () => setActiveTab("listings"),
     },
     {
       key: "proposals",
       label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
       a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
       tone: colors.badge.trade,
-      selected: activeTab === "proposals",
+      visible: true,
       onPress: () => {
         setModalityFilter("all");
         setActiveTab("proposals");
@@ -239,10 +230,10 @@ export function MyListings({
     },
     {
       key: "concluded",
-      label: `Concluídos (${concludedProposals.length + deliveredBooks.length})`,
+      label: concludedCount > 0 ? `Concluídos (${concludedCount})` : "Concluídos",
       a11y: "Concluídos",
       tone: colors.badge.completed,
-      selected: activeTab === "concluded",
+      visible: true,
       onPress: () => {
         setModalityFilter("all");
         setActiveTab("concluded");
@@ -250,66 +241,122 @@ export function MyListings({
     },
   ];
 
-  return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {/* Cabeçalho do Figma `05.04`–`05.08`: título em serifa, subtítulo e "+" para anunciar. */}
-      <View style={[styles.header, wideWeb && styles.headerWide]}>
-        {onBack ? (
+  // Subfiltros de status só aparecem dentro da aba Anúncios quando há mais de um status.
+  const statusChips: {
+    key: "all" | "active" | "paused" | "reserved";
+    label: string;
+    a11y: string;
+    tone: { background: string; text: string };
+    selected: boolean;
+    visible: boolean;
+    onPress: () => void;
+  }[] = [
+    {
+      key: "all",
+      label: `Todos (${activeBooks.length})`,
+      a11y: "Filtrar por Todos",
+      tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
+      selected: statusFilter === "all",
+      visible: true,
+      onPress: () => setStatusFilter("all"),
+    },
+    {
+      key: "active",
+      label: `Ativos (${availableCount})`,
+      a11y: "Filtrar por Ativos",
+      tone: colors.badge.available,
+      selected: statusFilter === "active",
+      visible: availableCount > 0 || statusFilter === "active",
+      onPress: () => setStatusFilter("active"),
+    },
+    {
+      key: "paused",
+      label: `Pausados (${pausedCount})`,
+      a11y: "Filtrar por Pausados",
+      tone: colors.badge.paused,
+      selected: statusFilter === "paused",
+      visible: pausedCount > 0 || statusFilter === "paused",
+      onPress: () => setStatusFilter("paused"),
+    },
+    {
+      key: "reserved",
+      label: `Reservados (${reservedCount})`,
+      a11y: "Filtrar por Reservados",
+      tone: colors.badge.reserved,
+      selected: statusFilter === "reserved",
+      visible: reservedCount > 0 || statusFilter === "reserved",
+      onPress: () => setStatusFilter("reserved"),
+    },
+  ];
+
+  const header = (
+    <View testID="my-listings-header" style={[styles.header, wideWeb && styles.headerWide]}>
+      {onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          hitSlop={12}
+          onPress={onBack}
+          style={withPress(styles.iconButton)}
+        >
+          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        </Pressable>
+      ) : null}
+      <View style={styles.headerText}>
+        <Text accessibilityRole="header" style={styles.heroTitle}>
+          Estante
+        </Text>
+        <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
+      </View>
+      <View style={styles.headerActions}>
+        {/* Botão Rascunhos no topo ao lado do título da Estante */}
+        {onNavigateToDrafts ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Voltar"
+            accessibilityLabel={
+              draftsState.drafts.length > 0
+                ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
+                : "Ver rascunhos"
+            }
             hitSlop={12}
-            onPress={onBack}
-            style={withPress(styles.iconButton)}
+            onPress={guardedDrafts}
+            style={({ pressed }) => [
+              styles.draftsLink,
+              isIos && (iosGlass ? styles.iosDraftsGlass : styles.iosDraftsOpaque),
+              pressed && styles.draftsLinkPressed,
+            ]}
           >
-            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+            {isIos && iosGlass ? <IosGlassBackdrop style={styles.iosDraftsGlassShape} /> : null}
+            <AppIcon name="document" size={18} color={isIos ? colors.m3.primary : colors.m3.onSecondaryContainer} />
+            <Text style={[styles.draftsLinkText, isIos && { color: colors.m3.onSurface }]}>
+              {draftsState.drafts.length > 0
+                ? `Rascunhos (${draftsState.drafts.length})`
+                : "Rascunhos"}
+            </Text>
           </Pressable>
         ) : null}
-        <View style={styles.headerText}>
-          <Text accessibilityRole="header" style={styles.heroTitle}>
-            Estante
-          </Text>
-          <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
-        </View>
-        <View style={styles.headerActions}>
-          {/* Botão Rascunhos no topo ao lado do título da Estante */}
-          {onNavigateToDrafts ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                draftsState.drafts.length > 0
-                  ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
-                  : "Ver rascunhos"
-              }
-              hitSlop={12}
-              onPress={guardedDrafts}
-              style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
-            >
-              <AppIcon name="document" size={18} color={colors.m3.onSecondaryContainer} />
-              <Text style={styles.draftsLinkText}>
-                {draftsState.drafts.length > 0
-                  ? `Rascunhos (${draftsState.drafts.length})`
-                  : "Rascunhos"}
-              </Text>
-            </Pressable>
-          ) : null}
-          {wideWeb && onNavigateToCreateListing ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Anunciar livro no topo da estante"
-              hitSlop={12}
-              onPress={guardedCreateListing}
-              style={withPress(styles.announceButtonHeader)}
-            >
-              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
-              <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        {wideWeb && onNavigateToCreateListing ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Anunciar livro no topo da estante"
+            hitSlop={12}
+            onPress={guardedCreateListing}
+            style={withPress(styles.announceButtonHeader)}
+          >
+            <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+            <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
+          </Pressable>
+        ) : null}
       </View>
+    </View>
+  );
+  const hasScrollableShelf = !state.loading && !state.error && state.books.length > 0;
+  const scrollCachedNotice = isIos && hasScrollableShelf;
 
+  return (
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={header} scrolling={hasScrollableShelf}>
       <View style={[styles.content, wideWeb && styles.contentWide]}>
-        <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />
+        {scrollCachedNotice ? null : <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />}
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (
@@ -324,20 +371,24 @@ export function MyListings({
             onNavigateToHelp={guardedHelp}
           />
         ) : (
-          <ScrollView
+          <ScrollEdgeScrollView
+            ref={scrollRef}
             {...standardVerticalScrollProps}
             contentContainerStyle={[
               styles.scroll,
               {
-                paddingBottom:
+                paddingBottom: isIos
+                  ? (onNavigateToCreateListing ? scrollBottomPadding.nativeTabWithFab : tokens.spacing[24])
+                  :
                   hasBooks && onNavigateToCreateListing && !wideWeb
                     ? scrollBottomPadding.withBottomBarAndFab + insets.bottom
                     : scrollBottomPadding.withBottomBar + insets.bottom,
               },
             ]}
           >
+            {scrollCachedNotice ? <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" /> : null}
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
-            <View style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
+            <View testID="my-listings-stats-row" style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
                 const isSelected = activeTab === "listings" && modalityFilter === stat.key;
                 const isDimmed = activeTab === "listings" && modalityFilter !== "all" && !isSelected;
@@ -349,6 +400,7 @@ export function MyListings({
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={`${stat.count} ${stat.label}`}
                     onPress={() => {
+                      if (isIos) triggerHaptic("selection");
                       setActiveTab("listings");
                       setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key));
                     }}
@@ -413,19 +465,14 @@ export function MyListings({
                       </>
                     ) : (
                       <>
-                        <View style={styles.statContentRow}>
-                          <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
-                            {stat.count}
-                          </Text>
-                          {isSelected ? (
-                            <View style={[styles.statCheckBadge, { backgroundColor: badgeTone.text }]}>
-                              <AppIcon name="check" size={12} color={badgeTone.background} />
-                            </View>
-                          ) : null}
-                        </View>
+                        <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
+                          {stat.count}
+                        </Text>
                         <Text
                           style={[styles.statLabelMobile, { color: badgeTone.text }]}
                           numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.8}
                         >
                           {stat.label}
                         </Text>
@@ -436,23 +483,121 @@ export function MyListings({
               })}
             </View>
 
-            {/* No celular os chips quebram em linhas para caberem inteiros, sem corte nem rolagem. */}
+            {/* Chips de seção em 1 linha limpa (igual Todos/Venda/Troca), sem faixa cinza atrás */}
             <View
+              accessibilityRole="tablist"
               testID="my-listings-tablist"
-              style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+              style={isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid}
             >
-              {shelfChips.map((chip) => (
-                <Chip
-                  key={chip.key}
-                  size="compact"
-                  label={chip.label}
-                  accessibilityLabel={chip.a11y}
-                  tone={chip.tone}
-                  selected={chip.selected}
-                  onPress={chip.onPress}
-                />
-              ))}
+              {primaryTabs
+                .filter((tab) => tab.visible)
+                .map((tab) => (
+                  <View key={tab.key} style={{ flexShrink: 1 }}>
+                    <Chip
+                      size="compact"
+                      label={tab.label}
+                      accessibilityLabel={tab.a11y}
+                      tone={activeTab === tab.key ? tab.tone : undefined}
+                      selected={activeTab === tab.key}
+                      onPress={tab.onPress}
+                    />
+                  </View>
+                ))}
             </View>
+
+            {activeTab === "listings" ? (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>
+                  {`${displayedBooks.length} ${displayedBooks.length === 1 ? "anúncio" : "anúncios"}`}
+                </Text>
+                {showStatusSubfilters ? (
+                  <Pressable
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      statusFilter === "all"
+                        ? "Filtrar anúncios por situação"
+                        : `Filtro ativo: ${STATUS_DROPDOWN_LABELS[statusFilter]}`
+                    }
+                    hitSlop={8}
+                    onPress={() => {
+                      if (isIOS) triggerHaptic("light");
+                      setFilterMenuOpen(true);
+                    }}
+                    style={[
+                      styles.statusDropdownButton,
+                      isIOS && statusFilter === "all" && (iosGlass ? styles.iosDropdownGlass : styles.iosDropdownOpaque),
+                      statusFilter !== "all" && styles.statusDropdownButtonActive,
+                    ]}
+                  >
+                    {isIOS && iosGlass && statusFilter === "all" ? (
+                      <IosGlassBackdrop style={styles.iosDropdownGlassShape} />
+                    ) : null}
+                    <Text
+                      style={[
+                        styles.statusDropdownText,
+                        statusFilter !== "all" && styles.statusDropdownTextActive,
+                      ]}
+                    >
+                      {STATUS_DROPDOWN_LABELS[statusFilter]}
+                    </Text>
+                    <AppIcon
+                      name="chevronDown"
+                      size={14}
+                      color={statusFilter !== "all" ? colors.action : colors.m3.onSurfaceVariant}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <BottomSheet
+              visible={filterMenuOpen}
+              onClose={() => setFilterMenuOpen(false)}
+              title="Filtrar anúncios"
+              testID="my-listings-filter-sheet"
+            >
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Filtrar anúncios"
+                style={styles.filterSheetList}
+              >
+                {statusChips
+                  .filter((chip) => chip.visible)
+                  .map((chip) => (
+                    <Pressable
+                      key={chip.key}
+                      accessible={true}
+                      accessibilityRole="radio"
+                      accessibilityLabel={chip.a11y}
+                      accessibilityState={{ checked: chip.selected }}
+                      onPress={() => {
+                        chip.onPress();
+                        setFilterMenuOpen(false);
+                      }}
+                      style={({ pressed }) => [
+                        styles.filterSheetRow,
+                        chip.selected && styles.filterSheetRowSelected,
+                        pressed && styles.filterSheetRowPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.filterSheetLabel,
+                          chip.selected && styles.filterSheetLabelSelected,
+                        ]}
+                      >
+                        {chip.label}
+                      </Text>
+                      <AppIcon
+                        name={chip.selected ? "radioOn" : "radioOff"}
+                        size={22}
+                        color={chip.selected ? colors.m3.primary : colors.m3.outline}
+                      />
+                    </Pressable>
+                  ))}
+              </View>
+            </BottomSheet>
 
             {/* Gatilho de acessibilidade mantido para compatibilidade com rotinas de teste */}
             <Pressable
@@ -612,7 +757,7 @@ export function MyListings({
                 </Pressable>
               </View>
             ) : null}
-          </ScrollView>
+          </ScrollEdgeScrollView>
         )}
       </View>
       {/* FAB do Material 3 (56 dp, primary container) no canto inferior direito, acima da barra de navegação. */}
@@ -633,9 +778,7 @@ export function MyListings({
           ]}
         >
           {iosGlass ? (
-            <View pointerEvents="none" style={styles.iosBlurClip}>
-              <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-            </View>
+            <IosGlassBackdrop style={styles.iosGlassShape} />
           ) : null}
           <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
         </Pressable>
@@ -643,12 +786,13 @@ export function MyListings({
       {shareFeedback ? (
         <Snackbar visible message={shareFeedback} onDismiss={dismissShareFeedback} />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
 export type MyListingsScreenProps = {
   focusKey?: number;
+  scrollToTopTick?: number;
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
@@ -662,6 +806,7 @@ export type MyListingsScreenProps = {
 
 export default function MyListingsScreen({
   focusKey,
+  scrollToTopTick,
   onBack,
   onRequireSignIn,
   onNavigateToCreateListing,
@@ -713,6 +858,7 @@ export default function MyListingsScreen({
       onNavigateToReceivedRequests={onNavigateToReceivedRequests}
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
       focusKey={focusKey}
+      scrollToTopTick={scrollToTopTick}
     />
   );
 }

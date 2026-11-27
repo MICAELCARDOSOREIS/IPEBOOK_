@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ComponentRef, type RefObject } from "react";
+import { type ComponentRef, type RefObject, useMemo, useRef } from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { extractBookSidePhotos } from "@/model/bookPhotos";
 import type { Book } from "@/model/entities/book";
@@ -7,11 +7,13 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { Book3D } from "@/view/components/Book3D";
 import { BottomSheet } from "@/view/components/BottomSheet";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { Snackbar } from "@/view/components/Snackbar";
+import { triggerHaptic } from "@/view/haptics";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { triggerHaptic } from "@/view/haptics";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 
 /** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
@@ -93,6 +95,9 @@ export function HeroIconButton({
   buttonRef?: RefObject<ComponentRef<typeof View> | null>;
 }) {
   const { colors } = useTheme();
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const isIos = Platform.OS === "ios";
+  const iosGlass = isIos && !reduceTransparency;
   const styles = getDetailSectionStyles(colors);
   return (
     <Pressable
@@ -103,14 +108,18 @@ export function HeroIconButton({
       disabled={disabled}
       hitSlop={4}
       onPress={() => {
-        if (Platform.OS === "ios") triggerHaptic("selection");
+        if (isIos) triggerHaptic("selection");
         onPress();
       }}
       style={({ pressed }) => [
         styles.heroIconButton,
+        isIos && (iosGlass ? styles.iosHeroIconGlass : styles.iosHeroIconOpaque),
         pressed && !disabled && styles.heroIconButtonPressed,
       ]}
     >
+      {iosGlass ? (
+        <IosGlassBackdrop isInteractive style={styles.iosHeroIconGlassShape} />
+      ) : null}
       <AppIcon name={icon} size={22} color={iconColor ?? colors.m3.onSurface} />
     </Pressable>
   );
@@ -192,6 +201,9 @@ export function BookDetailHeroSection({
   onOpenGallery,
 }: BookDetailHeroSectionProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = getDetailSectionStyles(colors);
   const sidePhotos = useMemo(() => extractBookSidePhotos(book?.photos), [book?.photos]);
 
@@ -252,8 +264,9 @@ export function BookDetailHeroSection({
                 accessibilityLabel="Ver fotos do anúncio em tela cheia"
                 onPress={onOpenGallery}
                 hitSlop={8}
-                style={withPress(styles.photosButton)}
+                style={withPress([styles.photosButton, iosGlass && styles.iosGlassPhotosButton])}
               >
+                {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
                 <AppIcon name="camera" size={16} color={colors.m3.primary} />
                 <Text style={styles.photosButtonText}>
                   {photos.length > 1 ? `Ver fotos (${photos.length})` : "Ver fotos"}
@@ -272,13 +285,6 @@ export function BookDetailHeroSection({
                   >
                     <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
                   </Pressable>
-                ))}
-              </View>
-            ) : null}
-            {photos.length > 1 && !wideWeb ? (
-              <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
-                {photos.map((_, idx) => (
-                  <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
                 ))}
               </View>
             ) : null}
@@ -329,17 +335,55 @@ export function ShareListingFeedback({ state, onDismissCopied, onDismissError, s
   );
 }
 
+/** Cartão de denúncia do anúncio exibido no rodapé de detalhes para visitantes e leitores. */
+export function BookDetailReportSection({
+  onPress,
+}: {
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
+  const styles = getDetailSectionStyles(colors);
+
+  return (
+    <View style={styles.reportSection}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Denunciar anúncio"
+        onPress={onPress}
+        style={withPress([styles.reportCard, iosGlass && styles.iosGlassCard])}
+      >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
+        <View style={styles.reportIconBox}>
+          <AppIcon name="flag" size={18} color={colors.error} />
+        </View>
+        <View style={styles.reportContent}>
+          <Text style={styles.reportTitle}>Denunciar anúncio</Text>
+          <Text style={styles.reportSubtitle}>
+            Conteúdo impróprio, dados falsos ou suspeita de golpe
+          </Text>
+        </View>
+        <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+      </Pressable>
+    </View>
+  );
+}
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     manualShareHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     manualShareLink: {
-      ...tokens.typography.bodyMedium,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      ...tokens.typography.bodyLarge,
       color: colors.m3.onSurface,
       borderWidth: 1,
       borderColor: colors.m3.outline,
       borderRadius: tokens.radius.small,
       padding: tokens.spacing[12],
       marginTop: tokens.spacing[12],
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     heroWide: {
       flex: 1.15,
@@ -379,6 +423,28 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
+    iosHeroIconGlass: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
+      shadowRadius: 10,
+      overflow: "hidden",
+    },
+    iosHeroIconOpaque: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosHeroIconGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     heroIconButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       transform: [{ scale: 0.96 }],
@@ -406,22 +472,16 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.semiBold,
       color: colors.m3.primary,
     },
+    iosGlassPhotosButton: {
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
     thumbRow: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
     thumb: { width: 56, height: 72, borderRadius: tokens.radius.small, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
     thumbActive: { borderColor: colors.m3.primary },
     thumbImage: { width: "100%", height: "100%" },
-    photoDots: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      marginTop: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-    },
-    dot: { width: 6, height: 6, borderRadius: tokens.radius.micro, backgroundColor: colors.m3.outlineVariant },
-    dotActive: { backgroundColor: colors.m3.onSurface },
     detailRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -466,5 +526,42 @@ function createStyles(colors: ColorPalette) {
     },
     sellerName: { flexShrink: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     sellerMeta: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    reportSection: { paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[16] },
+    reportCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.card,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      gap: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      minHeight: 56,
+      ...iosNeutralCardStyle(colors),
+    },
+    reportIconBox: {
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.cardSmall,
+      backgroundColor: colors.m3.errorContainerM3 ?? colors.errorContainer ?? "#F9DEDC",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    reportContent: { flex: 1, gap: tokens.spacing[2] },
+    reportTitle: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
+    reportSubtitle: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
+    iosGlassCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassCardShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xl,
+      overflow: "hidden",
+    },
   });
 }

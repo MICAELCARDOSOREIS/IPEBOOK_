@@ -4,6 +4,8 @@ import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
 import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag, type TagProps } from "@/view/components/Tag";
 import { formatPrice } from "@/view/formatPrice";
@@ -38,6 +40,9 @@ function ShelfRowComponent({ book, summary, accessibilityLabel, onPress, onShare
   const { colors } = useTheme();
   const styles = getShelfRowStyles(colors);
   const [isHovered, setIsHovered] = useState(false);
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
 
   if (wide) {
     const actionText = wide.actionLabel ?? "Editar";
@@ -230,9 +235,28 @@ function ShelfRowComponent({ book, summary, accessibilityLabel, onPress, onShare
           accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
           hitSlop={8}
           onPress={onShareWhatsApp}
-          style={withPress([styles.whatsappButton, styles.whatsappButtonMobile])}
+          style={withPress([
+            styles.whatsappButton,
+            styles.whatsappButtonMobile,
+            isIos && (iosGlass
+              ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+              : { backgroundColor: colors.m3.surfaceContainer }),
+          ])}
         >
+          {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
           <AppIcon name="share" size={16} color={colors.nature.foliage} />
+        </Pressable>
+      ) : null}
+      {book.status === "reserved" && onNavigateToNegotiation ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir conversa sobre ${book.title}`}
+          onPress={onNavigateToNegotiation}
+          style={({ pressed }) => [styles.openChatButton, pressed && styles.rowPressed]}
+        >
+          <AppIcon name="chat" size={16} color={colors.nature.foliageDeep} />
+          <Text style={styles.openChatText}>Abrir conversa e combinar encontro</Text>
+          <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
         </Pressable>
       ) : null}
     </View>
@@ -244,12 +268,29 @@ ShelfRow.displayName = "ShelfRow";
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    openChatButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.nature.sprout,
+    },
+    openChatText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.nature.foliageDeep,
+    },
     mobileCardContainer: {
       position: "relative",
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       elevation: 2,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },

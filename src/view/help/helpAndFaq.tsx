@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
 import { HelpContactLinks } from "@/view/help/HelpContactLinks";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -79,9 +80,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   });
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -95,9 +95,11 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
           <TextField
             label="Buscar dúvida"
+            labelBackgroundColor={colors.background}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Ex: ponto de encontro, doação, senha..."
+            returnKeyType="search"
           />
 
           <View style={styles.filterContainer}>
@@ -159,8 +161,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
             </View>
           ) : null}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -232,6 +234,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[20],
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[12],
     alignItems: "center",
   },
@@ -241,6 +244,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[16],
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[8],
   },
   question: {

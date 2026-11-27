@@ -13,6 +13,7 @@ import {
   type PushTicket,
   type StoredNotification,
 } from "./logic.ts";
+import { getWebPushCredentials, sendWebPush } from "./webPush.ts";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
@@ -57,11 +58,17 @@ Deno.serve(async (request) => {
     .eq("user_id", notification.user_id)
     .maybeSingle();
   const token = preferences?.push_token;
-  if (!isExpoPushToken(token)) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
   // Spec 099: a pessoa desativou este tipo de aviso — o push não sai, mas o aviso segue no app.
   if (isTypeMuted(notification.type, preferences?.muted_types)) {
     return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
   }
+
+  const webCredentials = getWebPushCredentials();
+  const { data: webSubscriptions } = webCredentials
+    ? await admin.from("v2_web_push_subscriptions").select("endpoint,p256dh,auth_secret")
+      .eq("user_id", notification.user_id).limit(10)
+    : { data: null };
+  if (!isExpoPushToken(token) && !webSubscriptions?.length) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 
   // Reivindica o envio de forma atômica agora que há destino e permissão (RN-03).
   const { count } = await admin
@@ -71,23 +78,38 @@ Deno.serve(async (request) => {
     .is("pushed_at", null);
   if (!count) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 
-  const { count: unreadCount, error: badgeError } = await admin
-    .from("v2_notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", notification.user_id)
-    .eq("read", false);
+  const sendNativePush = async (nativeToken: string) => {
+    const { count: unreadCount, error: badgeError } = await admin
+      .from("v2_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", notification.user_id)
+      .eq("read", false);
+    const response = await fetch(EXPO_PUSH_URL, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(buildPushMessage(notification, nativeToken, badgeError ? undefined : unreadCount ?? undefined)),
+    }).catch(() => null);
+    if (!response?.ok) return false;
+    const ticket = ((await response.json().catch(() => null)) as { data?: PushTicket } | null)?.data;
+    if (isInvalidTokenTicket(ticket)) {
+      await admin.from("v2_user_preferences").update({ push_token: null })
+        .eq("user_id", notification.user_id).eq("push_token", nativeToken);
+    }
+    return true;
+  };
 
-  const response = await fetch(EXPO_PUSH_URL, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(buildPushMessage(notification, token, badgeError ? undefined : unreadCount ?? undefined)),
-  }).catch(() => null);
-  if (!response?.ok) return reply(502, { erro: "Serviço de push indisponível." });
-
-  const ticket = ((await response.json().catch(() => null)) as { data?: PushTicket } | null)?.data;
-  if (isInvalidTokenTicket(ticket)) {
-    // RN-04: o aparelho não existe mais.
-    await admin.from("v2_user_preferences").update({ push_token: null }).eq("user_id", notification.user_id);
+  const webSends = webCredentials ? (webSubscriptions ?? []).map(async (destination) => {
+    const result = await sendWebPush(destination, webCredentials);
+    if (result === "expired") {
+      await admin.from("v2_web_push_subscriptions").delete().eq("endpoint", destination.endpoint)
+        .eq("user_id", notification.user_id).eq("auth_secret", destination.auth_secret);
+    }
+    return result !== "failed";
+  }) : [];
+  const sends = isExpoPushToken(token) ? [sendNativePush(token), ...webSends] : webSends;
+  const results = await Promise.allSettled(sends);
+  if (!results.some((result) => result.status === "fulfilled" && result.value)) {
+    return reply(502, { erro: "Serviço de push indisponível." });
   }
   return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 });

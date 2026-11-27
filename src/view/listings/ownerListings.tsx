@@ -6,6 +6,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { withPress } from "@/view/pressFeedback";
@@ -102,6 +103,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       elevation: 1,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },

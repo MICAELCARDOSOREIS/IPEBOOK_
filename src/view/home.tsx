@@ -1,9 +1,5 @@
-import { CachedBookNotice } from "@/view/components/CachedBookNotice";
-import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
-import { BlurView } from "expo-blur";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import type { Book } from "@/model/entities/book";
 import {
   makeAuthViewModel,
   makeHomeViewModel,
@@ -12,37 +8,39 @@ import {
   makeNotificationsViewModel,
   makeProfileViewModel,
 } from "@/di/container";
-import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
-import { LoadingState } from "@/view/components/LoadingState";
-import { OfflineState } from "@/view/components/OfflineState";
-import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
-import {
-  CAROUSEL_MAX_ITEMS,
-  CatalogCarousel,
-  HomeEmptyCatalogSection,
-  HomeShortcutsSection,
-  carouselOffsetFor,
-} from "@/view/home/CatalogCarousel";
-import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
-import { ScreenContainer } from "@/view/components/ScreenContainer";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-import { IpeMark } from "@/view/components/IpeMark";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
+import { IpeMark } from "@/view/components/IpeMark";
 import {
   resetAppLaunchCelebrationForTesting,
   triggerIpePetals,
 } from "@/view/components/ipeCelebrationController";
+import { LoadingState } from "@/view/components/LoadingState";
+import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
+import { OfflineState } from "@/view/components/OfflineState";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
+import {
+  CAROUSEL_MAX_ITEMS,
+  CatalogCarousel,
+  carouselOffsetFor,
+  HomeEmptyCatalogSection,
+  HomeShortcutsSection,
+} from "@/view/home/CatalogCarousel";
 import { HomeFloatingAddButton } from "@/view/home/HomeFloatingChatButton";
-import type { BookModality } from "@/model/entities/book";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 
 export { carouselOffsetFor };
 
@@ -63,6 +61,8 @@ export type HomeProps = {
   onNavigateToSearch?: (filter?: { modality?: BookModality; neighborhood?: string }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
+  /** Incrementado ao tocar na aba Início já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 export { resetAppLaunchCelebrationForTesting };
 
@@ -93,7 +93,14 @@ export default function Home({
   onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
+  scrollToTopTick = 0,
 }: HomeProps = {}) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const neighborhoodHook = useActiveNeighborhood("all");
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
@@ -103,7 +110,7 @@ export default function Home({
   const [profileState] = makeProfileViewModel(authState.user?.id ?? null);
   // Mantém refresh em segundo plano para manter estado atualizado ao puxar para atualizar
   const [, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
-  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, "home");
+  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, String(focusKey ?? "home"));
   const conversationsBadgeCount = explicitConversationsBadgeCount ?? navBadges.conversations;
   const { isOnline } = makeNetworkStatus();
   useReloadOnReconnect(isOnline, actions.reload);
@@ -114,7 +121,7 @@ export default function Home({
   const stackHero = useHydratedWindowWidth() < 1100;
   const isWeb = Platform.OS === "web";
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
@@ -250,101 +257,102 @@ export default function Home({
     ? `Em ${effectiveNeighborhood}`
     : "Perto de você";
 
-  const listHeader = (
-    <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
-      {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
-      {wideWeb ? null : (
-        <View style={styles.topBar}>
+  const mobileTopBar = wideWeb ? null : (
+    <View style={[styles.topBar, styles.topBarFixed, isIos && { backgroundColor: "transparent" }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
+        hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
+        onPress={handleSelectNeighborhood}
+        style={({ pressed }) => [
+          styles.neighborhoodPill,
+          isIos && (iosGlass ? styles.iosNeighborhoodPillGlass : styles.iosNeighborhoodPillOpaque),
+          pressed && styles.profileButtonPressed,
+        ]}
+      >
+        {iosGlass ? <IosGlassBackdrop style={styles.iosTopGlassShape} /> : null}
+        <AppIcon name="place" size={20} color={colors.m3.primary} />
+        <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+        <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+      </Pressable>
+
+      <View style={styles.topRightActions}>
+        {authState.loading ? null : authState.user ? (
+          <>
+            <Pressable
+              testID="home-top-conversations-button"
+              accessibilityRole="button"
+              accessibilityLabel={
+                conversationsBadgeCount > 0
+                  ? `Abrir conversas, ${conversationsBadgeCount} ${conversationsBadgeCount === 1 ? "nova" : "novas"}`
+                  : "Abrir conversas"
+              }
+              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+              onPress={() => guardedNavigateToConversations()}
+              style={({ pressed }) => [
+                styles.topIconButton,
+                isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
+                pressed && styles.profileButtonPressed,
+              ]}
+            >
+              {iosGlass ? (
+                <IosGlassBackdrop style={styles.iosTopGlassShape} />
+              ) : null}
+              <AppIcon name="chat" size={20} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+              {conversationsBadgeCount > 0 ? (
+                <View style={styles.topIconBadge} testID="home-top-conversations-badge">
+                  <Text style={styles.topIconBadgeText}>
+                    {conversationsBadgeCount > 9 ? "9+" : conversationsBadgeCount}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+            <Pressable
+              testID="home-top-profile-button"
+              accessibilityRole="button"
+              accessibilityLabel={
+                authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
+              }
+              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+              onPress={() => guardedNavigateToProfile()}
+              style={({ pressed }) => [
+                styles.profileButton,
+                isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
+                pressed && styles.profileButtonPressed,
+              ]}
+            >
+              {iosGlass && !profileState.profile?.photoUrl ? (
+                <IosGlassBackdrop style={styles.iosTopGlassShape} />
+              ) : null}
+              {profileState.profile?.photoUrl ? (
+                <Image
+                  source={{ uri: profileState.profile.photoUrl }}
+                  accessibilityLabel={authState.user.name ?? "Meu perfil"}
+                  style={styles.profileAvatarImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <AppIcon name="person" size={22} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+              )}
+            </Pressable>
+          </>
+        ) : (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
-            hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
-            onPress={handleSelectNeighborhood}
-            style={withPress(styles.neighborhoodPill)}
+            accessibilityLabel="Entrar no aplicativo"
+            hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
+            onPress={() => guardedNavigateToSignIn()}
+            style={withPress(styles.sessionPill)}
           >
-            <AppIcon name="place" size={20} color={colors.m3.primary} />
-            <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
-            <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.sessionPillText}>Entrar</Text>
           </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
-          <View style={styles.topRightActions}>
-            {authState.loading ? null : authState.user ? (
-              <>
-                <Pressable
-                  testID="home-top-conversations-button"
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    conversationsBadgeCount > 0
-                      ? `Abrir conversas, ${conversationsBadgeCount} ${conversationsBadgeCount === 1 ? "nova" : "novas"}`
-                      : "Abrir conversas"
-                  }
-                  hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-                  onPress={() => guardedNavigateToConversations()}
-                  style={({ pressed }) => [
-                    styles.topIconButton,
-                    isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
-                    pressed && styles.profileButtonPressed,
-                  ]}
-                >
-                  {iosGlass ? (
-                    <View pointerEvents="none" style={styles.iosTopBlurClip}>
-                      <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
-                    </View>
-                  ) : null}
-                  <AppIcon name="chat" size={20} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
-                  {conversationsBadgeCount > 0 ? (
-                    <View style={styles.topIconBadge} testID="home-top-conversations-badge">
-                      <Text style={styles.topIconBadgeText}>
-                        {conversationsBadgeCount > 9 ? "9+" : conversationsBadgeCount}
-                      </Text>
-                    </View>
-                  ) : null}
-                </Pressable>
-                <Pressable
-                  testID="home-top-profile-button"
-                accessibilityRole="button"
-                accessibilityLabel={
-                  authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
-                }
-                hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-                onPress={() => guardedNavigateToProfile()}
-                style={({ pressed }) => [
-                  styles.profileButton,
-                  isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
-                  pressed && styles.profileButtonPressed,
-                ]}
-              >
-                {iosGlass && !profileState.profile?.photoUrl ? (
-                  <View pointerEvents="none" style={styles.iosTopBlurClip}>
-                    <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
-                  </View>
-                ) : null}
-                {profileState.profile?.photoUrl ? (
-                  <Image
-                    source={{ uri: profileState.profile.photoUrl }}
-                    accessibilityLabel={authState.user.name ?? "Meu perfil"}
-                    style={styles.profileAvatarImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <AppIcon name="person" size={22} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
-                )}
-              </Pressable>
-              </>
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Entrar no aplicativo"
-                hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
-                onPress={() => guardedNavigateToSignIn()}
-                style={withPress(styles.sessionPill)}
-              >
-                <Text style={styles.sessionPillText}>Entrar</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      )}
+  const listHeader = (
+    <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
 
       {/* 2. Manchete Editorial com o Ipê de Piripiri (Figma 02.01 / Spec 078) */}
       <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
@@ -465,63 +473,32 @@ export default function Home({
       </View>
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      {wideWeb ? (
-        <View style={styles.chipsContainerWide} testID="home-quick-filter-chips">
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone =
-              mod === "all"
-                ? isIos
-                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
-                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
-                : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          {...standardHorizontalScrollProps}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
-          style={styles.chipsScrollView}
-        >
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone =
-              mod === "all"
-                ? isIos
-                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
-                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
-                : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </ScrollView>
-      )}
+      <View style={wideWeb ? styles.chipsContainerWide : styles.chipsRow} testID="home-quick-filter-chips">
+        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+          const isSelected = selectedModality === mod;
+          const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+          const tone =
+            mod === "all"
+              ? isIos
+                ? { background: colors.m3.primaryContainer, text: colors.action }
+                : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+              : colors.badge[mod];
+          return (
+            <Chip
+              key={mod}
+              size="compact"
+              label={label}
+              accessibilityLabel={`Filtrar por ${label}`}
+              selected={isSelected}
+              tone={tone}
+              onPress={() => setSelectedModality(mod)}
+            />
+          );
+        })}
+      </View>
 
       <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
+
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
       {state.loading ? (
         <LoadingState label="Carregando livros" variant="homeCarousel" />
@@ -535,7 +512,7 @@ export default function Home({
         <CatalogCarousel
           title="Recém-adicionados"
           displayTitle={carouselDisplayTitle}
-          badgeText={`${neighborhoodBooks.length} ${neighborhoodBooks.length === 1 ? "livro" : "livros"}`}
+          badgeText={wideWeb ? `${neighborhoodBooks.length} ${neighborhoodBooks.length === 1 ? "livro" : "livros"}` : undefined}
           books={recentBooks}
           onNavigateToBookDetail={guardedNavigateToBookDetail}
           onViewMore={() => {
@@ -582,19 +559,14 @@ export default function Home({
 
   return (
     <ScreenContainer
+      testID="home-screen"
       edges={["top", "left", "right"]}
-      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
-      paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
-      paddingBottom={wideWeb ? tokens.spacing[32] : scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24]}
-      contentStyle={wideWeb ? styles.wideHomeContent : undefined}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => void handleRefresh()}
-          colors={[colors.action, colors.ipe.bloom]}
-          tintColor={colors.ipe.bloom}
-        />
-      }
+      header={mobileTopBar}
+      scroll={false}
+      maxWidth={null}
+      paddingHorizontal={0}
+      paddingTop={0}
+      paddingBottom={0}
       overlay={
         <>
           <IpeCelebrationOverlay />
@@ -610,19 +582,61 @@ export default function Home({
         </>
       }
     >
-      {listHeader}
+      <ScrollView
+        ref={scrollRef}
+        {...standardVerticalScrollProps}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
+        style={styles.homeScroll}
+        contentContainerStyle={[
+          styles.homeScrollContent,
+          {
+            maxWidth: wideWeb ? WEB_MAX_WIDTH : 720,
+            paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
+            paddingBottom: wideWeb
+              ? tokens.spacing[32]
+              : isIos
+                ? scrollBottomPadding.nativeTabWithFab
+                : scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24],
+          },
+          wideWeb && styles.wideHomeContent,
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={[colors.action, colors.ipe.bloom]}
+            tintColor={colors.ipe.bloom}
+          />
+        }
+      >
+        {listHeader}
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    homeScroll: { flex: 1, width: "100%" },
+    homeScrollContent: { flexGrow: 1, width: "100%", alignSelf: "center" },
     wideHomeContent: { width: "100%", },
     headerContainer: { marginBottom: tokens.spacing[16], },
     headerContainerWide: { marginBottom: tokens.spacing[24], width: "100%", },
 
     // 1. Top bar
+    nativeSafeHeader: { flex: 0 },
     topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8], marginBottom: tokens.spacing[12], },
+    topBarFixed: {
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[4],
+      paddingBottom: tokens.spacing[4],
+      marginBottom: 0,
+      backgroundColor: colors.background,
+    },
     topBarWide: { marginBottom: tokens.spacing[16], },
     neighborhoodPill: {
       flexShrink: 1,
@@ -677,9 +691,9 @@ function createStyles(colors: ColorPalette) {
     iosTopIconGlass: {
       width: 42,
       height: 42,
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: "transparent",
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.12,
@@ -692,10 +706,26 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    iosTopBlurClip: {
+    iosTopGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
       overflow: "hidden",
+    },
+    iosNeighborhoodPillGlass: {
+      height: 42,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosNeighborhoodPillOpaque: {
+      height: 42,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
     },
     profileAvatarImage: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, },
     sessionPill: { paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, minHeight: 36, justifyContent: "center", },
@@ -782,7 +812,6 @@ function createStyles(colors: ColorPalette) {
 
     // 3. Chips de Filtro
     chipsContainer: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
-    chipsScrollView: { marginBottom: tokens.spacing[20], marginHorizontal: -tokens.spacing[16], },
-    chipsScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[16], },
+    chipsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4], marginBottom: tokens.spacing[20] },
   });
 }

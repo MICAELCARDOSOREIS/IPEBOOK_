@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { USER_REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -7,6 +7,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -32,6 +33,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   // Web larga: motivos de um lado, detalhes e envio do outro.
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [detailsFocused, setDetailsFocused] = useState(false);
 
   const guardedBack = useGuardedPress(onBack);
   const guardedNavigateToLoginPress = useGuardedPress(onNavigateToLogin);
@@ -101,9 +103,8 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
@@ -141,18 +142,26 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
 
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
-          <Text style={styles.label}>Detalhes (opcional)</Text>
-          <TextInput
-            accessibilityLabel="Detalhes adicionais da denúncia"
-            value={state.details}
-            onChangeText={actions.setDetails}
-            editable={!state.loading}
-            multiline
-            maxLength={500}
-            placeholder="Conte o que aconteceu, se quiser."
-            placeholderTextColor={colors.m3.onSurfaceVariant}
-            style={styles.input}
-          />
+          <View style={styles.field}>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Detalhes (opcional)</Text>
+              <Text style={styles.counter}>{`${state.details.length}/500`}</Text>
+            </View>
+            <TextInput
+              accessibilityLabel="Detalhes adicionais da denúncia"
+              value={state.details}
+              onChangeText={actions.setDetails}
+              editable={!state.loading}
+              multiline
+              textAlignVertical="top"
+              maxLength={500}
+              placeholder="Descreva o que aconteceu para ajudar nossa análise."
+              placeholderTextColor={colors.m3.onSurfaceVariant}
+              onFocus={() => setDetailsFocused(true)}
+              onBlur={() => setDetailsFocused(false)}
+              style={[styles.input, detailsFocused && styles.inputFocused]}
+            />
+          </View>
 
           {state.error ? <InlineErrorCard message={state.error} /> : null}
 
@@ -166,8 +175,8 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
           </View>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -204,16 +213,31 @@ function createStyles(colors: ColorPalette) {
     reasonTexts: { flex: 1, gap: tokens.spacing[2] },
     reasonLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     reasonHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    field: { gap: tokens.spacing[6] },
+    labelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
     label: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    counter: { ...tokens.typography.labelSmall, color: colors.m3.onSurfaceVariant },
     input: {
       minHeight: 96,
       textAlignVertical: "top",
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : undefined,
       color: colors.m3.onSurface,
       ...tokens.typography.bodyLarge,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+    },
+    inputFocused: {
+      borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
+      borderWidth: 2,
     },
     error: { ...tokens.typography.bodyMedium, color: colors.error },
   });

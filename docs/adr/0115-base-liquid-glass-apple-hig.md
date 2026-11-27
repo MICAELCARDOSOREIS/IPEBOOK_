@@ -1,6 +1,7 @@
 # ADR 0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo
 
 - **Status:** Aceito
+- **Atualização:** O material e a barra iOS descritos neste registro foram substituídos pelo [ADR 0123](0123-liquid-glass-nativo-ios.md).
 - **Data:** 17 de novembro de 2026
 - **Autores:** Maria Clara Almeida Martins (`pessoa:maria-clara`), Eric Vinícius dos Santos Oliveira (`pessoa:eric`), Micael Cardoso Reis (`pessoa:micael`)
 - **Decisores:** Time de Engenharia e Design IpêBook

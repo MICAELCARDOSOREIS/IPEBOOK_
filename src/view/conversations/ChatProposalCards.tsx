@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Book } from "@/model/entities/book";
-import { AppIcon } from "@/view/components/AppIcon";
+import type { Book, BookModality } from "@/model/entities/book";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -11,6 +11,7 @@ export type OwnerPendingProposalCardProps = {
   counterpartName: string;
   initialMessage?: string | null;
   offeredBook?: Book | null;
+  modality?: BookModality;
   isWebStandalone?: boolean;
   responding: boolean;
   error?: string | null;
@@ -25,6 +26,7 @@ export function OwnerPendingProposalCard({
   counterpartName,
   initialMessage,
   offeredBook,
+  modality,
   isWebStandalone = false,
   responding,
   error,
@@ -33,12 +35,14 @@ export function OwnerPendingProposalCard({
 }: OwnerPendingProposalCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const proposalIcon: AppIconName =
+    modality === "sale" ? "category" : modality === "donation" ? "heart" : "swap";
 
   return (
     <View style={[styles.proposalCard, isWebStandalone && styles.proposalCardWide]}>
       <View style={styles.proposalHeader}>
         <View style={styles.proposalIconBox}>
-          <AppIcon name="swap" size={18} color={colors.nature.foliage} />
+          <AppIcon name={proposalIcon} size={18} color={colors.nature.foliage} />
         </View>
         <View style={styles.proposalText}>
           <Text style={styles.proposalTitle}>Nova proposta recebida</Text>

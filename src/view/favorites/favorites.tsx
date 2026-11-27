@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { Chip } from "@/view/components/Chip";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -13,6 +13,7 @@ import { IpeMark } from "@/view/components/IpeMark";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -74,23 +75,32 @@ export default function Favorites({
   );
 
   return (
-    <SafeAreaView style={styles.page}>
+    <ScrollEdgeScreen style={styles.page} scrolling={Boolean(userId) && !sessionLoading && !state.loading && !state.error} header={<>
       {wideWeb ? null : <TopAppBar title="Favoritos" onBack={guardedBack} />}
 
       {!wideWeb && userId && state.books.length > 0 ? (
         <View style={styles.mobileChipsRow}>
           {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
             const selected = statusFilter === value;
+            if (Platform.OS === "ios") {
+              return (
+                <Chip
+                  key={value}
+                  size="compact"
+                  label={label}
+                  accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                  selected={selected}
+                  onPress={() => setStatusFilter(value)}
+                />
+              );
+            }
             return (
               <Pressable
                 key={value}
                 accessibilityRole="button"
                 accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
                 accessibilityState={{ selected }}
-                onPress={() => {
-                  if (Platform.OS === "ios") triggerHaptic("selection");
-                  setStatusFilter(value);
-                }}
+                onPress={() => setStatusFilter(value)}
                 style={withPress([styles.mobileChip, selected && styles.mobileChipSelected])}
               >
                 {selected ? <AppIcon name="check" size={14} color={colors.nature.onFoliage} /> : null}
@@ -100,6 +110,7 @@ export default function Favorites({
           })}
         </View>
       ) : null}
+      </>}>
 
       {wideWeb && userId ? (
         <View style={styles.wideHeader}>
@@ -177,7 +188,7 @@ export default function Favorites({
           )}
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           style={styles.flexOne}
           key={wideWeb ? `grade-${gridColumns}` : "lista"}
           numColumns={wideWeb ? gridColumns : 1}
@@ -272,7 +283,7 @@ export default function Favorites({
         message={state.actionError ?? ""}
         onDismiss={actions.clearActionError}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -347,6 +358,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
+      minHeight: Platform.OS === "ios" ? 44 : undefined,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type NavigationBadgesDeps = {
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
@@ -21,30 +22,36 @@ export function useNavigationBadgesViewModel(
   deps: NavigationBadgesDeps,
 ): NavigationBadges {
   const [badges, setBadges] = useState<NavigationBadges>(NONE);
+  const activeRef = useRef(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!sessionUserId) {
       setBadges(NONE);
       return;
     }
-    let active = true;
-    const load = () => {
-      deps
-        .listReceivedRequests(sessionUserId)
-        .then((list) => {
-          if (active) setBadges({ conversations: list.filter((e) => e.request.status === "pending").length });
-        })
-        .catch(() => {
-          /* o selo é só um aviso; sem rede ele mantém o último valor */
-        });
-    };
+    deps
+      .listReceivedRequests(sessionUserId)
+      .then((list) => {
+        if (activeRef.current) setBadges({ conversations: list.filter((e) => e.request.status === "pending").length });
+      })
+      .catch(() => {
+        /* o selo é só um aviso; sem rede ele mantém o último valor */
+      });
+  }, [sessionUserId, deps]);
+
+  const debouncedLoad = useDebouncedRealtimeCallback(load, 200);
+
+  useEffect(() => {
+    activeRef.current = true;
     load();
-    const off = deps.subscribe?.(sessionUserId, load);
+    const off = sessionUserId ? deps.subscribe?.(sessionUserId, debouncedLoad) : undefined;
     return () => {
-      active = false;
+      activeRef.current = false;
       off?.();
     };
-  }, [sessionUserId, refreshKey, deps]);
+  }, [sessionUserId, refreshKey, deps, load, debouncedLoad]);
+
+  useAppForegroundRefresh(load, Boolean(sessionUserId));
 
   return badges;
 }

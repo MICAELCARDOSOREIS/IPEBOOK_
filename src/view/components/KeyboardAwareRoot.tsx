@@ -12,14 +12,14 @@ import { useTheme } from "@/view/theme/ThemeProvider";
  * quando a janela nunca encolhe). Aqui o `paddingBottom` vem direto da geometria reportada pelo
  * evento do teclado (`useAnimatedKeyboardInset`) e desliza animado junto com ele — vale para todas
  * as telas de uma vez, no Android e no iOS, então as telas não precisam de `KeyboardAvoidingView`
- * próprios. Na web o navegador já encolhe a área útil e o valor fica em zero.
+ * próprios. Na web, o viewport visual informa quanto do layout fica atrás do teclado.
  */
-export function KeyboardAwareRoot({ children }: { children: ReactNode }) {
+export function KeyboardAwareRoot({ children, disabled = false }: { children: ReactNode; disabled?: boolean }) {
   const inseto = useAnimatedKeyboardInset();
   const { colors } = useTheme();
 
   return (
-    <Animated.View testID="keyboard-aware-root" style={[styles.root, { paddingBottom: inseto, backgroundColor: colors.m3.surfaceContainer }]}>
+    <Animated.View testID="keyboard-aware-root" style={[styles.root, { paddingBottom: disabled ? 0 : inseto, backgroundColor: colors.m3.surfaceContainer }]}>
       {children}
     </Animated.View>
   );

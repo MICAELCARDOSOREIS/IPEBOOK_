@@ -1,8 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { AccessibilityInfo, Platform, StyleSheet } from "react-native";
 import * as container from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 import ConversationsScreen, { Conversations } from "@/view/conversations/conversations";
+import { colors } from "@/view/tokens";
 
 jest.mock("@/viewmodel/useConversationsViewModel", () => ({
   ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
@@ -166,6 +168,34 @@ describe("Conversations (Spec 076)", () => {
     expect(screen.getByText("Não foi possível cancelar o pedido. Tente novamente.")).toBeDefined();
   });
 
+  it("usa Liquid Glass no botão de cancelar pedido no iOS (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe("transparent");
+      expect(screen.getByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeDefined();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
+  });
+
+  it("mantém o fundo sólido do botão de cancelar pedido no Android (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe(colors.errorContainer);
+      expect(screen.queryByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeNull();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
+  });
+
   it("renderiza botão Voltar no cabeçalho mobile quando onBack é informado", async () => {
     setup({ items });
     const onBack = jest.fn();
@@ -174,6 +204,41 @@ describe("Conversations (Spec 076)", () => {
     expect(backBtn).toBeDefined();
     await act(async () => { fireEvent.press(backBtn); });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém o cabeçalho de Conversas e desfoca a lista ao rolar no iOS", async () => {
+    const originalPlatform = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    const transparency = jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+    try {
+      setup({ items });
+      const onBack = jest.fn();
+      const screen = await renderView({ onBack });
+      const list = screen.getByTestId("conversation-list");
+      const blur = () => screen.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true });
+      const scroll = (y: number) => ({ nativeEvent: { contentOffset: { x: 0, y } } });
+
+      expect(blur()).toBeNull();
+      await fireEvent.scroll(list, scroll(80));
+      expect(blur()).not.toBeNull();
+      expect(screen.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await fireEvent.press(screen.getByRole("button", { name: "Voltar" }));
+      expect(onBack).toHaveBeenCalledTimes(1);
+
+      await fireEvent.scroll(list, scroll(0));
+      expect(blur()).toBeNull();
+      await screen.unmount();
+
+      transparency.mockResolvedValue(true);
+      const opaque = await renderView({ onBack });
+      await fireEvent.scroll(opaque.getByTestId("conversation-list"), scroll(80));
+      expect(opaque.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true })).toBeNull();
+      expect(opaque.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await opaque.unmount();
+    } finally {
+      transparency.mockRestore();
+      Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+    }
   });
 
   it("aciona reload ao tentar novamente no estado de erro online e offline", async () => {

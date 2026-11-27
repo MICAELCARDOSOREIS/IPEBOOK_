@@ -29,7 +29,7 @@ describe("Cards de Catálogo e Busca iOS 26 (Spec 137 · #229)", () => {
     jest.clearAllMocks();
   });
 
-  it("aplica superfície Liquid Glass (radius 20) e haptic ao tocar em card do catálogo no iOS", async () => {
+  it("aplica superfície sólida (radius 20) e haptic ao tocar em card do catálogo no iOS", async () => {
     Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
     const impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
     const onDetail = jest.fn();
@@ -47,7 +47,8 @@ describe("Cards de Catálogo e Busca iOS 26 (Spec 137 · #229)", () => {
     const card = view.getByLabelText("Ver detalhe de O Pequeno Príncipe, Antoine de Saint-Exupéry em Centro");
     const style = StyleSheet.flatten(card.props.style);
     expect(style.borderRadius).toBe(tokens.radius.xl);
-    expect(style.backgroundColor).toBe(tokens.glass.fill);
+    expect(style.backgroundColor).toBe("transparent");
+    expect(view.getAllByTestId("ios-native-glass", { includeHiddenElements: true }).length).toBeGreaterThanOrEqual(1);
 
     await fireEvent.press(card);
     expect(onDetail).toHaveBeenCalledWith("livro-1");
@@ -99,20 +100,22 @@ describe("Cards de Catálogo e Busca iOS 26 (Spec 137 · #229)", () => {
     const fab = addView.getByTestId("home-floating-add-button");
     const fabStyle = StyleSheet.flatten(fab.props.style);
     expect(fabStyle.borderRadius).toBe(tokens.radius.full);
-    expect(fabStyle.backgroundColor).toBe(tokens.glass.fill);
+    expect(fabStyle.backgroundColor).toBe("transparent");
+    expect(addView.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
     await fireEvent.press(fab);
     expect(onAdd).toHaveBeenCalledTimes(1);
     expect(impactSpy).toHaveBeenCalledTimes(1);
 
     const chipView = await render(<Chip label="Venda" selected={false} onPress={jest.fn()} />);
     const chipStyle = StyleSheet.flatten(chipView.getByRole("checkbox", { name: "Venda" }).props.style);
-    expect(chipStyle.backgroundColor).toBe(tokens.glass.fill);
-    expect(chipStyle.borderColor).toBe(tokens.glass.stroke);
+    expect(chipStyle.backgroundColor).toBe("transparent");
+    expect(chipStyle.borderColor).toBe("transparent");
+    expect(chipView.getByTestId("ios-native-glass", { includeHiddenElements: true })).toBeDefined();
 
     Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
     const androidFab = await render(<HomeFloatingAddButton onPress={onAdd} />);
     const androidFabStyle = StyleSheet.flatten(androidFab.getByTestId("home-floating-add-button").props.style);
-    expect(androidFabStyle.backgroundColor).toBe(colors.nature.sprout);
+    expect(androidFabStyle.backgroundColor).toBe(colors.m3.primaryContainer);
     impactSpy.mockRestore();
   });
 });

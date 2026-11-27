@@ -32,15 +32,15 @@ function createSearchStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
       paddingHorizontal: tokens.spacing[14],
-      height: tokens.spacing[40],
+      height: Platform.OS === "ios" ? 44 : tokens.spacing[40],
       borderRadius: tokens.radius.full,
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     neighborhoodText: { flexShrink: 1, ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium },
     topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     favoritesTopButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
+      width: Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      height: Platform.OS === "ios" ? 44 : tokens.spacing[40],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
@@ -51,7 +51,7 @@ function createSearchStyles(colors: ColorPalette) {
     },
     favoritesTopButtonWide: { width: "auto", flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[14] },
     favoritesButtonText: { ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium },
-    tuneButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center" },
+    tuneButton: { width: Platform.OS === "ios" ? 44 : tokens.spacing[40], height: Platform.OS === "ios" ? 44 : tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center" },
     // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
     tuneBadge: {
       position: "absolute",
@@ -69,8 +69,7 @@ function createSearchStyles(colors: ColorPalette) {
     heroSection: { gap: tokens.spacing[6], marginTop: tokens.spacing[4], marginBottom: tokens.spacing[4] },
     heading: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, letterSpacing: tokens.letterSpacing.brandTighter },
     subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4] },
-    quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[2] },
+    quickModalitiesRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4], marginBottom: tokens.spacing[4], paddingVertical: tokens.spacing[2] },
     clearFiltersButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
@@ -108,7 +107,7 @@ function createSearchStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[4],
-      height: 36,
+      height: Platform.OS === "ios" ? 44 : 36,
       paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -167,6 +166,27 @@ function createSearchStyles(colors: ColorPalette) {
     historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16] },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
     snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20 },
+    iosGlassPill: {
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+    },
+    iosOpaquePill: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
   });
 }
 

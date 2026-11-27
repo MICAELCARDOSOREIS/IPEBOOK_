@@ -3,6 +3,7 @@ import type { BookRequest, RequestStatus } from "@/model/entities/bookRequest";
 import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { subscribePostgresChanges } from "@/infra/supabaseRealtime";
 
 type RequestRow = {
   id: string;
@@ -70,5 +71,24 @@ export class SupabaseBookRequestDataSource implements IBookRequestDataSource {
     const { data, error } = await this.client.rpc("accept_book_request", { target_request_id: id });
     if (error || !data) throw new DataSourceError("Não foi possível aceitar o pedido.");
     return mapRequest(data as RequestRow);
+  }
+
+  subscribeToRequest(requestId: string, onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: `book-requests:${requestId}`,
+      event: "*",
+      table: "v2_book_requests",
+      filter: `id=eq.${requestId}`,
+      onPayload: () => onChange(),
+    });
+  }
+
+  subscribeToAll(onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: "book-requests:all",
+      event: "*",
+      table: "v2_book_requests",
+      onPayload: () => onChange(),
+    });
   }
 }

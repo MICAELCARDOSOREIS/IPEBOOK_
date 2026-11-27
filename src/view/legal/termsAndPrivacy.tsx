@@ -1,8 +1,9 @@
 import { type ComponentRef, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, type PressableProps, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, type PressableProps, StyleSheet, Text, View } from "react-native";
 import { LEGAL_LAST_UPDATED, PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { SegmentedControl } from "@/view/components/SegmentedControl";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -79,9 +80,8 @@ export default function TermsAndPrivacy({
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -92,34 +92,44 @@ export default function TermsAndPrivacy({
               Consulte os documentos que orientam o uso do IpêBook.
             </Text>
           </View>
-          <View
-            testID="terms-privacy-tablist"
-            accessibilityRole="tablist"
-            accessibilityLabel="Documentos do IpêBook"
-            style={styles.tabs}
-          >
-            {legalTabs.map(({ key, label }) => {
-              const selected = activeTab === key;
-              return (
-                <Pressable
-                  key={key}
-                  ref={(tab) => { tabRefs.current[key] = tab; }}
-                  accessibilityRole="tab"
-                  accessibilityLabel={label}
-                  accessibilityState={{ selected }}
-                  nativeID={isWeb ? `legal-tab-${key}` : undefined}
-                  aria-controls={isWeb ? `legal-panel-${key}` : undefined}
-                  aria-selected={isWeb ? selected : undefined}
-                  tabIndex={isWeb ? (selected ? 0 : -1) : undefined}
-                  onKeyDown={isWeb ? (event) => handleTabKey(event, key) : undefined}
-                  onPress={() => setActiveTab(key)}
-                  style={withPress([styles.tab, selected && styles.activeTab])}
-                >
-                  <Text style={[styles.tabText, selected && styles.activeTabText]}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {Platform.OS === "ios" && !wide ? (
+            <SegmentedControl
+              testID="terms-privacy-tablist"
+              accessibilityLabel="Documentos do IpêBook"
+              value={activeTab}
+              onChange={setActiveTab}
+              options={legalTabs.map(({ key, label }) => ({ value: key, label }))}
+            />
+          ) : (
+            <View
+              testID="terms-privacy-tablist"
+              accessibilityRole="tablist"
+              accessibilityLabel="Documentos do IpêBook"
+              style={styles.tabs}
+            >
+              {legalTabs.map(({ key, label }) => {
+                const selected = activeTab === key;
+                return (
+                  <Pressable
+                    key={key}
+                    ref={(tab) => { tabRefs.current[key] = tab; }}
+                    accessibilityRole="tab"
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected }}
+                    nativeID={isWeb ? `legal-tab-${key}` : undefined}
+                    aria-controls={isWeb ? `legal-panel-${key}` : undefined}
+                    aria-selected={isWeb ? selected : undefined}
+                    tabIndex={isWeb ? (selected ? 0 : -1) : undefined}
+                    onKeyDown={isWeb ? (event) => handleTabKey(event, key) : undefined}
+                    onPress={() => setActiveTab(key)}
+                    style={withPress([styles.tab, selected && styles.activeTab])}
+                  >
+                    <Text style={[styles.tabText, selected && styles.activeTabText]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           {isWeb && (
             <View
@@ -171,8 +181,8 @@ export default function TermsAndPrivacy({
             ) : null}
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 

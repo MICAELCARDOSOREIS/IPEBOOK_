@@ -190,13 +190,12 @@ export function MyListingsListingsTab({
                   ? `Ver negociação de ${book.title}`
                   : `Gerenciar anúncio de ${book.title}`
               }
-              onPress={() => onNavigateToManageListing?.(book.id)}
-              onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
-              onNavigateToNegotiation={
+              onPress={() =>
                 book.status === "reserved" && onNavigateToNegotiationForBook
-                  ? () => onNavigateToNegotiationForBook(book.id)
-                  : undefined
+                  ? onNavigateToNegotiationForBook(book.id)
+                  : onNavigateToManageListing?.(book.id)
               }
+              onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
             />
           ))}
         </View>
@@ -205,7 +204,7 @@ export function MyListingsListingsTab({
       <View style={[styles.orientationBox, !wideWeb && styles.orientationBoxMobile]}>
         <AppIcon name="info" size={16} color={colors.secondaryText} />
         <Text style={styles.orientationHint}>
-          Toque em um livro para editar, pausar ou marcar como concluído.
+          Toque em um livro para gerenciar, pausar ou abrir a conversa.
         </Text>
       </View>
     </>

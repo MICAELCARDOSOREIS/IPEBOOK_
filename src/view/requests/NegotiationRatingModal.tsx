@@ -1,7 +1,10 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -58,12 +61,13 @@ function NegotiationRatingModalContent({
       statusBarTranslucent
       navigationBarTranslucent
       visible={visible}
+      accessibilityViewIsModal={visible}
       animationType="fade"
       transparent
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={styles.card} accessible={true} accessibilityViewIsModal={true}>
+        <ModalGlassSurface radius={Platform.OS === "ios" ? tokens.radius.xl : tokens.radius.large} style={styles.card} accessibilityViewIsModal>
           {isSuccess ? (
             <View style={styles.successContent}>
               <View style={styles.successIconBox}>
@@ -120,7 +124,10 @@ function NegotiationRatingModalContent({
                       accessibilityRole="radio"
                       accessibilityLabel={`${score} ${score === 1 ? "estrela" : "estrelas"}`}
                       accessibilityState={{ checked: score === selectedScore }}
-                      onPress={() => onSelectScore(score)}
+                      onPress={() => {
+                        if (Platform.OS === "ios") triggerHaptic("selection");
+                        onSelectScore(score);
+                      }}
                       disabled={isSubmitting}
                       style={withPress(styles.starButton)}
                     >
@@ -170,7 +177,7 @@ function NegotiationRatingModalContent({
               </View>
             </View>
           )}
-        </View>
+        </ModalGlassSurface>
       </View>
     </Modal>
   );
@@ -193,6 +200,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[24],
       borderWidth: 1,
       borderColor: colors.border,
+      ...iosNeutralCardStyle(colors),
       gap: tokens.spacing[16],
     },
     formContent: {

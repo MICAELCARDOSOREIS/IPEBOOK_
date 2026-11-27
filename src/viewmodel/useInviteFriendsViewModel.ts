@@ -158,8 +158,11 @@ export function useInviteFriendsViewModel(
         return;
       }
 
-      await Share.share({ message });
-      if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
+      const result = await Share.share({ message });
+      if (active.current) {
+        const wasDismissed = result.action === Share.dismissedAction;
+        setState((prev) => ({ ...prev, sharing: false, shared: !wasDismissed, error: null }));
+      }
     } catch (error) {
       if (active.current) {
         setState((prev) => ({

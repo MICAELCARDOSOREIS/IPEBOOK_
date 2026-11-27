@@ -1,13 +1,12 @@
-import { BlurView } from "expo-blur";
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 
 export type ProfileMenuItem = {
   key: string;
@@ -56,7 +55,7 @@ export function ProfileIdentityCard({
 }: ProfileIdentityCardProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -64,15 +63,10 @@ export function ProfileIdentityCard({
     <View
       style={[
         styles.heroBlock,
-        isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+        isIos && styles.iosNeutralSurface,
         wideWeb && styles.heroBlockWide,
       ]}
     >
-      {iosGlass ? (
-        <View pointerEvents="none" style={styles.iosBlurClip}>
-          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-        </View>
-      ) : null}
       <View style={styles.identityRow}>
         <View style={styles.identityText}>
           <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -84,6 +78,7 @@ export function ProfileIdentityCard({
                 accessibilityRole="link"
                 accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
               >
                 <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
@@ -93,6 +88,7 @@ export function ProfileIdentityCard({
                 accessibilityRole="button"
                 accessibilityLabel="Adicionar Instagram ao perfil"
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={onEditProfile}
               >
                 <Text style={styles.identityHandleMuted}>Adicionar Instagram</Text>
@@ -111,15 +107,24 @@ export function ProfileIdentityCard({
         </View>
       </View>
 
-      <View style={[styles.statsContainer, isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface)]}>
+      <View
+        style={[
+          styles.statsContainer,
+          isIos && styles.iosStatsSurface,
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
           onPress={onMyListings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{totalPublications}</Text>
-          <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {totalPublications}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {totalPublications === 1 ? "publicação" : "publicações"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -130,8 +135,12 @@ export function ProfileIdentityCard({
           onPress={onMeetingHistory}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{completedTrocas}</Text>
-          <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {completedTrocas}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {completedTrocas === 1 ? "troca" : "trocas"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -142,10 +151,12 @@ export function ProfileIdentityCard({
           onPress={onRatings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
             {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
           </Text>
-          <Text style={styles.statLabel}>nota média</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            nota média
+          </Text>
         </Pressable>
       </View>
 
@@ -163,8 +174,11 @@ export function ProfileIdentityCard({
             pressed && styles.editProfileButtonPressed,
           ]}
         >
+          {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
           <AppIcon name="edit" size={18} color={colors.m3.primary} />
-          <Text numberOfLines={1} style={styles.editProfileButtonText}>Editar perfil</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.editProfileButtonText}>
+            Editar perfil
+          </Text>
         </Pressable>
 
         {onCreateListing && !wideWeb ? (
@@ -178,83 +192,23 @@ export function ProfileIdentityCard({
             style={({ pressed }) => [
               styles.publishButton,
               isIos && styles.iosPublishButton,
+              iosGlass && styles.iosGlassPublishButton,
               pressed && styles.publishButtonPressed,
             ]}
           >
+            {iosGlass ? (
+              <IosGlassBackdrop
+                tintColor={colors.m3.primary}
+                isInteractive
+                style={{ borderRadius: tokens.radius.full }}
+              />
+            ) : null}
             <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-            <Text numberOfLines={1} style={styles.publishButtonText}>Publicar um livro</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.publishButtonText}>
+              Publicar um livro
+            </Text>
           </Pressable>
         ) : null}
-      </View>
-    </View>
-  );
-}
-
-export type ProfileCommunityBadgesProps = {
-  neighborhood?: string | null;
-  completedTrocas: number;
-  totalPublications: number;
-  wideWeb?: boolean;
-};
-
-/**
- * Selos Comunitários de Piripiri (Spec 122).
- */
-export function ProfileCommunityBadges({
-  neighborhood,
-  completedTrocas,
-  totalPublications,
-  wideWeb = false,
-}: ProfileCommunityBadgesProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={[styles.badgesSection, wideWeb && styles.badgesSectionWide]} testID="profile-badges-section">
-      <View style={styles.badgesHeaderRow}>
-        <View style={styles.sectionBloom} />
-        <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
-      </View>
-      <View style={styles.badgesRow}>
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Leitor de Piripiri: ${neighborhood || "Comunidade"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
-            <AppIcon name="place" size={20} color={colors.nature.foliage} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>{neighborhood || "Comunidade"}</Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Ponto recomendado: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
-            <AppIcon name="checkCircle" size={20} color={colors.action} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Ponto recomendado</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
-          </Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
-            <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -280,7 +234,7 @@ export function ProfileMenuSection({
 }: ProfileMenuSectionProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -289,15 +243,10 @@ export function ProfileMenuSection({
       <View
         style={[
           styles.cardGroup,
-          isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+          isIos && styles.iosNeutralSurface,
           wideWeb && styles.cardGroupWide,
         ]}
       >
-        {iosGlass ? (
-          <View pointerEvents="none" style={styles.iosBlurClip}>
-            <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-          </View>
-        ) : null}
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionBloom} />
           <Text style={styles.sectionHeader}>{title}</Text>
@@ -351,7 +300,7 @@ export function ProfileMenuSection({
               accessibilityRole="button"
               accessibilityLabel="Sair da conta"
               onPress={onSignOut}
-              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+              style={({ pressed }) => [styles.menuRow, isIos && styles.iosMenuRow, pressed && styles.menuRowPressed]}
             >
               <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
                 <AppIcon name="logout" size={20} color={colors.error} />
@@ -392,27 +341,27 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[24],
       justifyContent: "space-between",
     },
-    iosGlassSurface: {
+    iosNeutralSurface: {
       borderRadius: tokens.radius.xxl,
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
-      shadowColor: "#362b1f",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 14,
+      shadowOpacity: 0.09,
+      shadowRadius: 12,
     },
-    iosOpaqueSurface: {
-      borderRadius: tokens.radius.xxl,
+    iosStatsSurface: {
+      borderRadius: tokens.radius.large,
       borderCurve: "continuous",
-      backgroundColor: colors.m3.surfaceContainer,
-      borderColor: tokens.ios.separator,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.m3.outlineVariant,
     },
     iosGlassButton: {
       minHeight: 49,
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.12,
@@ -423,13 +372,13 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       borderCurve: "continuous",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: tokens.ios.separator,
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.17,
       shadowRadius: 7,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.xxl,
       overflow: "hidden",
@@ -438,8 +387,25 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainer,
       borderColor: tokens.ios.separator,
     },
+    iosGlassStats: {
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: tokens.ios.separator,
+      overflow: "hidden",
+    },
+    iosGlassPublishButton: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
     iosMenuRow: {
       backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    iosGlassMenuRow: {
+      backgroundColor: "transparent",
+    },
+    iosGlassMenuRowPressed: {
+      backgroundColor: "rgba(0, 0, 0, 0.05)",
     },
     iosMenuIconContainer: {
       width: 36,
@@ -447,7 +413,6 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.primaryContainer,
     },
-    badgesSectionWide: { width: "100%", marginTop: 0 },
     sectionWide: { flex: 1, minWidth: 300 },
     identityRow: {
       minHeight: 100,
@@ -509,14 +474,14 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[6],
-      flex: 1,
-      minHeight: tokens.accessibility.touchTarget,
+      gap: tokens.spacing[8],
+      width: "100%",
+      minHeight: 50,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -529,55 +494,9 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     primaryActions: {
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "stretch",
-      gap: tokens.spacing[8],
-    },
-    badgesSection: {
-      width: "100%",
-      marginTop: tokens.spacing[8],
-    },
-    badgesRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[8],
-    },
-    badgeItem: {
-      flex: 1,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingVertical: tokens.spacing[14],
-      paddingHorizontal: tokens.spacing[6],
-      minHeight: 110,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      elevation: 1,
-      shadowColor: colors.ipe.trunk,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-    },
-    badgeIconBox: {
-      width: 42,
-      height: 42,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[4],
-    },
-    badgeTitle: {
-      ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    badgeDesc: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      textAlign: "center",
+      gap: tokens.spacing[10],
     },
     statsContainer: {
       flexDirection: "row",
@@ -597,7 +516,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[2],
-      paddingHorizontal: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[2],
       borderRadius: tokens.radius.small,
     },
     statBoxPressed: {
@@ -624,15 +543,15 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     publishButton: {
-      flex: 1.25,
-      minHeight: 48,
+      width: "100%",
+      minHeight: 50,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       borderRadius: tokens.shapeMorph.buttonRest,
       backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
     },
     publishButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -645,14 +564,6 @@ function createStyles(colors: ColorPalette) {
     },
     section: {
       gap: tokens.spacing[4],
-    },
-    badgesHeaderRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
     },
     sectionHeaderRow: {
       flexDirection: "row",

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type MeetingState = {
   meeting: Meeting | null;
@@ -17,6 +19,8 @@ export type MeetingState = {
 
 export type MeetingActions = {
   reload: () => Promise<void>;
+  /** Atualiza o encontro em segundo plano sem piscar o estado de carregamento. */
+  refresh?: () => Promise<void>;
   confirm: () => Promise<boolean>;
   cancel: () => Promise<boolean>;
 };
@@ -25,14 +29,16 @@ const LOAD_ERROR = "Não foi possível carregar o encontro. Tente novamente.";
 const ACTION_ERROR = "Não foi possível atualizar o encontro. Tente novamente.";
 /** Respostas ao encontro por minuto, como os demais formulários (ADR 0027). */
 const MEETING_ATTEMPTS = 3;
+const MEETING_SAFETY_POLL_MS = 8_000;
 
-/** Encontro de uma negociação aceita, com confirmar e cancelar (Spec 052, `06.05`, `06.11`). */
+/** Encontro de uma negociação aceita, com confirmar, cancelar e sincronização em tempo real (Spec 052, `06.05`, `06.11`). */
 export function useMeetingViewModel(
   requestId: string,
   sessionUserId: string | null,
   useCases: IMeetingUseCases,
   rateLimiter: IRateLimiter,
   logger: ILogger,
+  subscribe?: (requestId: string, sessionUserId: string, onChange: () => void) => () => void,
 ): [MeetingState, MeetingActions] {
   const [state, setState] = useState<MeetingState>({
     meeting: null,
@@ -44,25 +50,38 @@ export function useMeetingViewModel(
   });
   const active = useRef(false);
 
-  const reload = useCallback(async () => {
-    if (!active.current) return;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
-    try {
-      const [meeting, history] = await Promise.all([
-        useCases.getMeeting(requestId, sessionUserId),
-        useCases.getMeetingHistory(requestId, sessionUserId),
-      ]);
-      if (active.current) setState((previous) => ({ ...previous, meeting, history, loading: false }));
-    } catch (error) {
-      if (active.current) {
-        setState((previous) => ({
-          ...previous,
-          loading: false,
-          error: error instanceof DomainError ? error.message : LOAD_ERROR,
-        }));
+  const load = useCallback(
+    async (silent: boolean) => {
+      if (!active.current) return;
+      if (!silent) {
+        setState((previous) => ({ ...previous, loading: true, error: null }));
       }
-    }
-  }, [useCases, requestId, sessionUserId]);
+      try {
+        const [meeting, history] = await Promise.all([
+          useCases.getMeeting(requestId, sessionUserId),
+          useCases.getMeetingHistory(requestId, sessionUserId),
+        ]);
+        if (active.current) {
+          setState((previous) => ({ ...previous, meeting, history, loading: false, error: null }));
+        }
+      } catch (error) {
+        if (active.current && !silent) {
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: error instanceof DomainError ? error.message : LOAD_ERROR,
+          }));
+        }
+      }
+    },
+    [useCases, requestId, sessionUserId],
+  );
+
+  const reload = useCallback(() => load(false), [load]);
+  const refresh = useCallback(() => load(true), [load]);
+  const debouncedRefresh = useDebouncedRealtimeCallback(() => {
+    void refresh();
+  });
 
   const run = useCallback(
     async (action: "confirm" | "cancel"): Promise<boolean> => {
@@ -107,5 +126,25 @@ export function useMeetingViewModel(
     };
   }, [reload]);
 
-  return [state, { reload, confirm, cancel }];
+  useEffect(() => {
+    if (!requestId || !sessionUserId || !subscribe) return;
+    return subscribe(requestId, sessionUserId, debouncedRefresh);
+  }, [requestId, sessionUserId, subscribe, debouncedRefresh]);
+
+  useAppForegroundRefresh(() => {
+    void refresh();
+  }, Boolean(requestId && sessionUserId));
+
+  // Rede de segurança em primeiro plano quando há encontro aguardando confirmação ou sem encontro ainda.
+  const awaitingLiveChange = !state.meeting || state.meeting.status === "proposed";
+  useEffect(() => {
+    if (process.env.NODE_ENV === "test" || !awaitingLiveChange || !requestId || !sessionUserId) return;
+    const timer = setInterval(() => {
+      if (AppState.currentState && AppState.currentState !== "active") return;
+      void refresh();
+    }, MEETING_SAFETY_POLL_MS);
+    return () => clearInterval(timer);
+  }, [awaitingLiveChange, requestId, sessionUserId, refresh]);
+
+  return [state, { reload, refresh, confirm, cancel }];
 }

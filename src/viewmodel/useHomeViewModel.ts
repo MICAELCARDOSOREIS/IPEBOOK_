@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
-import { registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { registerBooksMemoryCache, subscribeBooksCatalogMutated } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh } from "@/viewmodel/useRealtimeSync";
 
 export type HomeState = {
   books: readonly Book[];
@@ -85,6 +86,16 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
       request.current += 1;
     };
   }, [reload, isTest]);
+
+  useEffect(() => {
+    return subscribeBooksCatalogMutated(() => {
+      void reload();
+    });
+  }, [reload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  });
 
   return [state, { reload }];
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, Text, View } from "react-native";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
@@ -23,7 +23,11 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { BookCover } from "@/view/components/BookCover";
+import { SegmentedControl } from "@/view/components/SegmentedControl";
 import { Tag } from "@/view/components/Tag";
+import { TopAppBar } from "@/view/components/TopAppBar";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { triggerHaptic } from "@/view/haptics";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -71,7 +75,12 @@ export function Conversations({
   const styles = useMemo(() => createConversationsStyles(colors), [colors]);
   const [state, actions] = makeConversationsViewModel(sessionUserId);
   const { isOnline } = makeNetworkStatus();
-
+  const hasIosHeader = Platform.OS === "ios" && Boolean(onBack);
+  const isIos = Platform.OS === "ios";
+  // Liquid Glass nativo (ADR 0123) com alternativa opaca quando o material não está disponível.
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
+  const hasList = state.items.length > 0 && !state.error;
   // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
   const { reload } = actions;
   const lastFocusKey = useRef(focusKey);
@@ -141,6 +150,21 @@ export function Conversations({
   const pendingReceivedCount = useMemo(
     () => activeItems.filter((item) => item.kind === "pendingReceived").length,
     [activeItems],
+  );
+
+  const showPendingBanner = filter === "active" && pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests);
+  const iosFilters = (
+    <View style={styles.filterBar}>
+      <SegmentedControl
+        accessibilityLabel="Filtrar conversas"
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: "active", label: `Ativas (${activeItems.length})` },
+          { value: "completed", label: `Concluídas (${completedItems.length})` },
+        ]}
+      />
+    </View>
   );
 
   const open = (item: ConversationItem) => {
@@ -229,33 +253,38 @@ export function Conversations({
   };
 
   return (
-    <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.page}>
+    <ScrollEdgeScreen
+      style={styles.page}
+      header={hasIosHeader ? <TopAppBar title="Conversas" onBack={guardedBack} /> : null}
+      scrolling={hasList}
+    >
       <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
-        {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader) */}
-        <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
-          {!wideWeb && onBack ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-              onPress={guardedBack}
-              style={withPress(styles.backButton)}
+        {hasIosHeader ? null : (
+          <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
+            {!wideWeb && onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+                onPress={guardedBack}
+                style={withPress(styles.backButton)}
+              >
+                <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
+            <Text
+              accessibilityRole="header"
+              style={[styles.title, wideWeb && styles.titleWide, !wideWeb && Boolean(onBack) && styles.titleWithBack]}
             >
-              <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-            </Pressable>
-          ) : null}
-          <Text
-            accessibilityRole="header"
-            style={[styles.title, wideWeb && styles.titleWide, !wideWeb && Boolean(onBack) && styles.titleWithBack]}
-          >
-            Conversas
-          </Text>
-          {wideWeb ? (
-            <Text style={styles.subtitleWide}>
-              Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
+              Conversas
             </Text>
-          ) : null}
-        </View>
+            {wideWeb ? (
+              <Text style={styles.subtitleWide}>
+                Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         {state.loading && state.items.length === 0 ? (
           wideWeb ? (
@@ -381,47 +410,58 @@ export function Conversations({
                   </Text>
                 </View>
               ) : null}
-              <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
-                <Chip
-                  label={`Ativas (${activeItems.length})`}
-                  selected={filter === "active"}
-                  onPress={() => setFilter("active")}
-                />
-                <Chip
-                  label={`Concluídas (${completedItems.length})`}
-                  selected={filter === "completed"}
-                  onPress={() => setFilter("completed")}
-                />
-              </View>
-              <FlatList
+              {Platform.OS === "ios" ? (
+                hasIosHeader ? null : iosFilters
+              ) : (
+                <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
+                  <Chip
+                    label={`Ativas (${activeItems.length})`}
+                    selected={filter === "active"}
+                    onPress={() => setFilter("active")}
+                  />
+                  <Chip
+                    label={`Concluídas (${completedItems.length})`}
+                    selected={filter === "completed"}
+                    onPress={() => setFilter("completed")}
+                  />
+                </View>
+              )}
+              <ScrollEdgeFlatList
+                testID="conversation-list"
                 style={styles.flexOne}
                 {...standardVerticalScrollProps}
                 data={visibleItems}
                 keyExtractor={(item) => item.requestId}
-                contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-                ListHeaderComponent={
-                  filter === "active" && pendingReceivedCount > 0 && onOpenReceivedRequests ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
-                      onPress={guardedOpenReceivedRequests}
-                      style={withPress([styles.pendingBanner, wideWeb && styles.pendingBannerWide])}
-                    >
-                      <View style={styles.pendingBannerIcon}>
-                        <AppIcon name="swap" size={18} color={colors.nature.foliage} />
-                      </View>
-                      <View style={styles.pendingBannerContent}>
-                        <Text style={styles.pendingBannerTitle}>
-                          {`${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}`}
-                        </Text>
-                        <Text style={styles.pendingBannerSubtitle}>
-                          Toque para gerenciar e aceitar na lista de pedidos
-                        </Text>
-                      </View>
-                      <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
-                    </Pressable>
-                  ) : undefined
-                }
+                contentContainerStyle={wideWeb ? styles.wideList : [
+                  styles.list,
+                  { paddingBottom: scrollBottomPadding.withoutBottomBar },
+                ]}
+                ListHeaderComponent={hasIosHeader || showPendingBanner ? (
+                  <>
+                    {hasIosHeader ? iosFilters : null}
+                    {showPendingBanner ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
+                        onPress={guardedOpenReceivedRequests}
+                        style={withPress([styles.pendingBanner, wideWeb && styles.pendingBannerWide])}
+                      >
+                        <View style={styles.pendingBannerIcon}>
+                          <AppIcon name="swap" size={18} color={colors.nature.foliage} />
+                        </View>
+                        <View style={styles.pendingBannerContent}>
+                          <Text style={styles.pendingBannerTitle}>
+                            {`${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}`}
+                          </Text>
+                          <Text style={styles.pendingBannerSubtitle}>
+                            Toque para gerenciar e aceitar na lista de pedidos
+                          </Text>
+                        </View>
+                        <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
+                      </Pressable>
+                    ) : null}
+                  </>
+                ) : undefined}
                 ListEmptyComponent={
                   <View style={styles.filteredEmpty}>
                     <Text style={styles.filteredEmptyTitle}>
@@ -475,7 +515,7 @@ export function Conversations({
                         />
                         <View style={styles.rowText}>
                           <View style={styles.rowHeader}>
-                            <Text style={[styles.about, isSelected && styles.nameSelected]} numberOfLines={1}>
+                            <Text style={[styles.about, isSelected && styles.nameSelected]} numberOfLines={2}>
                               {item.listing.title}
                             </Text>
                             {isCompleted ? (
@@ -517,10 +557,24 @@ export function Conversations({
                           <Pressable
                             accessibilityRole="button"
                             accessibilityLabel={`Cancelar pedido de ${item.listing.title}`}
-                            onPress={() => setToCancel(item)}
+                            onPress={() => {
+                              if (isIos) triggerHaptic("light");
+                              setToCancel(item);
+                            }}
                             hitSlop={8}
-                            style={withPress(styles.cancelRequest)}
+                            style={({ pressed }) => [
+                              styles.cancelRequest,
+                              isIos && (iosGlass ? styles.iosCancelRequestGlass : styles.iosCancelRequestOpaque),
+                              pressed && (isIos ? styles.iosCancelRequestPressed : styles.cancelRequestPressed),
+                            ]}
                           >
+                            {iosGlass ? (
+                              <IosGlassBackdrop
+                                testID="conversations-cancel-request-glass"
+                                tintColor={colors.errorContainer}
+                                style={styles.iosGlassPillShape}
+                              />
+                            ) : null}
                             <Text style={styles.cancelRequestText}>Cancelar pedido</Text>
                           </Pressable>
                         </View>
@@ -626,7 +680,7 @@ export function Conversations({
           onCancel={() => setToCancel(null)}
         />
       </View>
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

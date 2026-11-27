@@ -1,4 +1,5 @@
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { Platform, StyleSheet } from "react-native";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import type { ProfileState, ProfileActions } from "@/viewmodel/useProfileViewModel";
@@ -26,6 +27,12 @@ const authState: AuthState = {
 const authActions: AuthActions = { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() };
 
 describe("Topo da Home — Botão de perfil e sem sino de notificações (Spec 078 / Melhoria UX)", () => {
+  const originalPlatform = Platform.OS;
+
+  afterEach(() => {
+    Platform.OS = originalPlatform;
+  });
+
   beforeEach(() => {
     jest.mocked(useHomeViewModel).mockReturnValue([homeState, homeActions]);
     jest.mocked(useAuthViewModel).mockReturnValue([authState, authActions]);
@@ -43,15 +50,17 @@ describe("Topo da Home — Botão de perfil e sem sino de notificações (Spec 0
     expect(screen.queryByRole("button", { name: /Abrir notificações/ })).toBeNull();
   });
 
-  it("renderiza o botão de perfil com acessibilidade adequada e navega ao tocar", async () => {
+  it("mantém o cabeçalho na área segura do iOS e navega ao tocar em Perfil", async () => {
+    Platform.OS = "ios";
     const onNavigateToProfile = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<Home onNavigateToProfile={onNavigateToProfile} />);
     });
-    const profileBtn = screen.getByTestId("home-top-profile-button");
-    expect(profileBtn).toBeDefined();
-    expect(screen.getByRole("button", { name: "Meu perfil, Ana" })).toBeDefined();
+    expect(screen.getByTestId("home-screen").props.edges).toEqual(["top", "left", "right"]);
+    expect(screen.getByRole("button", { name: /Selecionar local/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /Abrir conversas/ })).toBeDefined();
+    const profileBtn = screen.getByRole("button", { name: "Meu perfil, Ana" });
     fireEvent.press(profileBtn);
     expect(onNavigateToProfile).toHaveBeenCalledTimes(1);
   });

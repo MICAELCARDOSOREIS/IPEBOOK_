@@ -59,7 +59,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(actions.shareImage).not.toHaveBeenCalled();
   });
 
-  it("renderiza cabeçalho, manchete e prévia da mensagem", async () => {
+  it("renderiza cabeçalho, manchete e orientação de link", async () => {
     mockViewModel();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -68,9 +68,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
 
     expect(screen.getByText("Convidar amigos")).toBeDefined();
     expect(screen.getByText("Livros ganham vida quando são lidos.")).toBeDefined();
-    expect(
-      screen.getByText(/Oi! Participe do IpêBook em Piripiri: https:\/\/ipebook\.app/),
-    ).toBeDefined();
+    expect(screen.getByText("O link vai junto na mensagem.")).toBeDefined();
   });
 
   it("exibe aviso acessível quando o link foi copiado", async () => {
@@ -125,7 +123,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(screen.queryByLabelText("Mais opções de compartilhamento")).toBeNull();
     expect(screen.queryByLabelText("Copiar link do aplicativo")).toBeNull();
     expect(screen.queryByRole("button", { name: "Compartilhar texto" })).toBeNull();
-    expect(screen.getByText("Texto que vai junto com a imagem")).toBeDefined();
+    expect(screen.getByText("O link vai junto na mensagem.")).toBeDefined();
     const capture = jest.mocked(actions.shareImage).mock.calls[0][0];
     await expect(capture()).resolves.toBe("file:///tmp/convite.png");
   });

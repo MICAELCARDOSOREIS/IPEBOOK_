@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { useRef } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,7 +6,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { triggerHaptic } from "@/view/haptics";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
@@ -45,7 +44,7 @@ export function PhotoSourceSheet(props: PhotoSourceSheetProps) {
 function PhotoSourceSheetContent({ visible, title = "Adicionar foto", bookSide, onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = getPhotoSourceStyles(colors);
   const insets = useSafeAreaInsets();
@@ -69,9 +68,7 @@ function PhotoSourceSheetContent({ visible, title = "Adicionar foto", bookSide, 
           ]}
         >
           {iosGlass && !wideWeb ? (
-            <View pointerEvents="none" style={styles.iosBlurClip}>
-              <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
-            </View>
+            <IosGlassBackdrop style={styles.iosGlassShape} />
           ) : null}
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
@@ -186,9 +183,9 @@ function createStyles(colors: ColorPalette) {
     cancelText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
     iosGlassSheet: {
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       borderTopWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: "transparent",
       overflow: "hidden",
     },
     iosOpaqueSheet: {
@@ -197,7 +194,7 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderTopLeftRadius: tokens.radius.xxl,
       borderTopRightRadius: tokens.radius.xxl,

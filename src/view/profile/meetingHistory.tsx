@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { Meeting } from "@/model/entities/meeting";
 import { makeAuthViewModel, makeNetworkStatus, makeUserMeetingsViewModel } from "@/di/container";
@@ -12,18 +11,21 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type MeetingHistoryProps = {
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
 };
 
-export default function MeetingHistory({ onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
+export default function MeetingHistory({ focusKey, onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
   const { colors } = useTheme();
@@ -33,6 +35,9 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
   const [state, actions] = makeUserMeetingsViewModel(userId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const { isOnline } = makeNetworkStatus();
 
   function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {
@@ -47,8 +52,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!authState.loading && !state.loading && !state.error && state.meetings.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             {onBack ? (
@@ -73,7 +77,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Histórico de encontros" onBack={guardedBack} />
-      )}
+      )}>
       {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando encontros…" />
@@ -102,7 +106,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-meetings-2" : "list-meetings-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -178,7 +182,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
           }}
         />
       )}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -258,6 +262,8 @@ function createStyles(colors: ColorPalette) {
     },
     emptyAction: {
       marginTop: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[24],
       borderRadius: tokens.radius.full,

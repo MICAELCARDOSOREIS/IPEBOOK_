@@ -31,4 +31,18 @@ describe("Chip (design-system/04-componentes/chip.md)", () => {
     );
     expect(getByRole("checkbox").props.accessibilityState.disabled).toBe(true);
   });
+
+  it("preserva a cor real de preenchimento na bolinha de Doação com borda de alto contraste", async () => {
+    const { toJSON } = await render(
+      <Chip
+        label="Doação"
+        selected={false}
+        tone={{ background: "#F5B718", text: "#451A03" }}
+        onPress={() => {}}
+      />,
+    );
+    const serialized = JSON.stringify(toJSON());
+    expect(serialized).toContain("#F5B718");
+    expect(serialized).toContain("#451A03");
+  });
 });

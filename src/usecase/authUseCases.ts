@@ -81,6 +81,15 @@ export class AuthUseCases implements IAuthUseCases {
     return user;
   }
 
+  async signInWithApple(): Promise<User | null> {
+    if (!this.dataSource.signInWithApple) {
+      throw new AuthError("Login com a Apple indisponível.");
+    }
+    const user = await this.dataSource.signInWithApple();
+    if (user?.name) await this.ensurePublicProfile(user.id, user.name);
+    return user;
+  }
+
   async setSessionFromUrl(url: string): Promise<User> {
     if (!this.dataSource.setSessionFromUrl) {
       throw new AuthError("Processamento de retorno de autenticação indisponível.");
