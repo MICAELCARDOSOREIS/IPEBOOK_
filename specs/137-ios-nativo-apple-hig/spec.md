@@ -1,7 +1,7 @@
 # Especificação 137 — [iOS Nativo] Adequar todas as telas do iPhone ao Apple HIG e Liquid Glass
 
 **Estado:** Em andamento (Base Liquid Glass, Descoberta/Busca, Acessibilidade Apple HIG, Negociação/Compartilhamento, Publicação local e Push local entregues; pendentes Acesso, Perfil/Conta/Moderação, Sign in with Apple, Config/Build iOS e Auditoria Visual contra o Figma iOS 26 atualizado)  
-**Responsável Principal:** Eric Vinícius dos Santos Oliveira (`@Eric2025gh`, `pessoa:eric`)  
+**Responsável Principal:** Micael Cardoso Reis (`@MICAELCARDOSOREIS`, `pessoa:micael`)  
 **Apoio e Entregas da Equipe:** Maria Clara Almeida Martins (`@clarinhamartins` — T002 Base Liquid Glass, ADR 0115; T004 Descoberta/Busca, ADR 0116 + PR #243 Alertas; T008 Acessibilidade Apple HIG, PR #242), Micael Cardoso Reis (`@MICAELCARDOSOREIS` — refinamentos DS PR #241 e contratos/arquitetura), Antonio Carlos Gomes (`@gomes738` — T005 Publicação/Rascunhos e T006/T010)  
 **Referências Principais:**
 - [ADR 0008 — Diretrizes Visuais por Plataforma](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
@@ -15,7 +15,7 @@
 
 O **IpêBook** utiliza Expo 58 / React Native com arquitetura MVVM em 7 camadas. Enquanto a versão **Android** segue estritamente o **Material Design 3** e a versão **Web** possui layout próprio (além dos ajustes de PWA no Safari documentados na Spec 136), a versão **iOS Nativa (iPhone)** segue o **Apple Human Interface Guidelines (HIG)** e a linguagem visual **Liquid Glass (iOS 26)** em **tema claro exclusivo** (Spec 139 / ADR 0114), com fonte editorial (`Source Serif 4` / `Plus Jakarta Sans` no conteúdo e `SF Pro` nos controles nativos iOS).
 
-O **Eric Vinícius (`@Eric2025gh`)** assume a **responsabilidade principal** pela coordenação técnica, configuração nativa (`app.json` / `expo run:ios`), revisão de conformidade com o Apple HIG, homologação em iPhone real/simulador e fechamento dos fluxos pendentes, contando com apoio dos demais integrantes nos módulos de cada área.
+**Micael Cardoso Reis (`@MICAELCARDOSOREIS`)** assume a **responsabilidade principal** pela coordenação técnica, configuração nativa (`app.json` / `expo run:ios`), revisão de conformidade com o Apple HIG, homologação em iPhone real/simulador e fechamento dos fluxos pendentes, contando com apoio dos demais integrantes nos módulos de cada área.
 
 ---
 

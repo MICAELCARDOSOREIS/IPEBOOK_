@@ -100,7 +100,6 @@
 | **Micael Cardoso Reis** | Arquitetura MVVM, governança/CI, Design System M3, validações automatizadas e recursos hiperlocais (bairros, QR Code, busca) |
 | **Maria Clara Almeida Martins** | Identidade Visual e IHC (Design System Ipê), tema escuro, acessibilidade (WCAG 2.1 AA / TalkBack), onboarding, catálogo, perfil, estados de UI e iOS Nativo Apple HIG / Liquid Glass (ADRs 0115 e 0116) |
 | **Antonio Carlos Gomes** | Ciclo de negociação, cadastro/gestão de anúncios, integração ISBN (BrasilAPI), boxes/coleções e moderação comunitária |
-| **Eric Vinícius dos Santos Oliveira** | Definição de escopo de produto e plataformas (Android/Web) e consolidação documental de conformidade e rastreabilidade |
 
 ---
 

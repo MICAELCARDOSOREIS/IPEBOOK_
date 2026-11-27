@@ -623,9 +623,9 @@ No aplicativo implementado, **46 rotas estáticas** cobrem integralmente os 8 fl
 - `specs/131-design-de-erros-e-auto-recuperacao-offline/`: Design harmonioso de erros visuais, auto-recuperação de conexão e tratamento de rede (ADR 0102).
 - `specs/132-esqueletos-de-carregamento-e-cache-instantaneo/`: Esqueletos de carregamento (Skeleton Loading) e abertura instantânea de telas (ADR 0103).
 - `specs/133-migrar-telas-autenticacao-screen-container/`: Migração das telas de autenticação para ScreenContainer e aprimoramento de IHC (ADR 0106, Maria Clara; consolida a antiga Spec 134).
-- `specs/135-alinhamento-figma-com-codigo/`: Auditoria e guia de sincronização dos mockups do Figma com a evolução UX/WCAG 2.2 AA do código (Issue #219, Eric Vinícius).
+- `specs/135-alinhamento-figma-com-codigo/`: Auditoria e guia de sincronização dos mockups do Figma com a evolução UX/WCAG 2.2 AA do código (Issue #219, Micael Cardoso Reis).
 - `specs/136-pwa-iphone-apple-hig/`: Adequação das telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web (Issue #220, ADR 0108, Maria Clara).
-- `specs/137-ios-nativo-apple-hig/`: Planejamento e divisão em sub-issues da adequação nativa do iPhone (iOS) ao Apple HIG e Liquid Glass sem impactar Android/Web (Eric Vinícius).
+- `specs/137-ios-nativo-apple-hig/`: Planejamento e divisão em sub-issues da adequação nativa do iPhone (iOS) ao Apple HIG e Liquid Glass sem impactar Android/Web (Micael Cardoso Reis).
 - `specs/138-e2e-web-cdp/`: Suíte automatizada de testes End-to-End (E2E) da versão Web via Chrome CDP nativo sem Playwright (ADR 0112).
 - `specs/139-remocao-tema-escuro/`: Remoção do suporte ao tema escuro e consolidação da operação exclusiva no tema claro editorial (ADR 0114, substituindo ADR 0036).
 - `specs/143-endurecimento-seguranca-rls-lgpd/`: Endurecimento de segurança, RLS, triggers, Edge Function `enviar-push`, conformidade LGPD Art. 18, Open Graph e CSP estrita na Web (ADR 0119; validação local concluída, implantação remota T008 pendente de autorização).
