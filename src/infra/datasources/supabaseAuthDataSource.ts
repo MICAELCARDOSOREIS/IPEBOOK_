@@ -6,6 +6,7 @@ import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/mode
 import { MIN_PASSWORD_LENGTH } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
+import type { IWebPushService } from "@/model/services/iWebPushService";
 
 /** Mensagens e limites de tempo para proteção contra requisições travadas sem internet. */
 export const AUTH_NETWORK_ERROR_MESSAGE = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
@@ -134,6 +135,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     private readonly client: SupabaseAppClient,
     private readonly recoveryRedirectUrl: string,
     private readonly nativeGoogle?: INativeGoogleSignIn,
+    private readonly webPush?: IWebPushService,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -351,6 +353,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async signOut(): Promise<void> {
+    if (Platform.OS === "web" && this.webPush) {
+      await withAuthTimeout(this.webPush.disable(), 2000).catch(() => undefined);
+    }
     const { error } = await this.client.auth.signOut();
     if (error) throw new AuthError("Não foi possível sair. Tente novamente.");
     await this.nativeGoogle?.signOut();

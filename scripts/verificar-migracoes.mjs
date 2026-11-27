@@ -8,6 +8,7 @@ const other = '33333333-3333-4333-8333-333333333333';
 await db.exec(`create schema auth;
 create role anon nologin;
 create role authenticated nologin;
+create role service_role nologin bypassrls;
 create table auth.users (id uuid primary key);
 create function auth.uid() returns uuid stable language sql as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
@@ -932,6 +933,21 @@ await denied('M7: photos com link http://', () => as('authenticated', secOwner, 
 await denied('M7: photos com mais de 5 itens', () => as('authenticated', secOwner, `update public.v2_books set photos = array['https://ok.example/1.jpg','https://ok.example/2.jpg','https://ok.example/3.jpg','https://ok.example/4.jpg','https://ok.example/5.jpg','https://ok.example/6.jpg'] where id = '${secBookAvail}'`));
 await as('authenticated', secOwner, `update public.v2_books set photos = array['https://ok.example/1.jpg','https://ok.example/2.jpg','https://ok.example/3.jpg','https://ok.example/4.jpg','https://ok.example/5.jpg'] where id = '${secBookAvail}'`);
 process.stdout.write('Spec 143 M7 (suspensão UPDATE/DELETE e photos HTTPS máx. 5): verificado com sucesso\n');
+
+const webPushEndpoint = 'https://web.push.apple.com/inscricao-de-teste';
+const webPushKey = 'x'.repeat(87);
+const webPushSecret = 'a'.repeat(22);
+const insertWebPush = (id, endpoint) => `insert into public.v2_web_push_subscriptions (endpoint, user_id, p256dh, auth_secret)
+  values ('${endpoint}', '${id}', '${webPushKey}', '${webPushSecret}')`;
+await as('authenticated', owner, insertWebPush(owner, webPushEndpoint));
+await denied('Web Push: inscrição em outra conta', () => as('authenticated', reader, insertWebPush(owner, 'https://web.push.apple.com/outra')));
+await denied('Web Push: destino fora da Apple', () => as('authenticated', owner, insertWebPush(owner, 'https://web.push.apple.com.exemplo.com/externo')));
+await denied('Web Push: leitura anônima', () => as('anon', null, 'select * from public.v2_web_push_subscriptions'));
+const webPushOther = await as('authenticated', reader, `delete from public.v2_web_push_subscriptions where endpoint = '${webPushEndpoint}' returning endpoint`);
+if (webPushOther.rows.length !== 0) throw new Error('Web Push: outra conta removeu inscrição alheia');
+const webPushOwn = await as('authenticated', owner, `delete from public.v2_web_push_subscriptions where endpoint = '${webPushEndpoint}' returning endpoint`);
+if (webPushOwn.rows.length !== 1) throw new Error('Web Push: dono não conseguiu remover sua inscrição');
+process.stdout.write('Web Push: inscrição própria, destinos e RLS verificados.\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

@@ -37,3 +37,9 @@ Este plano descreve as etapas para implementar a Spec 135 (Issue #220), adequand
 ### Fase 5: Conclusão e Entrega
 - Revisar diff completo (`git diff`).
 - Validar conformidade com os critérios de aceite da Issue #220.
+
+## Correções da auditoria de iPhone
+
+A auditoria do Obsidian Mind identificou que a Web expõe permissão de push sem fazer inscrição. A versão Web deve apresentar o estado real dos avisos até haver entrega em segundo plano. A central de notificações no app permanece acessível. Validar telas móveis via Chrome CDP e repetir em Safari e modo Tela de Início com teclado, links diretos e reconexão.
+
+Implementar Web Push como opção ativada pela chave VAPID pública no build de homologação. Reutilizar o webhook protegido de notificações. Validar assinaturas de origem Apple, RLS por conta e remoção ao sair. No iPhone, verificar o prompt a partir do toque, entrega com app fechado e a abertura da central.

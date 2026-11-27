@@ -91,12 +91,7 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   }
 
   async getPermissions(): Promise<boolean> {
-    if (Platform.OS === "web") {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        return Notification.permission === "granted";
-      }
-      return false;
-    }
+    if (Platform.OS === "web") return false;
 
     const Notifications = getNotificationsModule();
     if (!Notifications) return false;
@@ -110,17 +105,7 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   }
 
   async requestPermissions(): Promise<boolean> {
-    if (Platform.OS === "web") {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        try {
-          const perm = await Notification.requestPermission();
-          return perm === "granted";
-        } catch {
-          return false;
-        }
-      }
-      return false;
-    }
+    if (Platform.OS === "web") return false;
 
     const Notifications = getNotificationsModule();
     if (!Notifications) return false;

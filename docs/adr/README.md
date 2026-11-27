@@ -122,3 +122,4 @@
 - [0120 — Navegação por arraste entre abas (`react-native-pager-view`) e transições direcionais no Stack](0120-navegacao-por-arraste-entre-abas-e-transicoes-direcionais.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
+- [0122 — Web Push no IpêBook instalado](0122-web-push-no-ipebook-instalado.md)

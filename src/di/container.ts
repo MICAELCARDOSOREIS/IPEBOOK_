@@ -86,6 +86,9 @@ import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
+import { WebPushService } from "@/infra/services/webPushService";
+import type { IWebPushService } from "@/model/services/iWebPushService";
+import { useWebPushViewModel } from "@/viewmodel/useWebPushViewModel";
 import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
 import { ExpoStoreReviewService } from "@/infra/services/expoStoreReviewService";
 import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
@@ -157,6 +160,7 @@ function getSupabaseAppClient() {
 
 function createDataSources(): {
   auth: IAuthDataSource;
+  webPush?: IWebPushService;
   books: IBookDataSource;
   requests: IBookRequestDataSource;
   meetings: IMeetingDataSource;
@@ -183,11 +187,14 @@ function createDataSources(): {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
     const client = getSupabaseAppClient();
+    const webPush = new WebPushService(client, process.env.EXPO_PUBLIC_WEB_PUSH_VAPID_KEY);
     return {
+      webPush,
       auth: new SupabaseAuthDataSource(
         client,
         redirectUrl,
         new GoogleNativeSignInService(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
+        webPush,
       ),
       books: new CachedBookDataSource(new SupabaseBookDataSource(client), { network: networkStatusDataSource }),
       requests: new SupabaseBookRequestDataSource(client),
@@ -259,6 +266,7 @@ function createDataSources(): {
 }
 
 const dataSources = createDataSources();
+export const makeWebPushViewModel = (userId: string | null) => useWebPushViewModel(dataSources.webPush, userId);
 const bookDataSource = dataSources.books;
 
 const appUpdatePolicyDataSource =

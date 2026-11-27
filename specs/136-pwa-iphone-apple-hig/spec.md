@@ -51,3 +51,10 @@ Enquanto a versão Android segue estritamente o Material Design 3 e a versão We
 | CA6 | Alvos de toque nos componentes de topo e navegação mantêm conformidade com o piso mínimo de 44×44 pt do Apple HIG. | Teste unitário de acessibilidade interativa. |
 | CA7 | O comportamento e visual do Android (MD3) e Web Desktop permanecem 100% inalterados. | Testes existentes verdes sem regressões. |
 | CA8 | Suíte completa de validação passa com 100% de sucesso (`npm run typecheck`, `npm run check:architecture`, `npm run test`). | Comandos executados com código de saída 0. |
+
+## Avisos com o IpêBook instalado
+
+- Quem usa o IpêBook instalado pela Tela de Início pode ativar ou desativar avisos pelo botão da Central de notificações. O sistema só pede permissão em resposta ao toque.
+- O Safari sem instalação e os ambientes sem chave pública continuam mostrando os avisos na central, sem pedir permissão de envio em segundo plano.
+- Após ativar, uma notificação genérica abre a central ao toque. O aviso na tela bloqueada não contém dados de propostas, pessoas ou conversas. As preferências por tipo continuam valendo.
+- Ao sair da conta, desativar a inscrição deste dispositivo. Inscrições inválidas são removidas no envio. A entrega será homologada com iPhone e backend de teste configurado.

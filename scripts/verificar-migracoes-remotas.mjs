@@ -211,6 +211,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Entregas concluídas por QR code (Spec 095)',
     colunas: ['request_id', 'completed_by', 'completed_at'],
   },
+  v2_web_push_subscriptions: {
+    nome: 'v2_web_push_subscriptions',
+    descricao: 'Inscrições privadas de avisos do IpêBook instalado (Spec 136)',
+    colunas: ['user_id', 'endpoint', 'p256dh', 'auth_secret'],
+  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
@@ -751,6 +756,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Tempo real para encontros e entregas',
     validar: (ctx) => Boolean(ctx.tabelas.v2_meetings?.existe && ctx.tabelas.v2_deliveries?.existe),
     detalhe: 'v2_meetings e v2_deliveries na publicação supabase_realtime com REPLICA IDENTITY FULL',
+  },
+  '20261126212846_web_push_iphone.sql': {
+    titulo: 'Inscrições Web Push do iPhone',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_web_push_subscriptions?.existe),
+    detalhe: 'v2_web_push_subscriptions com acesso privado por conta (Spec 136)',
   },
 };
 

@@ -8,6 +8,7 @@ import {
   constantTimeEqual,
   NOTIFICATION_CHANNEL,
   isAuthorizedWebhookSecret,
+  isApplePushEndpoint,
   isExpoPushToken,
   isInvalidTokenTicket,
   isTypeMuted,
@@ -27,6 +28,13 @@ const aviso: StoredNotification = {
 };
 
 describe("função enviar-push: lógica pura (Spec 096)", () => {
+  it("só permite chamadas a endpoints HTTPS Web Push da Apple", () => {
+    expect(isApplePushEndpoint("https://web.push.apple.com/endpoint")).toBe(true);
+    expect(isApplePushEndpoint("https://push.apple.com.exemplo.com/endpoint")).toBe(false);
+    expect(isApplePushEndpoint("https://web.push.apple.com@exemplo.com/endpoint")).toBe(false);
+    expect(isApplePushEndpoint("https://web.push.apple.com:8443/endpoint")).toBe(false);
+    expect(isApplePushEndpoint("http://web.push.apple.com/endpoint")).toBe(false);
+  });
   it("CA5: a mensagem leva título, texto, canal do tipo e a rota do aviso (Spec 099)", () => {
     expect(buildPushMessage(aviso, "ExponentPushToken[abc123]")).toEqual({
       to: "ExponentPushToken[abc123]",
