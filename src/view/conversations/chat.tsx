@@ -25,6 +25,7 @@ import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
+import { buildDirectionsUrl } from "@/view/directionsUrl";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
 import { createChatStyles } from "./chatStyles";
@@ -217,7 +218,7 @@ export function Chat({
     if (!meetingState.meeting) return;
     const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meetingState.meeting?.pointName);
     const query = point ? `${point.name}, ${point.address}` : `${meetingState.meeting.pointName}, Piripiri - PI`;
-    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+    void Linking.openURL(buildDirectionsUrl(query));
   };
 
   const handleAddToCalendar = async () => {

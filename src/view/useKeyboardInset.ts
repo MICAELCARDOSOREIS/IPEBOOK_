@@ -5,6 +5,16 @@ import type { KeyboardEvent } from "react-native";
 /** Duração do deslize no Android, onde o evento não traz tempo próprio (teclado já apareceu). */
 const DURACAO_ANDROID = 200;
 
+export function medirInsetoViewport(
+  windowHeight: number,
+  viewport: Pick<VisualViewport, "height" | "offsetTop" | "scale">,
+  editing: boolean,
+): number {
+  // A barra do navegador e o zoom também alteram o viewport, sem abrir o teclado.
+  if (!editing || viewport.scale !== 1 || windowHeight - viewport.height < 100) return 0;
+  return Math.max(0, windowHeight - viewport.height - viewport.offsetTop);
+}
+
 /**
  * Altura que o teclado cobre da janela, a partir do evento nativo (Spec 088).
  *
@@ -28,9 +38,8 @@ export function medirInsetoTeclado(event: KeyboardEvent | undefined, windowHeigh
  *
  * Alimenta o `paddingBottom` da raiz (`KeyboardAwareRoot`), que é a única fonte de desvio do teclado
  * no app: as telas não precisam mais de `KeyboardAvoidingView` próprios. No iOS a animação acompanha
- * o tempo e a curva do teclado (eventos `will...`); no Android, sem `willShow` nem duração no evento,
- * usamos um deslize curto quando ele aparece. Na web o valor fica em zero, porque o navegador já
- * encolhe a área útil.
+ * o tempo do teclado. No Android usamos um deslize curto. Na web, o viewport visual
+ * detecta a área útil mesmo quando o navegador conserva o tamanho da janela.
  */
 export function useAnimatedKeyboardInset(): Animated.Value {
   const { height: windowHeight } = useWindowDimensions();
@@ -42,7 +51,28 @@ export function useAnimatedKeyboardInset(): Animated.Value {
   const animacao = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (Platform.OS === "web") return undefined;
+    if (Platform.OS === "web") {
+      const viewport = typeof window !== "undefined" ? window.visualViewport : undefined;
+      if (!viewport) return undefined;
+      const update = () => {
+        const editing = document.activeElement?.matches(
+          'textarea,[contenteditable="true"],input:not([type]),input:is([type="text"],[type="email"],[type="password"],[type="search"],[type="number"],[type="tel"],[type="url"])',
+        );
+        inseto.setValue(medirInsetoViewport(window.innerHeight, viewport, Boolean(editing)));
+      };
+      const clear = () => inseto.setValue(0);
+      viewport.addEventListener("resize", update);
+      viewport.addEventListener("scroll", update);
+      document.addEventListener("focusin", update);
+      document.addEventListener("focusout", clear);
+      update();
+      return () => {
+        viewport.removeEventListener("resize", update);
+        viewport.removeEventListener("scroll", update);
+        document.removeEventListener("focusin", update);
+        document.removeEventListener("focusout", clear);
+      };
+    }
 
     const animarPara = (alvo: number, duracao?: number) => {
       animacao.current?.stop();

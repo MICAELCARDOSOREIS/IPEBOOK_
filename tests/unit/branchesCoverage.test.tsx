@@ -720,7 +720,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
       expect(sortBooks(books, "recent", "all")).toHaveLength(3);
 
       // describeResults
-      expect(describeResults(0, { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toBe("0 livros");
+      expect(describeResults(0, { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toBe("0 livros disponíveis");
       expect(describeResults(1, { modality: "sale", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("1 livro à venda");
       expect(describeResults(2, { modality: "trade", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("2 livros para troca");
       expect(describeResults(3, { modality: "donation", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("3 livros para doação");

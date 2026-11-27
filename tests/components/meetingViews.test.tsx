@@ -200,7 +200,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Como chegar a Praça da Bandeira (Centro)" }));
     });
-    expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining("google.com/maps"));
+    expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining("maps.apple.com"));
   });
 
   it("avisa quando o horário do encontro já passou e quando o mapa falha (Spec 079)", async () => {

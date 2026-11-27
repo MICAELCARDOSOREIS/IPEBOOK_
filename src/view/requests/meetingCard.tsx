@@ -8,6 +8,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { describeMeetingCountdown, formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
+import { buildDirectionsUrl } from "@/view/directionsUrl";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
@@ -139,7 +140,7 @@ export function MeetingCard({
     setMapError(null);
     const query = point ? point.address : `${meeting!.pointName}, Piripiri`;
     try {
-      await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+      await Linking.openURL(buildDirectionsUrl(query));
     } catch {
       setMapError("Não foi possível abrir o mapa. Tente novamente.");
     }

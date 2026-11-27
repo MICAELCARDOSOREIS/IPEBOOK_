@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react-native";
 // @ts-expect-error Exportado pelo mock de react-native
 import { Platform, StyleSheet, Text, __emitKeyboardEvent } from "react-native";
-import { medirInsetoTeclado } from "@/view/useKeyboardInset";
+import { medirInsetoTeclado, medirInsetoViewport } from "@/view/useKeyboardInset";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
 
 /** Lê o valor atual do `paddingBottom` animado aplicado pela raiz. */
@@ -66,7 +66,7 @@ describe("KeyboardAwareRoot (Spec 088)", () => {
     Platform.OS = original;
   });
 
-  it("na web não age, porque o navegador já encolhe a área útil", async () => {
+  it("na web ignora eventos de teclado nativos", async () => {
     const original = Platform.OS;
     Platform.OS = "web";
     const screen = await render(
@@ -77,5 +77,14 @@ describe("KeyboardAwareRoot (Spec 088)", () => {
     __emitKeyboardEvent("keyboardDidShow", 320);
     expect(paddingRaiz(screen)).toBe(0);
     Platform.OS = original;
+  });
+
+  it("usa o viewport visual na web apenas quando o teclado cobre parte do layout", () => {
+    const keyboard = { height: 480, offsetTop: 20, scale: 1 };
+    expect(medirInsetoViewport(800, keyboard, true)).toBe(300);
+    expect(medirInsetoViewport(800, keyboard, false)).toBe(0);
+    expect(medirInsetoViewport(800, { ...keyboard, height: 740 }, true)).toBe(0);
+    expect(medirInsetoViewport(800, { ...keyboard, scale: 2 }, true)).toBe(0);
+    expect(medirInsetoViewport(480, keyboard, true)).toBe(0);
   });
 });

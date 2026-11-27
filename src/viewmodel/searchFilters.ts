@@ -260,7 +260,10 @@ export function removeFilter(filters: SearchFilters, key: SearchFilterKey): Sear
 /** Resumo da faixa de resultados do Figma `02.04`: "1 livro à venda · Literatura · Bom estado". */
 export function describeResults(count: number, filters: SearchFilters): string {
   const countLabel = `${count} ${count === 1 ? "livro" : "livros"}`;
-  const head = filters.modality === "all" ? countLabel : `${countLabel} ${MODALITY_SUMMARY[filters.modality]}`;
+  const head =
+    filters.modality === "all"
+      ? `${countLabel} ${count === 1 ? "disponível" : "disponíveis"}`
+      : `${countLabel} ${MODALITY_SUMMARY[filters.modality]}`;
   const details: string[] = [];
   if (filters.onlyBoxes) {
     details.push("Boxes e coleções");
