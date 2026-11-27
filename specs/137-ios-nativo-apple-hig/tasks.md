@@ -38,6 +38,7 @@
 
 - [ ] **T009 (Issue #234 — `@Eric2025gh`) — Sign in with Apple (obrigatório na App Store)**
   - Integrar login nativo com Apple (`expo-apple-authentication` + Supabase Auth + Service ID / provedor Apple no Supabase) isolado para iOS nas telas `02 · Entrar` (`915:434`) e `03 · Criar conta` (`916:119`).
+  - Cliente implementado com botão nativo, nonce e retorno pela rota. O provedor Apple, a assinatura e o teste de e-mail privado em iPhone seguem pendentes. Ver [ADR 0121](../../docs/adr/0121-login-apple-e-retorno-nativo-de-recuperacao.md).
 
 - [ ] **T010 (Issue #235 — `@Eric2025gh`) — Notificações Push no iOS (`APNs`)**
   - Implementação local entregue em `2a7a9d98` (atualização de selo/badge, abertura de conversa/negociação/central ao tocar e pedido de permissão).
@@ -45,10 +46,12 @@
 
 - [ ] **T011 (Issue #236 — `@Eric2025gh`) — Build iOS, `PrivacyInfo.xcprivacy`, `NativeTabs` / `expo-glass-effect` e TestFlight**
   - Adicionar perfis `ios` em `eas.json` (`development`, `preview`, `production`) compilados com **SDK iOS 26 (Xcode 26)**, `PrivacyInfo.xcprivacy` e distribuição via TestFlight/Dev Client.
-  - Avaliar adoção de `NativeTabs` (`expo-router/unstable-native-tabs`) nas 3 abas no iOS e `expo-glass-effect` (`GlassView`) para habilitar a refração física nativa do Liquid Glass (que não aparece apenas com `BlurView`).
+  - Adotados `NativeTabs` (`expo-router/native-tabs`) no iPhone e `GlassView` (`expo-glass-effect`, ADR 0123) nas superfícies que usam o material.
+  - Configurados ambiente EAS, manifesto, permissões efetivas e link universal de recuperação. A assinatura, a distribuição no TestFlight e a comparação do Liquid Glass em aparelho continuam pendentes.
 
 - [ ] **T012 (Issue #237 — `@Eric2025gh`) — Auditoria Visual Final × Figma (`APP · 20 · iPhone · iOS 26`)**
   - Conferir lado a lado no iPhone/build iOS 26 tipografia, refração Liquid Glass da barra e botões, contrastes, listas agrupadas e estados vazios/carregamento/erro contra [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md), incluindo os ajustes validados em `6f13603`.
+  - Conferir em aparelho o cabeçalho fixo de Início abaixo da barra de status. A área segura superior vem da aba nativa e abrange os controles de local, conversas e perfil.
 
 - [ ] **T013 (Issue #238 — `@Eric2025gh`) — Verificação final, QA iOS e regressão zero em Android e Web**
   - Validar todas as telas no iPhone físico/TestFlight e simulador (Safe Areas, Dynamic Island, teclado, *swipe back*, *Haptics*, `UISwitch`, VoiceOver, Dynamic Type e Reduzir Transparência) e executar `npm run validate`.
