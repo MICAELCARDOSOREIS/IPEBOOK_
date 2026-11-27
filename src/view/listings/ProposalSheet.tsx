@@ -11,21 +11,28 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
+import { TextButton } from "@/view/components/TextButton";
 import { formatPrice } from "@/view/formatPrice";
 import { withPress } from "@/view/pressFeedback";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 
 export type ProposalSheetProps = {
   visible: boolean;
@@ -51,11 +58,25 @@ function getProposalSheetStyles(colors: ColorPalette) {
 
 export function ProposalSheet(props: ProposalSheetProps) {
   if (!props.visible) return null;
-  return <ProposalSheetContent {...props} />;
+  return (
+    <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
+      visible={props.visible}
+      transparent
+      animationType="fade"
+      onRequestClose={props.onClose}
+      accessibilityViewIsModal
+      aria-modal
+    >
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <ProposalSheetContent {...props} />
+      </SafeAreaProvider>
+    </Modal>
+  );
 }
 
 function ProposalSheetContent({
-  visible,
   onClose,
   targetBook,
   userBooks = [],
@@ -64,11 +85,12 @@ function ProposalSheetContent({
   submitDisabled = false,
   error = null,
   onSubmit,
-}: ProposalSheetProps) {
+}: Omit<ProposalSheetProps, "visible">) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const keyboardInset = useAnimatedKeyboardInset();
+  const isKeyboardVisible = useKeyboardVisible();
   const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
   const styles = getProposalSheetStyles(colors);
 
@@ -101,16 +123,7 @@ function ProposalSheetContent({
   const sheetTitle = isTrade ? "Proposta de Troca" : "Solicitar Negociação";
 
   return (
-    <Modal
-      statusBarTranslucent
-      navigationBarTranslucent
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
-    >
+    <>
       <Animated.View
         testID="proposal-sheet-scrim"
         style={[
@@ -126,7 +139,20 @@ function ProposalSheetContent({
           onPress={onClose}
         />
 
-        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: Math.max(insets.bottom, tokens.spacing[16]) }]}>
+        <ModalGlassSurface
+          sheet
+          radius={tokens.radius.extraLarge}
+          style={[
+            styles.sheet,
+            wideWeb && styles.sheetWide,
+            {
+              paddingBottom:
+                !wideWeb && isKeyboardVisible
+                  ? tokens.spacing[12]
+                  : Math.max(insets.bottom, tokens.spacing[16]),
+            },
+          ]}
+        >
           {wideWeb ? null : <View style={styles.dragHandle} />}
 
           <View style={styles.header}>
@@ -191,7 +217,9 @@ function ProposalSheetContent({
                 onFocus={() => {
                   setMessageFocused(true);
                   if (Platform.OS !== "web") {
-                    scrollRef.current?.scrollTo({ y: 96, animated: true });
+                    setTimeout(() => {
+                      scrollRef.current?.scrollTo({ y: 112, animated: true });
+                    }, 120);
                   }
                 }}
                 onBlur={() => setMessageFocused(false)}
@@ -293,15 +321,17 @@ function ProposalSheetContent({
               loadingLabel="Enviando proposta…"
               onPress={() => void handleSubmit()}
             />
-            <OutlinedButton
-              label="Cancelar"
-              disabled={submitting}
-              onPress={onClose}
-            />
+            {wideWeb || !isKeyboardVisible ? (
+              <OutlinedButton
+                label="Cancelar"
+                disabled={submitting}
+                onPress={onClose}
+              />
+            ) : null}
           </View>
-        </View>
+        </ModalGlassSurface>
       </Animated.View>
-    </Modal>
+    </>
   );
 }
 
@@ -377,7 +407,16 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
     },
     content: {
+      flexShrink: 1,
       paddingHorizontal: tokens.spacing[16],
+    },
+    keyboardAccessory: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[4],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
     },
     contentContainer: {
       paddingVertical: tokens.spacing[12],

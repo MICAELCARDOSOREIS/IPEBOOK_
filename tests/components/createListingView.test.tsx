@@ -1,7 +1,6 @@
 import type React from "react";
-import { act, fireEvent, render } from "@testing-library/react-native";
-import { within } from "@testing-library/react-native";
-import { AccessibilityInfo, Keyboard } from "react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { AccessibilityInfo, Platform } from "react-native";
 import * as container from "@/di/container";
 import * as useIsWideWebModule from "@/view/useIsWideWeb";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
@@ -99,22 +98,46 @@ async function goToStep(screen: Awaited<ReturnType<typeof render>>, step: 2 | 3)
 }
 
 describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
-  it("permite buscar o ISBN digitado e concluir o teclado numérico no iOS", async () => {
-    const actions = mockViewModel({ ...filledState, isbn: "9788535914849" });
-    const dismiss = jest.spyOn(Keyboard, "dismiss");
+  it("oculta o campo manual de ISBN no iOS", async () => {
+    const originalOs = Platform.OS;
+    mockViewModel({ ...filledState, isbn: "9788535914849" });
     try {
-      const screen = await renderScreen();
-      const isbn = screen.getByLabelText("ISBN (opcional)");
+      Platform.OS = "ios";
+      const iosScreen = await renderScreen();
+      expect(iosScreen.queryByLabelText("ISBN (opcional)")).toBeNull();
+      expect(iosScreen.queryByRole("button", { name: "Buscar pelo ISBN" })).toBeNull();
+    } finally {
+      Platform.OS = originalOs;
+    }
+  });
+
+  it("oculta o campo manual de ISBN no Android", async () => {
+    const originalOs = Platform.OS;
+    mockViewModel({ ...filledState, isbn: "9788535914849" });
+    try {
+      Platform.OS = "android";
+      const androidScreen = await renderScreen();
+      expect(androidScreen.queryByLabelText("ISBN (opcional)")).toBeNull();
+      expect(androidScreen.queryByRole("button", { name: "Buscar pelo ISBN" })).toBeNull();
+    } finally {
+      Platform.OS = originalOs;
+    }
+  });
+
+  it("exibe o campo manual de ISBN apenas na Web e permite buscar", async () => {
+    const originalOs = Platform.OS;
+    const actions = mockViewModel({ ...filledState, isbn: "9788535914849" });
+    try {
+      Platform.OS = "web";
+      const webScreen = await renderScreen();
+      const isbn = webScreen.getByLabelText("ISBN (opcional)");
       expect(isbn.props.keyboardType).toBe("number-pad");
-      expect(isbn.props.inputAccessoryViewID).toEqual(expect.any(String));
       await act(async () => {
-        fireEvent.press(screen.getAllByRole("button", { name: "Concluir" })[0]);
-        fireEvent.press(screen.getByRole("button", { name: "Buscar pelo ISBN" }));
+        fireEvent.press(webScreen.getByRole("button", { name: "Buscar pelo ISBN" }));
       });
-      expect(dismiss).toHaveBeenCalledTimes(1);
       expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
     } finally {
-      dismiss.mockRestore();
+      Platform.OS = originalOs;
     }
   });
 

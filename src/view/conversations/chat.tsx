@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
+  type FlatList,
   Platform,
   Pressable,
   Text,
@@ -9,8 +9,8 @@ import {
   type TextInputProps,
   View,
 } from "react-native";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import * as Linking from "expo-linking";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
   makeDeliveryStatus,
@@ -26,6 +26,7 @@ import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineI
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { buildDirectionsUrl } from "@/view/directionsUrl";
+import { triggerHaptic } from "@/view/haptics";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
 import { createChatStyles } from "./chatStyles";
@@ -34,6 +35,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { TopAppBarBackButton } from "@/view/components/TopAppBar";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -281,118 +283,134 @@ export function Chat({
     );
   };
 
+  const scrollUnderHeader = Platform.OS === "ios" && !embedded
+    && !state.isLoading && !state.error && detail?.request.status !== "pending" && timeline.length > 0;
+  const chatHeader = (
+    <>
+      {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
+      <View
+        style={[styles.header, wideWeb && styles.headerWide, wideWeb && embedded && styles.headerEmbeddedWide, scrollUnderHeader && { backgroundColor: "transparent", borderBottomWidth: 0 }]}
+        testID={wideWeb && embedded ? "conversation-chat-header" : undefined}
+      >
+        {embedded ? null : Platform.OS === "ios" ? (
+          <TopAppBarBackButton onBack={guardedBack} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            hitSlop={8}
+            onPress={guardedBack}
+            style={withPress(styles.backButton)}
+          >
+            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+          </Pressable>
+        )}
+        <Avatar name={name} photoUrl={counterpartPhotoUrl} size={wideWeb ? 44 : 40} />
+        <View style={styles.headerInfo}>
+          <Text accessibilityRole="header" style={[styles.headerTitle, wideWeb && styles.headerTitleWide]} numberOfLines={1}>
+            {name}
+          </Text>
+          {isWebStandalone && detail ? (
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
+            </Text>
+          ) : detail && !embedded ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+              onPress={() => guardedOpenNegotiation(requestId)}
+              style={withPress(styles.headerBookLink, colors.m3.focusRing)}
+            >
+              <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
+              {modalityLabel ? (
+                <>
+                  <Text style={styles.headerSubtitle}>·</Text>
+                  <Text style={styles.headerSubtitle}>{modalityLabel}</Text>
+                </>
+              ) : null}
+              <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          ) : embedded && modalityLabel ? (
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {`Bate-papo da negociação · ${modalityLabel}`}
+            </Text>
+          ) : null}
+        </View>
+        {onDeleteConversation ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Opções da conversa"
+            accessibilityState={{ expanded: conversationOptionsOpen }}
+            onPress={() => setConversationOptionsOpen((open) => !open)}
+            style={withPress(styles.backButton, colors.m3.focusRing)}
+          >
+            <AppIcon name="more" size={22} color={colors.m3.onSurface} />
+          </Pressable>
+        ) : null}
+      </View>
+      {conversationOptionsOpen && onDeleteConversation ? (
+        <View style={styles.conversationOptions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setConversationOptionsOpen(false);
+              onDeleteConversation();
+            }}
+            style={withPress(styles.conversationDelete, colors.m3.focusRing)}
+          >
+            <Text style={styles.conversationDeleteLabel}>Apagar conversa</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </>
+  );
+  const meetingStrip = (
+    <>
+      {detail?.request.status === "accepted" &&
+        (meetingState.loading || meetingState.error || meetingState.meeting || delivery.completed || openScheduling) &&
+        (wideWeb || !isKeyboardVisible) ? (
+        <View style={[styles.embeddedStatusStrip, !wideWeb && styles.narrowStatusStrip]}>
+          {meetingState.loading && !delivery.completed ? (
+            <Text style={styles.headerSubtitle}>Carregando encontro…</Text>
+          ) : meetingState.error && !delivery.completed ? (
+            <Pressable accessibilityRole="button" onPress={() => void meetingActions.reload()} style={withPress(styles.headerBookLink)}>
+              <Text style={styles.headerSubtitle}>Não foi possível carregar o encontro. Tentar novamente</Text>
+            </Pressable>
+          ) : (
+            <NegotiationStatusCard
+              embedded
+              meeting={meetingState.meeting}
+              requestStatus={detail.request.status}
+              counterpartName={name}
+              sessionUserId={sessionUserId}
+              deliveryCompleted={Boolean(delivery.completed)}
+              busy={meetingState.busy}
+              combineAccessibilityLabel="Combinar encontro na negociação"
+              combineButtonLabel={wideWeb ? "Combinar encontro" : "Combinar"}
+              onCombineMeeting={openScheduling}
+              onConfirmMeeting={() => void meetingActions.confirm()}
+              onSuggestOtherTime={openScheduling}
+              onRescheduleMeeting={openScheduling}
+              onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
+              onOpenDirections={handleOpenDirections}
+              onAddToCalendar={() => void handleAddToCalendar()}
+            />
+          )}
+          {meetingState.actionError ? (
+            <Text accessibilityRole="alert" style={styles.conversationDeleteLabel}>{meetingState.actionError}</Text>
+          ) : null}
+        </View>
+      ) : null}
+
+    </>
+  );
+
   const chatBody = (
     <View style={isWebStandalone ? styles.webWrapper : styles.flex}>
       <View style={isWebStandalone ? styles.webCard : styles.flex}>
-        {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
-        <View
-          style={[styles.header, wideWeb && styles.headerWide, wideWeb && embedded && styles.headerEmbeddedWide]}
-          testID={wideWeb && embedded ? "conversation-chat-header" : undefined}
-        >
-          {embedded ? null : (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={8}
-              onPress={guardedBack}
-              style={withPress(styles.backButton)}
-            >
-              <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-            </Pressable>
-          )}
-          <Avatar name={name} photoUrl={counterpartPhotoUrl} size={wideWeb ? 44 : 40} />
-          <View style={styles.headerInfo}>
-            <Text accessibilityRole="header" style={[styles.headerTitle, wideWeb && styles.headerTitleWide]} numberOfLines={1}>
-              {name}
-            </Text>
-            {isWebStandalone && detail ? (
-              <Text style={styles.headerSubtitle} numberOfLines={1}>
-                {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
-              </Text>
-            ) : detail && !embedded ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
-                onPress={() => guardedOpenNegotiation(requestId)}
-                style={withPress(styles.headerBookLink, colors.m3.focusRing)}
-              >
-                <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
-                {modalityLabel ? (
-                  <>
-                    <Text style={styles.headerSubtitle}>·</Text>
-                    <Text style={styles.headerSubtitle}>{modalityLabel}</Text>
-                  </>
-                ) : null}
-                <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
-              </Pressable>
-            ) : embedded && modalityLabel ? (
-              <Text style={styles.headerSubtitle} numberOfLines={1}>
-                {`Bate-papo da negociação · ${modalityLabel}`}
-              </Text>
-            ) : null}
-          </View>
-          {onDeleteConversation ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Opções da conversa"
-              accessibilityState={{ expanded: conversationOptionsOpen }}
-              onPress={() => setConversationOptionsOpen((open) => !open)}
-              style={withPress(styles.backButton, colors.m3.focusRing)}
-            >
-              <AppIcon name="more" size={22} color={colors.m3.onSurface} />
-            </Pressable>
-          ) : null}
-        </View>
-        {conversationOptionsOpen && onDeleteConversation ? (
-          <View style={styles.conversationOptions}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                setConversationOptionsOpen(false);
-                onDeleteConversation();
-              }}
-              style={withPress(styles.conversationDelete, colors.m3.focusRing)}
-            >
-              <Text style={styles.conversationDeleteLabel}>Apagar conversa</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        {scrollUnderHeader ? null : chatHeader}
         <View style={styles.flex}>
-          {detail?.request.status === "accepted" &&
-            (meetingState.loading || meetingState.error || meetingState.meeting || delivery.completed || openScheduling) &&
-            (wideWeb || !isKeyboardVisible) ? (
-            <View style={[styles.embeddedStatusStrip, !wideWeb && styles.narrowStatusStrip]}>
-              {meetingState.loading && !delivery.completed ? (
-                <Text style={styles.headerSubtitle}>Carregando encontro…</Text>
-              ) : meetingState.error && !delivery.completed ? (
-                <Pressable accessibilityRole="button" onPress={() => void meetingActions.reload()} style={withPress(styles.headerBookLink)}>
-                  <Text style={styles.headerSubtitle}>Não foi possível carregar o encontro. Tentar novamente</Text>
-                </Pressable>
-              ) : (
-                <NegotiationStatusCard
-                  embedded
-                  meeting={meetingState.meeting}
-                  requestStatus={detail.request.status}
-                  counterpartName={name}
-                  sessionUserId={sessionUserId}
-                  deliveryCompleted={Boolean(delivery.completed)}
-                  busy={meetingState.busy}
-                  combineAccessibilityLabel="Combinar encontro na negociação"
-                  combineButtonLabel={wideWeb ? "Combinar encontro" : "Combinar"}
-                  onCombineMeeting={openScheduling}
-                  onConfirmMeeting={() => void meetingActions.confirm()}
-                  onSuggestOtherTime={openScheduling}
-                  onRescheduleMeeting={openScheduling}
-                  onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
-                  onOpenDirections={handleOpenDirections}
-                  onAddToCalendar={() => void handleAddToCalendar()}
-                />
-              )}
-              {meetingState.actionError ? (
-                <Text accessibilityRole="alert" style={styles.conversationDeleteLabel}>{meetingState.actionError}</Text>
-              ) : null}
-            </View>
-          ) : null}
+          {scrollUnderHeader ? null : meetingStrip}
 
           {detail?.isOwner && detail.request.status === "pending" ? (
             <OwnerPendingProposalCard
@@ -452,7 +470,7 @@ export function Chat({
               </View>
             </View>
           ) : (
-            <FlatList
+            <ScrollEdgeFlatList
               ref={listRef}
               style={styles.flex}
               {...standardVerticalScrollProps}
@@ -567,6 +585,7 @@ export function Chat({
                   disabled={!canSend}
                   onPress={() => {
                     if (!canSend) return;
+                    if (Platform.OS === "ios") triggerHaptic("light");
                     void actions.sendMessage();
                   }}
                   style={withPress([styles.send, canSend ? styles.sendActive : styles.sendDisabled])}
@@ -637,12 +656,14 @@ export function Chat({
   }
 
   return (
-    <SafeAreaView
+    <ScrollEdgeScreen
+      header={scrollUnderHeader ? <>{chatHeader}{meetingStrip}</> : null}
+      scrolling={scrollUnderHeader}
       edges={Platform.OS === "ios" && isKeyboardVisible ? ["top", "left", "right"] : ["top", "left", "right", "bottom"]}
       style={[styles.page, isWebStandalone && styles.pageWeb]}
     >
       {chatBody}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 

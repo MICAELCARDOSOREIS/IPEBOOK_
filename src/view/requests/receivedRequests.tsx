@@ -78,7 +78,6 @@ export function ReceivedRequests({
       onRetry={() => void actions.reload()}
       onBack={guardedBack}
       showHeroDescription={false}
-      showPendingSummary
       feedbackMessage={feedbackMessage}
       onDismissFeedback={() => setFeedbackMessage(null)}
       renderExtra={(item) => {
@@ -167,12 +166,12 @@ export function ReceivedRequests({
               </>
             ) : null}
             {request.status === "accepted" ? (
-              <View style={s.actions}>
+              <View style={s.pendingActions}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Ver detalhes do encontro"
                   onPress={() => guardedNavigateToNegotiationDetail?.(request.id)}
-                  style={withPress(s.primary)}
+                  style={withPress([s.primary, s.fullWidthAction])}
                 >
                   <Text style={s.primaryText}>Ver detalhes do encontro</Text>
                 </Pressable>
@@ -181,7 +180,7 @@ export function ReceivedRequests({
                     accessibilityRole="button"
                     accessibilityLabel={`Conversar com ${requesterName ?? COMMUNITY_MEMBER}`}
                     onPress={() => onOpenChat(request.id)}
-                    style={withPress(s.chatButton)}
+                    style={withPress([s.chatButton, s.fullWidthAction])}
                   >
                     <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
                     <Text style={s.chatButtonText}>Conversar</Text>

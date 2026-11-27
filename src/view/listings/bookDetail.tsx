@@ -1,12 +1,7 @@
-import { CachedBookNotice } from "@/view/components/CachedBookNotice";
-import { OfflineState } from "@/view/components/OfflineState";
-import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
-import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { triggerHaptic } from "@/view/haptics";
+import { captureRef } from "react-native-view-shot";
 import {
   makeAuthViewModel,
   makeBookDetailViewModel,
@@ -16,34 +11,39 @@ import {
   makeRequestNegotiationViewModel,
   makeShareListingViewModel,
 } from "@/di/container";
-import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { formatPrice } from "@/view/formatPrice";
-import { formatBookLocation } from "@/model/entities/location";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { captureRef } from "react-native-view-shot";
-import { Breadcrumb } from "@/view/components/Breadcrumb";
-import { ErrorState } from "@/view/components/ErrorState";
-import { ListingShareCard } from "@/view/components/ListingShareCard";
-import { LoadingState } from "@/view/components/LoadingState";
-import { FilledButton } from "@/view/components/FilledButton";
-import { AppIcon } from "@/view/components/AppIcon";
-import { Avatar } from "@/view/components/Avatar";
-import { BookDetailHeroSection, DetailRow, ShareListingFeedback } from "@/view/listings/BookDetailSections";
-import { PhotoGallery } from "@/view/listings/photoGallery";
-import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
-import { ProposalSheet } from "@/view/listings/ProposalSheet";
-import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
-import { updateWebSocialMeta } from "@/view/webMeta";
 import { extractBookSidePhotos } from "@/model/bookPhotos";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-import { useOnRefocus } from "@/view/useRefocusKey";
-
+import { formatBookLocation } from "@/model/entities/location";
+import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
+import { AppIcon } from "@/view/components/AppIcon";
+import { Avatar } from "@/view/components/Avatar";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { ErrorState } from "@/view/components/ErrorState";
+import { FilledButton } from "@/view/components/FilledButton";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { ListingShareCard } from "@/view/components/ListingShareCard";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
+import { formatPrice } from "@/view/formatPrice";
+import { triggerHaptic } from "@/view/haptics";
+import { BookDetailHeroSection, BookDetailReportSection, DetailRow, ShareListingFeedback } from "@/view/listings/BookDetailSections";
+import { ProposalSheet } from "@/view/listings/ProposalSheet";
+import { PhotoGallery } from "@/view/listings/photoGallery";
+import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { withPress } from "@/view/pressFeedback";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useOnRefocus } from "@/view/useRefocusKey";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { updateWebSocialMeta } from "@/view/webMeta";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
+import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
+
 interface ModalityThemeColors {
   background: string;
   text: string;
@@ -96,7 +96,8 @@ export default function BookDetail({
 }: BookDetailProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
@@ -416,7 +417,7 @@ export default function BookDetail({
           <View pointerEvents="none" style={[styles.iosStatusBarShield, styles.iosStatusBarShieldOpaque, { height: insets.top }]} />
         ) : (
           <View pointerEvents="none" style={[styles.iosStatusBarShield, { height: insets.top }]}>
-            <BlurView intensity={44} tint="light" style={StyleSheet.absoluteFill} />
+            <IosGlassBackdrop />
           </View>
         )
       ) : null}
@@ -526,8 +527,9 @@ export default function BookDetail({
                 }
                 hitSlop={4}
                 onPress={() => guardedNavigateToUserProfile(book.ownerId)}
-                style={withPress(styles.inlineSellerPill)}
+                style={withPress([styles.inlineSellerPill, iosGlass && styles.iosGlassPill])}
               >
+                {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassPillShape} /> : null}
                 <Avatar
                   name={ownerProfileState.profile?.name?.trim() || "Comunidade"}
                   photoUrl={ownerProfileState.profile?.photoUrl}
@@ -544,7 +546,19 @@ export default function BookDetail({
 
             {/* 3. Cartão da modalidade (troca e doação) */}
             {book.modality !== "sale" ? (
-              <View style={[styles.modalityCard, { backgroundColor: modalityTag[book.modality].background }]}>
+              <View
+                style={[
+                  styles.modalityCard,
+                  { backgroundColor: modalityTag[book.modality].background },
+                  iosGlass && styles.iosGlassCard,
+                ]}
+              >
+                {iosGlass ? (
+                  <IosGlassBackdrop
+                    tintColor={modalityTag[book.modality].background}
+                    style={styles.iosGlassCardShape}
+                  />
+                ) : null}
                 <AppIcon
                   name={book.modality === "trade" ? "swap" : "info"}
                   size={20}
@@ -571,7 +585,8 @@ export default function BookDetail({
             ) : null}
 
             {/* 4. Detalhes: conservação, categoria e retirada */}
-            <View style={styles.detailList}>
+            <View style={[styles.detailList, iosGlass && styles.iosGlassCard]}>
+              {iosGlass ? <IosGlassBackdrop style={styles.iosGlassCardShape} /> : null}
               {book.isBox ? (
                 <DetailRow
                   icon="conservation"
@@ -606,8 +621,16 @@ export default function BookDetail({
                     backgroundColor: heroColors.container,
                     borderColor: heroColors.border,
                   },
+                  iosGlass && styles.iosGlassCard,
                 ])}
               >
+                {iosGlass ? (
+                  <IosGlassBackdrop
+                    tintColor={heroColors?.container}
+                    isInteractive
+                    style={styles.iosGlassCardShape}
+                  />
+                ) : null}
                 <View style={[styles.activeNegotiationIconBox, heroColors && { backgroundColor: heroColors.background }]}>
                   <AppIcon name="chat" size={24} color={heroColors?.text ?? colors.nature.foliage} />
                 </View>
@@ -642,8 +665,9 @@ export default function BookDetail({
                   accessibilityRole="button"
                   accessibilityLabel="Você já tem uma proposta para este anúncio. Toque para ver a negociação"
                   onPress={navigateToActiveNegotiation}
-                  style={withPress(styles.activeNegotiationBanner)}
+                  style={withPress([styles.activeNegotiationBanner, iosGlass && styles.iosGlassCard])}
                 >
+                  {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
                   <View style={styles.activeNegotiationIconBox}>
                     <AppIcon name="chat" size={24} color={colors.nature.foliage} />
                   </View>
@@ -659,25 +683,7 @@ export default function BookDetail({
             ) : null}
 
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
-              <View style={styles.reportSection}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Denunciar anúncio"
-                  onPress={() => guardedNavigateToReport(book.id)}
-                  style={withPress(styles.reportCard)}
-                >
-                  <View style={styles.reportIconBox}>
-                    <AppIcon name="flag" size={18} color={colors.error} />
-                  </View>
-                  <View style={styles.reportContent}>
-                    <Text style={styles.reportTitle}>Denunciar anúncio</Text>
-                    <Text style={styles.reportSubtitle}>
-                      Conteúdo impróprio, dados falsos ou suspeita de golpe
-                    </Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                </Pressable>
-              </View>
+              <BookDetailReportSection onPress={() => guardedNavigateToReport(book.id)} />
             ) : null}
           </View>
         ) : null}
@@ -702,7 +708,16 @@ export default function BookDetail({
 
       {/* 6. Barra fixa inferior: ação principal por modalidade */}
       {actionBar && !wideWeb ? (
-        <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[
+            styles.bottomBarContainer,
+            isIos && !reduceTransparency && styles.iosBottomBarGlass,
+          ]}
+        >
+          {isIos && !reduceTransparency ? (
+            <IosGlassBackdrop />
+          ) : null}
           {actionBar}
         </SafeAreaView>
       ) : null}
@@ -784,7 +799,7 @@ function createStyles(colors: ColorPalette) {
       left: 0,
       right: 0,
       zIndex: 10,
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       overflow: "hidden",
     },
     iosStatusBarShieldOpaque: {
@@ -848,20 +863,17 @@ function createStyles(colors: ColorPalette) {
     modalityCardText: { flex: 1, gap: tokens.spacing[2] },
     modalityCardTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold },
     modalityCardBody: { ...tokens.typography.bodyMedium },
-    detailList: { backgroundColor: colors.surface, borderRadius: tokens.radius.card, borderWidth: 1, borderColor: colors.book.paperEdge, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4] },
-    synopsisSection: { gap: tokens.spacing[8] },
+    detailList: { backgroundColor: colors.surface, borderRadius: tokens.radius.card, borderWidth: 1, borderColor: colors.book.paperEdge, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4], ...iosNeutralCardStyle(colors) },
+    synopsisSection: { gap: tokens.spacing[10], paddingVertical: tokens.spacing[4] },
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
-    synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
+    synopsisText: { ...tokens.typography.subheadline, lineHeight: 25, letterSpacing: 0.15, color: colors.m3.onSurfaceVariant },
     descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    reportSection: { paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[16], },
-    reportCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: tokens.radius.card, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12], gap: tokens.spacing[12], borderWidth: 1, borderColor: colors.book.paperEdge, minHeight: 56 },
-    reportIconBox: { width: tokens.spacing[32], height: tokens.spacing[32], borderRadius: tokens.radius.cardSmall, backgroundColor: colors.m3.errorContainerM3 ?? colors.errorContainer ?? "#F9DEDC", alignItems: "center", justifyContent: "center", },
-    reportContent: { flex: 1, gap: tokens.spacing[2], },
-    reportTitle: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface, },
-    reportSubtitle: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, },
-    reportButton: { minHeight: tokens.accessibility.touchTarget, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], },
-    reportText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
-    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.book.paperEdge },
+    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.book.paperEdge, overflow: "hidden" },
+    iosBottomBarGlass: { backgroundColor: "transparent", borderTopColor: "transparent" },
+    iosGlassPill: { borderCurve: "continuous", backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" },
+    iosGlassPillShape: { ...StyleSheet.absoluteFill, borderRadius: tokens.radius.full, overflow: "hidden" },
+    iosGlassCard: { borderRadius: tokens.radius.xl, borderCurve: "continuous", backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" },
+    iosGlassCardShape: { ...StyleSheet.absoluteFill, borderRadius: tokens.radius.xl, overflow: "hidden" },
     bottomBar: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12], },
     primarySlot: { flex: 1 },
     statusButton: { flex: 1, minHeight: 52, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", paddingHorizontal: tokens.spacing[16], },

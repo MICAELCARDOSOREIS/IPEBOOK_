@@ -1,20 +1,20 @@
 import { memo, useRef, useState } from "react";
-import { FlatList, type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { type FlatList, type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality } from "@/model/entities/book";
+import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { IpeMark } from "@/view/components/IpeMark";
-import { triggerHaptic } from "@/view/haptics";
-import { withPress } from "@/view/pressFeedback";
 import { formatPrice } from "@/view/formatPrice";
-import { formatBookLocation } from "@/model/entities/location";
+import { triggerHaptic } from "@/view/haptics";
+import { isMainTabsSwipeActive } from "@/view/mainTabsState";
+import { withPress } from "@/view/pressFeedback";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { isMainTabsSwipeActive } from "@/view/mainTabsState";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { getTouchOrigin, isDragPressRelease, type TouchOrigin, useGuardedPress } from "@/view/useGuardedPress";
 import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export const MODALITY_PLURAL = {
   sale: "livros à venda",
@@ -88,8 +88,8 @@ function CatalogCarouselComponent({
   const lastIndex = Math.max(0, books.length - 1);
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
-  const iosGlass = isIos && !reduceTransparency;
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = getCarouselStyles(colors);
   const modalityTag = getModalityTag(colors);
   const windowWidth = useHydratedWindowWidth();
@@ -132,9 +132,11 @@ function CatalogCarouselComponent({
           pressed && styles.carouselCardPressed,
         ]}
       >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
         <View
           style={[
             styles.carouselCardCoverArea,
+            isIos && styles.iosCoverArea,
             wide && styles.carouselCardCoverAreaWide,
             { backgroundColor: tag.background },
           ]}
@@ -276,6 +278,7 @@ function CatalogCarouselComponent({
           onPress={onViewMore}
           style={withPress([styles.viewMoreButton, isIos && (iosGlass ? styles.iosViewMoreGlass : styles.iosViewMoreOpaque)])}
         >
+          {iosGlass ? <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} /> : null}
           <Text style={[styles.viewMoreText, isIos && styles.iosViewMoreText]}>{viewMoreButtonText}</Text>
           <AppIcon name="chevronRight" size={16} color={isIos ? colors.m3.onSurface : colors.m3.primary} />
         </Pressable>
@@ -314,6 +317,7 @@ function CatalogCarouselComponent({
           isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
         ])}
       >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
         <View style={styles.viewMoreBottomIconBox}>
           <AppIcon name="search" size={22} color={colors.nature.foliageDeep} />
         </View>
@@ -355,8 +359,8 @@ export function HomeShortcutsSection({
 }: HomeShortcutsSectionProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
-  const iosGlass = isIos && !reduceTransparency;
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = getCarouselStyles(colors);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
@@ -423,10 +427,18 @@ export function HomeShortcutsSection({
       onPress={() => onNavigateToSearch({ modality: "donation" })}
       style={({ pressed }) => [
         styles.donationBanner,
+        iosGlass && styles.iosGlassBanner,
         isBannerHovered && styles.donationBannerHovered,
         pressed && styles.donationBannerPressed,
       ]}
     >
+      {iosGlass ? (
+        <IosGlassBackdrop
+          tintColor={colors.ipe.bloom}
+          isInteractive
+          style={styles.iosGlassCardShape}
+        />
+      ) : null}
       <View style={styles.donationBannerIconBox}>
         <AppIcon name="bookmark" size={22} color={colors.ipe.onContainer} />
       </View>
@@ -466,9 +478,6 @@ export function HomeEmptyCatalogSection({
   onResetModality,
 }: HomeEmptyCatalogSectionProps) {
   const { colors } = useTheme();
-  const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
-  const iosGlass = isIos && !reduceTransparency;
   const styles = getCarouselStyles(colors);
 
   const isFilteredByModalityOnly =
@@ -553,7 +562,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
       minHeight: tokens.spacing[64],
       gap: tokens.spacing[12],
-      marginBottom: tokens.spacing[24],
+      marginBottom: tokens.spacing[12],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.ipe.bloom,
       borderWidth: 1,
@@ -587,7 +596,7 @@ function createStyles(colors: ColorPalette) {
     donationBannerSubtitle: { fontFamily: tokens.fontFamily.regular, fontSize: 13, lineHeight: 18, color: colors.ipe.onContainer, opacity: 0.88, },
     donationBannerChevronBox: { width: tokens.spacing[28], height: tokens.spacing[28], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
     donationBannerChevronBoxHovered: { transform: [{ translateX: 2 }], },
-    carouselSection: { marginBottom: tokens.spacing[24] },
+    carouselSection: { marginBottom: tokens.spacing[12] },
     carouselHeader: { position: "relative", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[16], gap: Platform.OS === "ios" ? tokens.spacing[6] : 0 },
     carouselTitleGroup: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: Platform.OS === "ios" ? tokens.spacing[6] : tokens.spacing[8], marginRight: Platform.OS === "ios" ? 0 : tokens.spacing[8], },
     carouselTitle: {
@@ -625,8 +634,8 @@ function createStyles(colors: ColorPalette) {
     iosViewMoreGlass: {
       minHeight: 44,
       paddingHorizontal: tokens.spacing[12],
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
       shadowColor: "#302e24",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.1,
@@ -705,21 +714,34 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.08,
       shadowRadius: 6,
     },
-    iosGlassCard: {
-      borderRadius: tokens.radius.xl,
-      borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
-      shadowColor: "#362b1f",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 14,
-    },
     iosOpaqueCard: {
       borderRadius: tokens.radius.xl,
       borderCurve: "continuous",
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderColor: tokens.ios.separator,
+    },
+    iosGlassCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassBanner: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassCardShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xl,
+      overflow: "hidden",
+    },
+    iosCoverArea: {
+      borderTopLeftRadius: tokens.radius.xl,
+      borderTopRightRadius: tokens.radius.xl,
     },
     carouselCardPressed: { borderRadius: tokens.shapeMorph.cardPressed, transform: [{ scale: 0.96 }], },
     carouselCardCoverArea: {
@@ -788,7 +810,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
       gap: tokens.spacing[12],
       marginTop: tokens.spacing[16],
-      marginBottom: tokens.spacing[12],
+      marginBottom: 0,
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderWidth: 1,

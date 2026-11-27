@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
 import { HelpContactLinks } from "@/view/help/HelpContactLinks";
 import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -80,9 +80,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   });
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -162,8 +161,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
             </View>
           ) : null}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 

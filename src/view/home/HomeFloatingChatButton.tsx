@@ -1,4 +1,3 @@
-import { BlurView } from "expo-blur";
 import { useMemo, useState } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,7 +5,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type HomeFloatingAddButtonProps = {
   onPress: () => void;
@@ -20,14 +19,16 @@ export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isHovered, setIsHovered] = useState(false);
 
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
   const navBarDockHeight = 80;
-  const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const bottom = isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   return (
     <Pressable
@@ -49,9 +50,7 @@ export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
       ]}
     >
       {iosGlass ? (
-        <View pointerEvents="none" style={styles.iosBlurClip}>
-          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-        </View>
+        <IosGlassBackdrop style={styles.iosGlassShape} />
       ) : null}
       <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
     </Pressable>
@@ -101,8 +100,8 @@ function createStyles(colors: ColorPalette) {
     iosGlassButton: {
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
       shadowColor: "#302e24",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.14,
@@ -115,7 +114,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainer,
       borderColor: colors.m3.outlineVariant,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
       overflow: "hidden",

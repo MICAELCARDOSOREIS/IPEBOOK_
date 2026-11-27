@@ -13,7 +13,6 @@ import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { getTouchOrigin, isDragPressRelease, type TouchOrigin } from "@/view/useGuardedPress";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { webColumnWidth } from "@/view/webLayout";
 
 export type SearchBookCardProps = {
@@ -47,8 +46,6 @@ function SearchBookCardComponent({
 }: SearchBookCardProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
-  const iosGlass = isIos && !reduceTransparency;
   const styles = getCardStyles(colors);
   const [isHovered, setIsHovered] = useState(false);
   const pressOriginRef = useRef<TouchOrigin | null>(null);
@@ -90,7 +87,7 @@ function SearchBookCardComponent({
     <View
       style={[
         styles.card,
-        isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
+        isIos && styles.iosOpaqueCard,
         wideWeb && styles.cardWide,
         wideWeb && isHovered && styles.cardWideHovered,
         wideWeb && { maxWidth: wideColumnMaxWidth },
@@ -199,16 +196,6 @@ function createCardStyles(colors: ColorPalette) {
       shadowOpacity: 0.08,
       shadowRadius: 6,
       gap: tokens.spacing[8],
-    },
-    iosGlassCard: {
-      borderRadius: tokens.radius.xl,
-      borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
-      shadowColor: "#362b1f",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 14,
     },
     iosOpaqueCard: {
       borderRadius: tokens.radius.xl,

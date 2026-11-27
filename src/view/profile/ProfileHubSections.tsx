@@ -1,13 +1,12 @@
-import { BlurView } from "expo-blur";
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 
 export type ProfileMenuItem = {
   key: string;
@@ -56,7 +55,7 @@ export function ProfileIdentityCard({
 }: ProfileIdentityCardProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -64,15 +63,10 @@ export function ProfileIdentityCard({
     <View
       style={[
         styles.heroBlock,
-        isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+        isIos && styles.iosNeutralSurface,
         wideWeb && styles.heroBlockWide,
       ]}
     >
-      {iosGlass ? (
-        <View pointerEvents="none" style={styles.iosBlurClip}>
-          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-        </View>
-      ) : null}
       <View style={styles.identityRow}>
         <View style={styles.identityText}>
           <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -113,15 +107,24 @@ export function ProfileIdentityCard({
         </View>
       </View>
 
-      <View style={[styles.statsContainer, isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface)]}>
+      <View
+        style={[
+          styles.statsContainer,
+          isIos && styles.iosStatsSurface,
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
           onPress={onMyListings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{totalPublications}</Text>
-          <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {totalPublications}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {totalPublications === 1 ? "publicação" : "publicações"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -132,8 +135,12 @@ export function ProfileIdentityCard({
           onPress={onMeetingHistory}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{completedTrocas}</Text>
-          <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {completedTrocas}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {completedTrocas === 1 ? "troca" : "trocas"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -144,10 +151,12 @@ export function ProfileIdentityCard({
           onPress={onRatings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
             {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
           </Text>
-          <Text style={styles.statLabel}>nota média</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            nota média
+          </Text>
         </Pressable>
       </View>
 
@@ -165,8 +174,11 @@ export function ProfileIdentityCard({
             pressed && styles.editProfileButtonPressed,
           ]}
         >
+          {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
           <AppIcon name="edit" size={18} color={colors.m3.primary} />
-          <Text numberOfLines={1} style={styles.editProfileButtonText}>Editar perfil</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.editProfileButtonText}>
+            Editar perfil
+          </Text>
         </Pressable>
 
         {onCreateListing && !wideWeb ? (
@@ -180,11 +192,21 @@ export function ProfileIdentityCard({
             style={({ pressed }) => [
               styles.publishButton,
               isIos && styles.iosPublishButton,
+              iosGlass && styles.iosGlassPublishButton,
               pressed && styles.publishButtonPressed,
             ]}
           >
+            {iosGlass ? (
+              <IosGlassBackdrop
+                tintColor={colors.m3.primary}
+                isInteractive
+                style={{ borderRadius: tokens.radius.full }}
+              />
+            ) : null}
             <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-            <Text numberOfLines={1} style={styles.publishButtonText}>Publicar um livro</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.publishButtonText}>
+              Publicar um livro
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -212,7 +234,7 @@ export function ProfileMenuSection({
 }: ProfileMenuSectionProps) {
   const { colors } = useTheme();
   const isIos = Platform.OS === "ios";
-  const reduceTransparency = useReduceTransparency();
+  const reduceTransparency = useOpaqueIosSurfaces();
   const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -221,15 +243,10 @@ export function ProfileMenuSection({
       <View
         style={[
           styles.cardGroup,
-          isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+          isIos && styles.iosNeutralSurface,
           wideWeb && styles.cardGroupWide,
         ]}
       >
-        {iosGlass ? (
-          <View pointerEvents="none" style={styles.iosBlurClip}>
-            <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
-          </View>
-        ) : null}
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionBloom} />
           <Text style={styles.sectionHeader}>{title}</Text>
@@ -283,7 +300,7 @@ export function ProfileMenuSection({
               accessibilityRole="button"
               accessibilityLabel="Sair da conta"
               onPress={onSignOut}
-              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+              style={({ pressed }) => [styles.menuRow, isIos && styles.iosMenuRow, pressed && styles.menuRowPressed]}
             >
               <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
                 <AppIcon name="logout" size={20} color={colors.error} />
@@ -324,27 +341,27 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[24],
       justifyContent: "space-between",
     },
-    iosGlassSurface: {
+    iosNeutralSurface: {
       borderRadius: tokens.radius.xxl,
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
-      shadowColor: "#362b1f",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 14,
+      shadowOpacity: 0.09,
+      shadowRadius: 12,
     },
-    iosOpaqueSurface: {
-      borderRadius: tokens.radius.xxl,
+    iosStatsSurface: {
+      borderRadius: tokens.radius.large,
       borderCurve: "continuous",
-      backgroundColor: colors.m3.surfaceContainer,
-      borderColor: tokens.ios.separator,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.m3.outlineVariant,
     },
     iosGlassButton: {
       minHeight: 49,
       borderCurve: "continuous",
-      backgroundColor: tokens.glass.fill,
-      borderColor: tokens.glass.stroke,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.12,
@@ -355,13 +372,13 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       borderCurve: "continuous",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: tokens.ios.separator,
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.17,
       shadowRadius: 7,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.xxl,
       overflow: "hidden",
@@ -370,8 +387,25 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainer,
       borderColor: tokens.ios.separator,
     },
+    iosGlassStats: {
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: tokens.ios.separator,
+      overflow: "hidden",
+    },
+    iosGlassPublishButton: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
     iosMenuRow: {
       backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    iosGlassMenuRow: {
+      backgroundColor: "transparent",
+    },
+    iosGlassMenuRowPressed: {
+      backgroundColor: "rgba(0, 0, 0, 0.05)",
     },
     iosMenuIconContainer: {
       width: 36,
@@ -440,14 +474,14 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[6],
-      flex: 1,
-      minHeight: tokens.accessibility.touchTarget,
+      gap: tokens.spacing[8],
+      width: "100%",
+      minHeight: 50,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -460,9 +494,9 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     primaryActions: {
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "stretch",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[10],
     },
     statsContainer: {
       flexDirection: "row",
@@ -482,7 +516,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[2],
-      paddingHorizontal: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[2],
       borderRadius: tokens.radius.small,
     },
     statBoxPressed: {
@@ -509,15 +543,15 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     publishButton: {
-      flex: 1.25,
-      minHeight: 48,
+      width: "100%",
+      minHeight: 50,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       borderRadius: tokens.shapeMorph.buttonRest,
       backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
     },
     publishButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

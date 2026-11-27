@@ -11,6 +11,7 @@ import { Chip } from "@/view/components/Chip";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { TextField } from "@/view/components/TextField";
 import { TextButton } from "@/view/components/TextButton";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
@@ -109,8 +110,8 @@ export function CreateListingStep1({
 
   return (
     <>
-      <View style={wideWeb ? styles.webIsbnCard : styles.isbnCard}>
-        {wideWeb ? (
+      {wideWeb ? (
+        <View style={styles.webIsbnCard}>
           <View style={styles.webIsbnHeader}>
             <View style={styles.webIsbnTextsRow}>
               <IconBadge icon="camera" tone="action" />
@@ -131,7 +132,62 @@ export function CreateListingStep1({
               <Text style={styles.webScanButtonText}>Usar câmera</Text>
             </Pressable>
           </View>
-        ) : (
+
+          <BarcodeScannerModal
+            visible={scannerVisible}
+            onClose={() => setScannerVisible(false)}
+            onScan={(scannedCode) => {
+              onScanBarcode?.(scannedCode);
+            }}
+          />
+
+          {Platform.OS === "web" && onSetIsbn && onLookupIsbn ? (
+            <>
+              <TextField
+                label="ISBN (opcional)"
+                labelBackgroundColor={colors.m3.surfaceContainerLow}
+                value={isbn ?? ""}
+                onChangeText={onSetIsbn}
+                editable={!loading && !lookingUpIsbn}
+                keyboardType="number-pad"
+                helperText="Digite o ISBN ou cole o código se ele terminar em X."
+                returnKeyType="done"
+                onSubmitEditing={onLookupIsbn}
+              />
+              <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
+            </>
+          ) : null}
+
+          {isbnFeedback ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              style={[
+                styles.isbnFeedback,
+                isbnFeedback.type === "success"
+                  ? styles.isbnFeedbackSuccess
+                  : isbnFeedback.type === "error"
+                    ? styles.isbnFeedbackError
+                    : styles.isbnFeedbackInfo,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.isbnFeedbackText,
+                  isbnFeedback.type === "success"
+                    ? styles.isbnFeedbackTextSuccess
+                    : isbnFeedback.type === "error"
+                      ? styles.isbnFeedbackTextError
+                      : styles.isbnFeedbackTextInfo,
+                ]}
+              >
+                {isbnFeedback.message}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <IosCardSurface variant="neutral" style={styles.isbnCard}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Abrir leitor de código de barras pela câmera"
@@ -147,59 +203,59 @@ export function CreateListingStep1({
             </View>
             <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
           </Pressable>
-        )}
 
-        <BarcodeScannerModal
-          visible={scannerVisible}
-          onClose={() => setScannerVisible(false)}
-          onScan={(scannedCode) => {
-            onScanBarcode?.(scannedCode);
-          }}
-        />
-        {Platform.OS === "ios" && onSetIsbn && onLookupIsbn ? (
-          <>
-            <TextField
-              label="ISBN (opcional)"
-              value={isbn ?? ""}
-              onChangeText={onSetIsbn}
-              editable={!loading && !lookingUpIsbn}
-              keyboardType="number-pad"
-              helperText="Digite o ISBN ou cole o código se ele terminar em X."
-              iosKeyboardDone
-              returnKeyType="done"
-            />
-            <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
-          </>
-        ) : null}
+          <BarcodeScannerModal
+            visible={scannerVisible}
+            onClose={() => setScannerVisible(false)}
+            onScan={(scannedCode) => {
+              onScanBarcode?.(scannedCode);
+            }}
+          />
+          {Platform.OS === "web" && onSetIsbn && onLookupIsbn ? (
+            <>
+              <TextField
+                label="ISBN (opcional)"
+                value={isbn ?? ""}
+                onChangeText={onSetIsbn}
+                editable={!loading && !lookingUpIsbn}
+                keyboardType="number-pad"
+                helperText="Digite o ISBN ou cole o código se ele terminar em X."
+                returnKeyType="done"
+                onSubmitEditing={onLookupIsbn}
+              />
+              <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
+            </>
+          ) : null}
 
-        {isbnFeedback ? (
-          <View
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={[
-              styles.isbnFeedback,
-              isbnFeedback.type === "success"
-                ? styles.isbnFeedbackSuccess
-                : isbnFeedback.type === "error"
-                  ? styles.isbnFeedbackError
-                  : styles.isbnFeedbackInfo,
-            ]}
-          >
-            <Text
+          {isbnFeedback ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
               style={[
-                styles.isbnFeedbackText,
+                styles.isbnFeedback,
                 isbnFeedback.type === "success"
-                  ? styles.isbnFeedbackTextSuccess
+                  ? styles.isbnFeedbackSuccess
                   : isbnFeedback.type === "error"
-                    ? styles.isbnFeedbackTextError
-                    : styles.isbnFeedbackTextInfo,
+                    ? styles.isbnFeedbackError
+                    : styles.isbnFeedbackInfo,
               ]}
             >
-              {isbnFeedback.message}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+              <Text
+                style={[
+                  styles.isbnFeedbackText,
+                  isbnFeedback.type === "success"
+                    ? styles.isbnFeedbackTextSuccess
+                    : isbnFeedback.type === "error"
+                      ? styles.isbnFeedbackTextError
+                      : styles.isbnFeedbackTextInfo,
+                ]}
+              >
+                {isbnFeedback.message}
+              </Text>
+            </View>
+          ) : null}
+        </IosCardSurface>
+      )}
 
       <View style={wideWeb ? styles.webDividerContainer : styles.dividerContainer}>
         <View style={styles.dividerLine} />
@@ -437,7 +493,7 @@ export function CreateListingStep1({
 
       {!wideWeb ? (
         <>
-          <View style={styles.photoCard}>
+          <IosCardSurface variant="neutral" style={styles.photoCard}>
             <AddPhotoCard
               photoUrl={photoUrl}
               onPress={onGoToPhotos}
@@ -449,12 +505,12 @@ export function CreateListingStep1({
                 Foto leve, com boa luz. Você pode ajustar na próxima etapa.
               </Text>
             </View>
-          </View>
+          </IosCardSurface>
 
-          <View style={styles.nextStepsNote}>
+          <IosCardSurface variant="glass" style={styles.nextStepsNote}>
             <AppIcon name="info" size={16} color={colors.secondaryText} />
-            <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
-          </View>
+            <Text style={styles.hint}>Conservação e local de retirada vêm nas próximas etapas.</Text>
+          </IosCardSurface>
         </>
       ) : null}
 
@@ -669,7 +725,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
+      paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[12] : 0,
+      paddingVertical: Platform.OS === "ios" ? tokens.spacing[10] : tokens.spacing[2],
     },
     webPhotoCard: {
       flexDirection: "row",

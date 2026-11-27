@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosBlurBottomBar } from "@/view/components/IosBlurBottomBar";
+import { useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { triggerHaptic } from "@/view/haptics";
 import { LoadingState } from "@/view/components/LoadingState";
 import {
   makeAuthViewModel,
@@ -17,6 +20,7 @@ import { MeetingCard } from "@/view/requests/meetingCard";
 import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Avatar } from "@/view/components/Avatar";
@@ -66,6 +70,9 @@ export function RequestDetail({
     void (actions.refresh ?? actions.reload)();
   });
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
   const [meeting, setMeeting] = useState<Meeting | null>(null);
@@ -157,13 +164,59 @@ export function RequestDetail({
       </View>
     ) : null;
 
+  const personChatRow = detail ? (
+    <View style={[styles.personRow, !wide && styles.personRowFixed]}>
+      <Avatar
+        name={detail.counterpartName ?? COMMUNITY_MEMBER}
+        photoUrl={detail.counterpartPhotoUrl ?? undefined}
+        size={44}
+      />
+      <View style={styles.personText}>
+        <Text style={styles.personName} numberOfLines={1} ellipsizeMode="tail">
+          {detail.counterpartName ?? COMMUNITY_MEMBER}
+        </Text>
+        <Text style={styles.personRole} numberOfLines={1}>
+          {detail.isOwner ? "Quer o livro" : "Anunciou o livro"}
+        </Text>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
+        onPress={() => {
+          if (isIos) triggerHaptic("light");
+          guardedOpenChat(requestId);
+        }}
+        style={withPress([
+          styles.chatButton,
+          isIos && (iosGlass ? styles.iosChatButtonGlass : styles.iosChatButtonOpaque),
+        ])}
+      >
+        <AppIcon name="chat" size={20} color={isIos ? colors.m3.onPrimary : colors.m3.onSecondaryContainer} />
+        <Text style={[styles.chatButtonText, isIos && styles.iosChatButtonText]}>Conversar</Text>
+      </Pressable>
+    </View>
+  ) : null;
+
+  const fixedBottomChatBar =
+    !wide && personChatRow ? (
+      <IosBlurBottomBar innerStyle={styles.bottomChatBarInner} testID="request-detail-bottom-chat-bar">
+        {personChatRow}
+      </IosBlurBottomBar>
+    ) : null;
+
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Acompanhar encontro" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen
+      style={styles.page}
+      header={<TopAppBar title="Acompanhar encontro" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />}
+      overlay={fixedBottomChatBar}
+    >
+      <ScrollEdgeScrollView
         testID="request-detail-scroll"
         {...standardVerticalScrollProps}
-        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: !wide && detail ? scrollBottomPadding.withBottomBar + tokens.spacing[16] : scrollBottomPadding.withoutBottomBar },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -316,29 +369,8 @@ export function RequestDetail({
 
               {wide || delivery.completed ? deliveryCard : null}
 
-              {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
-              <View style={styles.personRow}>
-                <Avatar
-                  name={detail.counterpartName ?? COMMUNITY_MEMBER}
-                  photoUrl={detail.counterpartPhotoUrl ?? undefined}
-                  size={44}
-                />
-                <View style={styles.personText}>
-                  <Text style={styles.personName} numberOfLines={2}>
-                    {detail.counterpartName ?? COMMUNITY_MEMBER}
-                  </Text>
-                  <Text style={styles.personRole}>{detail.isOwner ? "Quer o livro" : "Anunciou o livro"}</Text>
-                </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
-                  onPress={() => guardedOpenChat(requestId)}
-                  style={withPress(styles.chatButton)}
-                >
-                  <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
-                  <Text style={styles.chatButtonText}>Conversar</Text>
-                </Pressable>
-              </View>
+              {/* Pessoa da negociação em uma linha (Spec 083); no mobile fica fixa no rodapé */}
+              {wide ? personChatRow : null}
 
               {/* Informações de apoio e próximos passos durante a espera de resposta */}
               {awaitingAnswer ? (
@@ -429,7 +461,7 @@ export function RequestDetail({
             </View>
           ) : null}
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       <Dialog
         visible={confirmCancelOpen}
@@ -468,7 +500,7 @@ export function RequestDetail({
           isSuccess={ratingState.isSuccess}
         />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -630,6 +662,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
     borderWidth: 1,
     borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
   },
   bookInfo: { flex: 1, gap: tokens.spacing[4] },
   bookTitle: {
@@ -658,6 +691,7 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[8],
   },
   cardHighlighted: {
@@ -690,23 +724,54 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[12],
     borderRadius: tokens.radius.card,
     backgroundColor: colors.m3.surfaceContainerLow,
+    ...iosNeutralCardStyle(colors),
   },
-  personText: { flex: 1, gap: tokens.spacing[2] },
+  personRowFixed: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    padding: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  bottomChatBarInner: {
+    maxWidth: 520,
+    paddingHorizontal: tokens.spacing[16],
+    paddingTop: tokens.spacing[12],
+    paddingBottom: tokens.spacing[8],
+  },
+  personText: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
   personName: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
   personRole: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   chatButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: tokens.spacing[6],
-    minHeight: tokens.accessibility.touchTarget,
-    paddingHorizontal: tokens.spacing[16],
+    justifyContent: "center",
+    gap: tokens.spacing[8],
+    minHeight: 50,
+    minWidth: 140,
+    paddingHorizontal: tokens.spacing[20],
     borderRadius: tokens.radius.full,
     backgroundColor: colors.m3.secondaryContainer,
   },
+  iosChatButtonGlass: {
+    borderCurve: "continuous",
+    backgroundColor: colors.action,
+    shadowColor: "#2e2b21",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+  },
+  iosChatButtonOpaque: {
+    borderCurve: "continuous",
+    backgroundColor: colors.action,
+  },
   chatButtonText: {
-    ...tokens.typography.labelMedium,
+    ...tokens.typography.labelLarge,
     fontWeight: tokens.fontWeight.semiBold,
     color: colors.m3.onSecondaryContainer,
+  },
+  iosChatButtonText: {
+    color: colors.m3.onPrimary,
   },
   infoCard: {
     backgroundColor: colors.surface,
@@ -714,6 +779,7 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[12],
   },
   stepsList: {

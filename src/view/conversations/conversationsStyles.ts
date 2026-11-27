@@ -476,7 +476,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     rowText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
-    rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    rowHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[8] },
     rowAuthorGroup: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
     name: { flex: 1, ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurfaceVariant },
     nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },

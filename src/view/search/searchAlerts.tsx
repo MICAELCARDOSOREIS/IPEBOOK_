@@ -1,5 +1,6 @@
 import { useId, useMemo, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollEdgeFlatList } from "@/view/components/ScrollEdgeScreen";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { triggerHaptic } from "@/view/haptics";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -59,10 +60,65 @@ export default function SearchAlerts({ userId, sessionLoading = false, initialQu
    */
   const showListChrome = state.loading || state.alerts.length > 0;
 
+  const hasScrollableAlerts = !sessionLoading && Boolean(userId) && !state.loading && !loadError;
+  const scrollForm = Platform.OS === "ios" && hasScrollableAlerts;
+  const form = (
+    <>
+      {showListChrome ? (
+        <View style={[styles.heroHeader, wide && styles.wideFullWidth]}>
+          <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
+          <Text style={styles.body}>
+            Avisamos quando houver um anúncio que combine com sua busca.
+          </Text>
+        </View>
+      ) : null}
+      <View style={[styles.formCard, wide && styles.wideFullWidth]}>
+        <Text style={styles.formTitle}>
+          Avisaremos você
+        </Text>
+        <Text style={styles.body}>
+          Avisaremos na central de notificações quando surgir um livro com este título ou autor.
+        </Text>
+        <TextInput
+          accessibilityLabel="Termo do alerta"
+          value={state.query}
+          onChangeText={actions.setQuery}
+          accessibilityHint={hasError ? formError ?? undefined : undefined}
+          aria-describedby={hasError ? errorId : undefined}
+          placeholder="Título ou autor"
+          placeholderTextColor={colors.secondaryText}
+          onFocus={() => setQueryFocused(true)}
+          onBlur={() => setQueryFocused(false)}
+          style={[styles.input, queryFocused && !hasError && styles.inputFocused, hasError && styles.inputError]}
+          maxLength={100}
+        />
+        {hasError ? (
+          <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
+            {formError}
+          </Text>
+        ) : null}
+        {state.message ? (
+          <Text accessibilityRole="alert" style={styles.successMessage}>
+            {state.message}
+          </Text>
+        ) : null}
+        <FilledButton
+          label="Criar alerta"
+          onPress={() => {
+            if (Platform.OS === "ios") triggerHaptic("selection");
+            void actions.create();
+          }}
+        />
+      </View>
+
+    </>
+  );
+
   return (
     <ScreenContainer
       maxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 720}
       scroll={false}
+      hasScrollableList={hasScrollableAlerts}
       paddingHorizontal={0}
       paddingTop={0}
       paddingBottom={0}
@@ -116,52 +172,7 @@ export default function SearchAlerts({ userId, sessionLoading = false, initialQu
         </View>
       ) : (
         <View style={[styles.content, wide && styles.contentWide]}>
-          {showListChrome ? (
-            <View style={[styles.heroHeader, wide && styles.wideFullWidth]}>
-              <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
-              <Text style={styles.body}>
-                Avisamos quando houver um anúncio que combine com sua busca.
-              </Text>
-            </View>
-          ) : null}
-          <View style={[styles.formCard, wide && styles.wideFullWidth]}>
-            <Text style={styles.formTitle}>
-              Avisaremos você
-            </Text>
-            <Text style={styles.body}>
-              Avisaremos na central de notificações quando surgir um livro com este título ou autor.
-            </Text>
-            <TextInput
-              accessibilityLabel="Termo do alerta"
-              value={state.query}
-              onChangeText={actions.setQuery}
-              accessibilityHint={hasError ? formError ?? undefined : undefined}
-              aria-describedby={hasError ? errorId : undefined}
-              placeholder="Título ou autor"
-              placeholderTextColor={colors.secondaryText}
-              onFocus={() => setQueryFocused(true)}
-              onBlur={() => setQueryFocused(false)}
-              style={[styles.input, queryFocused && !hasError && styles.inputFocused, hasError && styles.inputError]}
-              maxLength={100}
-            />
-            {hasError ? (
-              <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
-                {formError}
-              </Text>
-            ) : null}
-            {state.message ? (
-              <Text accessibilityRole="alert" style={styles.successMessage}>
-                {state.message}
-              </Text>
-            ) : null}
-            <FilledButton
-              label="Criar alerta"
-              onPress={() => {
-                if (Platform.OS === "ios") triggerHaptic("selection");
-                void actions.create();
-              }}
-            />
-          </View>
+          {scrollForm ? null : form}
 
           {state.loading ? (
             <LoadingState label="Carregando alertas" />
@@ -172,12 +183,13 @@ export default function SearchAlerts({ userId, sessionLoading = false, initialQu
               <OfflineState onRetry={() => void actions.reload()} />
             )
           ) : (
-            <FlatList
+            <ScrollEdgeFlatList
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
               numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
               style={styles.flexOne}
               data={state.alerts}
+              ListHeaderComponent={scrollForm ? form : undefined}
               keyExtractor={(item) => item.id}
               contentContainerStyle={[
                 styles.listContent,

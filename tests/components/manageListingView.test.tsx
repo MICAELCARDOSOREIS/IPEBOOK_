@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type React from "react";
 import * as Linking from "expo-linking";
-import { Share } from "react-native";
+import { Platform, Share, StyleSheet } from "react-native";
 import type { Book } from "@/model/entities/book";
 import ManageListing from "@/view/listings/manageListing";
 import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
@@ -61,7 +61,10 @@ async function renderScreen(props: Partial<React.ComponentProps<typeof ManageLis
 }
 
 describe("tela de gerenciar anúncio (Figma 04.08)", () => {
-  it("mostra o livro, o estado atual e as ações disponíveis", async () => {
+  afterEach(() => { jest.restoreAllMocks(); });
+
+  it("mostra o livro e mantém a ação de segurança acessível no iPhone compacto", async () => {
+    jest.replaceProperty(Platform, "OS", "ios");
     mockViewModel({});
     const screen = await renderScreen();
 
@@ -76,9 +79,10 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByLabelText("Editar anúncio")).toBeDefined();
     expect(screen.getByLabelText("Pausar anúncio")).toBeDefined();
 
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Segurança em Piripiri" }));
-    });
+    const safety = screen.getByRole("button", { name: "Segurança em Piripiri" });
+    expect(screen.queryByText("Segurança")).toBeNull();
+    expect(StyleSheet.flatten(safety.props.style)).toMatchObject({ width: 44, minHeight: 44 });
+    await act(async () => { fireEvent.press(safety); });
     expect(screen.getByRole("header", { name: "Segurança em Piripiri" })).toBeDefined();
     const emergency = screen.getByRole("link", { name: "Emergência policial · Ligar 190" });
     const civilPolice = screen.getByRole("link", { name: "Polícia Civil do Piauí · Ligar 197" });

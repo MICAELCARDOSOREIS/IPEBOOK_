@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -9,8 +10,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
+      paddingTop: Platform.OS === "ios" ? 0 : tokens.spacing[12],
+      paddingBottom: Platform.OS === "ios" ? 0 : tokens.spacing[12],
       gap: tokens.spacing[8],
     },
     iconButton: {
@@ -43,9 +44,9 @@ export function createMyListingsStyles(colors: ColorPalette) {
     },
     iosFabGlass: {
       borderRadius: tokens.radius.full,
-      backgroundColor: tokens.glass.fill,
+      backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: tokens.glass.stroke,
+      borderColor: "transparent",
       shadowColor: "#302e24",
       shadowOpacity: 0.14,
       shadowRadius: 10,
@@ -58,7 +59,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    iosBlurClip: {
+    iosGlassShape: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.full,
       overflow: "hidden",
@@ -78,13 +79,31 @@ export function createMyListingsStyles(colors: ColorPalette) {
       gap: tokens.spacing[6],
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
-      minHeight: 36,
+      minHeight: Platform.OS === "ios" ? 44 : 36,
       borderRadius: tokens.radius.full,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       backgroundColor: colors.m3.secondaryContainer,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
     draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
+    iosDraftsGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosDraftsOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosDraftsGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     draftsLinkText: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSecondaryContainer,
@@ -197,7 +216,11 @@ export function createMyListingsStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
-    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    statsRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+      ...(Platform.OS === "ios" ? { marginTop: -28 } : {}),
+    },
     statsRowWide: { gap: tokens.spacing[16] },
     statCardMobile: {
       flex: 1,
@@ -205,9 +228,10 @@ export function createMyListingsStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[10],
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
+      paddingHorizontal: tokens.spacing[6],
       paddingVertical: tokens.spacing[10],
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[4],
       elevation: 1,
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.08,
@@ -338,6 +362,22 @@ export function createMyListingsStyles(colors: ColorPalette) {
       borderColor: colors.action,
       backgroundColor: colors.nature.sprout,
     },
+    iosDropdownGlass: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      overflow: "hidden",
+    },
+    iosDropdownOpaque: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
+      borderCurve: "continuous",
+    },
+    iosDropdownGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     statusDropdownText: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurface,
@@ -375,14 +415,14 @@ export function createMyListingsStyles(colors: ColorPalette) {
     },
     filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
     hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
-    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
+    // iPhone: mesma fileira limpa de chips da Home/Explorar (sem faixa cinza nem sombra atrás).
     segmentTrackIOS: {
       flexDirection: "row",
       alignItems: "center",
-      padding: tokens.spacing[2],
-      gap: tokens.spacing[4],
+      justifyContent: "space-between",
+      gap: tokens.spacing[6],
       borderRadius: tokens.radius.segmentOuter,
-      backgroundColor: colors.m3.surfaceContainerHighest,
+      backgroundColor: "transparent",
     },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     concludedSectionTitle: {
@@ -394,6 +434,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
+      ...iosNeutralCardStyle(colors),
     },
     attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     attentionAvatar: {

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, SectionList, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeSectionList } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -7,6 +8,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -84,6 +86,9 @@ export default function Notifications({
   const { colors } = useTheme();
   const styles = useMemo(() => createNotificationsStyles(colors), [colors]);
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
@@ -219,10 +224,10 @@ export default function Notifications({
     );
   }
 
-  return (
-    <SafeAreaView style={styles.page}>
-      {renderHeader(true)}
-      <View style={[styles.content, wide && styles.contentWide]}>
+  const hasScrollableNotifications = !state.loading && !state.error && sections.length > 0;
+  const scrollControls = isIos && hasScrollableNotifications;
+  const controls = (
+    <>
         {Platform.OS === "web" ? (
           <View style={styles.permissionBannerAction}>
             {webPush.status === "active" || webPush.status === "inactive" ? (
@@ -243,15 +248,13 @@ export default function Notifications({
         ) : state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
-            accessible={true}
-            accessibilityRole="alert"
             testID="permission-alert"
           >
             <View style={styles.permissionIconCircle}>
               <AppIcon name="info" size={20} color={colors.highlight} />
             </View>
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionBannerTitle}>Notificações desativadas</Text>
+              <Text accessibilityRole="alert" style={styles.permissionBannerTitle}>Notificações desativadas</Text>
               <Text style={styles.permissionBannerDescription}>
                 Ative as notificações do IpêBook nas configurações do aparelho para não perder propostas nem lembretes de encontros presenciais.
               </Text>
@@ -283,11 +286,20 @@ export default function Notifications({
                       aria-pressed={selected}
                       onPress={() => actions.setFilter(filter)}
                       style={withWebInteractive(
-                        [styles.filterChip, selected && styles.filterChipActive],
+                        [
+                          styles.filterChip,
+                          selected && styles.filterChipActive,
+                          isIos && !selected && (iosGlass
+                            ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                            : { backgroundColor: colors.m3.surfaceContainer }),
+                        ],
                         selected ? styles.filterChipActiveHover : styles.filterChipHover,
                         colors.m3.focusRing,
                       )}
                     >
+                      {isIos && iosGlass && !selected ? (
+                        <IosGlassBackdrop style={{ borderRadius: 999 }} />
+                      ) : null}
                       <Text style={[styles.filterChipText, selected && styles.filterChipTextActive]}>{label}</Text>
                     </Pressable>
                   );
@@ -311,8 +323,18 @@ export default function Notifications({
                   accessibilityRole="button"
                   accessibilityState={{ expanded: manageOpen }}
                   onPress={() => setManageOpen((open) => !open)}
-                  style={withWebInteractive(styles.actionBtn, styles.actionBtnHover, colors.m3.focusRing)}
+                  style={withWebInteractive(
+                    [
+                      styles.actionBtn,
+                      isIos && (iosGlass
+                        ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                        : { backgroundColor: colors.m3.surfaceContainer }),
+                    ],
+                    styles.actionBtnHover,
+                    colors.m3.focusRing,
+                  )}
                 >
+                  {isIos && iosGlass ? <IosGlassBackdrop style={{ borderRadius: 999 }} /> : null}
                   <AppIcon name="more" size={18} color={colors.secondaryText} />
                   <Text style={styles.actionBtnSecondaryText}>Gerenciar notificações</Text>
                 </Pressable>
@@ -340,6 +362,14 @@ export default function Notifications({
             ) : null}
           </View>
         ) : null}
+
+    </>
+  );
+
+  return (
+    <ScrollEdgeScreen style={styles.page} header={renderHeader(true)} scrolling={hasScrollableNotifications}>
+      <View style={[styles.content, wide && styles.contentWide]}>
+        {scrollControls ? null : controls}
 
         <View
           testID="notifications-main"
@@ -395,10 +425,11 @@ export default function Notifications({
               </View>
             </View>
           ) : (
-            <SectionList
+            <ScrollEdgeSectionList
               testID="notifications-list"
               style={styles.flexOne}
               sections={sections}
+              ListHeaderComponent={scrollControls ? controls : undefined}
               keyExtractor={({ item }) => item.id}
               contentContainerStyle={[
                 styles.listContent,
@@ -617,6 +648,6 @@ export default function Notifications({
         onLater={() => void promptActions.decline()}
         onDismiss={promptActions.dismiss}
       /> : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }

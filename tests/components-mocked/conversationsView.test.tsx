@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { AccessibilityInfo, Platform } from "react-native";
 import * as container from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
@@ -174,6 +175,41 @@ describe("Conversations (Spec 076)", () => {
     expect(backBtn).toBeDefined();
     await act(async () => { fireEvent.press(backBtn); });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém o cabeçalho de Conversas e desfoca a lista ao rolar no iOS", async () => {
+    const originalPlatform = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    const transparency = jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+    try {
+      setup({ items });
+      const onBack = jest.fn();
+      const screen = await renderView({ onBack });
+      const list = screen.getByTestId("conversation-list");
+      const blur = () => screen.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true });
+      const scroll = (y: number) => ({ nativeEvent: { contentOffset: { x: 0, y } } });
+
+      expect(blur()).toBeNull();
+      await fireEvent.scroll(list, scroll(80));
+      expect(blur()).not.toBeNull();
+      expect(screen.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await fireEvent.press(screen.getByRole("button", { name: "Voltar" }));
+      expect(onBack).toHaveBeenCalledTimes(1);
+
+      await fireEvent.scroll(list, scroll(0));
+      expect(blur()).toBeNull();
+      await screen.unmount();
+
+      transparency.mockResolvedValue(true);
+      const opaque = await renderView({ onBack });
+      await fireEvent.scroll(opaque.getByTestId("conversation-list"), scroll(80));
+      expect(opaque.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true })).toBeNull();
+      expect(opaque.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await opaque.unmount();
+    } finally {
+      transparency.mockRestore();
+      Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+    }
   });
 
   it("aciona reload ao tentar novamente no estado de erro online e offline", async () => {
