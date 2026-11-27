@@ -2,7 +2,7 @@
 
 **Disciplina:** Interação Humano-Computador (IHC) & Programação para Dispositivos Móveis (PDM)  
 **Instituição:** Instituto Federal do Piauí (IFPI) — Campus Piripiri  
-**Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes, Eric Vinícius dos Santos Oliveira  
+**Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes  
 **Versão do Documento:** 1.1  
 **Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?t=xKQbpBwLpirB2jV2-0)  
 **Referências do Figma** — [Pranchas e componentes de Android e iPhone](../design-system/referencias-figma/README.md). Inventários por plataforma para consulta em modo Dev: [Android](../design-system/telas-android-figma.md), [iPhone](../design-system/telas-iphone-figma.md) e [Web](../design-system/telas-web-figma.md).

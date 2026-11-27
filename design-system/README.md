@@ -135,7 +135,7 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
 - **Modelo de governança:** centralizado — Micael Cardoso Reis mantém `design-system/`
   (fonte única desde o [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md));
   mudanças de token ou componente passam por ele antes de entrar em `develop`,
-  para evitar que Maria Clara e Eric decidam valores de design em paralelo durante a
+  para evitar que os demais integrantes decidam valores de design em paralelo durante a
   implementação das telas (Tarefas 23 e 24).
 - **Responsável por revisar mudanças:** Micael Cardoso Reis.
 - **Como propor uma mudança:** pull request de uma branch de funcionalidade para `develop` que

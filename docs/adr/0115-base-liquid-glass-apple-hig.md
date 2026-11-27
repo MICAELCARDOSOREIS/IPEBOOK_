@@ -3,7 +3,7 @@
 - **Status:** Aceito
 - **Atualização:** O material e a barra iOS descritos neste registro foram substituídos pelo [ADR 0123](0123-liquid-glass-nativo-ios.md).
 - **Data:** 17 de novembro de 2026
-- **Autores:** Maria Clara Almeida Martins (`pessoa:maria-clara`), Eric Vinícius dos Santos Oliveira (`pessoa:eric`), Micael Cardoso Reis (`pessoa:micael`)
+- **Autores:** Maria Clara Almeida Martins (`pessoa:maria-clara`), Micael Cardoso Reis (`pessoa:micael`)
 - **Decisores:** Time de Engenharia e Design IpêBook
 - **Contexto técnico:** Estabelecimento da infraestrutura do Design System para suporte a iOS Nativo no padrão Apple Human Interface Guidelines (HIG) e linguagem visual Liquid Glass (iOS 26), com preservação integral de Android (MD3) e Web.
 - **Relacionado a:** ADR 0008 (Diretrizes Visuais por Plataforma), ADR 0106 (Padronização com ScreenContainer), ADR 0108 (PWA no iPhone/Safari).

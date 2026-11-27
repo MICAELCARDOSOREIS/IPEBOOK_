@@ -31,8 +31,3 @@ Este projeto integra as atividades avaliativas do curso de Tecnologia em Anális
 * **GitHub:** [@gomes738](https://github.com/gomes738)
 * **E-mail no Git:** `carlosgoms738@gmail.com`
 * **Principais Atribuições:** Ciclo de vida da negociação simples (pedidos, aceite, cancelamento), cadastro e gestão de anúncios, integração de ISBN com BrasilAPI, suporte a box/coleções e moderação de conteúdo comunitário.
-
-### 4. Eric Vinícius dos Santos Oliveira
-* **GitHub:** [@Eric2025gh](https://github.com/Eric2025gh)
-* **E-mails no Git:** `contalpessoal2024@gmail.com` / `eric.vinicius@12min.com`
-* **Principais Atribuições:** Definição de escopo de produto e plataformas (estratégia Android/Web), consolidação técnica e documental dos relatórios de conformidade e rastreabilidade para a banca avaliadora.

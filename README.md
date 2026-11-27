@@ -174,11 +174,6 @@ componentes e integração entre camadas.
       <sub><b>Antonio Carlos Gomes</b></sub><br/>
       <a href="https://github.com/gomes738">@gomes738</a>
     </td>
-    <td align="center">
-      <a href="https://github.com/Eric2025gh"><img src="https://github.com/Eric2025gh.png?size=120" width="120" alt="Eric Vinícius dos Santos Oliveira"/></a><br/>
-      <sub><b>Eric Vinícius dos Santos Oliveira</b></sub><br/>
-      <a href="https://github.com/Eric2025gh">@Eric2025gh</a>
-    </td>
   </tr>
 </table>
 

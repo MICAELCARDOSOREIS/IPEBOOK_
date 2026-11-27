@@ -1,6 +1,6 @@
 # Plano de Execução — Spec 137: iOS Nativo (Todas as Telas) no Padrão Apple HIG e Liquid Glass
 
-**Responsável Principal:** Eric Vinícius dos Santos Oliveira (`@Eric2025gh`)  
+**Responsável Principal:** Micael Cardoso Reis (`@MICAELCARDOSOREIS`)  
 **Estratégia:** Execução incremental por sub-issues isoladas na branch `develop` (via feature branches derivadas de `develop`), mantendo Android (MD3) e Web 100% preservados em cada entrega e operando exclusivamente no tema claro editorial (Spec 139 / ADR 0114).
 
 ---
@@ -28,7 +28,7 @@
 - Adequar `index.tsx`, `pesquisa.tsx`, `favoritos.tsx`, `alertas.tsx`, `alertas/[id].tsx`, `alertas/[id]/editar.tsx`, `livro/[id].tsx` e `perfil/[userId].tsx`.
 
 ## Fase 4 — Publicação, Rascunhos, Estante e Pedidos — Issue #230 (`T005`)
-- *(Implementação local entregue no commit `dcef8369`; pendente homologação em iPhone pelo Eric e conferência visual contra Seções `03`, `04` (`17`, `19`), `07` (`34B`), `08` (`997:2248`) e `11` (`55`, `58`).)*
+- *(Implementação local entregue no commit `dcef8369`; pendente homologação em iPhone e conferência visual contra Seções `03`, `04` (`17`, `19`), `07` (`34B`), `08` (`997:2248`) e `11` (`55`, `58`).)*
 - Adequar `anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx`, `pedidos-recebidos.tsx`.
 
 ## Fase 5 — Conversas, Negociação, Encontro, Entrega e Compartilhar — Issue #231 (`T006`)

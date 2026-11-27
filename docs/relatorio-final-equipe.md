@@ -4,7 +4,7 @@
 **Instituição:** Instituto Federal de Educação, Ciência e Tecnologia do Piauí (IFPI) — Campus Piripiri  
 **Curso:** Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)  
 **Disciplinas:** Engenharia de Software III / Programação para Dispositivos Móveis  
-**Responsável pela Consolidação:** Eric Vinícius dos Santos Oliveira  
+**Responsável pela Consolidação:** Micael Cardoso Reis  
 **Data:** Outubro de 2026 *(atualizado em novembro de 2026 com a consolidação da entrega beta `0.2.0`)*  
 
 ---
@@ -42,10 +42,6 @@ Ao longo do semestre, o projeto evoluiu de uma ideia exploratória para uma plat
 - **Negociação e Ciclo de Vida do Livro:** Implementação dos casos de uso e infraestrutura da negociação simples (Spec 004), incluindo estados de pedido (pendente, aceito, concluído e cancelado).
 - **Cadastro e Gestão de Anúncios:** Fluxo completo de anúncio de livros (Spec 003), validação de ISBN com integração à BrasilAPI e suporte a coleções/box de livros.
 - **Segurança e Moderação:** Validação de regras de negócio, limites anti-abuso e painel de moderação para conformidade com termos da comunidade.
-
-### 2.4 Eric Vinícius dos Santos Oliveira
-- **Definição de Produto e Plataformas:** Condução e formalização da decisão estratégica inicial de plataformas (Android e Web prioritárias, evoluindo posteriormente para PWA Apple HIG na Spec 136 e planejamento de iOS Nativo na Spec 137).
-- **Consolidação Técnica e Documental:** Elaboração deste relatório consolidado de entregas, guia de sincronização do Figma (`docs/relatorio-alinhamento-figma-e-evolucao-ux.md`) e rastreabilidade para a banca avaliadora.
 
 ---
 

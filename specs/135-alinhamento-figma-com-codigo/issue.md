@@ -1,7 +1,7 @@
 # Issue #219 — [Design/Figma] Sincronizar mockups do Figma com a evolução do app e auditoria de UX/Acessibilidade
 
-* **Responsável:** Eric Vinícius dos Santos Oliveira ([@Eric2025gh](https://github.com/Eric2025gh))
-* **Labels:** `pessoa:eric-vinicius`, `design`, `figma`, `ux`, `accessibility`, `no-code`
+* **Responsável:** Micael Cardoso Reis ([@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS))
+* **Labels:** `pessoa:micael`, `design`, `figma`, `ux`, `accessibility`, `no-code`
 * **Tipo:** Design / Documentação (Zero alterações em código da aplicação)
 * **Arquivo do Figma:** [IpêBook no Figma](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook) (Canvas `APP · 10 · Android · Material 3`)
 * **Documento Base de Referência:** [`docs/relatorio-alinhamento-figma-e-evolucao-ux.md`](../../docs/relatorio-alinhamento-figma-e-evolucao-ux.md)
@@ -13,7 +13,7 @@
 
 > **Atenção:** O trabalho de design não é pontual em uma ou duas telas. Durante o ciclo de testes em Piripiri (PI), refinamentos de IHC, WCAG 2.2 AA e Material Design 3, **praticamente todas as 42 telas e fluxos do aplicativo receberam atualizações no código e estão defasadas no Figma**.
 > 
-> O Eric precisa passar sistematicamente pelos 8 fluxos e conferir os frames correspondentes no Figma, aplicando as alterações descritas no relatório de alinhamento.
+> É necessário passar sistematicamente pelos 8 fluxos e conferir os frames correspondentes no Figma, aplicando as alterações descritas no relatório de alinhamento.
 >
 > 🛑 **REGRA DE OURO:** **NÃO MEXER NO CÓDIGO DA APLICAÇÃO**. O código React Native / Expo já está validado, com testes automatizados passando e em conformidade técnica. O trabalho é 100% no arquivo do Figma e nos artefatos visuais.
 
@@ -25,7 +25,7 @@ O aplicativo **IpêBook** passou por sucessivas rodadas de testes com leitores r
 
 Como consequência natural dessas melhorias, a base de código implementada em React Native / Expo evoluiu além dos mockups originais desenhados no Figma, gerando um descompasso visual e estrutural entre o que está no arquivo de design e o produto real entregue.
 
-O objetivo do Eric é atualizar o arquivo do Figma para refletir 1:1 a realidade madura do aplicativo, utilizando como guia detalhado o inventário já mapeado em `docs/relatorio-alinhamento-figma-e-evolucao-ux.md`.
+O objetivo desta entrega é atualizar o arquivo do Figma para refletir 1:1 a realidade madura do aplicativo, utilizando como guia detalhado o inventário já mapeado em `docs/relatorio-alinhamento-figma-e-evolucao-ux.md`.
 
 ---
 
@@ -39,7 +39,7 @@ O objetivo do Eric é atualizar o arquivo do Figma para refletir 1:1 a realidade
 
 ## 🔍 Pilares Transversais (Afetam Praticamente Todas as Telas)
 
-O Eric deve aplicar estes 5 padrões transversais em todos os frames:
+Aplicar estes 5 padrões transversais em todos os frames:
 
 1. **Tipografia Unificada Plus Jakarta Sans:**
    - Toda a interface foi padronizada na tipografia **Plus Jakarta Sans**, garantindo legibilidade editorial superior e acolhimento comunitário.
