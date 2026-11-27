@@ -13,6 +13,7 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "ios": {
+        "image": "sdk-58",
         "simulator": true
       },
       "env": {
@@ -28,6 +29,13 @@
       "android": {
         "buildType": "apk"
       },
+      "ios": {
+        "image": "sdk-58",
+        "simulator": false,
+        "env": {
+          "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha?origem=ios"
+        }
+      },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
         "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha"
@@ -39,6 +47,13 @@
       "environment": "production",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "image": "sdk-58",
+        "distribution": "store",
+        "env": {
+          "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha?origem=ios"
+        }
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
