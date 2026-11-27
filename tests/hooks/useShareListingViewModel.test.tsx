@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { Platform, Share } from "react-native";
+import { Clipboard, Platform, Share } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { ValidationError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
@@ -574,6 +574,46 @@ describe("useShareListingViewModel — abertura do WhatsApp na web", () => {
 
     expect(openURL).toHaveBeenCalled();
     expect(hook.current[0].error).toBeNull();
+    Platform.OS = originalOS;
+  });
+});
+
+describe("useShareListingViewModel — copiar link direto", () => {
+  it("copia o link no Clipboard no aparelho", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const setString = jest.spyOn(Clipboard, "setString");
+    const hook = await renderHook(fakeUseCases);
+
+    await act(async () => {
+      await hook.current[1].copyLink?.("b1");
+    });
+
+    expect(setString).toHaveBeenCalledWith("https://ipebook.app/livro/b1");
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+    Platform.OS = originalOS;
+  });
+
+  it("oferece manualShareLink na web quando clipboard está bloqueado", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    stubGlobal("navigator", {
+      clipboard: {
+        writeText: jest.fn().mockRejectedValue(new Error("negado")),
+      },
+    });
+    const hook = await renderHook(fakeUseCases);
+
+    await act(async () => {
+      await hook.current[1].copyLink?.("b1");
+    });
+
+    expect(hook.current[0]).toEqual({
+      sharing: false,
+      linkCopied: false,
+      error: null,
+      manualShareLink: "https://ipebook.app/livro/b1",
+    });
     Platform.OS = originalOS;
   });
 });

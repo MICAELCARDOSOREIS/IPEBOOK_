@@ -338,7 +338,7 @@ const CENARIOS = [
 
       await page.setViewport(320, 844, true);
       await page.waitFor(`(() => {
-        const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
+        const share = document.querySelector('[aria-label="Divulgar no WhatsApp"]');
         const removal = document.querySelector('[aria-label="Excluir anúncio"]');
         return Boolean(innerWidth === 320 && share && removal
           && removal.getBoundingClientRect().bottom <= share.getBoundingClientRect().top);
@@ -347,7 +347,7 @@ const CENARIOS = [
 
       await page.setViewport(1440, 900, false);
       await page.waitFor(`(() => {
-        const share = document.querySelector('[aria-label="Compartilhar anúncio"]');
+        const share = document.querySelector('[aria-label="Divulgar no WhatsApp"]');
         const pause = document.querySelector('[aria-label="Pausar anúncio"]');
         return Boolean(innerWidth === 1440 && share && pause);
       })()`, { message: "controles de gerenciamento visíveis após voltar ao desktop" });

@@ -79,6 +79,8 @@ const symbols = {
   eye: { ios: "eye", android: "visibility", web: "visibility" },
   wifiOff: { ios: "wifi.slash", android: "wifi_off", web: "wifi_off" },
   shield: { ios: "shield.lefthalf.filled", android: "shield", web: "shield" },
+  copy: { ios: "doc.on.doc", android: "content_copy", web: "content_copy" },
+  link: { ios: "link", android: "link", web: "link" },
 } as const;
 
 export type AppIconName = keyof typeof symbols;

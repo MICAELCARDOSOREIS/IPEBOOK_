@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, Share } from "react-native";
+import { Clipboard, Platform, Share } from "react-native";
 import * as Linking from "expo-linking";
 import { DomainError } from "@/model/errors";
 import type { IShareUseCases, ShareableListing } from "@/usecase/iShareUseCases";
@@ -18,6 +18,8 @@ export type ShareListingActions = {
   shareImage: (bookId: string, listing: ShareableListing, capture: () => Promise<string>) => Promise<void>;
   /** Atalho do WhatsApp (Spec 118 / ADR 0110): abre o aplicativo com a mensagem formatada, sem a folha do sistema. */
   shareToWhatsApp: (bookId: string, listing: ShareableListing) => Promise<void>;
+  /** Copia apenas o link canônico do anúncio (fallback em folha selecionável quando o navegador bloquear). */
+  copyLink?: (bookId: string) => Promise<void>;
   dismissLinkCopied: () => void;
   /** Fecha o aviso de falha exibido na tela; a próxima tentativa também limpa o erro sozinha. */
   dismissError: () => void;
@@ -227,6 +229,48 @@ export function useShareListingViewModel(
     [useCases, shareImageFile],
   );
 
+  const copyLink = useCallback(
+    async (bookId: string) => {
+      setState((prev) => ({ ...prev, sharing: true, error: null, manualShareLink: undefined }));
+      try {
+        const url = `${SHARE_BASE_URL}${useCases.buildListingSharePath(bookId)}`;
+        if (Platform.OS === "web") {
+          const webNavigator = typeof navigator !== "undefined" ? (navigator as WebNavigatorWithShare) : undefined;
+          try {
+            if (webNavigator?.clipboard?.writeText) {
+              await webNavigator.clipboard.writeText(url);
+              if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+              return;
+            }
+          } catch {
+            // Navegador bloqueou a cópia automática: oferece o campo selecionável.
+          }
+          if (active.current) {
+            setState({ sharing: false, linkCopied: false, error: null, manualShareLink: url });
+          }
+          return;
+        }
+
+        if (typeof Clipboard?.setString === "function") {
+          Clipboard.setString(url);
+          if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+          return;
+        }
+        await Share.share({ message: url });
+        if (active.current) setState({ sharing: false, linkCopied: false, error: null });
+      } catch (error) {
+        if (active.current) {
+          setState({
+            sharing: false,
+            linkCopied: false,
+            error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+          });
+        }
+      }
+    },
+    [useCases],
+  );
+
   const dismissLinkCopied = useCallback(() => {
     setState((prev) => ({ ...prev, linkCopied: false }));
   }, []);
@@ -237,5 +281,5 @@ export function useShareListingViewModel(
       : prev));
   }, []);
 
-  return [state, { share, shareImage, shareToWhatsApp, dismissLinkCopied, dismissError }];
+  return [state, { share, shareImage, shareToWhatsApp, copyLink, dismissLinkCopied, dismissError }];
 }

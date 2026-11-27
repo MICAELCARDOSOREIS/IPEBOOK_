@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
-import { Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { IosBlurBottomBar } from "@/view/components/IosBlurBottomBar";
 import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
+import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { PIRIPIRI_POLICE_CONTACT } from "@/model/helpContent";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { Dialog } from "@/view/components/Dialog";
 import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -19,7 +21,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatPrice } from "@/view/formatPrice";
 import { HelpContactLinks } from "@/view/help/HelpContactLinks";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
+import { tokens } from "@/view/tokens";
+import { createManageListingStyles } from "@/view/listings/manageListingStyles";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useOnRefocus } from "@/view/useRefocusKey";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -61,33 +64,25 @@ export default function ManageListing({
   const isIos = Platform.OS === "ios";
   const opaqueIos = useOpaqueIosSurfaces();
   const iosGlass = isIos && !opaqueIos;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createManageListingStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const wide = useIsWideWeb();
   const { width, fontScale } = useWindowDimensions();
   const compactSafetyAction = Platform.OS === "ios" && (width <= 390 || fontScale > 1.2);
 
+  const manualLinkRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+
+  useEffect(() => {
+    if (!shareState.linkCopied) return;
+    const timer = setTimeout(shareActions.dismissLinkCopied, 4000);
+    return () => clearTimeout(timer);
+  }, [shareState.linkCopied, shareActions.dismissLinkCopied]);
+
   const handleRemove = async () => {
     const removed = await actions.remove();
     setConfirmingRemoval(false);
     if (removed) guardedRemoved();
-  };
-
-  const handleShare = async () => {
-    if (!state.book) return;
-    await shareActions.share(state.book.id, {
-      title: state.book.title,
-      author: state.book.author,
-      modality: state.book.modality,
-      price: state.book.price,
-      neighborhood: state.book.neighborhood,
-      condition: state.book.condition,
-      category: state.book.category,
-      isBox: state.book.isBox,
-      boxVolumesCount: state.book.boxVolumesCount,
-      photoUrl: state.book.photoUrl,
-    });
   };
 
   const handleShareWhatsApp = async () => {
@@ -104,6 +99,11 @@ export default function ManageListing({
       boxVolumesCount: state.book.boxVolumesCount,
       photoUrl: state.book.photoUrl,
     });
+  };
+
+  const handleCopyLink = async () => {
+    if (!state.book || !shareActions.copyLink) return;
+    await shareActions.copyLink(state.book.id);
   };
 
   const contentMaxWidth = wide ? 1120 : 560;
@@ -146,6 +146,15 @@ export default function ManageListing({
   const locked = reserved || delivered;
   const canOpenAcceptedChat = reserved && Boolean(state.acceptedRequestId) && Boolean(onOpenChat);
   const location = [book.neighborhood, book.city, book.state].filter(Boolean).join(" · ");
+  const shareUrl = `${SHARE_BASE_URL}/livro/${book.id}`;
+  const shareUrlDisplay = shareUrl.replace(/^https?:\/\//, "");
+  const shareStatusNotice = paused
+    ? "Anúncio pausado: retome o anúncio antes de divulgar para que leitores consigam acessá-lo."
+    : delivered
+      ? "Livro entregue: este anúncio permanece no histórico."
+      : reserved
+        ? "Negociação em andamento: quem abrir o link verá o livro como reservado."
+        : null;
 
   const modalityTheme =
     book.modality === "donation"
@@ -251,7 +260,7 @@ export default function ManageListing({
   return (
     <ScreenContainer
       maxWidth={contentMaxWidth}
-      paddingBottom={tokens.spacing[96]}
+      paddingBottom={isIos ? tokens.spacing[96] + tokens.spacing[16] : tokens.spacing[24]}
       header={
         <TopAppBar
           contentMaxWidth={contentMaxWidth}
@@ -260,7 +269,6 @@ export default function ManageListing({
           rightAction={safetyHeaderButton}
         />
       }
-      contentStyle={styles.containerContent}
       overlay={
         <>
           <IosBlurBottomBar style={styles.bottomBar} innerStyle={{ maxWidth: contentMaxWidth }}>
@@ -340,6 +348,23 @@ export default function ManageListing({
               </ModalGlassSurface>
             </View>
           </Modal>
+          <BottomSheet
+            visible={Boolean(shareState.manualShareLink)}
+            onClose={shareActions.dismissError}
+            title="Copiar link do anúncio"
+            showCloseButton
+            initialFocusRef={manualLinkRef}
+          >
+            <Text style={styles.manualShareHint}>Copie o link abaixo para divulgar onde preferir:</Text>
+            <TextInput
+              ref={manualLinkRef}
+              accessibilityLabel="Link do anúncio"
+              value={shareState.manualShareLink ?? ""}
+              readOnly
+              selectTextOnFocus
+              style={styles.manualShareInput}
+            />
+          </BottomSheet>
         </>
       }
     >
@@ -550,50 +575,75 @@ export default function ManageListing({
           ) : null}
         </View>
 
-        <View style={[styles.actionGroups, wide && styles.actionGroupsWide]}>
-          <View style={[styles.actionGroup, wide && styles.actionGroupWide]}>
+        <View style={styles.shareSectionCard}>
+          <View style={styles.shareSectionHeader}>
             <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
               Divulgação
             </Text>
+            <Text style={styles.shareSectionSubtitle}>
+              Envie seu livro para leitores de Piripiri pelo WhatsApp ou copie o link direto.
+            </Text>
+          </View>
 
+          {shareStatusNotice ? (
+            <View style={styles.shareNoticeBox}>
+              <AppIcon name="info" size={16} color={colors.m3.onSurfaceVariant} />
+              <Text style={styles.shareNoticeText}>{shareStatusNotice}</Text>
+            </View>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Divulgar no WhatsApp"
+            accessibilityHint="Abre o WhatsApp com mensagem formatada para enviar a grupos ou status de Piripiri."
+            accessibilityState={{ disabled: shareState.sharing, busy: shareState.sharing }}
+            disabled={shareState.sharing}
+            onPress={() => void handleShareWhatsApp()}
+            style={({ pressed }) => [
+              styles.actionCard,
+              pressed && styles.actionCardPressed,
+              shareState.sharing && styles.actionCardDisabled,
+            ]}
+          >
+            <View style={[styles.actionIconWrapper, { backgroundColor: colors.nature.sprout }]}>
+              <AppIcon name="whatsapp" size={22} color={colors.nature.foliageDeep} />
+            </View>
+            <View style={styles.actionTexts}>
+              <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
+              <Text style={styles.actionHint}>Envie direto para status e grupos de Piripiri.</Text>
+            </View>
+            <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+          </Pressable>
+
+          <View style={styles.shareLinkRow}>
+            <View style={styles.shareLinkInfo}>
+              <AppIcon name="link" size={16} color={colors.m3.onSurfaceVariant} />
+              <Text style={styles.shareLinkUrl} numberOfLines={1}>
+                {shareUrlDisplay}
+              </Text>
+            </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Divulgar no WhatsApp"
-              accessibilityHint="Abre o WhatsApp com mensagem formatada para enviar a grupos ou status de Piripiri."
-              onPress={() => void handleShareWhatsApp()}
+              accessibilityLabel="Copiar link do anúncio"
+              accessibilityHint="Copia o endereço direto deste anúncio para colar em outras redes."
+              accessibilityState={{ disabled: shareState.sharing, busy: shareState.sharing }}
+              disabled={shareState.sharing}
+              onPress={() => void handleCopyLink()}
               style={({ pressed }) => [
-                styles.actionCard,
+                styles.copyLinkPill,
+                shareState.linkCopied && styles.copyLinkPillCopied,
                 pressed && styles.actionCardPressed,
+                shareState.sharing && styles.actionCardDisabled,
               ]}
             >
-              <View style={[styles.actionIconWrapper, { backgroundColor: "#E8F5E9" }]}>
-                <AppIcon name="whatsapp" size={22} color="#1B5E20" />
-              </View>
-              <View style={styles.actionTexts}>
-                <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
-                <Text style={styles.actionHint}>Envie direto para status e grupos de Piripiri.</Text>
-              </View>
-              <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Compartilhar anúncio"
-              accessibilityHint="Abre o menu para copiar link ou enviar anúncio por outros aplicativos."
-              onPress={() => void handleShare()}
-              style={({ pressed }) => [
-                styles.actionCard,
-                pressed && styles.actionCardPressed,
-              ]}
-            >
-              <View style={[styles.actionIconWrapper, { backgroundColor: colors.ipe.container }]}>
-                <AppIcon name="share" size={22} color={colors.ipe.onContainer} />
-              </View>
-              <View style={styles.actionTexts}>
-                <Text style={styles.actionTitle}>Compartilhar anúncio</Text>
-                <Text style={styles.actionHint}>Copie o link ou envie por outros aplicativos.</Text>
-              </View>
-              <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+              <AppIcon
+                name={shareState.linkCopied ? "check" : "copy"}
+                size={15}
+                color={shareState.linkCopied ? colors.nature.foliageDeep : colors.m3.onSecondaryContainer}
+              />
+              <Text style={[styles.copyLinkPillText, shareState.linkCopied && styles.copyLinkPillTextCopied]}>
+                {shareState.linkCopied ? "Copiado" : "Copiar link"}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -601,287 +651,4 @@ export default function ManageListing({
       </View>
     </ScreenContainer>
   );
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    loadingContainer: { flex: 1, padding: tokens.spacing[16], justifyContent: "center" },
-    containerContent: { paddingBottom: tokens.spacing[24] },
-    headerSafetyButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[4],
-      minHeight: 36,
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      backgroundColor: colors.surface,
-    },
-    headerSafetyText: {
-      ...tokens.typography.labelMedium,
-      fontFamily: fontFamily.semiBold,
-    },
-    headerSafetyCompact: {
-      width: 44,
-      minHeight: 44,
-      justifyContent: "center",
-      paddingHorizontal: 0,
-    },
-    iosSafetyGlass: {
-      backgroundColor: "transparent",
-      borderColor: "transparent",
-      borderCurve: "continuous",
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-    },
-    iosSafetyOpaque: {
-      backgroundColor: colors.m3.surfaceContainer,
-      borderColor: colors.m3.outlineVariant,
-      borderCurve: "continuous",
-    },
-    iosSafetyGlassShape: {
-      ...StyleSheet.absoluteFill,
-      borderRadius: tokens.radius.full,
-      overflow: "hidden",
-    },
-    safetyModalBackdrop: {
-      flex: 1,
-      backgroundColor: colors.m3.scrim,
-      justifyContent: "center",
-      padding: tokens.spacing[16],
-    },
-    safetyModalCard: {
-      width: "100%",
-      maxWidth: 460,
-      alignSelf: "center",
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
-      elevation: 4,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.16,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-    },
-    safetyModalHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[8],
-    },
-    safetyModalTitleRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      flex: 1,
-    },
-    safetyModalTitle: {
-      ...tokens.typography.titleMedium,
-      fontFamily: fontFamily.semiBold,
-      color: colors.text,
-    },
-    safetyModalAnswer: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      lineHeight: 20,
-    },
-    bottomBar: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-    },
-    content: { gap: tokens.spacing[16] },
-    overview: {
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[14],
-    },
-    overviewDetails: { gap: tokens.spacing[14] },
-    overviewDetailsWide: { flexDirection: "row", alignItems: "center" },
-    bookSummary: { flex: 1, minWidth: 0 },
-    shortcuts: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[12],
-      borderTopWidth: 1,
-      borderTopColor: colors.book.paperEdge,
-    },
-    shortcut: {
-      flexGrow: 1,
-      flexBasis: 135,
-      maxWidth: "100%",
-      minHeight: tokens.accessibility.touchTarget,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.m3.outline,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-    },
-    primaryShortcut: { backgroundColor: colors.action, borderColor: colors.action },
-    deleteShortcutRow: {
-      flexBasis: "100%",
-      width: "100%",
-      minHeight: tokens.accessibility.touchTarget,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.errorContainer,
-      backgroundColor: colors.surface,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[8],
-    },
-    shortcutText: { ...tokens.typography.labelLarge, color: colors.action, flexShrink: 1, textAlign: "center" },
-    primaryShortcutText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, flexShrink: 1, textAlign: "center" },
-    deleteShortcutText: { ...tokens.typography.labelLarge, color: colors.error, flexShrink: 1, textAlign: "center" },
-    toastBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
-      backgroundColor: colors.nature.sprout,
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-      borderRadius: tokens.radius.cardSmall,
-      padding: tokens.spacing[12],
-    },
-    toastBannerText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.text,
-      flex: 1,
-    },
-    toastCloseButton: {
-      minWidth: 32,
-      minHeight: 32,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    actionGroups: { gap: tokens.spacing[16] },
-    actionGroupsWide: { flexDirection: "row", alignItems: "flex-start" },
-    securityTipBox: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[8],
-      backgroundColor: colors.nature.sprout,
-      borderRadius: tokens.radius.cardSmall,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[10],
-    },
-    securityTipText: {
-      flex: 1,
-      ...tokens.typography.footnote,
-      color: colors.nature.foliageDeep,
-      lineHeight: 18,
-    },
-    bookRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[14],
-      alignItems: "center",
-    },
-    bookTexts: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
-    tagRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], marginTop: tokens.spacing[2] },
-    bookTitle: {
-      ...tokens.typography.titleLarge,
-      color: colors.text,
-    },
-    bookAuthor: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-    },
-    metaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      flexWrap: "wrap",
-      marginTop: tokens.spacing[4],
-    },
-    metaBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      maxWidth: "100%",
-      gap: tokens.spacing[4],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-    },
-    bookMeta: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-      flexShrink: 1,
-    },
-    price: {
-      ...tokens.typography.bodyMedium,
-      fontFamily: fontFamily.semiBold,
-      color: colors.action,
-    },
-    statusBox: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[8],
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-    },
-    statusBoxWide: { width: 320 },
-    statusBoxPaused: {
-      borderColor: colors.m3.outline,
-    },
-    statusBoxReserved: { backgroundColor: colors.ipe.petalSoft, borderColor: colors.action },
-    statusHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[10] },
-    statusIconBadge: { width: 36, height: 36, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
-    statusTitleGroup: { flex: 1 },
-    statusTitle: { ...tokens.typography.titleMedium, color: colors.text, fontFamily: fontFamily.semiBold },
-    statusHint: { ...tokens.typography.bodyMedium, color: colors.secondaryText, lineHeight: 20 },
-    actionGroupWide: { flex: 1 },
-    actionGroup: { minWidth: 0, gap: tokens.spacing[8] },
-    sectionHeaderTitle: {
-      ...tokens.typography.labelMedium,
-      color: colors.secondaryText,
-      fontFamily: fontFamily.semiBold,
-      textTransform: "uppercase",
-      letterSpacing: 0.8,
-      paddingHorizontal: tokens.spacing[4],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[2],
-    },
-    actionCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[10],
-      minHeight: tokens.accessibility.touchTarget,
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.04,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-    },
-    actionCardPressed: { backgroundColor: colors.m3.surfaceContainerLow, transform: [{ scale: 0.98 }] },
-    actionCardDisabled: { opacity: 0.45 },
-    actionIconWrapper: { width: 44, height: 44, borderRadius: tokens.radius.cardSmall, alignItems: "center", justifyContent: "center" },
-    actionTexts: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
-    actionTitle: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.semiBold, color: colors.text },
-    actionHint: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 18 },
-    textDisabled: { color: colors.secondaryText },
-    reservedWarningBox: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], backgroundColor: colors.ipe.petalSoft, padding: tokens.spacing[10], borderRadius: tokens.radius.cardSmall, marginTop: tokens.spacing[4] },
-    deleteHint: { ...tokens.typography.footnote, color: colors.secondaryText, flex: 1, lineHeight: 18 },
-  });
 }
