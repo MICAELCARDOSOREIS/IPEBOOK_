@@ -1,9 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { AccessibilityInfo, Platform } from "react-native";
+import { AccessibilityInfo, Platform, StyleSheet } from "react-native";
 import * as container from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 import ConversationsScreen, { Conversations } from "@/view/conversations/conversations";
+import { colors } from "@/view/tokens";
 
 jest.mock("@/viewmodel/useConversationsViewModel", () => ({
   ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
@@ -165,6 +166,34 @@ describe("Conversations (Spec 076)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar pedido de Iracema")); });
     await act(async () => { fireEvent.press(screen.getByText("Sim, cancelar")); });
     expect(screen.getByText("Não foi possível cancelar o pedido. Tente novamente.")).toBeDefined();
+  });
+
+  it("usa Liquid Glass no botão de cancelar pedido no iOS (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe("transparent");
+      expect(screen.getByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeDefined();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
+  });
+
+  it("mantém o fundo sólido do botão de cancelar pedido no Android (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe(colors.errorContainer);
+      expect(screen.queryByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeNull();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
   });
 
   it("renderiza botão Voltar no cabeçalho mobile quando onBack é informado", async () => {

@@ -10,8 +10,8 @@ export function createMyListingsStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: Platform.OS === "ios" ? 0 : tokens.spacing[12],
-      paddingBottom: Platform.OS === "ios" ? 0 : tokens.spacing[12],
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[8] : tokens.spacing[12],
+      paddingBottom: tokens.spacing[12],
       gap: tokens.spacing[8],
     },
     iconButton: {
@@ -215,11 +215,14 @@ export function createMyListingsStyles(colors: ColorPalette) {
       color: colors.m3.onPrimary,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
+    scroll: {
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[4] : 0,
+      paddingBottom: tokens.spacing[96] + tokens.spacing[64],
+      gap: tokens.spacing[16],
+    },
     statsRow: {
       flexDirection: "row",
       gap: tokens.spacing[8],
-      ...(Platform.OS === "ios" ? { marginTop: -28 } : {}),
     },
     statsRowWide: { gap: tokens.spacing[16] },
     statCardMobile: {
@@ -419,8 +422,7 @@ export function createMyListingsStyles(colors: ColorPalette) {
     segmentTrackIOS: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       borderRadius: tokens.radius.segmentOuter,
       backgroundColor: "transparent",
     },

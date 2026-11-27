@@ -615,6 +615,31 @@ export function createConversationsStyles(colors: ColorPalette) {
       minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[32],
       justifyContent: "center",
     },
+    iosCancelRequestGlass: {
+      backgroundColor: "transparent",
+      overflow: "hidden",
+      borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+    },
+    iosCancelRequestOpaque: {
+      borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosGlassPillShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    iosCancelRequestPressed: {
+      opacity: 0.78,
+      transform: [{ scale: 0.96 }],
+    },
+    cancelRequestPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.97 }],
+    },
     cancelRequestText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
     pendingBanner: {
       flexDirection: "row",

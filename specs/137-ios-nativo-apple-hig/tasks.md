@@ -21,10 +21,12 @@
 
 - [ ] **T005 (Issue #230) — Adequar Publicação (ISBN, Câmera, Fotos, Rascunhos), Minha Estante e Pedidos**
   - Implementação local entregue em `dcef8369` (`anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx`, `pedidos-recebidos.tsx`) com acesso aos Ajustes do iPhone, entrada manual de ISBN, ação Concluir no teclado numérico, salvamento de rascunho e diálogos destrutivos.
+  - Refinamento em 26/11/2026: aba "Concluídos" sempre visível e remoção da sobreposição negativa no iOS em `src/view/listings/myListings.tsx` e `myListingsStyles.ts`, com asserções de estilo em `tests/components/myListingsView.test.tsx`. `npm run validate` e `npm run test:e2e:build` aprovados (8/8); conferência visual em iPhone pendente.
   - *Pendências para fechamento:* homologação em iPhone pelo Eric e conferência visual contra os quadros `14`–`16`, `17`, `19`, `33`–`35`, `34B`, `55`, `58` e `997:2248`.
 
 - [x] **T006 (Issue #231) — Adequar Conversas, Negociação, Encontro, Entrega e Compartilhamento**
   - Implementação e validação em iPhone com Expo Go concluídas (`9eba578e`, `40aee97f`, `c71bed35`) cobrindo chat com teclado/safe area, leitor de QR Code, encontro/entrega e compartilhamento de texto/link.
+  - Refinamento em 26/11/2026: botão "Cancelar pedido" com `IosGlassBackdrop`, fallback opaco e haptic leve em `src/view/conversations/conversations.tsx`, com dois testes em `tests/components-mocked/conversationsView.test.tsx`. Contratos Jest aprovados; conferência visual da refração em iPhone pendente.
   - *Conferência pós-redesign Figma:* checar alinhamento visual com Seção `04` (`18`, `43`–`46`, `50`), `27`, `54` e protótipos `08` (`937:2829`, `3131`–`3391`) durante a auditoria #237.
 
 - [ ] **T007 (Issue #232) — Adequar Perfil, Conta, Notificações, Ajuda, Moderação e Estados Globais**
