@@ -22,6 +22,10 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
     expect(screen.getByText("1. Finalidade da Comunidade")).toBeDefined();
     expect(screen.getByText(/cidade de Piripiri, PI/)).toBeDefined();
     expect(screen.getByText("4. Encontros Presenciais e Segurança")).toBeDefined();
+    expect(screen.getByText(/conta e risco/)).toBeDefined();
+    expect(screen.getByText(/não respondem por danos físicos/)).toBeDefined();
+    expect(screen.getByText(/Lei nº 9\.610\/1998/)).toBeDefined();
+    expect(screen.getByText(/Comarca de Piripiri, PI/)).toBeDefined();
   });
 
   it("agrupa as abas de Termos/Privacidade em um contêiner com papel tablist", async () => {
@@ -52,9 +56,9 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
     // A política precisa refletir o que o app realmente coleta (formulário de segurança dos dados da Play Store).
     expect(screen.getByText("3. Com quem os dados são compartilhados")).toBeDefined();
     expect(screen.getByText(/Supabase .*Google\/Apple/)).toBeDefined();
-    expect(screen.getByText(/Não coletamos localização por GPS/)).toBeDefined();
+    expect(screen.getByText(/não coletamos localização precisa por GPS/i)).toBeDefined();
     expect(screen.getByText(/maiores de 18 anos/)).toBeDefined();
-    expect(screen.getByText("Última atualização: 29 de outubro de 2026")).toBeDefined();
+    expect(screen.getByText("Última atualização: 27 de novembro de 2026")).toBeDefined();
   });
 
   it("abre direto na aba de Privacidade quando pedido (link da Play Store)", async () => {

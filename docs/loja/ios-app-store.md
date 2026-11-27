@@ -1,8 +1,8 @@
 # Guia e Ficha de Publicação iOS (App Store / TestFlight)
 
-Este documento reúne o passo a passo técnico para compilar e enviar o **IpêBook** (`com.ipebook.app`, versão `0.2.5`) ao **TestFlight** e à **App Store** a partir de um Mac (via Xcode ou EAS Build), além de todos os textos e respostas prontos para preencher no **App Store Connect**.
+Este documento reúne o passo a passo técnico para compilar e enviar o **IpêBook** (`com.ipebook.app`) ao **TestFlight** e à **App Store** a partir de um Mac (via Xcode ou EAS Build), além de todos os textos e respostas prontos para preencher no **App Store Connect**.
 
-> **Sem Sentry:** O acompanhamento externo de erros (`@sentry/react-native`) foi removido na [Spec 145](../../specs/145-remocao-do-sentry/spec.md) / [ADR 0124](../adr/0124-remocao-do-sentry.md). Nenhuma chave ou token do Sentry é necessário para compilar no Xcode ou no EAS.
+> O código iOS está implementado. A homologação em iPhone e a distribuição pelo TestFlight seguem pendentes. [Estado e continuidade](../estado.md)
 
 ---
 
@@ -36,7 +36,7 @@ EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<client_id_web_google_oauth>
 
 ## 3. Opção A — Compilar e Arquivar Localmente no Mac (Xcode)
 
-No macOS com **Node.js 22+**, **Xcode** e **CocoaPods** instalados:
+No macOS com **Node.js 24**, **Xcode** e **CocoaPods** instalados:
 
 ```bash
 # 1. Instala dependências Node, gera a pasta nativa ios/ e executa pod install
@@ -63,15 +63,15 @@ Se a conta estiver vinculada ao projeto no Expo (`eas login`):
 
 ```bash
 # Gera o binário .ipa assinado para a App Store / TestFlight
-npx eas-cli build --platform ios --profile production
+npx --no-install eas-cli build --platform ios --profile production
 
 # Envia a build gerada para o App Store Connect / TestFlight
-npx eas-cli submit --platform ios --profile production
+npx --no-install eas-cli submit --platform ios --profile production
 ```
 
 Para configurar a chave APNs (`.p8`) de notificações push no Expo:
 ```bash
-npx eas-cli credentials -p ios
+npx --no-install eas-cli credentials -p ios
 ```
 
 ---

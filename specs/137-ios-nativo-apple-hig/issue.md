@@ -10,7 +10,7 @@
 * **Inventário de Telas iPhone no Figma:** [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md) (Canvas `APP · 20 · iPhone · iOS 26`: tema claro exclusivo, 52 quadros principais + 4 estados após carregamento + 7 estados iOS 26 + 25 telas de protótipo nativo + 2 pranchas iOS 26)
 * **Documentos de Referência:**
   - [ADR 0008 — Diretrizes Visuais por Plataforma](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) (Android segue Material Design 3; iOS segue Liquid Glass / Apple HIG)
-  - [ADR 0114 — Remoção do Tema Escuro (Tema Claro Exclusivo)](../../docs/adr/0114-remocao-tema-escuro.md)
+  - [ADR 0114 — Remoção do Tema Escuro (Tema Claro Exclusivo)](../../docs/adr/0114-remocao-do-tema-escuro.md)
   - [Spec 136 — PWA/iOS no Safari](../136-pwa-iphone-apple-hig/issue.md) (complementar para web/Safari; esta issue foca no **app nativo iOS**)
 
 ---

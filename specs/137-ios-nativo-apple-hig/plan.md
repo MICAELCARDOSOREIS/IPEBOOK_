@@ -6,7 +6,7 @@
 ---
 
 ## Fase 0 — Governança, ADR e Configuração Nativa iOS (`app.json`) — Issue #226 (`T001`)
-- Registrar ADR formal atualizando a entrada do **iOS Nativo** em escopo (vinculado ao [ADR 0008](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) e [ADR 0114](../../docs/adr/0114-remocao-tema-escuro.md)).
+- Registrar ADR formal atualizando a entrada do **iOS Nativo** em escopo (vinculado ao [ADR 0008](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) e [ADR 0114](../../docs/adr/0114-remocao-do-tema-escuro.md)).
 - Configurar a seção `ios` em `app.json`:
   - `supportsTablet`, `bundleIdentifier`, `buildNumber`.
   - `infoPlist` em português (`NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSLocationWhenInUseUsageDescription`).

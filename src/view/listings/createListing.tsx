@@ -553,7 +553,7 @@ export default function CreateListing({
                 <Text style={styles.previewNoteTitle}>Privacidade</Text>
               </View>
               <Text style={styles.previewNote}>
-                Privacidade garantida: Só o local de retirada aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
+                Privacidade garantida: só o bairro/local de retirada aparece no anúncio. Seu endereço residencial, telefone e e-mail nunca são exibidos.
               </Text>
             </View>
           </View>

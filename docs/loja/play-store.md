@@ -11,7 +11,7 @@ Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levanta
 - **Política de privacidade (URL pública):** https://ipebook.app/termos?aba=privacidade
 
 ## Descrição curta (até 80 caracteres)
-Venda, troque e doe livros com leitores de Piripiri, em pontos de encontro recomendados.
+Venda, troque e doe livros com leitores de Piripiri, PI.
 
 ## Descrição completa
 O IpêBook conecta quem tem livros parados a quem quer ler, aqui em Piripiri (PI).
@@ -47,5 +47,5 @@ Feito para a comunidade de Piripiri. Seus dados podem ser baixados ou excluídos
 - Capturas de tela: [`imagens/tela-inicio.png`](imagens/tela-inicio.png), [`imagens/captura-explorar.png`](imagens/captura-explorar.png), [`imagens/captura-detalhe-livro.png`](imagens/captura-detalhe-livro.png), [`imagens/captura-anunciar.png`](imagens/captura-anunciar.png), [`imagens/captura-encontro.png`](imagens/captura-encontro.png), [`imagens/tela-entrar.png`](imagens/tela-entrar.png) e [`imagens/tela-cadastro.png`](imagens/tela-cadastro.png).
 
 ## Checklist de envio e acompanhamento
-- Política de privacidade revisada juridicamente antes da promoção para produção aberta.
-- Build Android `0.2.0` enviada à Play Store e validada em aparelho real com duas contas (2026-11-16).
+- Termos de Uso e Política de Privacidade alinhados à LGPD, Marco Civil da Internet, Lei de Direitos Autorais e remoção do Sentry (2026-11-27); validação formal com advogado recomendada antes da expansão comercial.
+- Confira no [estado do projeto](../estado.md) a última submissão Android e a validação em aparelho.

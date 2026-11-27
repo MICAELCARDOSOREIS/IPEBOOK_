@@ -79,7 +79,7 @@
 - [0077 — Cancelar pedido por status e avisos de favoritos no servidor](0077-cancelar-pedido-e-avisos-de-favoritos.md)
 - [0078 — Moderação por RPCs no banco e moderadores cadastrados no Supabase](0078-moderacao.md)
 - [0079 — Limites contra abuso por gatilho no banco](0079-limites-anti-abuso.md)
-- [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md)
+- [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md) (substituído pelo ADR 0124)
 - [0081 — Atualizações pelo EAS Update com runtime pela versão do app](0081-atualizacoes-eas-update.md)
 - [0082 — Login Google nativo com idToken no Supabase](0082-login-google-nativo.md)
 - [0083 — Correções da auditoria de segurança](0083-correcoes-auditoria-seguranca.md)

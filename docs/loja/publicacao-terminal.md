@@ -22,11 +22,12 @@ Envia o `.aab` gerado localmente para a Google Play com `eas submit`, sem abrir 
 ## Uso
 
 ```
-npm run aab:local     # gera o .aab assinado (versionCode incrementado pelo EAS)
-npm run play:submit   # envia o .aab mais recente de android/build-logs/
+npm run aab:local         # inicia a geração do AAB assinado em segundo plano
+npm run aab:local:status  # consulte até confirmar a conclusão
+npm run play:submit       # envia o AAB mais recente de android/build-logs/
 ```
 
-Para enviar um arquivo específico: `bash scripts/enviar-play.sh caminho/do/arquivo.aab`.
+Para enviar um arquivo específico, use `npm run play:submit -- caminho/do/arquivo.aab`.
 
 ## Faixa e status
 

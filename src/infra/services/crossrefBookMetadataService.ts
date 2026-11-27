@@ -40,7 +40,7 @@ export class CrossrefBookMetadataService implements IBookMetadataService {
         signal: controller.signal,
         headers: {
           Accept: "application/json",
-          "User-Agent": "IpeBook/1.0 (https://ipebook.app; mailto:contato@ipebook.app)",
+          "User-Agent": "IpeBook/1.0 (https://ipebook.app; mailto:ipebook738@gmail.com)",
         },
       });
 

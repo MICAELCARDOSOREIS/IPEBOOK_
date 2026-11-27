@@ -1,28 +1,26 @@
-# Status Report — Ipebook
+# Relatório executivo — Ipebook
 
-**Data:** 17 de novembro de 2026 | **Versão:** `0.2.0` | **Branch:** `develop`  
+**Data:** 27 de novembro de 2026 | **Versão do repositório:** `0.2.5` | **Branch:** `develop`
+
 **Contexto:** Plataforma comunitária de circulação de livros em Piripiri, PI — IFPI Campus Piripiri (TADS, 2026)
 
 ---
 
-## 1. Resumo Executivo (3P)
+## 1. Resumo executivo
 
-- **Progresso:** Versão `0.2.0` concluída e **publicada na Google Play Store** (`com.ipebook.app`), com validação ponta a ponta em aparelho real usando duas contas (pedido, chat em tempo real, agendamento de encontro, QR Code de entrega, avaliação, notificações push, moderação, login com Google, Sentry e `expo-updates`). Suíte migrada de Vitest para **Jest** com provedor de cobertura V8 ([ADR 0113](adr/0113-migracao-vitest-para-jest.md)), reforçada com **suíte E2E Web automatizada via Chrome CDP** ([Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)), suíte E2E nativa Android em **Maestro** (`.maestro/*.yaml`, **6/6 fluxos aprovados no Waydroid** em sessão autenticada cobrindo as telas principais, sub-rotas de perfil/estante/configurações/moderação/alertas/beta/404, scanner ISBN e encontro), atualização dos patches Expo 58 (`expo` `~58.0.26` e 4 pacotes via `npx expo install --check`) e elevação da cobertura de *functions* para **85,19%** — somando **2.317 testes em 313 arquivos**, **7/7 cenários E2E Web verdes**, **46 arquivos de rota/layout** (`44` rotas navegáveis) e **43/43 migrações SQL** validadas — além de hooks Git locais (`ci:rapido` no `pre-commit` e `ci:local` espelhando o CI/CD no `pre-push`).
-- **Planos:** Integrar na branch `develop` os ajustes de Jest, E2E Web CDP, fluxos `.maestro/`, cobertura ampliada e documentação sincronizada (`npm run validate`), atualizar a publicação Web/PWA em `https://ipebook.app` (Cloudflare Pages), executar os cenários condicionais de `.maestro/` que exigem conta secundária / encontro confirmado em aparelho físico, executar o plano de **iOS Nativo (Apple HIG / Liquid Glass)** especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) e concluir os itens pós-lançamento do beta.
-- **Riscos e Atenção:**
-  - A versão Web em produção (`https://ipebook.app`) ainda precisa ser republicada para refletir as correções recentes de PWA, SEO (`<title>` estático), remoção do Mapbox e layout desktop.
-  - Nos fluxos Maestro (`.maestro/*.yaml`), os ramos condicionais que dependem de aparelho sem sessão (`E2E_CLEAR_STATE=true` e `Continuar com Google`) ou de conversa com encontro confirmado (`Entrega do livro` para câmera QR) foram pulados na sessão autenticada do Waydroid e seguem dependentes de conta de teste ou aparelho secundário.
-  - Termos de Uso e Política de Privacidade em link público ainda aguardam revisão jurídica, ainda não há um segundo projeto Supabase em nuvem dedicado exclusivamente a testes/staging (E2E Web roda contra modo memória isolado e SQL valida localmente em PGlite), e não há ferramenta de analytics de produto (ex.: PostHog) ativa em produção.
+- **Progresso.** A atualização Android `0.2.5` foi enviada à faixa fechada Alpha em 26/11. O iOS nativo recebeu login Apple, abas nativas e Liquid Glass. O app passou a tratar erros localmente após a remoção do Sentry. [Estado e continuidade](estado.md) · [ADR 0124](adr/0124-remocao-do-sentry.md)
+- **Próximas verificações.** Confirmar acesso à build Alpha e o fluxo Android em aparelho físico. Homologar a interface iOS e o Web Push em iPhone. [Guia de homologação](desenvolvimento.md#homologar-ios)
+- **Riscos.** No Waydroid, o cenário autenticado do Maestro deixou condicionais de onboarding, Google e entrega por QR Code para validação posterior. A revisão jurídica dos Termos e da Política de Privacidade segue pendente. [Suíte Android](../.maestro/README.md)
 
 ---
 
-## 2. Status por Plataforma e Canal
+## 2. Situação por plataforma
 
-| Plataforma / Canal | Situação Atual | Observação |
-| :--- | :--- | :--- |
-| **Android** (`com.ipebook.app`) | **Publicado na Play Store (`0.2.0`)** | Validado ponta a ponta em aparelho real |
-| **Web / PWA** (`https://ipebook.app`) | **No ar — republicação pendente** | Build local validado com 7/7 cenários E2E CDP; falta novo deploy no Cloudflare Pages |
-| **iOS** | **PWA entregue · Nativo em implementação** | PWA adequado ao Apple HIG (Spec 136); no app nativo ([Spec 137](../specs/137-ios-nativo-apple-hig/spec.md)), base Liquid Glass ([ADR 0115](adr/0115-base-liquid-glass-apple-hig.md), T002) e Descoberta/Busca ([ADR 0116](adr/0116-padronizacao-apple-hig-descoberta-busca-ios.md), T004) já entregues por Maria Clara |
+| Plataforma | Último registro | Verificação pendente |
+| --- | --- | --- |
+| Android | `0.2.0` validada em aparelho físico. `0.2.5` submetida à faixa fechada Alpha | Confirmar a disponibilidade e validar a `0.2.5` em aparelho |
+| Web / PWA | Domínio `ipebook.app`. Web Push configurado na prévia de iPhone em 26/11 | Confirmar a versão servida pelo domínio e o recebimento de avisos em iPhone |
+| iOS nativo | Login Apple, abas nativas e Liquid Glass implementados | Homologação em iPhone e distribuição pelo TestFlight |
 
 ---
 
@@ -35,15 +33,19 @@
 | **12/11/2026** | Consolidação da versão `0.2.0` e publicação Web inicial em `https://ipebook.app`. |
 | **16/11/2026** | Publicação da build Android `0.2.0` na Google Play Store e validação ponta a ponta em aparelho real. |
 | **17/11/2026** | Suíte E2E Web via Chrome CDP (Spec 138 / ADR 0112), migração da suíte unitária/integração para Jest (ADR 0113) e especificação do iOS Nativo (Spec 137). |
+| **18/11/2026** | Adoção do tema claro editorial em todas as plataformas (ADR 0114). |
+| **24 a 26/11/2026** | Leitura sem conexão, endurecimento de RLS e LGPD, Web Push na prévia para iPhone e submissão Android `0.2.5` à Alpha. |
+| **27/11/2026** | Remoção do Sentry e documentação da publicação iOS. |
 
 ---
 
-## 4. Principais Entregas do Ciclo (01/11 – 17/11/2026)
+## 4. Principais entregas do ciclo
 
-- **Lançamento Beta Android (`0.2.0`):** Geração da build de produção, envio à Play Store e validação completa dos fluxos principais em dispositivos reais.
-- **Experiência Web, PWA e E2E CDP:** Adequação ao Apple HIG no iPhone/Safari (Spec 136), redesenho de Notificações e Conversas em 3 colunas no desktop, `<title>` estático para SEO, correção de vazamento de memória no SSR em desenvolvimento e suíte E2E Web automatizada com Chrome CDP (Spec 138).
-- **Migração para Jest e Qualidade Contínua:** Migração integral dos 312 arquivos de teste para Jest com `coverageProvider: "v8"` (ADR 0113), padronização visual dos estados de erro (Spec 131), quitação de dívidas de arquitetura/DI (Spec 126) e cadastro dos moderadores no Supabase.
-- **Encontros e Compartilhamento:** Remoção definitiva do Mapbox mantendo a lista acessível dos 4 Pontos Seguros de Piripiri (ADR 0111), e abertura direta do WhatsApp ao compartilhar anúncios (ADR 0110).
+- **Android.** Submissão do AAB da `0.2.5` para teste fechado. [Roteiro de publicação](loja/publicacao-terminal.md)
+- **iOS.** Login Apple e retorno da recuperação de senha ao app, abas nativas e tratamento de Reduzir Transparência. [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) · [ADR 0123](adr/0123-liquid-glass-nativo-ios.md)
+- **Web e PWA.** Web Push no app instalado no iPhone, com configuração na prévia de homologação. [ADR 0122](adr/0122-web-push-no-ipebook-instalado.md)
+- **Consulta offline.** A última cópia do catálogo, da Estante e de detalhes visitados pode ser consultada ao perder a conexão. [Spec 142](../specs/142-leitura-sem-conexao/spec.md)
+- **Conversas e Notificações.** Melhorias de navegação entre abas e filtros, apresentação do encontro confirmado e acessibilidade no chat. [Spec 141](../specs/141-melhorar-conversas-notificacoes/spec.md)
 
 ---
 
@@ -54,12 +56,12 @@
 - **Modalidades:** Apenas **livros físicos** nas modalidades **Venda, Troca e Doação** (empréstimo e arquivos digitais estão fora de escopo).
 
 ### Capacidades Implementadas
-- **Acesso e Onboarding:** Cadastro, login por e-mail/senha ou Google, recuperação e exclusão de conta (com limpeza de mídia), seleção inicial de bairro/ponto e página de convite ao beta.
+- **Acesso e Onboarding:** Cadastro, login por e-mail e senha ou Google e login Apple no app iOS, recuperação e exclusão de conta (com limpeza de mídia), seleção inicial de bairro/ponto e página de convite ao beta.
 - **Catálogo e Descoberta:** Tela inicial hiperlocal, busca com filtros por modalidade e *Boxes e coleções*, ordenação, histórico local, favoritos e alertas de busca.
 - **Publicação e Estante:** Fluxo guiado em 3 passos com até 3 fotos otimizadas, scanner/consulta por ISBN, suporte a boxes (2 a 100 volumes), rascunhos locais, edição, pausa/retomada e gestão de anúncios.
 - **Negociação, Encontro e Entrega:** Proposta com livro para troca e reserva atômica, chat em tempo real com linha do tempo, agendamento em Pontos Seguros com horários de expediente, confirmação presencial via **QR Code** (ou código de 8 caracteres), avaliação mútua (1–5★) e convite para avaliação na loja.
-- **Notificações, Compartilhamento e PWA:** Push local e remoto com preferências por categoria, pré-visualização Open Graph em links compartilhados, compartilhamento rápido no WhatsApp e PWA responsivo com tema claro/escuro.
-- **Segurança, Design e Acessibilidade:** Políticas RLS no Supabase, limites anti-abuso, bloqueio mútuo de usuários, denúncia de anúncios e pessoas, fila de moderação e Design System Ipê (Material 3 Expressive) com tema claro/escuro e suporte a acessibilidade (WCAG 2.1 AA e TalkBack).
+- **Notificações, Compartilhamento e PWA:** Push local e remoto com preferências por categoria, pré-visualização Open Graph em links compartilhados, compartilhamento rápido no WhatsApp e PWA responsivo e avisos Web Push no iPhone com o app instalado.
+- **Segurança, Design e Acessibilidade:** Políticas RLS no Supabase, limites anti-abuso, bloqueio mútuo de usuários, denúncia de anúncios e pessoas, fila de moderação e Design System Ipê (Material 3 Expressive) com tema claro editorial e suporte a acessibilidade (WCAG 2.1 AA e TalkBack).
 
 ---
 
@@ -71,8 +73,8 @@
 | **Cloudflare Pages** | Hospedagem Web/PWA (`https://ipebook.app`) e previews Open Graph |
 | **Google Play & Google Sign-In** | Distribuição Android (`com.ipebook.app`) e login nativo |
 | **Expo / EAS (`expo-updates`)** | Builds e atualizações OTA sem nova submissão na loja |
-| **Sentry** | Monitoramento de erros em produção sem exposição de dados pessoais |
-| **BrasilAPI** | Consulta automática de dados de livros por código ISBN |
+| **Relato local de erros** | `MemoryErrorReporter`, `SafeLogger` e interface de recuperação `AppErrorFallback` |
+| **BrasilAPI, Open Library, Google Books e Crossref** | Consulta de metadados por ISBN |
 
 ---
 
@@ -81,15 +83,7 @@
 - **Stack e Arquitetura:** React Native, Expo / Expo Router, TypeScript, Supabase, Jest, PGlite e Biome, em arquitetura **MVVM** desacoplada por contratos e injeção de dependências.
 - **Portões de Qualidade (`npm run validate` e `npm run test:e2e`):** Checagem automática de tipos, lint, grafo de imports, design system, numeração de specs/ADRs, configuração de build, migrações SQL em PGlite, cobertura V8 no Jest, sincronia da documentação e E2E Web via Chrome CDP.
 
-| Indicador | Valor Atual |
-| :--- | :--- |
-| **Testes automatizados** | **2.317 testes** em **313 arquivos** + **7/7 cenários E2E Web (CDP)** + **6 fluxos Maestro Android** (`.maestro/`, **6/6 no Waydroid**) |
-| **Cobertura (Statements / Lines)** | **95,26%** / **95,26%** |
-| **Cobertura (Functions / Branches)** | **85,19%** / **86,05%** |
-| **Saúde arquitetural** | **496 arquivos** sem violações de imports |
-| **Rotas estáticas** | **46 arquivos** em `src/app/` (`44` rotas navegáveis) |
-| **Documentação técnica** | **138 specs** e **116 ADRs** |
-| **Migrações Supabase** | **43/43** aplicadas e validadas com PGlite |
+As medições atuais de testes, cobertura, migrações, rotas e documentação estão no [estado verificado](estado.md#1-estado-verificado-em-execução).
 
 ---
 
@@ -102,10 +96,3 @@
 | **Antonio Carlos Gomes** | Ciclo de negociação, cadastro/gestão de anúncios, integração ISBN (BrasilAPI), boxes/coleções e moderação comunitária |
 
 ---
-
-## 9. Próximos Passos
-
-1. **Fechamento da branch `develop`:** Revisar alterações locais (Jest, E2E Web CDP e documentação sincronizada), executar `npm run validate` e `npm run test:e2e` e registrar commit.
-2. **Atualização Web (`https://ipebook.app`):** Gerar build Web (`npm run build:web`) e republicar no Cloudflare Pages.
-3. **Evolução iOS Nativo (`Spec 137`):** Executar incrementalmente a adequação nativa de iPhone ao Apple HIG e Liquid Glass em feature branches derivadas de `develop`.
-4. **Governança e Pós-lançamento Beta:** Concluir revisão jurídica dos Termos de Uso e Política de Privacidade em link público; avaliar adoção de analytics de uso (PostHog) e ambiente Supabase dedicado para testes.
