@@ -1,6 +1,6 @@
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 
-/** Guarda os erros em memória; usado em testes e quando não há chave do Sentry. */
+/** Guarda os erros em memória no aparelho, sem enviar dados para serviços externos (Spec 145 / ADR 0124). */
 export class MemoryErrorReporter implements IErrorReporter {
   readonly captured: Array<{ error: unknown; context?: Record<string, unknown> }> = [];
 

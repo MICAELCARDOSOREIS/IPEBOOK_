@@ -2,45 +2,23 @@
 
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { reportingSink } from "@/infra/services/safeLogger";
-import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 
-function fakeSentry() {
-  return { init: jest.fn(), captureException: jest.fn() };
-}
-
-describe("SentryErrorReporter (Spec 104)", () => {
-  it("inicia uma vez, sem dados pessoais e sem rastreamento de desempenho", () => {
-    const sentry = fakeSentry();
-    const reporter = new SentryErrorReporter({ dsn: "https://k@o.ingest.sentry.io/1", environment: "production", release: "0.1.0" }, sentry as never);
+describe("MemoryErrorReporter (Spec 145)", () => {
+  it("inicia sem efeito colateral externo e guarda erros e contextos em memória", () => {
+    const reporter = new MemoryErrorReporter();
     reporter.init();
-    reporter.init();
-    expect(sentry.init).toHaveBeenCalledTimes(1);
-    const options = sentry.init.mock.calls[0][0];
-    expect(options).toMatchObject({ dsn: "https://k@o.ingest.sentry.io/1", environment: "production", release: "0.1.0", sendDefaultPii: false, tracesSampleRate: 0 });
-    const event = options.beforeSend({ user: { id: "u1", email: "a@b.com", ip_address: "1.2.3.4" }, extra: { token: "segredo", tela: "chat" } });
-    expect(event.user).toEqual({ id: "u1" });
-    expect(event.extra.token).not.toBe("segredo");
-    expect(event.extra.tela).toBe("chat");
-    expect(options.beforeSend({ message: "sem extras" })).toEqual({ message: "sem extras" });
-  });
-
-  it("só envia depois de iniciar e filtra o contexto", () => {
-    const sentry = fakeSentry();
-    const reporter = new SentryErrorReporter({ dsn: "x", environment: "test" }, sentry as never);
-    const error = new Error("falhou");
+    const error = new Error("falha local");
+    reporter.captureException(error, { rota: "/livro" });
     reporter.captureException(error);
-    expect(sentry.captureException).not.toHaveBeenCalled();
-    reporter.init();
-    reporter.captureException(error, { password: "123", rota: "/livro" });
-    reporter.captureException(error);
-    expect(sentry.captureException).toHaveBeenNthCalledWith(1, error, { extra: expect.objectContaining({ rota: "/livro" }) });
-    expect(sentry.captureException.mock.calls[0][1].extra.password).not.toBe("123");
-    expect(sentry.captureException).toHaveBeenNthCalledWith(2, error, undefined);
+    expect(reporter.captured).toEqual([
+      { error, context: { rota: "/livro" } },
+      { error, context: undefined },
+    ]);
   });
 });
 
-describe("reportingSink (Spec 104)", () => {
-  it("logs de erro seguem para o acompanhamento; avisos e informações não", () => {
+describe("reportingSink (Spec 145)", () => {
+  it("logs de erro seguem para o acompanhamento local; avisos e informações não", () => {
     const reporter = new MemoryErrorReporter();
     reporter.init();
     const sink = reportingSink(reporter);

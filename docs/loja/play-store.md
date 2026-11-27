@@ -1,6 +1,6 @@
 # Rascunho da ficha na Play Store
 
-Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levantados do código em 2026-10-29 (Supabase, Expo Push, Sentry); conferir de novo se surgirem integrações novas.
+Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levantados do código (Supabase e Expo Push; o Sentry foi removido na Spec 145 / ADR 0124).
 
 ## Identificação
 - **Nome:** IpêBook — livros em Piripiri
@@ -35,10 +35,9 @@ Feito para a comunidade de Piripiri. Seus dados podem ser baixados ou excluídos
 | Fotos (anúncio e perfil) | Sim | Não | Mostrar o livro e o perfil | Não |
 | Mensagens no app | Sim | Não | Chat da negociação | Não |
 | Localização aproximada (bairro escolhido) | Sim | Não | Mostrar livros perto de você | Não |
-| Registros de falhas e diagnóstico | Sim (com Sentry ligado) | Não | Corrigir erros | — |
 | ID do dispositivo para push | Sim | Não | Enviar avisos | Não |
 
-- Dados criptografados em trânsito: **sim** (HTTPS no Supabase, Expo e Sentry).
+- Dados criptografados em trânsito: **sim** (HTTPS no Supabase e Expo).
 - Exclusão de dados: **sim**, pelo app (Configurações > Privacidade e dados > Excluir conta) — informar também o link web da política.
 - Localização precisa (GPS): **não** coletada.
 
@@ -49,5 +48,4 @@ Feito para a comunidade de Piripiri. Seus dados podem ser baixados ou excluídos
 
 ## Checklist de envio e acompanhamento
 - Política de privacidade revisada juridicamente antes da promoção para produção aberta.
-- Build de produção com `EXPO_PUBLIC_SENTRY_DSN` configurado (para uso do Sentry).
 - Build Android `0.2.0` enviada à Play Store e validada em aparelho real com duas contas (2026-11-16).

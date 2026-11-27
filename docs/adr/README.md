@@ -123,5 +123,6 @@
 - [0121 — Login Apple e retorno nativo de recuperação](0121-login-apple-e-retorno-nativo-de-recuperacao.md)
 - [0122 — Web Push no IpêBook instalado](0122-web-push-no-ipebook-instalado.md)
 - [0123 — Liquid Glass nativo no iOS](0123-liquid-glass-nativo-ios.md)
+- [0124 — Remoção do Sentry e manutenção exclusiva de tratamento local de erros](0124-remocao-do-sentry.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

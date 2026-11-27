@@ -52,28 +52,18 @@ describe("serviços de in-app updates", () => {
     }
   });
 
-  it("GooglePlayInAppUpdateService usa fallback RNSentry.fetchNativeRelease quando módulo nativo não está presente", async () => {
+  it("GooglePlayInAppUpdateService retorna false no Android quando módulo nativo IpebookPlayUpdate não está presente", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    (NativeModules as Record<string, unknown>).RNSentry = {
-      fetchNativeRelease: jest.fn(async () => ({
-        id: "com.ipebook.app",
-        version: "0.1.0",
-        build: "10",
-      })),
-    };
 
     try {
       const service = new GooglePlayInAppUpdateService();
       const result = await service.checkStoreUpdate();
       expect(result).toEqual({
         isUpdateAvailable: false,
-        installedVersionCode: 10,
-        installedVersionName: "0.1.0",
       });
       expect(await service.startUpdateFlow()).toBe(false);
     } finally {
-      delete (NativeModules as Record<string, unknown>).RNSentry;
       Platform.OS = originalOS;
     }
   });

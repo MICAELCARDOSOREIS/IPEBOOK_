@@ -78,7 +78,6 @@ export const PRIVACY_POLICY: readonly LegalSection[] = [
       "Negociações: pedidos, mensagens do chat, encontros combinados, confirmação de entrega e avaliações. Ficam visíveis só para as duas pessoas da negociação (as avaliações aparecem no perfil público).",
       "Segurança: denúncias e bloqueios que você faz ou recebe, analisados pela moderação.",
       "Avisos: o identificador do aparelho para notificações e as suas preferências de aviso.",
-      "Diagnóstico: relatórios de erro do aplicativo, sem nome, e-mail ou conteúdo de mensagens, para corrigir falhas.",
       "Não coletamos localização por GPS, contatos, documentos ou dados de pagamento.",
     ],
   },
@@ -86,7 +85,7 @@ export const PRIVACY_POLICY: readonly LegalSection[] = [
     title: "3. Com quem os dados são compartilhados",
     paragraphs: [
       "Nenhum dado é vendido nem usado para publicidade.",
-      "Usamos fornecedores que processam dados só para fazer o app funcionar: Supabase (banco de dados, login e fotos), Expo e Google Firebase (envio de notificações), Google (login com Google) e Sentry (relatórios de erro). Alguns guardam dados fora do Brasil (por exemplo, nos Estados Unidos); essa transferência internacional é feita nos termos do art. 33 da LGPD, para executar o serviço que você pediu.",
+      "Usamos fornecedores que processam dados só para fazer o app funcionar: Supabase (banco de dados, login e fotos), Expo e Google Firebase (envio de notificações) e Google/Apple (login social). Alguns guardam dados fora do Brasil (por exemplo, nos Estados Unidos); essa transferência internacional é feita nos termos do art. 33 da LGPD, para executar o serviço que você pediu.",
       "Podemos fornecer dados a autoridades quando houver ordem judicial ou obrigação legal.",
       "O seu e-mail nunca é exibido para outras pessoas.",
     ],
@@ -95,7 +94,7 @@ export const PRIVACY_POLICY: readonly LegalSection[] = [
     title: "4. Por quanto tempo guardamos",
     paragraphs: [
       "Os dados ficam guardados enquanto a conta existir. Ao excluir a conta, apagamos de forma definitiva perfil, anúncios, pedidos, mensagens, favoritos, alertas, avaliações e notificações.",
-      "Relatórios de erro são apagados automaticamente pelo fornecedor em até 90 dias. Cópias de segurança do banco de dados podem manter dados excluídos por alguns dias, até serem substituídas automaticamente.",
+      "Cópias de segurança do banco de dados podem manter dados excluídos por alguns dias, até serem substituídas automaticamente.",
     ],
   },
   {

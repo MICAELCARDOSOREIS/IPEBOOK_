@@ -1,6 +1,6 @@
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 
-/** Liga o acompanhamento de erros (Spec 104); sem EXPO_PUBLIC_SENTRY_DSN, não envia nada. */
+/** Inicializa o acompanhador local de erros (Spec 145 / ADR 0124). */
 export function startErrorReporting(reporter: IErrorReporter): void {
   reporter.init();
 }
