@@ -71,6 +71,11 @@ export default function DeleteAccount({
           <Text style={styles.bodyCenter}>
             Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
           </Text>
+          {Platform.OS === "ios" ? (
+            <Text style={styles.bodyCenter}>
+              Se você usou Entrar com a Apple, abra Ajustes, toque no seu nome e vá a Iniciar Sessão com a Apple. Selecione IpêBook e toque em Apagar.
+            </Text>
+          ) : null}
           <View style={styles.fullWidthButton}>
             <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
           </View>
