@@ -88,7 +88,7 @@ export function ReceivedRequests({
         return (
           <View style={s.receivedDetails}>
             <View style={s.requesterRow}>
-              <Avatar name={requesterName ?? COMMUNITY_MEMBER} photoUrl={requesterPhotoUrl ?? undefined} size={36} />
+              <Avatar name={requesterName ?? COMMUNITY_MEMBER} photoUrl={requesterPhotoUrl ?? undefined} size={32} />
               <View style={s.requesterInfo}>
                 <Text style={s.meta}>Pessoa interessada: {requesterName ?? COMMUNITY_MEMBER}</Text>
               </View>
@@ -120,50 +120,43 @@ export function ReceivedRequests({
               </View>
             ) : null}
             {request.status === "pending" ? (
-              <>
-                <View style={s.hintBox}>
-                  <Text style={s.hintText}>
-                    Confira a mensagem e o livro oferecido, se houver. Ao aceitar, o anúncio fica reservado para vocês combinarem o encontro.
-                  </Text>
-                </View>
-                <View style={s.pendingActions}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Aceitar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
-                    accessibilityHint="Aceita o pedido e reserva este anúncio."
-                    accessibilityState={{ disabled: busy, busy }}
-                    disabled={busy}
-                    onPress={() => setPendingAccept({ requestId: request.id, requesterName: requesterName ?? null })}
-                    style={withPress([s.primary, s.fullWidthAction])}
-                  >
-                    <AppIcon name="check" size={18} color={colors.surface} />
-                    <Text style={s.primaryText}>{busy ? "Respondendo…" : "Aceitar"}</Text>
-                  </Pressable>
-                  <View style={s.pendingSecondaryActions}>
-                    {guardedOpenChat ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Conversar com ${requesterName ?? COMMUNITY_MEMBER}`}
-                        onPress={() => guardedOpenChat(request.id)}
-                        style={withPress([s.chatButton, s.flexAction])}
-                      >
-                        <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
-                        <Text style={s.chatButtonText}>Conversar</Text>
-                      </Pressable>
-                    ) : null}
+              <View style={s.pendingActions}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Aceitar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
+                  accessibilityHint="Aceita o pedido e reserva este anúncio."
+                  accessibilityState={{ disabled: busy, busy }}
+                  disabled={busy}
+                  onPress={() => setPendingAccept({ requestId: request.id, requesterName: requesterName ?? null })}
+                  style={withPress([s.primary, s.fullWidthAction])}
+                >
+                  <AppIcon name="check" size={18} color={colors.surface} />
+                  <Text style={s.primaryText}>{busy ? "Respondendo…" : "Aceitar"}</Text>
+                </Pressable>
+                <View style={s.pendingSecondaryActions}>
+                  {guardedOpenChat ? (
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`Recusar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
-                      accessibilityState={{ disabled: busy, busy }}
-                      disabled={busy}
-                      onPress={() => void handleResponse(request.id, "reject")}
-                      style={withPress([s.secondary, guardedOpenChat ? s.flexAction : s.fullWidthAction])}
+                      accessibilityLabel={`Conversar com ${requesterName ?? COMMUNITY_MEMBER}`}
+                      onPress={() => guardedOpenChat(request.id)}
+                      style={withPress([s.chatButton, s.flexAction])}
                     >
-                      <Text style={s.secondaryText}>Recusar</Text>
+                      <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
+                      <Text style={s.chatButtonText}>Conversar</Text>
                     </Pressable>
-                  </View>
+                  ) : null}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Recusar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
+                    accessibilityState={{ disabled: busy, busy }}
+                    disabled={busy}
+                    onPress={() => void handleResponse(request.id, "reject")}
+                    style={withPress([s.rejectButton, guardedOpenChat ? s.flexAction : s.fullWidthAction])}
+                  >
+                    <Text style={s.rejectButtonText}>Recusar</Text>
+                  </Pressable>
                 </View>
-              </>
+              </View>
             ) : null}
             {request.status === "accepted" ? (
               <View style={s.pendingActions}>

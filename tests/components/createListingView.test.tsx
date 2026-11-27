@@ -1,6 +1,6 @@
 import type React from "react";
 import { act, fireEvent, render, within } from "@testing-library/react-native";
-import { AccessibilityInfo, Platform } from "react-native";
+import { AccessibilityInfo, Platform, StyleSheet } from "react-native";
 import * as container from "@/di/container";
 import * as useIsWideWebModule from "@/view/useIsWideWeb";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
@@ -106,6 +106,11 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
       const iosScreen = await renderScreen();
       expect(iosScreen.queryByLabelText("ISBN (opcional)")).toBeNull();
       expect(iosScreen.queryByRole("button", { name: "Buscar pelo ISBN" })).toBeNull();
+      const notaProximasEtapas = iosScreen.getByText("Conservação e local de retirada vêm nas próximas etapas.");
+      expect(StyleSheet.flatten(notaProximasEtapas.props.style)).toMatchObject({
+        flex: 1,
+        flexShrink: 1,
+      });
     } finally {
       Platform.OS = originalOs;
     }

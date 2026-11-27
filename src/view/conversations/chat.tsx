@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   type FlatList,
@@ -28,6 +28,7 @@ import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { buildDirectionsUrl } from "@/view/directionsUrl";
 import { triggerHaptic } from "@/view/haptics";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
+import { ChatWebOptions } from "./ChatWebOptions";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
 import { createChatStyles } from "./chatStyles";
 import { formatPrice } from "@/view/formatPrice";
@@ -65,8 +66,11 @@ export type ChatProps = {
   /** Atalho direto para agendar o encontro (`/negociacao/[id]/encontro`). */
   onScheduleMeeting?: (requestId: string) => void;
   onDeleteConversation?: () => void;
-  /** Painel da web larga entre a lista e os detalhes do livro. */
+  /** Painel ao lado da lista na web larga. */
   embedded?: boolean;
+  bookTitle?: string;
+  bookDetailsOpen?: boolean;
+  onOpenBookDetails?: () => void;
   /** Dados já conhecidos pela lista para evitar flash genérico enquanto o detalhe carrega. */
   initialCounterpartName?: string;
   initialCounterpartPhotoUrl?: string | null;
@@ -86,6 +90,9 @@ export function Chat({
   onScheduleMeeting,
   onDeleteConversation,
   embedded = false,
+  bookTitle,
+  bookDetailsOpen,
+  onOpenBookDetails,
   initialCounterpartName,
   initialCounterpartPhotoUrl,
   initialModality,
@@ -234,12 +241,34 @@ export function Chat({
     });
   };
 
+  const embeddedWeb = wideWeb && embedded;
+  const scrollFrame = useRef<number | null>(null);
+  const scrollWebHistoryToEnd = useCallback(() => {
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = null;
+      const node = listRef.current?.getScrollableNode?.();
+      if (typeof HTMLElement !== "undefined" && node instanceof HTMLElement) {
+        node.scrollTop = node.scrollHeight;
+      }
+    });
+  }, []);
+  useEffect(() => () => {
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+  }, []);
+
   // Ao abrir e a cada mensagem nova, a última fica visível (Spec 082).
   useEffect(() => {
-    if (timeline.length > 0) listRef.current?.scrollToEnd?.({ animated: true });
-  }, [timeline.length]);
+    if (timeline.length === 0) return;
+    if (embeddedWeb) scrollWebHistoryToEnd();
+    else listRef.current?.scrollToEnd?.({ animated: true });
+  }, [embeddedWeb, scrollWebHistoryToEnd, timeline.length]);
 
   const scrollToLatest = () => {
+    if (embeddedWeb) {
+      scrollWebHistoryToEnd();
+      return;
+    }
     listRef.current?.scrollToEnd?.({ animated: false });
     // Segunda passada depois da medição dos balões.
     setTimeout(() => listRef.current?.scrollToEnd?.({ animated: false }), 120);
@@ -285,12 +314,13 @@ export function Chat({
 
   const scrollUnderHeader = Platform.OS === "ios" && !embedded
     && !state.isLoading && !state.error && detail?.request.status !== "pending" && timeline.length > 0;
+  const compactBook = !wideWeb && !embedded ? detail?.book : undefined;
   const chatHeader = (
     <>
       {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
       <View
-        style={[styles.header, wideWeb && styles.headerWide, wideWeb && embedded && styles.headerEmbeddedWide, scrollUnderHeader && { backgroundColor: "transparent", borderBottomWidth: 0 }]}
-        testID={wideWeb && embedded ? "conversation-chat-header" : undefined}
+        style={[styles.header, !wideWeb && styles.headerCompact, wideWeb && styles.headerWide, embeddedWeb && styles.headerEmbeddedWide, scrollUnderHeader && { backgroundColor: "transparent", borderBottomWidth: 0 }]}
+        testID={embeddedWeb ? "conversation-chat-header" : compactBook ? "conversation-chat-compact-header" : undefined}
       >
         {embedded ? null : Platform.OS === "ios" ? (
           <TopAppBarBackButton onBack={guardedBack} />
@@ -305,41 +335,73 @@ export function Chat({
             <AppIcon name="back" size={24} color={colors.m3.onSurface} />
           </Pressable>
         )}
-        <Avatar name={name} photoUrl={counterpartPhotoUrl} size={wideWeb ? 44 : 40} />
+        <Avatar name={name} photoUrl={counterpartPhotoUrl} size={wideWeb ? 44 : 36} />
         <View style={styles.headerInfo}>
           <Text accessibilityRole="header" style={[styles.headerTitle, wideWeb && styles.headerTitleWide]} numberOfLines={1}>
             {name}
           </Text>
-          {isWebStandalone && detail ? (
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
-              {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
-            </Text>
-          ) : detail && !embedded ? (
+          {embeddedWeb && bookTitle && onOpenBookDetails ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+              accessibilityLabel={`Detalhes de ${bookTitle}`}
               accessibilityHint="Exibe os detalhes do livro e do encontro"
-              hitSlop={{ top: 6, bottom: 10, left: 6, right: 12 }}
-              onPress={() => guardedOpenNegotiation(requestId)}
-              style={withPress(styles.headerBookLink, colors.m3.focusRing)}
+              accessibilityState={{ expanded: Boolean(bookDetailsOpen) }}
+              aria-haspopup="dialog"
+              onPress={onOpenBookDetails}
+              style={withPress(styles.headerBookPill, colors.m3.focusRing)}
             >
-              <AppIcon name="shelf" size={13} color={colors.m3.onSurfaceVariant} />
-              <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
+              <BookCover
+                id={detail?.book.id ?? requestId}
+                title={bookTitle}
+                photoUrl={detail?.book.photoUrl}
+                variant="list"
+                width={18}
+              />
+              <Text style={styles.headerBookPillLabel}>Livro:</Text>
+              <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{bookTitle}</Text>
               {modalityLabel ? (
                 <>
                   <Text style={styles.headerSubtitle}>·</Text>
-                  <Text style={styles.headerSubtitle}>{modalityLabel}</Text>
+                  <Text style={styles.headerBookPillModality}>{modalityLabel}</Text>
                 </>
               ) : null}
-              <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
+              <AppIcon name="chevronRight" size={14} color={colors.m3.primary} />
             </Pressable>
+          ) : isWebStandalone && detail ? (
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
+            </Text>
+          ) : compactBook ? (
+            <View style={styles.headerBookSummary}>
+              <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{compactBook.title}</Text>
+              {modalityLabel ? (
+                <Text numberOfLines={1} style={[styles.headerSubtitle, styles.headerBookModality]}>{`· ${modalityLabel}`}</Text>
+              ) : null}
+            </View>
           ) : embedded && modalityLabel ? (
             <Text style={styles.headerSubtitle} numberOfLines={1}>
               {`Bate-papo da negociação · ${modalityLabel}`}
             </Text>
           ) : null}
         </View>
-        {onDeleteConversation ? (
+        {compactBook && onOpenNegotiation ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Detalhes da negociação de ${compactBook.title}`}
+            accessibilityHint="Exibe os detalhes do livro e do encontro"
+            onPress={() => guardedOpenNegotiation(requestId)}
+            style={withPress(styles.headerDetailsButton, colors.m3.focusRing)}
+          >
+            <AppIcon name="shelf" size={16} color={colors.m3.onSecondaryContainer} />
+            <Text style={styles.headerDetailsLabel}>Detalhes</Text>
+          </Pressable>
+        ) : null}
+        {embeddedWeb && onDeleteConversation ? (
+          <ChatWebOptions
+            label="Opções da conversa"
+            actions={[{ label: "Apagar conversa", icon: "delete", onPress: onDeleteConversation, destructive: true }]}
+          />
+        ) : onDeleteConversation ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Opções da conversa"
@@ -351,7 +413,7 @@ export function Chat({
           </Pressable>
         ) : null}
       </View>
-      {conversationOptionsOpen && onDeleteConversation ? (
+      {!embeddedWeb && conversationOptionsOpen && onDeleteConversation ? (
         <View style={styles.conversationOptions}>
           <Pressable
             accessibilityRole="button"
@@ -372,7 +434,7 @@ export function Chat({
       {detail?.request.status === "accepted" &&
         (meetingState.loading || meetingState.error || meetingState.meeting || delivery.completed || openScheduling) &&
         (wideWeb || !isKeyboardVisible) ? (
-        <View style={[styles.embeddedStatusStrip, !wideWeb && styles.narrowStatusStrip]}>
+        <View style={[styles.embeddedStatusStrip, embeddedWeb && styles.statusStripEmbeddedWide, !wideWeb && styles.narrowStatusStrip]}>
           {meetingState.loading && !delivery.completed ? (
             <Text style={styles.headerSubtitle}>Carregando encontro…</Text>
           ) : meetingState.error && !delivery.completed ? (
@@ -482,7 +544,7 @@ export function Chat({
               data={timeline}
               keyExtractor={(item) => item.key}
               renderItem={renderItem}
-              contentContainerStyle={[styles.list, wideWeb && styles.listWide]}
+              contentContainerStyle={[styles.list, wideWeb && styles.listWide, embeddedWeb && styles.listEmbeddedWide]}
               initialNumToRender={timeline.length}
               onContentSizeChange={scrollToLatest}
               onLayout={scrollToLatest}
@@ -536,31 +598,6 @@ export function Chat({
                 <View accessibilityRole="alert" style={styles.offlineNotice}>
                   <AppIcon name="wifiOff" size={14} color={colors.secondaryText} />
                   <Text style={styles.offlineNoticeText}>Sem conexão para enviar mensagens</Text>
-                </View>
-              ) : null}
-              {detail?.request.status === "accepted" &&
-              meetingState.meeting &&
-              meetingState.meeting.status !== "cancelled" &&
-              !state.inputText.trim() &&
-              isOnline &&
-              !state.isSending &&
-              (!isKeyboardVisible || state.messages.length === 0) ? (
-                <View style={styles.quickRepliesRow}>
-                  {["Estou chegando", "Já estou aqui", "Qual ponto?"].map((reply) => (
-                    <Pressable
-                      key={reply}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Sugestão de mensagem: ${reply}`}
-                      accessibilityHint="Preenche o campo de mensagem com esta frase rápida"
-                      onPress={() => {
-                        if (Platform.OS === "ios") triggerHaptic("selection");
-                        actions.setInputText(reply);
-                      }}
-                      style={withPress(styles.quickReplyChip)}
-                    >
-                      <Text style={styles.quickReplyText}>{reply}</Text>
-                    </Pressable>
-                  ))}
                 </View>
               ) : null}
               <View

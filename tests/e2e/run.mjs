@@ -139,9 +139,10 @@ async function sairDaContaPeloPerfil(page) {
 
 async function publicarLivroDoacao(page, { titulo, autor }) {
   await page.clickBySelector('[aria-label="Anunciar um livro"]');
-  await page.clickBySelector('[aria-label="Modalidade Doação"]');
   await page.fillInput('input[aria-label="Título"]', titulo);
   await page.fillInput('input[aria-label="Autor"]', autor);
+  await page.clickBySelector('[aria-label="Modalidade Doação"]');
+  await page.waitForText("Gratuito", { message: "prévia atualizada para Doação antes de avançar" });
   await page.clickByText("Continuar", { exact: true });
 
   await page.waitForText("Mostre seu livro.");
@@ -488,6 +489,11 @@ const CENARIOS = [
       await page.fillInput('[aria-label="Campo de mensagem"]', "Oi, combinamos a entrega hoje?");
       await page.clickBySelector('[aria-label="Enviar mensagem"]');
       await page.waitForText("Oi, combinamos a entrega hoje?");
+      for (const message of ["Posso levar o livro pela manhã.", "Vou mandar o ponto de encontro."]) {
+        await page.fillInput('[aria-label="Campo de mensagem"]', message);
+        await page.clickBySelector('[aria-label="Enviar mensagem"]');
+        await page.waitForText(message);
+      }
 
       await page.clickBySelector('[aria-label="Combinar encontro na negociação"]');
       await page.clickBySelector('[role="radio"][aria-label*="Praça da Bandeira"]');
@@ -512,6 +518,17 @@ const CENARIOS = [
       await page.clickByText("Revisar proposta", { exact: true });
       await page.waitFor("location.pathname.startsWith('/conversa/')");
       await page.waitForText("Encontro sugerido por");
+      await page.waitFor(`(() => {
+        const header = document.querySelector('[data-testid="conversation-chat-compact-header"]');
+        const button = header?.querySelector(${JSON.stringify(`[aria-label="Detalhes da negociação de ${tituloLivro}"]`)});
+        const box = button?.getBoundingClientRect();
+        const name = header?.querySelector('[role="heading"]')?.getBoundingClientRect();
+        const modality = Array.from(header?.querySelectorAll('*') ?? []).find((node) =>
+          node.childElementCount === 0 && node.textContent.trim() === '· Doação');
+        return Boolean(box && name && box.left >= name.right && box.right <= innerWidth && box.height >= 44 &&
+          button.textContent.includes('Detalhes') && header.textContent.includes(${JSON.stringify(tituloLivro)}) &&
+          modality && modality.getBoundingClientRect().height <= parseFloat(getComputedStyle(modality).lineHeight) + 1);
+      })()`, { message: "botão Detalhes visível à direita do nome no cabeçalho móvel" });
       await page.waitFor(`Boolean(document.querySelector('[aria-label="Campo de mensagem"]')?.getBoundingClientRect().width)`);
       await assertSemOverflowHorizontal(page, "Chat no celular");
       await page.setViewport(1440, 900, false);
@@ -532,22 +549,81 @@ const CENARIOS = [
       await page.waitForText("Oi, combinamos a entrega hoje?");
       await page.waitForText("Confirmar encontro");
       await page.waitFor(`(() => {
-        const bottoms = ["list", "chat", "about"].map((pane) =>
+        const bottoms = ["list", "chat"].map((pane) =>
           document.querySelector('[data-testid="conversation-' + pane + '-header"]')?.getBoundingClientRect().bottom
         );
         return bottoms.every(Number.isFinite) && Math.max(...bottoms) - Math.min(...bottoms) <= 1;
-      })()`, { message: "divisórias dos três cabeçalhos de Conversas alinhadas" });
+      })()`, { message: "divisórias dos cabeçalhos da lista e do chat alinhadas" });
       await page.waitFor(`(() => {
         const list = document.querySelector('[data-testid="conversation-list-footer"]')?.getBoundingClientRect();
         const chat = document.querySelector('[data-testid="conversation-chat-footer"]')?.getBoundingClientRect();
         return Boolean(list && chat && Math.abs(list.top - chat.top) <= 1);
       })()`, { message: "divisórias dos rodapés da lista e do chat alinhadas" });
+      const bookTrigger = JSON.stringify(`[aria-label="Detalhes de ${tituloLivro}"]`);
+      const aboutPanel = '[data-testid="conversation-about-container"]';
+      await page.waitFor(`!document.querySelector(${JSON.stringify(aboutPanel)})`);
+      await page.eval(`document.querySelector(${bookTrigger}).focus()`);
+      await page.send("Input.dispatchKeyEvent", { ...enter, type: "keyDown", text: "\r", unmodifiedText: "\r" });
+      await page.send("Input.dispatchKeyEvent", { ...enter, type: "keyUp" });
       await page.waitFor(`(() => {
-        const pane = document.querySelector('[data-testid="conversation-about"]');
-        return Boolean(pane && !pane.textContent.includes("Combinar encontro"));
-      })()`);
+        const panel = document.querySelector(${JSON.stringify(aboutPanel)});
+        const bounds = panel?.getBoundingClientRect();
+        return Boolean(bounds && Math.abs(bounds.right - innerWidth) <= 1 && bounds.width <= 400 &&
+          panel.contains(document.activeElement));
+      })()`, {
+        message: "detalhes do livro em painel lateral com foco dentro",
+      });
+      const escapeKey = { key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 };
+      await page.send("Input.dispatchKeyEvent", { ...escapeKey, type: "keyDown" });
+      await page.send("Input.dispatchKeyEvent", { ...escapeKey, type: "keyUp" });
+      await page.waitFor(`!document.querySelector(${JSON.stringify(aboutPanel)}) && document.activeElement === document.querySelector(${bookTrigger})`, {
+        message: "Escape fecha o painel e devolve o foco ao título do livro",
+      });
+      const historyTop = await page.eval(`document.querySelector('[data-testid="conversation-chat-history"]').getBoundingClientRect().top`);
+      await page.clickBySelector('[aria-label="Opções da conversa"]');
+      await page.waitFor(`(() => {
+        const button = document.querySelector('[aria-label="Apagar conversa"]');
+        const rect = button?.getBoundingClientRect();
+        const history = document.querySelector('[data-testid="conversation-chat-history"]');
+        const input = document.querySelector('[aria-label="Campo de mensagem"]')?.getBoundingClientRect();
+        const send = document.querySelector('[aria-label="Enviar mensagem"]')?.getBoundingClientRect();
+        return Boolean(rect && button.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)) &&
+          Math.abs(history.getBoundingClientRect().top - ${historyTop}) <= 1 && input && send && send.right - input.left <= 817);
+      })()`, { message: "menu da conversa sobrepõe o chat sem deslocá-lo e a composição limita a largura" });
+      await page.send("Input.dispatchKeyEvent", { ...escapeKey, type: "keyDown" });
+      await page.send("Input.dispatchKeyEvent", { ...escapeKey, type: "keyUp" });
+      await page.waitFor(`!document.querySelector('[aria-label="Apagar conversa"]') && document.activeElement?.getAttribute('aria-label') === 'Opções da conversa'`, {
+        message: "Escape fecha o menu da conversa e devolve o foco",
+      });
       await page.clickByText("Confirmar encontro", { exact: true });
       await page.waitForText("Confirmar entrega", { timeoutMs: 15000 });
+      const confirmedHistoryTop = await page.eval(`document.querySelector('[data-testid="conversation-chat-history"]').getBoundingClientRect().top`);
+      await page.waitFor('!document.querySelector(\'[aria-label="Como chegar"]\')');
+      await page.clickBySelector('[aria-label="Mais opções do encontro"]');
+      await page.waitFor('Boolean(document.querySelector(\'[aria-label="Como chegar"]\') && document.querySelector(\'[aria-label="Adicionar à agenda"]\') && document.querySelector(\'[aria-label="Reagendar encontro"]\'))');
+      await page.waitFor(`Math.abs(document.querySelector('[data-testid="conversation-chat-history"]').getBoundingClientRect().top - ${confirmedHistoryTop}) <= 1`, {
+        message: "menu do encontro mantém a altura disponível para o histórico",
+      });
+      await page.clickBySelector('[aria-label="Campo de mensagem"]');
+      await page.waitFor('!document.querySelector(\'[aria-label="Como chegar"]\')');
+      await page.setViewport(1440, 600, false);
+      await page.waitFor(`(() => {
+        const history = document.querySelector('[data-testid="conversation-chat-history"]');
+        const bounds = history?.getBoundingClientRect();
+        const event = Array.from(history?.querySelectorAll('*') ?? []).find((node) =>
+          node.childElementCount === 0 && node.textContent.startsWith('Encontro confirmado em'))?.getBoundingClientRect();
+        const composer = document.querySelector('[data-testid="conversation-chat-footer"]')?.getBoundingClientRect();
+        return Boolean(bounds && bounds.height >= 180 && history.scrollTop > 0 && event && event.top >= bounds.top - 1 &&
+          event.bottom <= bounds.bottom + 1 && composer && composer.bottom <= innerHeight);
+      })()`, { message: "aviso mais recente inteiro e campo de mensagem visível em janela baixa" });
+      await page.setViewport(1024, 768, false);
+      await page.waitFor(`(() => {
+        const action = document.querySelector('[aria-label="Entrega do livro"]')?.getBoundingClientRect();
+        const pane = document.querySelector('[data-testid="conversation-pane"]')?.getBoundingClientRect();
+        return Boolean(action && pane && action.width > 0 && action.left >= pane.left && action.right <= pane.right);
+      })()`, { message: "ação do encontro cabe no painel em janela estreita" });
+      await assertSemOverflowHorizontal(page, "Conversas em janela estreita");
+      await page.setViewport(1440, 900, false);
       await page.clickBySelector('[aria-label^="Abrir notificações"]');
       await page.waitForText("Ver encontro");
       await assertSemOverflowHorizontal(page, "Notificações em tela larga");

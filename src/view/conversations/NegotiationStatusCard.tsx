@@ -8,6 +8,7 @@ import { tokens, type ColorPalette, fontFamily } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { withPress } from "@/view/pressFeedback";
+import { ChatWebOptions } from "./ChatWebOptions";
 
 export type NegotiationStatusCardProps = {
   meeting: Meeting | null;
@@ -104,13 +105,31 @@ export function NegotiationStatusCard({
     const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
     const pointName = meeting.pointName || point?.name || "Ponto público de Piripiri";
     const whenFormatted = formatMeetingWhen(meeting.scheduledAt);
-    const hasSecondaryOptions = Boolean(onAddToCalendar || onRescheduleMeeting);
-    const inlineLayout = compactWeb && !showMoreOptions;
-    const compactButton = [embedded && styles.actionButtonCompact, compactWeb && styles.actionButtonWeb];
+    const hasSecondaryOptions = Boolean(onAddToCalendar || onRescheduleMeeting || (compactWeb && onOpenDirections));
+    const deliveryButton = onOpenDelivery ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Entrega do livro"
+        accessibilityHint="Abre a confirmação de entrega por QR Code ou código"
+        hitSlop={embedded ? 4 : undefined}
+        onPress={onOpenDelivery}
+        style={withPress([
+          styles.actionButtonPrimary,
+          embedded && styles.actionButtonCompact,
+          embedded && styles.actionButtonPrimaryCompact,
+          compactWeb && styles.actionButtonWeb,
+        ])}
+      >
+        <AppIcon name="checkCircle" size={embedded ? 15 : 16} color={colors.nature.onFoliage} />
+        <Text numberOfLines={1} style={[styles.actionButtonPrimaryText, embedded && styles.actionButtonCompactText]}>
+          Confirmar entrega
+        </Text>
+      </Pressable>
+    ) : null;
 
     return (
-      <View style={[styles.card, styles.cardConfirmed, embedded && styles.cardEmbedded, inlineLayout && styles.cardInline]}>
-        <View style={[styles.contentRow, inlineLayout && styles.contentRowInline]}>
+      <View style={[styles.card, styles.cardConfirmed, embedded && styles.cardEmbedded]}>
+        <View style={styles.contentRow}>
           <View style={[styles.iconBox, { backgroundColor: `${colors.action}20` }]}>
             <AppIcon name="place" size={20} color={colors.action} />
           </View>
@@ -119,13 +138,33 @@ export function NegotiationStatusCard({
             accessibilityLabel={`Encontro confirmado: ${whenFormatted}, em ${pointName}`}
             style={styles.textContainer}
           >
-            <Text style={styles.title}>Encontro confirmado</Text>
-            <Text style={styles.highlight}>{whenFormatted}</Text>
-            <Text style={styles.subtitle} numberOfLines={2}>
-              {pointName}
-            </Text>
+            {compactWeb ? (
+              <>
+                <Text style={styles.title}>Encontro confirmado</Text>
+                <Text style={styles.subtitle}>
+                  <Text style={styles.highlight}>{whenFormatted}</Text>{` · ${pointName}`}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>Encontro confirmado</Text>
+                <Text style={styles.highlight}>{whenFormatted}</Text>
+                <Text style={styles.subtitle} numberOfLines={2}>{pointName}</Text>
+              </>
+            )}
           </View>
-          {embedded && hasSecondaryOptions ? (
+          {compactWeb ? deliveryButton : null}
+          {compactWeb && hasSecondaryOptions ? (
+            <ChatWebOptions
+              label="Mais opções do encontro"
+              buttonText="Encontro"
+              actions={[
+                { label: "Como chegar", icon: "place", onPress: onOpenDirections },
+                { label: "Adicionar à agenda", icon: "calendar", onPress: onAddToCalendar },
+                { label: "Reagendar encontro", icon: "swap", onPress: onRescheduleMeeting },
+              ]}
+            />
+          ) : embedded && hasSecondaryOptions ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Mais opções do encontro"
@@ -140,37 +179,24 @@ export function NegotiationStatusCard({
           ) : null}
         </View>
 
-        <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact, inlineLayout && styles.actionsGridInline]}>
-          {onOpenDelivery ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Entrega do livro"
-              accessibilityHint="Abre a confirmação de entrega por QR Code ou código"
-              hitSlop={embedded ? 4 : undefined}
-              onPress={onOpenDelivery}
-              style={withPress([styles.actionButtonPrimary, compactButton, embedded && styles.actionButtonPrimaryCompact])}
-            >
-              <AppIcon name="checkCircle" size={embedded ? 15 : 16} color={colors.nature.onFoliage} />
-              <Text numberOfLines={1} style={[styles.actionButtonPrimaryText, embedded && styles.actionButtonCompactText]}>
-                Confirmar entrega
-              </Text>
-            </Pressable>
-          ) : null}
+        {!compactWeb ? (
+          <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact]}>
+            {deliveryButton}
 
-          {onOpenDirections ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Como chegar"
-              accessibilityHint="Abre a rota para o ponto de encontro no mapa"
-              hitSlop={embedded ? 4 : undefined}
-              onPress={onOpenDirections}
-              style={withPress([styles.actionButtonSecondary, compactButton])}
-            >
-              <AppIcon name="place" size={embedded ? 15 : 16} color={colors.m3.onSurface} />
-              <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
-                Como chegar
-              </Text>
-            </Pressable>
+            {onOpenDirections ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Como chegar"
+                accessibilityHint="Abre a rota para o ponto de encontro no mapa"
+                hitSlop={embedded ? 4 : undefined}
+                onPress={onOpenDirections}
+                style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
+              >
+                <AppIcon name="place" size={embedded ? 15 : 16} color={colors.m3.onSurface} />
+                <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
+                  Como chegar
+                </Text>
+              </Pressable>
           ) : null}
 
           {(!embedded || showMoreOptions) && onAddToCalendar ? (
@@ -179,7 +205,7 @@ export function NegotiationStatusCard({
               accessibilityLabel="Adicionar à agenda"
               hitSlop={embedded ? 4 : undefined}
               onPress={onAddToCalendar}
-              style={withPress([styles.actionButtonSecondary, compactButton])}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
               <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
@@ -194,7 +220,7 @@ export function NegotiationStatusCard({
               accessibilityLabel="Reagendar encontro"
               hitSlop={embedded ? 4 : undefined}
               onPress={onRescheduleMeeting}
-              style={withPress([styles.actionButtonSecondary, compactButton])}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="swap" size={16} color={colors.m3.onSurface} />
               <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
@@ -203,6 +229,7 @@ export function NegotiationStatusCard({
             </Pressable>
           ) : null}
         </View>
+        ) : null}
       </View>
     );
   }
@@ -335,17 +362,6 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
     },
-    cardInline: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    contentRowInline: {
-      flexGrow: 1,
-      flexShrink: 1,
-      flexBasis: 300,
-    },
     iconBox: {
       width: 40,
       height: 40,
@@ -382,12 +398,6 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginTop: tokens.spacing[2],
     },
-    actionsGridInline: {
-      flexGrow: 1,
-      flexShrink: 1,
-      flexBasis: 296,
-      marginTop: 0,
-    },
     actionButtonCompact: {
       flex: 1,
       flexBasis: "45%",
@@ -397,7 +407,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[12],
       minHeight: 44,
     },
-    actionButtonWeb: { flexBasis: "auto" },
+    actionButtonWeb: { flex: 0, flexBasis: "auto", flexShrink: 0 },
     actionButtonPrimaryCompact: {
       paddingHorizontal: tokens.spacing[12],
     },

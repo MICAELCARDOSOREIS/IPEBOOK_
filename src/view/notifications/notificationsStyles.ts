@@ -105,6 +105,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
     },
     // Controle para reabrir o aviso explicativo depois de uma recusa (Spec 127).
     permissionBannerAction: { marginTop: tokens.spacing[10], maxWidth: 320 },
+    permissionBannerActionWide: { maxWidth: 560, marginTop: 0, marginBottom: tokens.spacing[4] },
     flexOne: { flex: 1, minHeight: 0 },
     contentWide: {
       flex: 1,
@@ -113,7 +114,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
       alignItems: "stretch",
       rowGap: tokens.spacing[8],
     },
@@ -124,6 +125,95 @@ export function createNotificationsStyles(colors: ColorPalette) {
       minWidth: 0,
       alignSelf: "stretch",
       minHeight: 0,
+    },
+    mainWideColumns: {
+      flexDirection: "row",
+      alignItems: "stretch",
+      gap: tokens.spacing[24],
+    },
+    wideListColumn: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 0,
+    },
+    wideSidePane: {
+      width: 340,
+      flexShrink: 0,
+      paddingTop: tokens.spacing[16],
+      gap: tokens.spacing[14],
+    },
+    wideSideCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[18],
+      gap: tokens.spacing[10],
+    },
+    wideSideTitle: {
+      ...tokens.typography.titleMedium,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.m3.onSurface,
+    },
+    wideSideDescription: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    wideSideActions: {
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+    },
+    wideSideLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[10],
+      minHeight: 44,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    wideSideLinkHover: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+    wideSideLinkIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.soft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    wideSideLinkText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onSurface,
+      flex: 1,
+    },
+    wideTipCard: {
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[6],
+    },
+    wideTipHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    wideTipTitle: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurface,
+    },
+    wideTipText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 19,
     },
     // Centraliza os estados vazios, de carregamento e de erro.
     mainSolo: {
@@ -195,6 +285,9 @@ export function createNotificationsStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginBottom: tokens.spacing[8],
     },
+    managementActionsWide: {
+      justifyContent: "flex-end",
+    },
     historyToggle: {
       alignSelf: "flex-start",
       minHeight: tokens.accessibility.touchTarget,
@@ -259,7 +352,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[24],
-      paddingBottom: tokens.spacing[14],
+      paddingBottom: tokens.spacing[12],
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
@@ -535,8 +628,8 @@ export function createNotificationsStyles(colors: ColorPalette) {
       paddingRight: tokens.spacing[16],
     },
     cardIconButton: {
-      width: 34,
-      height: 34,
+      width: 38,
+      height: 38,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
@@ -570,6 +663,10 @@ export function createNotificationsStyles(colors: ColorPalette) {
       alignSelf: "center",
       marginTop: 0,
       flexShrink: 0,
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[6],
+      borderWidth: 1,
+      borderColor: `${colors.action}30`,
     },
     cardFooterUnread: {
       backgroundColor: colors.m3.secondaryContainer,

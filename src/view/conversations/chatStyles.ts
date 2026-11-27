@@ -3,6 +3,8 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { CONVERSATIONS_FOOTER_MIN_HEIGHT } from "@/view/conversations/conversationsStyles";
 
+const readingWidthPadding = "max(20px, calc((100% - 816px) / 2))" as never;
+
 export function createChatStyles(colors: ColorPalette) {
   return StyleSheet.create({
     closedNotice: {
@@ -65,6 +67,7 @@ export function createChatStyles(colors: ColorPalette) {
       borderBottomWidth: 1,
       borderBottomColor: colors.book.paperEdge,
     },
+    headerCompact: { paddingVertical: tokens.spacing[6], gap: tokens.spacing[8] },
     backButton: {
       width: tokens.accessibility.touchTarget,
       height: tokens.accessibility.touchTarget,
@@ -84,7 +87,47 @@ export function createChatStyles(colors: ColorPalette) {
       paddingVertical: 2,
       gap: tokens.spacing[6],
     },
-    linkBookTitle: { flexShrink: 1 },
+    headerBookPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      maxWidth: "100%",
+      minHeight: 28,
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      gap: tokens.spacing[6],
+    },
+    headerBookPillLabel: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSurfaceVariant,
+    },
+    headerBookPillModality: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.primary,
+    },
+    linkBookTitle: { flexShrink: 1, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
+    headerBookSummary: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
+    headerBookModality: { flexShrink: 0 },
+    headerDetailsButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      gap: tokens.spacing[6],
+      minHeight: 44,
+      paddingHorizontal: tokens.spacing[10],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    headerDetailsLabel: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSecondaryContainer,
+    },
     conversationOptions: {
       alignItems: "flex-end",
       paddingHorizontal: tokens.spacing[12],
@@ -271,28 +314,6 @@ export function createChatStyles(colors: ColorPalette) {
     },
     sendActive: { backgroundColor: colors.m3.primary },
     sendDisabled: { opacity: 0.45 },
-    quickRepliesRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[4],
-    },
-    quickReplyChip: {
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-      minHeight: Platform.OS === "ios" ? 44 : 36,
-      justifyContent: "center",
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-    },
-    quickReplyText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurface,
-    },
     eventRow: {
       alignItems: "center",
       marginVertical: tokens.spacing[8],
@@ -397,7 +418,8 @@ export function createChatStyles(colors: ColorPalette) {
       borderBottomWidth: 1,
       borderBottomColor: colors.book.paperEdge,
     },
-    headerEmbeddedWide: { paddingVertical: tokens.spacing[6] },
+    headerEmbeddedWide: { paddingVertical: tokens.spacing[2], zIndex: 3 },
+    statusStripEmbeddedWide: { zIndex: 2 },
     headerInfo: {
       flex: 1,
       minWidth: 0,
@@ -425,6 +447,13 @@ export function createChatStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
     },
+    listEmbeddedWide: {
+      flexGrow: 1,
+      justifyContent: "flex-end",
+      paddingHorizontal: readingWidthPadding,
+      paddingBottom: tokens.spacing[12],
+    },
+    readingWidth: { paddingHorizontal: readingWidthPadding },
     bubbleWide: {
       maxWidth: 460,
     },
@@ -435,7 +464,7 @@ export function createChatStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderTopColor: colors.book.paperEdge,
     },
-    composerEmbeddedWide: { minHeight: CONVERSATIONS_FOOTER_MIN_HEIGHT },
+    composerEmbeddedWide: { minHeight: CONVERSATIONS_FOOTER_MIN_HEIGHT, paddingHorizontal: readingWidthPadding },
     offlineNotice: {
       flexDirection: "row",
       alignItems: "center",
