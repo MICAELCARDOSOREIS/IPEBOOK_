@@ -16,6 +16,7 @@ export type NegotiationStatusCardProps = {
   sessionUserId: string;
   deliveryCompleted: boolean;
   embedded?: boolean;
+  compactWeb?: boolean;
   busy?: boolean;
   combineAccessibilityLabel?: string;
   combineButtonLabel?: string;
@@ -36,6 +37,7 @@ export function NegotiationStatusCard({
   sessionUserId,
   deliveryCompleted,
   embedded,
+  compactWeb,
   busy,
   combineAccessibilityLabel,
   combineButtonLabel,
@@ -102,30 +104,51 @@ export function NegotiationStatusCard({
     const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
     const pointName = meeting.pointName || point?.name || "Ponto público de Piripiri";
     const whenFormatted = formatMeetingWhen(meeting.scheduledAt);
+    const hasSecondaryOptions = Boolean(onAddToCalendar || onRescheduleMeeting);
+    const inlineLayout = compactWeb && !showMoreOptions;
+    const compactButton = [embedded && styles.actionButtonCompact, compactWeb && styles.actionButtonWeb];
 
     return (
-      <View style={[styles.card, styles.cardConfirmed, embedded && styles.cardEmbedded]}>
-        <View style={styles.contentRow}>
+      <View style={[styles.card, styles.cardConfirmed, embedded && styles.cardEmbedded, inlineLayout && styles.cardInline]}>
+        <View style={[styles.contentRow, inlineLayout && styles.contentRowInline]}>
           <View style={[styles.iconBox, { backgroundColor: `${colors.action}20` }]}>
             <AppIcon name="place" size={20} color={colors.action} />
           </View>
-          <View style={styles.textContainer}>
+          <View
+            accessible
+            accessibilityLabel={`Encontro confirmado: ${whenFormatted}, em ${pointName}`}
+            style={styles.textContainer}
+          >
             <Text style={styles.title}>Encontro confirmado</Text>
             <Text style={styles.highlight}>{whenFormatted}</Text>
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <Text style={styles.subtitle} numberOfLines={2}>
               {pointName}
             </Text>
           </View>
+          {embedded && hasSecondaryOptions ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Mais opções do encontro"
+              accessibilityHint="Exibe opções para adicionar à agenda ou reagendar o encontro"
+              accessibilityState={{ expanded: showMoreOptions }}
+              hitSlop={6}
+              onPress={() => setShowMoreOptions((prev) => !prev)}
+              style={withPress(styles.moreOptionsButton)}
+            >
+              <AppIcon name="more" size={18} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          ) : null}
         </View>
 
-        <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact]}>
+        <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact, inlineLayout && styles.actionsGridInline]}>
           {onOpenDelivery ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Entrega do livro"
+              accessibilityHint="Abre a confirmação de entrega por QR Code ou código"
               hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDelivery}
-              style={withPress([styles.actionButtonPrimary, embedded && styles.actionButtonCompact, embedded && styles.actionButtonPrimaryCompact])}
+              style={withPress([styles.actionButtonPrimary, compactButton, embedded && styles.actionButtonPrimaryCompact])}
             >
               <AppIcon name="checkCircle" size={embedded ? 15 : 16} color={colors.nature.onFoliage} />
               <Text numberOfLines={1} style={[styles.actionButtonPrimaryText, embedded && styles.actionButtonCompactText]}>
@@ -138,27 +161,15 @@ export function NegotiationStatusCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Como chegar"
+              accessibilityHint="Abre a rota para o ponto de encontro no mapa"
               hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDirections}
-              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
+              style={withPress([styles.actionButtonSecondary, compactButton])}
             >
               <AppIcon name="place" size={embedded ? 15 : 16} color={colors.m3.onSurface} />
               <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
                 Como chegar
               </Text>
-            </Pressable>
-          ) : null}
-
-          {embedded && (onAddToCalendar || onRescheduleMeeting) ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Mais opções do encontro"
-              accessibilityState={{ expanded: showMoreOptions }}
-              hitSlop={4}
-              onPress={() => setShowMoreOptions((prev) => !prev)}
-              style={withPress(styles.moreOptionsButton)}
-            >
-              <AppIcon name="more" size={18} color={colors.m3.onSurfaceVariant} />
             </Pressable>
           ) : null}
 
@@ -168,10 +179,10 @@ export function NegotiationStatusCard({
               accessibilityLabel="Adicionar à agenda"
               hitSlop={embedded ? 4 : undefined}
               onPress={onAddToCalendar}
-              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
+              style={withPress([styles.actionButtonSecondary, compactButton])}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>
+              <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
                 {embedded ? "Agenda" : "Adicionar à agenda"}
               </Text>
             </Pressable>
@@ -183,10 +194,12 @@ export function NegotiationStatusCard({
               accessibilityLabel="Reagendar encontro"
               hitSlop={embedded ? 4 : undefined}
               onPress={onRescheduleMeeting}
-              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
+              style={withPress([styles.actionButtonSecondary, compactButton])}
             >
               <AppIcon name="swap" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>Reagendar</Text>
+              <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
+                Reagendar
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -322,6 +335,17 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
     },
+    cardInline: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    contentRowInline: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 300,
+    },
     iconBox: {
       width: 40,
       height: 40,
@@ -355,17 +379,25 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[6],
     },
     actionsGridCompact: {
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       marginTop: tokens.spacing[2],
     },
-    actionButtonCompact: {
+    actionsGridInline: {
       flexGrow: 1,
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      paddingVertical: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[10],
-      minHeight: Platform.OS === "ios" ? 44 : 40,
+      flexShrink: 1,
+      flexBasis: 296,
+      marginTop: 0,
     },
+    actionButtonCompact: {
+      flex: 1,
+      flexBasis: "45%",
+      justifyContent: "center",
+      gap: tokens.spacing[6],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
+      minHeight: 44,
+    },
+    actionButtonWeb: { flexBasis: "auto" },
     actionButtonPrimaryCompact: {
       paddingHorizontal: tokens.spacing[12],
     },

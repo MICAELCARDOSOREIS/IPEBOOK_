@@ -318,9 +318,12 @@ export function Chat({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+              accessibilityHint="Exibe os detalhes do livro e do encontro"
+              hitSlop={{ top: 6, bottom: 10, left: 6, right: 12 }}
               onPress={() => guardedOpenNegotiation(requestId)}
               style={withPress(styles.headerBookLink, colors.m3.focusRing)}
             >
+              <AppIcon name="shelf" size={13} color={colors.m3.onSurfaceVariant} />
               <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
               {modalityLabel ? (
                 <>
@@ -379,6 +382,7 @@ export function Chat({
           ) : (
             <NegotiationStatusCard
               embedded
+              compactWeb={wideWeb && embedded}
               meeting={meetingState.meeting}
               requestStatus={detail.request.status}
               counterpartName={name}
@@ -472,6 +476,7 @@ export function Chat({
           ) : (
             <ScrollEdgeFlatList
               ref={listRef}
+              testID={wideWeb && embedded ? "conversation-chat-history" : undefined}
               style={styles.flex}
               {...standardVerticalScrollProps}
               data={timeline}
@@ -536,17 +541,21 @@ export function Chat({
               {detail?.request.status === "accepted" &&
               meetingState.meeting &&
               meetingState.meeting.status !== "cancelled" &&
-              state.messages.length === 0 &&
               !state.inputText.trim() &&
               isOnline &&
-              !state.isSending ? (
+              !state.isSending &&
+              (!isKeyboardVisible || state.messages.length === 0) ? (
                 <View style={styles.quickRepliesRow}>
                   {["Estou chegando", "Já estou aqui", "Qual ponto?"].map((reply) => (
                     <Pressable
                       key={reply}
                       accessibilityRole="button"
                       accessibilityLabel={`Sugestão de mensagem: ${reply}`}
-                      onPress={() => actions.setInputText(reply)}
+                      accessibilityHint="Preenche o campo de mensagem com esta frase rápida"
+                      onPress={() => {
+                        if (Platform.OS === "ios") triggerHaptic("selection");
+                        actions.setInputText(reply);
+                      }}
                       style={withPress(styles.quickReplyChip)}
                     >
                       <Text style={styles.quickReplyText}>{reply}</Text>
