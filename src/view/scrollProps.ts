@@ -47,6 +47,8 @@ export const scrollBottomPadding = {
   withBottomBar: 128,
   /** Telas com barra inferior de navegação e botão flutuante de mensagens (FAB) */
   withBottomBarAndFab: 192,
+  /** Espaço livre para o FAB dentro das abas que já recebem o inseto do UIKit. */
+  nativeTabWithFab: tokens.spacing[80],
   /** Telas secundárias sem barra inferior de navegação */
   withoutBottomBar: tokens.spacing[32],
 } as const;

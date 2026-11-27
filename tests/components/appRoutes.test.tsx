@@ -30,6 +30,7 @@ jest.mock("expo-router", () => ({
     canGoBack: () => mockCanGoBack(),
   },
   Stack: mockCreateScreenStub("StackStub"),
+  Slot: mockCreateScreenStub("SlotStub"),
   usePathname: () => mockPathnameState.current,
   useLocalSearchParams: () => mockParamsState.current,
   useFocusEffect: (cb: () => void) => {
@@ -38,6 +39,18 @@ jest.mock("expo-router", () => ({
       cb();
     }, []);
   },
+}));
+
+jest.mock("expo-router/native-tabs", () => ({
+  NativeTabs: Object.assign(mockCreateScreenStub("NativeTabsStub"), {
+    Trigger: Object.assign(mockCreateScreenStub("NativeTabTriggerStub"), {
+      Icon: mockCreateScreenStub("NativeTabIconStub"),
+      Label: ({ children }: { children: string }) => {
+        mockRenderedProps[`NativeTabLabel:${children}`] = { children };
+        return null;
+      },
+    }),
+  }),
 }));
 
 jest.mock("expo-status-bar", () => ({
@@ -174,9 +187,10 @@ import EsqueciSenha from "@/app/esqueci-senha";
 import ExcluirContaRoute from "@/app/excluir-conta";
 import FavoritesRoute from "@/app/favoritos";
 import GerenciarAnuncioRoute from "@/app/gerenciar-anuncio/[id]";
-import Index from "@/app/index";
+import Index from "@/app/(tabs)/index";
+import TabsLayout from "@/app/(tabs)/_layout";
 import LivroDetalhe from "@/app/livro/[id]";
-import MeusAnunciosRoute from "@/app/meus-anuncios";
+import MeusAnunciosRoute from "@/app/(tabs)/meus-anuncios";
 import MeusPedidosRoute from "@/app/meus-pedidos";
 import ModeracaoRoute from "@/app/moderacao";
 import NegociacaoDetalheRoute from "@/app/negociacao/[id]";
@@ -193,7 +207,7 @@ import ConvidarRoute from "@/app/perfil/convidar";
 import EditarPerfilRoute from "@/app/perfil/editar";
 import EncontrosRoute from "@/app/perfil/encontros";
 import SegurancaRoute from "@/app/perfil/seguranca";
-import Pesquisa from "@/app/pesquisa";
+import Pesquisa from "@/app/(tabs)/pesquisa";
 import RascunhosRoute from "@/app/rascunhos";
 import RedefinirSenhaRoute from "@/app/redefinir-senha";
 import Sobre from "@/app/sobre";
@@ -586,17 +600,40 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     const htmlElement = RootHtml({ children: null });
     expect(htmlElement.props.lang).toBe("pt-BR");
 
-    mockPathnameState.current = "/";
-    await renderRoute(<RootLayout />);
-    expect(getStub("PwaRegisterStub")).toBeTruthy();
-    expect(getStub("BrandSplashScreenStub")).toBeTruthy();
-    getStub("PushRegistrationStub").onOpenRoute("/notificacoes");
-    expect(mockPushOnce).toHaveBeenCalledWith("/notificacoes");
-    getStub("InitialRouteGateStub").onShowWelcome();
-    expect(mockReplaceOnce).toHaveBeenCalledWith("/bem-vindo");
-    const navBar = getStub("ConnectedNavigationBarStub");
-    navBar.onNavigate("search");
-    expect(mockPushOnce).toHaveBeenCalledWith("/pesquisa");
+    const originalOS = Platform.OS;
+    try {
+      Platform.OS = "android";
+      mockPathnameState.current = "/";
+      await renderRoute(<RootLayout />);
+      expect(getStub("PwaRegisterStub")).toBeTruthy();
+      expect(getStub("BrandSplashScreenStub")).toBeTruthy();
+      getStub("PushRegistrationStub").onOpenRoute("/notificacoes");
+      expect(mockPushOnce).toHaveBeenCalledWith("/notificacoes");
+      getStub("InitialRouteGateStub").onShowWelcome();
+      expect(mockReplaceOnce).toHaveBeenCalledWith("/bem-vindo");
+      const navBar = getStub("ConnectedNavigationBarStub");
+      navBar.onNavigate("search");
+      expect(mockPushOnce).toHaveBeenCalledWith("/pesquisa");
+
+      delete mockRenderedProps.ConnectedNavigationBarStub;
+      Platform.OS = "ios";
+      await renderRoute(<RootLayout />);
+      expect(mockRenderedProps.ConnectedNavigationBarStub).toBeUndefined();
+      await renderRoute(<TabsLayout />);
+      expect(getStub("NativeTabsStub").tintColor).toBeTruthy();
+      expect(mockRenderHistory.NativeTabTriggerStub?.map(({name}) => name)).toEqual(
+        expect.arrayContaining(["index", "pesquisa", "meus-anuncios"]),
+      );
+      for (const label of ["Início", "Explorar", "Estante"]) {
+        expect(mockRenderedProps[`NativeTabLabel:${label}`]).toEqual({ children: label });
+      }
+
+      Platform.OS = "web";
+      await renderRoute(<TabsLayout />);
+      expect(getStub("SlotStub")).toBeTruthy();
+    } finally {
+      Platform.OS = originalOS;
+    }
 
     const retryFn = jest.fn();
     await renderRoute(<ErrorBoundary error={new Error("Falha")} retry={retryFn} />);

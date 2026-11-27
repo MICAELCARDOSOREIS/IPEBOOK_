@@ -1,13 +1,13 @@
 import { Platform } from "react-native";
 
 const MODAL_ROUTES = new Set([
-  "anunciar",
   "denunciar/[id]",
   "denunciar-pessoa/[userId]",
   "excluir-conta",
 ]);
 
 const FADE_ROUTES = new Set([
+  "(tabs)",
   "index",
   "pesquisa",
   "meus-anuncios",

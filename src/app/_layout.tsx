@@ -155,7 +155,7 @@ export default function RootLayout() {
         <PwaRegister />
         <PushRegistration pathname={pathname} onOpenRoute={(route) => pushOnce(route as never)} />
         <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
-          <KeyboardAwareRoot>
+          <KeyboardAwareRoot disabled={Platform.OS === "ios" && Boolean(activeDestination && DOCK_DESTINATIONS.has(activeDestination))}>
             {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (
               <ConnectedWebHeader
                 active={activeDestination}
@@ -171,7 +171,7 @@ export default function RootLayout() {
                 <ThemedStack />
               </View>
             ) : <ThemedStack />}
-            {activeDestination && DOCK_DESTINATIONS.has(activeDestination) && !wideWeb && !WEB_BETA_ONLY ? (
+            {Platform.OS !== "ios" && activeDestination && DOCK_DESTINATIONS.has(activeDestination) && !wideWeb && !WEB_BETA_ONLY ? (
               <ConnectedNavigationBar
                 active={activeDestination}
                 pathname={pathname}
