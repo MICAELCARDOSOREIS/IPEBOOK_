@@ -281,16 +281,18 @@ export function RequestListLayout({
                       variant={wide ? "card" : "list"}
                     />
                     <View style={styles.bookInfo}>
-                      <Text numberOfLines={2} style={styles.itemTitle}>{item.listing.title}</Text>
+                      <View style={styles.titleRow}>
+                        <Text numberOfLines={2} style={styles.itemTitle}>{item.listing.title}</Text>
+                        <Text style={[styles.badge, completed ? styles.completed : styles[item.request.status]]}>
+                          {completed ? "Finalizado" : statusLabel[item.request.status]}
+                        </Text>
+                      </View>
                       <Text style={styles.body} numberOfLines={1}>{item.listing.author}</Text>
                       <View style={styles.tagRow}>
                         <Tag variant={item.listing.modality} />
                         {item.listing.modality === "sale" && item.listing.price !== undefined ? (
                           <Text style={styles.price}>{formatPrice(item.listing.price)}</Text>
                         ) : null}
-                        <Text style={[styles.badge, completed ? styles.completed : styles[item.request.status]]}>
-                          {completed ? "Finalizado" : statusLabel[item.request.status]}
-                        </Text>
                       </View>
                     </View>
                   </View>
@@ -336,18 +338,18 @@ export function createRequestStyles(colors: ColorPalette) {
       ...tokens.typography.bodyLarge,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    secondary: {
+    rejectButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: colors.m3.outlineVariant,
     },
-    secondaryText: {
-      color: colors.action,
-      ...tokens.typography.bodyLarge,
+    rejectButtonText: {
+      color: colors.error,
+      ...tokens.typography.bodyMedium,
       fontWeight: tokens.fontWeight.semiBold,
     },
     chatButton: {
@@ -362,17 +364,16 @@ export function createRequestStyles(colors: ColorPalette) {
     },
     chatButtonText: {
       color: colors.m3.onSecondaryContainer,
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.bodyMedium,
       fontWeight: tokens.fontWeight.semiBold,
     },
     requesterRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
-      backgroundColor: colors.m3.surfaceContainer,
-      borderRadius: tokens.radius.medium,
+      gap: tokens.spacing[10],
+      paddingTop: tokens.spacing[10],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.book.paperEdge,
     },
     requesterInfo: {
       flex: 1,
@@ -441,19 +442,6 @@ export function createRequestStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       fontWeight: tokens.fontWeight.medium,
       color: colors.m3.onSurface,
-    },
-    hintBox: {
-      backgroundColor: colors.nature.sprout,
-      borderRadius: tokens.radius.medium,
-      padding: tokens.spacing[12],
-      gap: tokens.spacing[4],
-      marginTop: tokens.spacing[6],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-    },
-    hintText: {
-      ...tokens.typography.labelMedium,
-      color: colors.nature.foliageDeep,
     },
     error: {
       ...tokens.typography.bodyMedium,
@@ -639,15 +627,15 @@ function createStyles(colors: ColorPalette) {
     minWidth: 0,
     gap: tokens.spacing[4],
   },
-  row: {
+  titleRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: tokens.spacing[8],
   },
   tagRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: tokens.spacing[8],
     marginTop: tokens.spacing[4],
@@ -672,7 +660,7 @@ function createStyles(colors: ColorPalette) {
   },
   itemTitle: {
     flex: 1,
-    minWidth: 140,
+    minWidth: 0,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: colors.text,
@@ -680,30 +668,31 @@ function createStyles(colors: ColorPalette) {
   badge: {
     flexShrink: 0,
     borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[10],
     paddingVertical: tokens.spacing[4],
     ...tokens.typography.labelMedium,
+    fontWeight: tokens.fontWeight.semiBold,
     overflow: "hidden",
   },
   pending: {
-    backgroundColor: colors.badge.trade.background,
-    color: colors.badge.trade.text,
+    backgroundColor: colors.ipe.container,
+    color: colors.ipe.onContainer,
   },
   accepted: {
-    backgroundColor: colors.badge.donation.background,
-    color: colors.badge.donation.text,
+    backgroundColor: colors.m3.secondaryContainer,
+    color: colors.m3.onSecondaryContainer,
   },
   completed: {
-    backgroundColor: colors.badge.completed.background,
-    color: colors.badge.completed.text,
+    backgroundColor: colors.nature.foliage,
+    color: colors.nature.onFoliage,
   },
   rejected: {
-    backgroundColor: colors.disabledBackground,
-    color: colors.secondaryText,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    color: colors.m3.onSurfaceVariant,
   },
   cancelled: {
-    backgroundColor: colors.disabledBackground,
-    color: colors.secondaryText,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    color: colors.m3.onSurfaceVariant,
   },
   primary: requestStyles.primary,
   primaryText: requestStyles.primaryText,

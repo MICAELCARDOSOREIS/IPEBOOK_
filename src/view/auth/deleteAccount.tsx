@@ -15,6 +15,7 @@ import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { scrollBottomPadding } from "@/view/scrollProps";
+import { SUPPORT_EMAIL } from "@/view/supportContact";
 
 export type DeleteAccountProps = {
   sessionUserId: string | null;
@@ -124,8 +125,8 @@ export default function DeleteAccount({
             {onNavigateToLogin
               ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
               : Platform.OS === "ios"
-                ? "No aplicativo do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o endereço cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."
-                : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
+                ? `No aplicativo do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o endereço cadastrado para ${SUPPORT_EMAIL} solicitando a exclusão definitiva dos seus dados (LGPD).`
+                : `No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o endereço cadastrado para ${SUPPORT_EMAIL} solicitando a exclusão definitiva dos seus dados (LGPD).`}
           </Text>
           {onNavigateToLogin ? (
             <View style={styles.fullWidthButton}>

@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type React from "react";
 import * as Linking from "expo-linking";
-import { Platform, Share, StyleSheet } from "react-native";
+import { Clipboard, Platform, Share, StyleSheet } from "react-native";
 import type { Book } from "@/model/entities/book";
 import ManageListing from "@/view/listings/manageListing";
 import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
@@ -244,16 +244,28 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(onViewPublicListing).toHaveBeenCalledWith("b1");
   });
 
-  it("permite compartilhar o anúncio", async () => {
+  it("copia o link direto na divulgação e não exibe o botão redundante de compartilhar abaixo", async () => {
     mockViewModel({});
+    const copySpy = jest.spyOn(Clipboard, "setString");
     const screen = await renderScreen();
 
-    const shareButton = screen.getByLabelText("Compartilhar anúncio");
-    expect(shareButton).toBeDefined();
-
+    expect(screen.getByText("ipebook.app/livro/b1")).toBeDefined();
+    expect(screen.queryByLabelText("Compartilhar anúncio")).toBeNull();
+    const copyButton = screen.getByLabelText("Copiar link do anúncio");
     await act(async () => {
-      fireEvent.press(shareButton);
+      fireEvent.press(copyButton);
     });
+    expect(copySpy).toHaveBeenCalledWith("https://ipebook.app/livro/b1");
+    expect(screen.getByText("Link do anúncio copiado para a área de transferência!")).toBeDefined();
+    expect(screen.getByText("Copiado")).toBeDefined();
+  });
+
+  it("mostra aviso contextual na divulgação quando o anúncio está pausado", async () => {
+    mockViewModel({ book: { ...book, status: "paused" } });
+    const screen = await renderScreen();
+    expect(
+      screen.getByText("Anúncio pausado: retome o anúncio antes de divulgar para que leitores consigam acessá-lo."),
+    ).toBeDefined();
   });
 
   it("permite divulgar o anúncio no WhatsApp (Spec 118)", async () => {
@@ -297,11 +309,33 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     const whatsappBtn = screen.getByLabelText("Divulgar no WhatsApp");
     expect(whatsappBtn.props.accessibilityHint).toContain("Abre o WhatsApp");
 
-    const shareBtn = screen.getByLabelText("Compartilhar anúncio");
-    expect(shareBtn.props.accessibilityHint).toContain("Abre o menu para copiar link");
+    const copyBtn = screen.getByLabelText("Copiar link do anúncio");
+    expect(copyBtn.props.accessibilityHint).toContain("Copia o endereço direto");
 
     const pauseBtn = screen.getByLabelText("Pausar anúncio");
     expect(pauseBtn.props.accessibilityHint).toContain("Oculta temporariamente");
+  });
+
+  it("reserva respiro inferior suficiente no iOS para a barra fixa não cobrir a divulgação", async () => {
+    jest.replaceProperty(Platform, "OS", "ios");
+    mockViewModel({});
+    const screen = await renderScreen();
+    type JsonNode = { type?: string; props?: { contentContainerStyle?: unknown }; children?: Array<JsonNode | string> | null };
+    const findScroll = (node: JsonNode | null): JsonNode | null => {
+      if (!node || typeof node === "string") return null;
+      if (node.type === "ScrollView") return node;
+      for (const child of node.children ?? []) {
+        if (typeof child !== "string") {
+          const hit = findScroll(child);
+          if (hit) return hit;
+        }
+      }
+      return null;
+    };
+    const scrollNode = findScroll(screen.toJSON() as JsonNode | null);
+    expect(scrollNode).not.toBeNull();
+    const scrollStyle = StyleSheet.flatten(scrollNode?.props?.contentContainerStyle as never);
+    expect(Number(scrollStyle.paddingBottom)).toBeGreaterThanOrEqual(112);
   });
 
   it("aplica a cor temática correspondente à modalidade do anúncio (doação, troca e venda)", async () => {

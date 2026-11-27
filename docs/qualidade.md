@@ -80,11 +80,11 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 ### 3.5. Testes de Integração Real (`tests/integration/`)
 - **`homeIntegration.test.tsx` (2 testes):** Exercita o fluxo completo de ponta a ponta sem nenhum mock de regra de negócio, ligando `MemoryBookDataSource` -> `BookUseCases` -> `useHomeViewModel` -> Renderização nativa da View.
 
-### 3.6. Testes E2E Web (CDP) e validação manual em dispositivo
+### 3.6. Testes E2E Web (CDP) e validação em dispositivo
 
-A versão Web conta com suíte End-to-End automatizada em [`tests/e2e/run.mjs`](../tests/e2e/run.mjs) (`npm run test:e2e`, [Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)), executando **7 cenários** ponta a ponta no Google Chrome headless via Chrome DevTools Protocol (CDP) puro em Node.js 24, sem Playwright (todos os **7/7 aprovados** em `npm run test:e2e:build`).
+A suíte Web executa oito cenários no Chrome headless via Chrome DevTools Protocol (CDP) em Node.js 24, usando o backend em memória. Rode `npm run test:e2e` para testar a exportação existente ou `npm run test:e2e:build` para regenerá-la. [Cenários](../tests/e2e/run.mjs) · [ADR 0112](adr/0112-e2e-web-cdp.md)
 
-Os fluxos nativos que exigem aparelho físico (login Google nativo, câmera e leitura de QR Code entre dois aparelhos, notificações push e leitor de tela TalkBack/VoiceOver) são conferidos manualmente antes de cada publicação (não há suíte Maestro ativa no repositório). Essa verificação manual é complementar e não substitui os testes automatizados descritos acima.
+A suíte Maestro cobre seis fluxos Android. Login nativo, QR Code em dois aparelhos, recebimento de push e leitores de tela exigem conferência em aparelho físico. As pré-condições para cada cenário estão no [guia da suíte Android](../.maestro/README.md).
 
 ---
 
@@ -92,42 +92,13 @@ Os fluxos nativos que exigem aparelho físico (login Google nativo, câmera e le
 
 A verificação é realizada pelo Jest com provedor V8 (`coverageProvider: "v8"` em [`jest.config.cjs`](../jest.config.cjs)), exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-11-17 pela suíte de validação e cobertura (`npm run test:coverage`):**
-- **Statements:** 95% (requisito: >= 80%)
-- **Branches:** 85,54% (requisito: >= 80%)
-- **Functions:** 81,02% (requisito: >= 80%)
-- **Lines:** 95% (requisito: >= 80%)
-
-A suíte validada nessa execução continha 2.300 testes aprovados em 312 arquivos. Os números acima
-são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
-`docs/estado.md` e não devem ser usados como retrato atual da cobertura.
-
-A cobertura de *functions* (81,02%) permanece com margem mais próxima do mínimo de 80%. Elevá-la de forma
-segura exige cobrir ramos e callbacks menos acionados de ViewModels e componentes de UI, e não apenas
-acrescentar testes de caminho feliz; por isso o limite não foi elevado artificialmente.
+A quantidade de testes, os percentuais medidos de cobertura e a data da execução ficam no [estado verificado](estado.md#1-estado-verificado-em-execução).
 
 ### 4.1. Lint e dependências
 
-O `npm run lint` executa o Biome sobre `src/`, `tests/`, `functions/` e `scripts/`. A configuração
-em [`biome.json`](../biome.json) usa o preset recomendado, formatter desativado e rebaixa para aviso
-(ou desativa pontualmente) as regras cuja correção exigiria refatoração ampla fora do escopo. Na
-medição de 2026-11-17 o resultado foi de 0 erros e 367 avisos em 856 arquivos verificados; a CI executa a mesma verificação. A regra `useHookAtTopLevel` (Rules of Hooks) permanece
-no nível padrão de erro.
+O `npm run lint` executa o Biome. O preset recomendado está em [biome.json](../biome.json), com o formatador desativado. A regra `useHookAtTopLevel` é tratada como erro.
 
-A auditoria de dependências de produção (`npm audit --omit=dev`) aponta 13 vulnerabilidades
-(2 altas, 10 moderadas e 1 baixa), sem nenhuma crítica. As correções automáticas disponíveis
-exigiriam mudanças incompatíveis em módulos do Expo (`expo@58`), então não foram aplicadas. Foram
-aplicados apenas `overrides` pontuais e compatíveis em `package.json`:
-
-| Pacote | Versão forçada | Origem | Efeito |
-| :--- | :--- | :--- | :--- |
-| `shell-quote` | `1.12.0` | `react-devtools-core` | Remove a vulnerabilidade crítica |
-| `node-forge` | `1.4.3` | `@expo/code-signing-certificates` | Remove a vulnerabilidade alta |
-
-As pendências restantes vêm de `glob`, `minimatch`, `zod` e `deepmerge` transitivos do Expo e do
-Sentry. `glob` e `minimatch` já estão na versão mais recente da linha usada e continuam sinalizados;
-`deepmerge` não tem correção publicada. A recomendação é reavaliar quando o Expo publicar uma
-versão compatível, sem forçar downgrade da stack.
+Use `npm audit --omit=dev` para consultar o estado das dependências contra os avisos disponíveis na data da execução. Os overrides vigentes ficam em [package.json](../package.json).
 
 ---
 
@@ -145,7 +116,7 @@ Este guia foi elaborado para apoiar a apresentação técnica perante os avaliad
 > 3. *Usabilidade: atestada por testes com React Native Testing Library que verificam acessibilidade para leitores de tela (papéis de header, alert e button), complementados por E2E Web via Chrome CDP e inspeção manual em dispositivo."*
 
 ### P3: "Como funciona a validação End-to-End (E2E) do aplicativo?"
-> **Resposta:** *"Na Web, mantemos uma suíte E2E automatizada e reproduzível (`npm run test:e2e`, Spec 138 / ADR 0112) executada em navegador Chromium real via Chrome DevTools Protocol (CDP) puro no Node 24, sem Playwright, cobrindo boas-vindas, busca pública, cadastro, anúncio em 3 etapas, favoritos e envio de pedido. Os fluxos nativos que dependem de aparelho físico Android (login Google nativo, câmera e QR Code entre dois aparelhos, notificações push e leitor de tela TalkBack) são verificados manualmente em dispositivo real antes de cada publicação (não mantemos fluxos Maestro desatualizados)."*
+> **Resposta:** Na Web, a suíte automatizada roda em Chrome com CDP e backend em memória. No Android, o Maestro exercita fluxos nativos. Os cenários que dependem de serviços externos, sensores ou tecnologia assistiva são conferidos em aparelho físico.
 
 ### P4: "Como garantiram que os testes não quebrem por acoplamento com detalhes de implementação?"
 > **Resposta:** *"Seguimos os princípios da Testing Library: testamos o que o usuário vê e como ele interage. Em vez de verificar estados internos ou instâncias de classes, consultamos a tela por `getByRole`, `getByText` e `getByLabelText`. Mocks foram utilizados de forma estrita e fundamentada apenas onde era necessário isolar cenários não-determinísticos (como simular queda instantânea de rede no teste de componente mockado)."*

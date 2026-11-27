@@ -75,14 +75,9 @@ ABIS="${APK_ABIS:-arm64-v8a,x86_64}"
 WORKERS="${GRADLE_WORKERS:-2}"
 JVMARGS="${GRADLE_JVMARGS:--Xmx3584m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
 
-TOKEN_ARQ="$HOME/.config/ipebook/sentry-auth-token"
-if [[ -z "${SENTRY_AUTH_TOKEN:-}" && -r "$TOKEN_ARQ" ]]; then export SENTRY_AUTH_TOKEN="$(cat "$TOKEN_ARQ")"; fi
-export SENTRY_DISABLE_AUTO_UPLOAD=true
-
 setsid nohup bash -c '
   echo $$ > "$1"
   cd "$2/android"
-  export SENTRY_DISABLE_AUTO_UPLOAD=true
   echo "--- Compilando APK Release (Gradle assembleRelease) ---"
   nice -n 19 ionice -c 3 ./gradlew assembleRelease --console=plain --max-workers="$3" -Dorg.gradle.jvmargs="$4" -PreactNativeArchitectures="$5"
   echo "RESULTADO=$?"

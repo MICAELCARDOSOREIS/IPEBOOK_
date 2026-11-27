@@ -76,11 +76,11 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
       <View style={styles.finalCta}>
         <Text accessibilityRole="header" aria-level={2} style={styles.finalTitle}>Pronto para dar nova vida a um livro?</Text>
         <View style={styles.finalActions}>
-          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={withPress(styles.cta)}>
+          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={withPress(styles.cta, colors.m3.focusRing)}>
             <Text style={styles.ctaText}>{betaInvite ? "Quero testar o app" : "Criar conta"}</Text>
           </Pressable>
           {betaInvite ? null : (
-            <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={withPress(styles.outlined)}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={withPress(styles.outlined, colors.m3.focusRing)}>
               <Text style={styles.outlinedText}>Entrar</Text>
             </Pressable>
           )}
@@ -126,8 +126,16 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: { gap: tokens.spacing[32] },
     sectionTitle: { ...tokens.typography.brandDisplayMd, color: colors.m3.onSurface },
-    steps: { flexDirection: "row", gap: tokens.spacing[24] },
-    step: { flex: 1, gap: tokens.spacing[8], padding: tokens.spacing[24], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
+    steps: { flexDirection: "row", gap: tokens.spacing[20] },
+    step: {
+      flex: 1,
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[24],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
     stepNumber: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.xl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
     stepNumberText: { ...tokens.typography.titleMedium, color: colors.m3.onPrimary },
     stepTitle: { ...tokens.typography.titleBlock, color: colors.m3.onSurface },

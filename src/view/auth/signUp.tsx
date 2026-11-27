@@ -189,7 +189,7 @@ export default function SignUp({
 
             <Checkbox
               label="Aceito os termos de uso"
-              description="e a política de privacidade."
+              description="e a política de privacidade, e declaro ter 18 anos ou mais."
               checked={acceptedTerms}
               onChange={(checked) => {
                 setAcceptedTerms(checked);

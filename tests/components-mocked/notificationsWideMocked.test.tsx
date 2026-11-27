@@ -137,6 +137,7 @@ describe("Notificações na web larga", () => {
       fireEvent.press(markReadBtn);
     });
     expect(actions.markAsRead).toHaveBeenCalledWith("n-1");
+    expect(screen.getByTestId("notifications-side-pane")).toBeDefined();
   });
 
   it("centraliza o estado vazio em toda a largura quando não há barra lateral", async () => {

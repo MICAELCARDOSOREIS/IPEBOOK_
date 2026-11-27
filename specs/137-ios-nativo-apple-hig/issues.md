@@ -18,7 +18,7 @@ Este documento mapeia o trabalho do iPhone nativo às sub-issues reais do GitHub
   - [Guia iPhone · iOS 26 (`915:384`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=915-384&m=dev)
   - [Notificações · permissões (`937:2386`)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=937-2386&m=dev)
 - **Escopo:**
-  - Registrar ADR atualizando a entrada do iOS Nativo em escopo (vinculado aos ADRs [0008](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) e [0114](../../docs/adr/0114-remocao-tema-escuro.md) — tema claro exclusivo).
+  - Registrar ADR atualizando a entrada do iOS Nativo em escopo (vinculado aos ADRs [0008](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) e [0114](../../docs/adr/0114-remocao-do-tema-escuro.md) — tema claro exclusivo).
   - Revisar `ios` em `app.json`: `bundleIdentifier`, `buildNumber`, `supportsTablet`, ícones e splash screen.
   - Configurar `infoPlist` em português (`NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSLocationWhenInUseUsageDescription`).
   - Validar esquemas de URL / deep links (`src/app/auth/callback.tsx` e links de livros).

@@ -1,12 +1,12 @@
 # Produto e requisitos do Ipebook
 
-> Beta pública em fase de lançamento: build Android `0.2.0` (`com.ipebook.app`) publicada na Play Store e validada ponta a ponta em aparelho real (2026-11-16), backend Supabase ativo (`EXPO_PUBLIC_BACKEND=supabase`), atuação exclusiva em Piripiri, PI (4 Pontos Seguros de encontro e compatibilidade com os 17 bairros oficiais, Specs 022 e 114, ADRs 0016 e 0111), moderação comunitária ativa (`v2_reports`, `v2_moderators`), primeiro acesso implementado (Spec 026), histórico recente no dispositivo (Spec 027) e publicação Web/PWA em `https://ipebook.app` (Spec 025, ADR 0020; republicação pendente para incorporar últimas evoluções).
+> O IpêBook atende Piripiri, PI, com Web/PWA em [ipebook.app](https://ipebook.app) e distribuição Android pela Google Play. A versão Android `0.2.5` foi enviada à faixa fechada Alpha em 26/11/2026. Consulte [Estado e continuidade](estado.md) para as verificações por plataforma.
 
-Revisão: 2026-11-17 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta `0.2.0`.
+Revisão em 27/11/2026 na branch `develop`.
 
 ## Objetivo confirmado
 
-O objetivo do **IpêBook** é viabilizar a circulação comunitária de livros físicos em **Piripiri, PI** (venda, troca e doação) em uma plataforma multiplataforma construída em Expo / React Native / TypeScript / Supabase com arquitetura MVVM em sete camadas. A aplicação opera hoje em produção Android (`0.2.0` na Google Play Store) e Web/PWA (`https://ipebook.app`), mantendo separação estrita de domínio, contratos testáveis e privacidade dos leitores.
+O objetivo do **IpêBook** é viabilizar a circulação comunitária de livros físicos em **Piripiri, PI** (venda, troca e doação) em uma plataforma multiplataforma construída em Expo / React Native / TypeScript / Supabase com arquitetura MVVM em sete camadas. A aplicação usa Supabase com controle de acesso por linha (RLS) e mantém a separação de domínio por contratos testáveis.
 
 A frase da interface “Um lugar para descobrir sua próxima leitura” sugere descoberta de livros. Com a decisão de modalidade abaixo, ela passa a significar especificamente compra, venda, troca e doação de livros entre pessoas da comunidade.
 
@@ -27,7 +27,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Favoritos e alertas de busca | **Implementada** na [spec 016](../specs/016-favoritos-e-alertas-de-busca/spec.md) e [spec 036](../specs/036-gerenciar-e-editar-alerta/spec.md): gerenciamento e edição próprios de alertas, modalidades persistidas e avisos automáticos |
 | Cadastrar livros e boxes | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/), [specs/017](../specs/017-rascunhos-de-anuncio/spec.md) e [specs/112](../specs/112-anuncio-box-de-livros/spec.md): `Book` com `modality`/`price`/`ownerId`, fluxo em 3 etapas, até 3 fotos com [guia de enquadramento](../specs/140-enquadramento-fotos-livro/spec.md), rascunhos locais/remotos e suporte a boxes (2 a 100 volumes) |
 | Editar e pausar anúncio | **Implementada** em [specs/024](../specs/024-editar-e-pausar-anuncio/spec.md) (issue #91): rota `/editar-anuncio/[id]`, pausa e retomada de anúncios em `/meus-anuncios` |
-| Conta e autenticação (criar conta, entrar, sair, redefinir senha) | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/), [specs/007](../specs/007-contas-persistentes/spec.md) e [specs/106](../specs/106-login-google-nativo/spec.md): e-mail/senha, login Google nativo e recuperação de acesso |
+| Conta e autenticação (criar conta, entrar, sair, redefinir senha) | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/), [specs/007](../specs/007-contas-persistentes/spec.md) e [specs/106](../specs/106-login-google-nativo/spec.md): e-mail e senha, login Google nativo no Android, login Apple nativo no iOS e recuperação de acesso |
 | Solicitar e responder negociação simples | **Implementada** em [specs/004](../specs/004-negociacao-simples/), [specs/009](../specs/009-detalhes-negociacao-encontro/) e [specs/113](../specs/113-melhorias-na-negociacao/spec.md): `BookRequest` com mensagem inicial e livro de troca opcional, reserva atômica e cancelamento (`cancelled`) |
 | Combinar encontro (local, dia e horário) | **Implementada** em [specs/052](../specs/052-combinar-encontro/spec.md) e [specs/114](../specs/114-melhorias-combinar-encontro/spec.md) (ADR 0111): escolha entre os 4 Pontos Seguros de Piripiri (sem Mapbox), confirmação, reagendamento, cancelamento e histórico (`/perfil/encontros`) |
 | Entrega presencial por QR Code | **Implementada** em [specs/095](../specs/095-conclusao-por-qr-code/spec.md) e [specs/115](../specs/115-melhorias-entrega-livro/spec.md) (ADR 0070): código QR e código legível de 8 caracteres em `/negociacao/[id]/entrega` |
@@ -45,7 +45,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Cancelar pedido e avisos de livros favoritados | **Implementada** em [specs/101](../specs/101-cancelar-pedido-e-avisos-de-favoritos/spec.md) (ADR 0077): status `cancelled`, botão em Conversas e avisos de preço e disponibilidade |
 | Moderação de denúncias | **Implementada** em [specs/102](../specs/102-moderacao/spec.md) (ADR 0078): fila para moderadores, pausa automática, remoção de anúncio e suspensão de conta |
 | Limites contra abuso | **Implementada** em [specs/103](../specs/103-limites-anti-abuso/spec.md) (ADR 0079): limites diários e por minuto no banco, com mensagem no app |
-| Acompanhamento de erros | **Implementada** em [specs/104](../specs/104-acompanhamento-de-erros/spec.md) (ADR 0080): Sentry sem dados pessoais e tela de erro amigável; liga com `EXPO_PUBLIC_SENTRY_DSN` |
+| Tratamento de erros | O relatório de erros é local, com mensagens amigáveis e ofuscação de dados sensíveis nos logs. A [Spec 145](../specs/145-remocao-do-sentry/spec.md) e o [ADR 0124](adr/0124-remocao-do-sentry.md) registram a remoção do Sentry. |
 | Avaliação na loja e atualizações sem loja | **Implementada** em [specs/105](../specs/105-avaliacao-na-loja-e-atualizacoes/spec.md), [specs/128](../specs/128-aviso-atualizacao-app/spec.md) e [specs/129](../specs/129-in-app-updates-google-play/spec.md): pedido de nota, verificação remota, Play In-App Updates e EAS Update |
 | Chat interno na negociação | **Implementada** em [specs/061](../specs/061-chat-mensagens-negociacao/spec.md) (ADR 0044): troca de mensagens transacionais em tempo real via Supabase Realtime |
 | Conversas e central de notificações | **Implementada** na [spec 141](../specs/141-melhorar-conversas-notificacoes/spec.md). O chat reúne as ações do encontro e orienta sobre propostas expiradas. A central apresenta o estado atual da negociação, o histórico de avisos e controles separados para leitura e exclusão. |
@@ -129,9 +129,9 @@ específico, basta atualizar esta tabela.
 
 ## Próximos passos e pendências
 
-A build Android `0.2.0` (`com.ipebook.app`) foi publicada na Play Store e validada ponta a ponta em aparelho real com duas contas em 2026-11-16 (`docs/estado.md`). As 43 migrações SQL estão aplicadas e verificadas no Supabase remoto, o Sentry está configurado e o cadastro dos moderadores (Spec 102) cobre os quatro integrantes de [docs/equipe.md](equipe.md). Pendências atuais:
+- **Android:** confirmar a disponibilidade da `0.2.5` para testadores Alpha e validar o fluxo principal em aparelho real.
 
-- **Republicação Web no Cloudflare Pages (`https://ipebook.app`):** subir o build atualizado com ajustes de PWA, `<title>` estático para SEO, remoção do Mapbox e layout desktop em 3 colunas.
+- **Web:** conferir no Cloudflare Pages a versão servida pelo domínio canônico antes de programar a publicação. A configuração de Web Push está documentada na [prévia para iPhone](estado.md#1-estado-verificado-em-execução) e o recebimento em aparelho segue pendente.
 - **Revisão jurídica dos Termos e Política de Privacidade:** validar a versão final publicada em `https://ipebook.app/termos?aba=privacidade`.
-- **iOS Nativo (`Spec 137`):** executar incrementalmente as 8 sub-issues de adequação nativa de iPhone ao Apple HIG e Liquid Glass (ver [`specs/137-ios-nativo-apple-hig/`](../specs/137-ios-nativo-apple-hig/spec.md)).
+- **iOS nativo:** homologar login Apple, recuperação de acesso, push e interface em um iPhone e preparar a distribuição pelo TestFlight. [Guia de publicação iOS](loja/ios-app-store.md)
 - **Analytics e ambiente de testes dedicado:** avaliar métricas de uso (ex.: PostHog) e um projeto Supabase separado para testes; ambos dependem de conta e decisão de custo.

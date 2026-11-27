@@ -9,6 +9,8 @@
 
 ---
 
+> Este relatório registra a entrega acadêmica da versão `0.2.0`. Os canais de distribuição e as medições atuais ficam em [Estado e continuidade](estado.md).
+
 ## 1. Visão Geral e Contexto do Projeto
 
 O **Ipebook** nasceu com o propósito de suprir a carência de uma plataforma hiperlocal dedicada à circulação, doação, venda acessível e troca de livros físicos no município de Piripiri - PI. 
@@ -80,7 +82,7 @@ O projeto segue rigorosamente o modelo de qualidade da **ISO/IEC 25010**:
 
 ---
 
-## 5. Conclusão e Estado Atual da Entrega
+## 5. Conclusão da entrega acadêmica
 
 O Ipebook atinge com sucesso o marco de versão estável para o ciclo avaliativo, dispondo de:
 1. Catálogo comunitário com paginação e filtros hiperlocais;

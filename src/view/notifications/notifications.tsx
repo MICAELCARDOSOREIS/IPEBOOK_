@@ -229,22 +229,22 @@ export default function Notifications({
   const controls = (
     <>
         {Platform.OS === "web" ? (
-          <View style={styles.permissionBannerAction}>
-            {webPush.status === "active" || webPush.status === "inactive" ? (
-              <OutlinedButton
-                label={webPush.status === "active" ? "Desativar avisos neste iPhone" : "Ativar avisos neste iPhone"}
-                loading={webPush.busy}
-                onPress={() => void webPush.toggle()}
-              />
-            ) : (
-              <Text style={styles.permissionBannerDescription}>
-                {webPush.status === "requires-install"
-                  ? "Para receber avisos neste iPhone, adicione o IpêBook à Tela de Início e abra a central pelo ícone."
-                  : "Na versão web, acompanhe propostas e lembretes nesta central."}
-              </Text>
-            )}
-            {webPush.error ? <Text accessibilityRole="alert" style={styles.permissionBannerDescription}>{webPush.error}</Text> : null}
-          </View>
+          webPush.status === "active" || webPush.status === "inactive" || webPush.status === "requires-install" || webPush.error ? (
+            <View style={[styles.permissionBannerAction, wide && styles.permissionBannerActionWide]}>
+              {webPush.status === "active" || webPush.status === "inactive" ? (
+                <OutlinedButton
+                  label={webPush.status === "active" ? "Desativar avisos neste iPhone" : "Ativar avisos neste iPhone"}
+                  loading={webPush.busy}
+                  onPress={() => void webPush.toggle()}
+                />
+              ) : webPush.status === "requires-install" ? (
+                <Text style={styles.permissionBannerDescription}>
+                  Para receber avisos neste iPhone, adicione o IpêBook à Tela de Início e abra a central pelo ícone.
+                </Text>
+              ) : null}
+              {webPush.error ? <Text accessibilityRole="alert" style={styles.permissionBannerDescription}>{webPush.error}</Text> : null}
+            </View>
+          ) : null
         ) : state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
@@ -341,13 +341,14 @@ export default function Notifications({
               </View>
             </View>
             {manageOpen ? (
-              <View style={styles.managementActions}>
+              <View style={[styles.managementActions, wide && styles.managementActionsWide]}>
                 {hasReadNotifications ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setConfirmDelete("read")}
                     style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
                   >
+                    <AppIcon name="delete" size={15} color={colors.error} />
                     <Text style={styles.actionBtnDangerText}>Excluir notificações lidas</Text>
                   </Pressable>
                 ) : null}
@@ -356,6 +357,7 @@ export default function Notifications({
                   onPress={() => setConfirmDelete("all")}
                   style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
                 >
+                  <AppIcon name="delete" size={15} color={colors.error} />
                   <Text style={styles.actionBtnDangerText}>Excluir todas as notificações</Text>
                 </Pressable>
               </View>
@@ -366,6 +368,71 @@ export default function Notifications({
     </>
   );
 
+  const wideSidePane = wide && showListChrome ? (
+    <View style={styles.wideSidePane} testID="notifications-side-pane">
+      <View style={styles.wideSideCard}>
+        <Text accessibilityRole="header" style={styles.wideSideTitle}>
+          Atalhos rápidos
+        </Text>
+        <Text style={styles.wideSideDescription}>
+          Acesse diretamente suas conversas, alertas de busca ou preferências de avisos.
+        </Text>
+        <View style={styles.wideSideActions}>
+          {onNavigateToAction ? (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ir para Conversas"
+                onPress={() => guardedAction("/conversas")}
+                style={withWebInteractive(styles.wideSideLink, styles.wideSideLinkHover, colors.m3.focusRing)}
+              >
+                <View style={styles.wideSideLinkIcon}>
+                  <AppIcon name="chat" size={16} color={colors.action} />
+                </View>
+                <Text style={styles.wideSideLinkText}>Conversas</Text>
+                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ir para Meus alertas"
+                onPress={() => guardedAction("/alertas")}
+                style={withWebInteractive(styles.wideSideLink, styles.wideSideLinkHover, colors.m3.focusRing)}
+              >
+                <View style={styles.wideSideLinkIcon}>
+                  <AppIcon name="search" size={16} color={colors.action} />
+                </View>
+                <Text style={styles.wideSideLinkText}>Meus alertas de livros</Text>
+                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ir para Preferências de notificações"
+                onPress={() => guardedAction("/perfil/configuracoes")}
+                style={withWebInteractive(styles.wideSideLink, styles.wideSideLinkHover, colors.m3.focusRing)}
+              >
+                <View style={styles.wideSideLinkIcon}>
+                  <AppIcon name="bell" size={16} color={colors.action} />
+                </View>
+                <Text style={styles.wideSideLinkText}>Preferências de avisos</Text>
+                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+            </>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.wideTipCard}>
+        <View style={styles.wideTipHeader}>
+          <AppIcon name="place" size={16} color={colors.nature.foliage} />
+          <Text style={styles.wideTipTitle}>Dica de segurança</Text>
+        </View>
+        <Text style={styles.wideTipText}>
+          Combine trocas e entregas sempre pelo chat e dê preferência aos pontos seguros de Piripiri.
+        </Text>
+      </View>
+    </View>
+  ) : null;
+
   return (
     <ScrollEdgeScreen style={styles.page} header={renderHeader(true)} scrolling={hasScrollableNotifications}>
       <View style={[styles.content, wide && styles.contentWide]}>
@@ -373,8 +440,9 @@ export default function Notifications({
 
         <View
           testID="notifications-main"
-          style={wide ? (showListChrome ? styles.main : styles.mainSolo) : styles.flexOne}
+          style={wide ? (showListChrome ? [styles.main, styles.mainWideColumns] : styles.mainSolo) : styles.flexOne}
         >
+          <View style={wide && showListChrome ? styles.wideListColumn : styles.flexOne}>
           {state.loading ? (
             <LoadingState
               label="Carregando notificações"
@@ -617,6 +685,8 @@ export default function Notifications({
               }}
             />
           )}
+          </View>
+          {wideSidePane}
         </View>
       </View>
 

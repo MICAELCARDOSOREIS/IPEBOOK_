@@ -114,15 +114,7 @@
       ],
       "expo-web-browser",
       "expo-apple-authentication",
-      "@react-native-google-signin/google-signin",
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "project": "ipebook",
-          "organization": "usermicael"
-        }
-      ]
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true

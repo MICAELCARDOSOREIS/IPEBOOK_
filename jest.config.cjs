@@ -16,7 +16,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@testing-library/react-native))",
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|native-base|react-native-svg|@testing-library/react-native))",
   ],
   moduleNameMapper: {
     "\\.(png|jpe?g|gif|webp|svg|ttf|otf|woff2?)$": "<rootDir>/tests/mocks/fileMock.cjs",
@@ -40,7 +40,6 @@ module.exports = {
     "^expo-blur$": "<rootDir>/tests/mocks/expo-blur.ts",
     "^expo-glass-effect$": "<rootDir>/tests/mocks/expo-glass-effect.tsx",
     "^@react-native-google-signin/google-signin$": "<rootDir>/tests/mocks/google-signin.ts",
-    "^@sentry/react-native$": "<rootDir>/tests/mocks/sentry-react-native.ts",
     "^react-native-pager-view$": "<rootDir>/tests/mocks/react-native-pager-view.tsx",
   },
   coverageProvider: "v8",

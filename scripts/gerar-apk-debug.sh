@@ -79,7 +79,6 @@ JVMARGS="${GRADLE_JVMARGS:--Xmx3584m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
 setsid nohup bash -c '
   echo $$ > "$1"
   cd "$2"
-  export SENTRY_DISABLE_AUTO_UPLOAD=true
   echo "--- 1/2: Gerando bundle JavaScript atualizado ---"
   nice -n 19 ionice -c 3 npx expo export:embed \
     --entry-file node_modules/expo-router/entry.js \

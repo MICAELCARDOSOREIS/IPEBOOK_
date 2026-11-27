@@ -40,6 +40,8 @@ export type BottomSheetProps = {
   showCloseButton?: boolean;
   /** Referência opcional para foco inicial na Web */
   initialFocusRef?: React.RefObject<FocusableElement | null>;
+  /** Abre a folha pela direita em janelas largas. */
+  placement?: "right";
 };
 
 /**
@@ -60,10 +62,12 @@ function BottomSheetContent({
   style,
   showCloseButton,
   initialFocusRef,
+  placement,
 }: Omit<BottomSheetProps, "onClose" | "onDismiss"> & { guardedClose: () => void }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const onRight = wideWeb && placement === "right";
   const keyboardInset = useAnimatedKeyboardInset();
   const reduceTransparency = useOpaqueIosSurfaces();
   const isIos = Platform.OS === "ios";
@@ -76,7 +80,7 @@ function BottomSheetContent({
   const sheetRef = useRef<View | null>(null);
 
   useModalFocusTrap(
-    visible,
+    visible && !onRight,
     () => {
       const elements: (FocusableElement | null)[] = [];
       if (initialFocusRef?.current) {
@@ -120,28 +124,36 @@ function BottomSheetContent({
     [guardedClose],
   );
 
+  const backdrop = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Fechar ao tocar fora"
+      aria-hidden={onRight || undefined}
+      focusable={onRight ? false : undefined}
+      onPress={guardedClose}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+
   return (
     <Animated.View
       testID={testID ? `${testID}-scrim` : "bottom-sheet-scrim"}
       style={[
         styles.scrim,
         wideWeb && styles.scrimWide,
+        onRight && styles.scrimRight,
         !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
       ]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Fechar ao tocar fora"
-        onPress={guardedClose}
-        style={StyleSheet.absoluteFill}
-      />
+      {onRight ? null : backdrop}
       <View
         ref={sheetRef as never}
         testID={testID ? `${testID}-container` : "bottom-sheet-container"}
-        {...(Platform.OS === "web" ? ({ tabIndex: -1 } as never) : {})}
+        {...(Platform.OS === "web" && !onRight ? ({ tabIndex: -1 } as never) : {})}
         style={[
           styles.sheet,
           wideWeb && styles.sheetWide,
+          onRight && styles.sheetRight,
           { paddingBottom: wideWeb ? tokens.spacing[24] : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
           style,
         ]}
@@ -192,6 +204,7 @@ function BottomSheetContent({
 
         {children}
       </View>
+      {onRight ? backdrop : null}
     </Animated.View>
   );
 }
@@ -206,6 +219,7 @@ export function BottomSheet({
   style,
   showCloseButton = false,
   initialFocusRef,
+  placement,
 }: BottomSheetProps) {
   const guardedClose = useGuardedPress(onClose);
 
@@ -214,6 +228,7 @@ export function BottomSheet({
       testID={testID}
       accessibilityViewIsModal
       aria-modal
+      accessibilityLabel={placement === "right" ? title : undefined}
       visible={visible}
       transparent
       hardwareAccelerated
@@ -233,6 +248,7 @@ export function BottomSheet({
             style={style}
             showCloseButton={showCloseButton}
             initialFocusRef={initialFocusRef}
+            placement={placement}
           >
             {children}
           </BottomSheetContent>
@@ -264,6 +280,7 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       alignItems: "center",
       padding: tokens.spacing[24],
     },
+    scrimRight: { alignItems: "flex-end", padding: 0 },
     sheet: {
       backgroundColor: sheetBg,
       maxHeight: "90%",
@@ -296,6 +313,15 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       borderRightWidth: 1,
       borderColor: colors.m3.outlineVariant,
       ...(isIos ? ({ borderCurve: "continuous" } as const) : {}),
+    },
+    sheetRight: {
+      zIndex: 1,
+      maxWidth: 400,
+      height: "100%",
+      maxHeight: "100%",
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+      paddingTop: tokens.spacing[20],
     },
     handleContainer: {
       alignSelf: "stretch",

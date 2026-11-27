@@ -509,7 +509,7 @@ export function CreateListingStep1({
 
           <IosCardSurface variant="glass" style={styles.nextStepsNote}>
             <AppIcon name="info" size={16} color={colors.secondaryText} />
-            <Text style={styles.hint}>Conservação e local de retirada vêm nas próximas etapas.</Text>
+            <Text style={[styles.hint, styles.nextStepsText]}>Conservação e local de retirada vêm nas próximas etapas.</Text>
           </IosCardSurface>
         </>
       ) : null}
@@ -727,6 +727,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[12] : 0,
       paddingVertical: Platform.OS === "ios" ? tokens.spacing[10] : tokens.spacing[2],
+    },
+    nextStepsText: {
+      flex: 1,
+      flexShrink: 1,
     },
     webPhotoCard: {
       flexDirection: "row",

@@ -8,7 +8,7 @@ Este documento estabelece o procedimento operacional de build, configuração, p
 
 O Ipebook Web é compilado como uma aplicação web estática com hidratação client-side via **Expo Router** (`output: "static"` no `app.json`).
 
-- **Comando de build:** `npm run build:web` (que executa `expo export --platform web`).
+- **Comando de build:** `npm run build:web` (exporta via Expo e prepara os arquivos em `dist/`).
 - **Diretório de saída:** `dist/`.
 - **Roteamento SPA e rotas dinâmicas:** Regras em `public/_redirects` (copiadas automaticamente para `dist/_redirects`) direcionam rotas com parâmetros como `/livro/*`, `/editar-anuncio/*`, `/denunciar/*`, `/negociacao/*`, `/alertas/:id` e `/alertas/:id/editar` para os respectivos stubs `[id].html` com código HTTP `200` (rewrite), permitindo que o Expo Router no navegador extraia os parâmetros e monte a tela. A rota de edição de alerta vem antes da rota de gerenciamento para preservar a correspondência mais específica.
 - **Cabeçalhos de Segurança:** Configurados em `public/_headers` (copiados para `dist/_headers`), cobrindo CSP, proteção contra clickjacking (`X-Frame-Options: DENY`), sniffing de MIME (`X-Content-Type-Options: nosniff`) e cache imutável de longo prazo para bundles em `_expo/static/*`.
@@ -35,10 +35,10 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 
 | Variável | Valor Recomendado / Descrição |
 |---|---|
-| `NODE_VERSION` | `24` (ou `>= 20.18.0`, alinhado ao Node 24 da CI) |
+| `NODE_VERSION` | `24`, mesma versão principal da CI |
 | `EXPO_PUBLIC_BACKEND` | `supabase` |
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
-| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publicável `sb_publishable_...` do projeto Supabase |
 | `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/redefinir-senha` (retorno da recuperação de senha; entra no bundle durante o build) |
 | `APPLE_TEAM_ID` | Identificador público de 10 caracteres da equipe Apple Developer. Em produção, gera `/.well-known/apple-app-site-association` para os links de recuperação originados no app iOS. |
 | `EXPO_PUBLIC_WEB_PUSH_VAPID_KEY` | Chave pública opcional de Web Push. Habilite após preparar a migração e a função de envio no Supabase. |

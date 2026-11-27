@@ -101,13 +101,16 @@ describe("Chat em tela cheia (Spec 082)", () => {
     expect(onDeleteConversation).toHaveBeenCalledTimes(1);
   });
 
-  it("tocar no livro no cabeçalho abre o acompanhamento da negociação", async () => {
+  it("o botão Detalhes no cabeçalho abre o acompanhamento da negociação", async () => {
     setup();
     const onOpenNegotiation = jest.fn();
     const screen = await renderChat({ onOpenNegotiation });
+    const bookLink = screen.getByRole("button", { name: "Detalhes da negociação de Dom Casmurro" });
+    expect(screen.getByText("Detalhes")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Abrir negociação de Dom Casmurro" }));
+      fireEvent.press(bookLink);
     });
+    expect(screen.queryByText("Livro:")).toBeNull();
     expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
   });
 
@@ -117,7 +120,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
     const screen = await renderChat({ onOpenNegotiation });
     expect(screen.getByRole("header").props.children).toBe("Ana Paula");
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
-    expect(screen.getByText("Troca")).toBeDefined();
+    expect(screen.getByText("· Troca")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("Combinar")); });
     expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
   });
@@ -420,6 +423,9 @@ describe("Chat em tela cheia (Spec 082)", () => {
       const screen = await renderChat({ embedded: true });
 
       expect(screen.getByText("Encontro confirmado")).toBeDefined();
+      expect(screen.queryByText("Estou chegando")).toBeNull();
+      expect(screen.queryByText("Já estou aqui")).toBeNull();
+      expect(screen.queryByText("Qual ponto?")).toBeNull();
       mockMeetingState = { meeting: null, loading: false };
     });
 

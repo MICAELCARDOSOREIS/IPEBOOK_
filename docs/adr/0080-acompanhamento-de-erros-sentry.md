@@ -1,8 +1,8 @@
 # 0080 — Acompanhamento de erros com Sentry
 
 - Data: 2026-10-29
-- Status: aceito
-- Especificação: [104](../../specs/104-acompanhamento-de-erros/spec.md)
+- Status: substituído por [0124](0124-remocao-do-sentry.md)
+- Especificação: [104](../../specs/104-acompanhamento-de-erros/spec.md) (revogada pela [Spec 145](../../specs/145-remocao-do-sentry/spec.md))
 
 ## Contexto
 Erros e travamentos no aparelho das pessoas não chegavam à equipe.

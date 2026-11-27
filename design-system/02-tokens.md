@@ -168,4 +168,4 @@ em [`src/view/tokens.ts`](../src/view/tokens.ts)
 
 ## Referência visual iOS 26
 
-Os tokens de cor compartilhados permanecem canônicos. A [especificação iPhone](iphone-liquid-glass.md) documenta os parâmetros de vidro, dimensões, SF Pro e as variações de botões observadas no Figma. Esses parâmetros são de planejamento visual e não substituem o contrato TypeScript nem removem valores históricos de tema escuro.
+Os tokens de cor compartilhados permanecem canônicos. A [especificação visual do iPhone](iphone-liquid-glass.md) registra dimensões, tipografia e variantes do Figma. Consulte o [ADR 0123](../docs/adr/0123-liquid-glass-nativo-ios.md) para os componentes nativos e suas alternativas de acessibilidade.

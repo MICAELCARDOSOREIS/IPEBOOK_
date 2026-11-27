@@ -5,7 +5,7 @@
 **Apoio e Entregas da Equipe:** Maria Clara Almeida Martins (`@clarinhamartins` — T002 Base Liquid Glass, ADR 0115; T004 Descoberta/Busca, ADR 0116 + PR #243 Alertas; T008 Acessibilidade Apple HIG, PR #242), Micael Cardoso Reis (`@MICAELCARDOSOREIS` — refinamentos DS PR #241 e contratos/arquitetura), Antonio Carlos Gomes (`@gomes738` — T005 Publicação/Rascunhos e T006/T010)  
 **Referências Principais:**
 - [ADR 0008 — Diretrizes Visuais por Plataforma](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
-- [ADR 0114 — Remoção do Tema Escuro (Tema Claro Exclusivo)](../../docs/adr/0114-remocao-tema-escuro.md)
+- [ADR 0114 — Remoção do Tema Escuro (Tema Claro Exclusivo)](../../docs/adr/0114-remocao-do-tema-escuro.md)
 - [Inventário de Telas iPhone · iOS 26 (Figma)](../../design-system/telas-iphone-figma.md) (Canvas `APP · 20 · iPhone · iOS 26`: 52 quadros principais, 4 estados após carregamento, 7 estados de catálogo/conversas/pedidos, 25 telas de protótipo nativo e 2 pranchas iOS 26)
 - [Spec 136 — PWA/iOS no Safari](../136-pwa-iphone-apple-hig/spec.md) (escopo Web/Safari; esta spec cobre **iOS Nativo**)
 

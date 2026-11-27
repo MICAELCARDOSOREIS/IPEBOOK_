@@ -15,7 +15,7 @@ export type AppErrorFallbackProps = {
   reporter?: IErrorReporter;
 };
 
-/** Tela mostrada quando uma tela quebra (Spec 104): avisa sem detalhes técnicos e envia o erro ao Sentry. */
+/** Tela mostrada quando uma tela quebra (Spec 145): avisa sem detalhes técnicos e registra o erro localmente. */
 export function AppErrorFallback({ error, retry, reporter = errorReporter }: AppErrorFallbackProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);

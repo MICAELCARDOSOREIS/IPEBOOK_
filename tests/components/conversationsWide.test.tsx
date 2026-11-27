@@ -10,9 +10,14 @@ jest.mock("@/viewmodel/useConversationsViewModel", () => ({
 }));
 jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 jest.mock("@/view/conversations/chat", () => ({
-  Chat: ({ onDeleteConversation }: { onDeleteConversation: () => void }) => {
+  Chat: ({ onDeleteConversation, onOpenBookDetails }: import("@/view/conversations/chat").ChatProps) => {
     const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");
-    return <Pressable accessibilityRole="button" onPress={onDeleteConversation}><Text>Apagar pelo chat</Text></Pressable>;
+    return (
+      <>
+        <Pressable accessibilityRole="button" onPress={onDeleteConversation}><Text>Apagar pelo chat</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={onOpenBookDetails}><Text>Detalhes do livro</Text></Pressable>
+      </>
+    );
   },
 }));
 
@@ -104,6 +109,8 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     });
 
     expect(screen.getByTestId("conversation-pane")).toBeDefined();
+    expect(screen.queryByTestId("conversation-about")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Detalhes do livro" })); });
     expect(screen.getByTestId("conversation-about")).toBeDefined();
     expect(screen.getByText("Sobre a troca")).toBeDefined();
   });
@@ -123,7 +130,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByText(/some só para você/)).toBeDefined();
   });
 
-  it("mantém o cabeçalho e exibe um único cartão no painel direito durante o carregamento", async () => {
+  it("mantém duas colunas durante o carregamento", async () => {
     setup({ loading: true, items: [] });
     const screen = await renderView();
 
@@ -132,7 +139,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
       screen.getByText("Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri."),
     ).toBeDefined();
     expect(screen.getByLabelText("Carregando conversas")).toBeDefined();
-    expect(screen.getByTestId("conversation-about-loading", { includeHiddenElements: true }).children).toHaveLength(1);
+    expect(screen.queryByTestId("conversation-about", { includeHiddenElements: true })).toBeNull();
   });
 
   it("no painel lateral de compra exibe autor, preço e permite abrir o anúncio ou denunciar", async () => {
@@ -162,6 +169,8 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     await act(async () => {
       fireEvent.press(screen.getByText("Maria"));
     });
+    expect(screen.queryByText("Sobre a compra")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Detalhes do livro" })); });
 
     expect(screen.getByText("Sobre a compra")).toBeDefined();
     expect(screen.getByText("Jorge Amado")).toBeDefined();
@@ -171,6 +180,8 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
       fireEvent.press(screen.getByRole("button", { name: "Ver anúncio de Capitães da Areia" }));
     });
     expect(onOpenListing).toHaveBeenCalledWith("b-sale");
+    expect(screen.queryByText("Sobre a compra")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Detalhes do livro" })); });
 
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Denunciar anúncio" }));

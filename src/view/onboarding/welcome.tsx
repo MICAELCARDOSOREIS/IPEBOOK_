@@ -67,9 +67,30 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
   // Cores canônicas vibrantes de modalidade fixadas com alto contraste (ADR 0104) nos dois modos de tema.
   if (wideWeb) {
     const cards = [
-      { label: "Venda", icon: MODALITY_CONFIG.Venda.icon, tone: lightColors.badge.sale.background, on: lightColors.badge.sale.text, text: MODALITY_CONFIG.Venda.description },
-      { label: "Troca", icon: MODALITY_CONFIG.Troca.icon, tone: lightColors.badge.trade.background, on: lightColors.badge.trade.text, text: MODALITY_CONFIG.Troca.description },
-      { label: "Doação", icon: MODALITY_CONFIG.Doação.icon, tone: lightColors.badge.donation.background, on: lightColors.badge.donation.text, text: MODALITY_CONFIG.Doação.description },
+      {
+        label: "Venda",
+        icon: MODALITY_CONFIG.Venda.icon,
+        tone: lightColors.badge.sale.background,
+        on: lightColors.badge.sale.text,
+        chipBg: "rgba(255, 255, 255, 0.16)",
+        text: MODALITY_CONFIG.Venda.description,
+      },
+      {
+        label: "Troca",
+        icon: MODALITY_CONFIG.Troca.icon,
+        tone: lightColors.badge.trade.background,
+        on: lightColors.badge.trade.text,
+        chipBg: "rgba(255, 255, 255, 0.16)",
+        text: MODALITY_CONFIG.Troca.description,
+      },
+      {
+        label: "Doação",
+        icon: MODALITY_CONFIG.Doação.icon,
+        tone: lightColors.badge.donation.background,
+        on: lightColors.badge.donation.text,
+        chipBg: "rgba(69, 26, 3, 0.10)",
+        text: MODALITY_CONFIG.Doação.description,
+      },
     ] as const;
     return (
       <ScrollView
@@ -77,7 +98,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
         contentContainerStyle={[styles.wideContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
-        <View style={styles.wideHeader}>
+        <View style={styles.wideHeader} accessibilityRole="header">
           <Logotipo />
           <View style={styles.wideHeaderActions}>
             {betaInvite ? null : (
@@ -85,12 +106,18 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
                 accessibilityRole="button"
                 accessibilityLabel="Entrar"
                 onPress={guardedSignIn}
-                style={withPress(styles.wideSignInButton)}
+                style={withPress(styles.wideSignInButton, colors.m3.focusRing)}
               >
-                <Text style={styles.wideLink}>Entrar</Text>
+                <AppIcon name="person" size={16} color={colors.m3.onSurface} />
+                <Text style={styles.wideSignInText}>Entrar</Text>
               </Pressable>
             )}
-            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={guardedStart} style={withPress(styles.wideCta)}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={labels.header}
+              onPress={guardedStart}
+              style={withPress(styles.wideHeaderCta, colors.m3.focusRing)}
+            >
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
           </View>
@@ -98,33 +125,44 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
 
         <View style={styles.wideHero}>
           <View style={styles.wideHeroText}>
-            <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
-              <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+            <View style={styles.wideLocation} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+              <View style={styles.locationDot} />
               <Text style={styles.locationText}>Piripiri · Piauí</Text>
             </View>
-            <View>
+            <View style={styles.wideTitleBlock}>
               <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
-              <View style={styles.highlight}>
-                <Text style={[styles.wideTitle, styles.highlightText]}>merece continuar.</Text>
-              </View>
+              <Text style={[styles.wideTitle, styles.wideTitleAccent]}>merece continuar.</Text>
             </View>
             <Text style={styles.wideLead}>
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
             </Text>
             <View style={styles.wideActions}>
-              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={guardedStart} style={withPress(styles.wideCta)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={labels.start}
+                onPress={guardedStart}
+                style={withPress(styles.wideCta, colors.m3.focusRing)}
+              >
                 <Text style={styles.wideCtaText}>{labels.start}</Text>
               </Pressable>
-              {betaInvite ? null : (
-                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={guardedSignIn} style={withPress(styles.wideOutlined)}>
+              {onExplore ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={guardedExplore}
+                  style={withPress(styles.wideOutlined, colors.m3.focusRing)}
+                >
+                  <Text style={styles.wideOutlinedText}>Explorar livros</Text>
+                </Pressable>
+              ) : betaInvite ? null : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={labels.signIn}
+                  onPress={guardedSignIn}
+                  style={withPress(styles.wideOutlined, colors.m3.focusRing)}
+                >
                   <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
                 </Pressable>
               )}
-              {onExplore ? (
-                <Pressable accessibilityRole="button" onPress={guardedExplore} style={withPress(styles.wideOutlined)}>
-                  <Text style={styles.wideOutlinedText}>Explorar livros</Text>
-                </Pressable>
-              ) : null}
             </View>
           </View>
           <View style={styles.widePanel}>
@@ -134,8 +172,13 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore,
 
         <View style={styles.wideCards}>
           {cards.map((card) => (
-            <View key={card.label} style={[styles.wideCard, { backgroundColor: card.tone }]}>
-              <AppIcon name={card.icon} size={24} color={card.on} />
+            <View key={card.label} testID={`wide-card-${card.label}`} style={[styles.wideCard, { backgroundColor: card.tone }]}>
+              <View
+                testID={`wide-card-badge-${card.label}`}
+                style={[styles.wideCardBadge, { backgroundColor: card.chipBg }]}
+              >
+                <AppIcon name={card.icon} size={20} color={card.on} />
+              </View>
               <Text style={[styles.wideCardTitle, { color: card.on }]}>{card.label}</Text>
               <Text style={[styles.wideCardText, { color: card.on }]}>{card.text}</Text>
             </View>
@@ -323,29 +366,152 @@ function createStyles(colors: ColorPalette) {
     maxWidth: WEB_MAX_WIDTH,
     alignSelf: "center",
     paddingHorizontal: WEB_GUTTER,
-    paddingTop: tokens.spacing[16],
-    paddingBottom: tokens.spacing[32],
-    gap: tokens.spacing[64],
+    paddingTop: tokens.spacing[20],
+    paddingBottom: tokens.spacing[40],
+    gap: tokens.spacing[48],
   },
-  wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
-  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
-  wideSignInButton: { height: 48, paddingHorizontal: tokens.spacing[16], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
-  wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-  wideCta: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
-  wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-  wideOutlined: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
-  wideOutlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[64], width: "100%" },
-  wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
-  wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
-  wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
-  wideActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[16] },
-  widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
+  wideHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 60,
+    paddingBottom: tokens.spacing[16],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.book.paperEdge,
+    width: "100%",
+  },
+  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+  wideSignInButton: {
+    height: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[20],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+  },
+  wideSignInText: {
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurface,
+    fontFamily: fontFamily.semiBold,
+  },
+  wideHeaderCta: {
+    height: 44,
+    paddingHorizontal: tokens.spacing[24],
+    borderRadius: tokens.radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.m3.primary,
+  },
+  wideCta: {
+    height: 52,
+    paddingHorizontal: tokens.spacing[32],
+    borderRadius: tokens.radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.m3.primary,
+    shadowColor: colors.m3.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  wideCtaText: {
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onPrimary,
+    fontFamily: fontFamily.semiBold,
+  },
+  wideOutlined: {
+    height: 52,
+    paddingHorizontal: tokens.spacing[28],
+    borderRadius: tokens.radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.m3.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+  },
+  wideOutlinedText: {
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurface,
+    fontFamily: fontFamily.semiBold,
+  },
+  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[48], width: "100%" },
+  wideHeroText: { flex: 1.15, gap: tokens.spacing[20], alignItems: "flex-start" },
+  wideLocation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[14],
+    paddingVertical: tokens.spacing[6],
+  },
+  wideTitleBlock: { gap: tokens.spacing[2] },
+  wideTitle: {
+    ...tokens.typography.brandHero,
+    lineHeight: 62,
+    letterSpacing: tokens.letterSpacing.brandTighter,
+    color: colors.m3.onSurface,
+  },
+  wideTitleAccent: { color: colors.actionDeep },
+  wideLead: {
+    ...tokens.typography.webLead,
+    lineHeight: 29,
+    color: colors.m3.onSurfaceVariant,
+    maxWidth: 500,
+  },
+  wideActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[12], marginTop: tokens.spacing[4] },
+  widePanel: {
+    flex: 1,
+    maxWidth: 620,
+    height: 380,
+    borderRadius: tokens.radius.xxl,
+    backgroundColor: colors.m3.primary,
+    borderWidth: 1,
+    borderColor: colors.actionDeep,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: tokens.spacing[20],
+    shadowColor: colors.m3.shadow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 3,
+  },
   wideIllustration: { width: "90%", height: "90%" },
-  wideCards: { flexDirection: "row", gap: tokens.spacing[24] },
-  wideCard: { flex: 1, gap: tokens.spacing[8], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
-  wideCardTitle: { ...tokens.typography.titleBlock },
-  wideCardText: { ...tokens.typography.bodyLarge },
+  wideCards: { flexDirection: "row", gap: tokens.spacing[20] },
+  wideCard: {
+    flex: 1,
+    gap: tokens.spacing[10],
+    padding: tokens.spacing[24],
+    borderRadius: tokens.radius.xl,
+    shadowColor: colors.m3.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 2,
+  },
+  wideCardBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: tokens.radius.cardSmall,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: tokens.spacing[2],
+  },
+  wideCardTitle: {
+    ...tokens.typography.titleBlock,
+  },
+  wideCardText: {
+    ...tokens.typography.bodyLarge,
+    opacity: 0.92,
+  },
   wideFooter: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   header: {
     flexDirection: "row",

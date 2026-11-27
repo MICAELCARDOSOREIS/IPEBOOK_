@@ -80,6 +80,7 @@ describe("ReceivedRequests View (ISO/IEC 25010 - Adequação Funcional)", () => 
       expect(screen.getByText("Tudo pela conversa")).toBeDefined();
       expect(screen.getByText("Capitães da Areia")).toBeDefined();
       expect(screen.getByText("Pessoa interessada: Pessoa da comunidade")).toBeDefined();
+      expect(screen.queryByText(/Ao aceitar, o anúncio fica reservado/)).toBeNull();
       expect(screen.queryByText(/user-interested/)).toBeNull();
 
       await act(async () => {

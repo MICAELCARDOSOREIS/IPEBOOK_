@@ -1,9 +1,9 @@
 # Arquitetura MVVM sofisticado
 
-> Atualização de 2026-10-23: `src/infra/datasources` tem implementações em memória e Supabase
+> `src/infra/datasources` tem implementações em memória e Supabase
 > para cada contrato (contas, anúncios, pedidos, encontros, favoritos, alertas, notificações,
 > denúncias, perfis, avaliações, fotos, preferências e exportação LGPD), além de adaptadores
-> `AsyncStorage` (onboarding, histórico de buscas, tema) e `NetInfo` (conectividade).
+> `AsyncStorage` (primeiro acesso, histórico de buscas e cache de consultas) e `NetInfo` (conectividade).
 > `di/container.ts` escolhe o Supabase quando `EXPO_PUBLIC_BACKEND=supabase` (fora de testes);
 > caso contrário, usa memória. As seções abaixo descrevem a origem de cada fluxo e podem citar o
 > estado da época em que foram escritas. O fluxo de senha temporária foi removido pela spec 007.
@@ -14,7 +14,7 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 
 | Camada | Responsabilidade | Exemplo real | Não deve fazer |
 | --- | --- | --- | --- |
-| `app` | Rotas e configuração de navegação | [index.tsx](../src/app/index.tsx) | Regras de negócio ou acesso a dados |
+| `app` | Rotas e configuração de navegação | [index.tsx](../src/app/(tabs)/index.tsx) | Regras de negócio ou acesso a dados |
 | `view` | Renderização e captura de eventos | [home.tsx](../src/view/home.tsx) | Chamar infraestrutura, validar negócio ou capturar exceções |
 | `viewmodel` | Estado e ações da tela; navegação quando necessária | [useHomeViewModel.ts](../src/viewmodel/useHomeViewModel.ts) | Conhecer implementação de persistência ou renderizar JSX |
 | `usecase` | Operações da aplicação e validações de negócio quando existirem | [bookUseCases.ts](../src/usecase/bookUseCases.ts) | Depender de React ou de SDK externo |
@@ -22,13 +22,13 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 | `infra` | Implementar contratos com tecnologia concreta | [memoryBookDataSource.ts](../src/infra/datasources/memoryBookDataSource.ts) | Definir fluxo de tela |
 | `di` | Construir e conectar implementações | [container.ts](../src/di/container.ts) | Concentrar regras de negócio |
 
-`app/_layout.tsx` configura o Stack e encapsula o `ThemeProvider`, `KeyboardAwareRoot`, `AppUpdateGate`, `PushRegistration` e `PwaRegister`; `app/index.tsx` liga a rota raiz às Views. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`, `IBookMetadataService`, `IPushNotificationService`, `IErrorReporter`, `IInAppUpdateService`, `IAppStoreLauncherService`, `IImagePickerService`, `IStoreReviewService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, `FileDownloadService`, `PwaService`, provedores de ISBN Open Library/Google Books/BrasilAPI/Crossref, `ExpoImagePickerService` com redução de imagem via `expo-image-manipulator`, `ExpoPushNotificationService`, `SentryErrorReporter`, `GooglePlayInAppUpdateService`, `ExpoStoreReviewService`, além dos equivalentes em memória para testes). `CachedBookDataSource` atua como decorator de cache offline em `AsyncStorage` sobre o catálogo.
+`app/_layout.tsx` configura o Stack e encapsula o `ThemeProvider`, `KeyboardAwareRoot`, `AppUpdateGate`, `PushRegistration` e `PwaRegister`; `app/(tabs)/index.tsx` liga a rota raiz às Views. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`, `IBookMetadataService`, `IPushNotificationService`, `IErrorReporter`, `IInAppUpdateService`, `IAppStoreLauncherService`, `IImagePickerService`, `IStoreReviewService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, `FileDownloadService`, `PwaService`, provedores de ISBN Open Library/Google Books/BrasilAPI/Crossref, `ExpoImagePickerService` com redução de imagem via `expo-image-manipulator`, `ExpoPushNotificationService`, `MemoryErrorReporter`, `GooglePlayInAppUpdateService`, `ExpoStoreReviewService`, além dos equivalentes em memória para testes). `CachedBookDataSource` usa `AsyncStorage` para manter a última consulta ao catálogo, à Estante e aos detalhes públicos. O [ADR 0124](adr/0124-remocao-do-sentry.md) registra o tratamento local de erros com `MemoryErrorReporter`, `SafeLogger` e `AppErrorFallback`. O layout de abas usa navegação nativa no iOS. [ADR 0123](adr/0123-liquid-glass-nativo-ios.md)
 
 ## Fluxo da tela inicial
 
 ```mermaid
 flowchart TD
-    R["app/index.tsx"] --> V["view/home.tsx"]
+    R["app/(tabs)/index.tsx"] --> V["view/home.tsx"]
     V --> DI["di/container.ts (makeHomeViewModel)"]
     DI --> VM["useHomeViewModel"]
     VM --> UC["IBookUseCases / BookUseCases"]
@@ -38,7 +38,7 @@ flowchart TD
     DI -. instancia .-> MEM
 ```
 
-Ao montar a tela, o hook chama `listBooks()`. O caso de uso delega a `list()` do datasource recebido no construtor. O datasource padrão retorna uma lista vazia. Quando resolve, o hook entrega o estado à View. Esta mostra lista, ausência de dados, carregamento ou erro.
+Ao montar a tela, o hook chama `listBooks()`. O caso de uso delega a `list()` do datasource recebido no construtor. O Supabase devolve os anúncios conforme as regras de leitura. Em ambiente de testes, o adaptador em memória parte dos dados definidos pelo teste. Ao resolver a consulta, o hook entrega o estado à View. Esta mostra lista, ausência de dados, carregamento ou erro.
 
 Conforme a Spec 126 ([ADR 0098](adr/0098-estrategia-de-injecao-de-dependencia-nos-viewmodels.md)), todos os ViewModels de `src/viewmodel/` recebem suas dependências por parâmetro obrigatório (nenhum ViewModel importa `src/di/container.ts`). O container expõe fábricas `make*ViewModel` consumidas pelas Views. Nos testes de hooks, a ViewModel recebe uma implementação alternativa diretamente pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
 
@@ -101,7 +101,7 @@ caso de uso por parâmetro para testes). Para manter `src/view/**` testável sem
 telas é feita por callbacks (`onAuthenticated`, `onNavigateToSignUp`, `onNavigateToSignIn`,
 `onNavigateToCreateListing`, `onRequireSignIn`) recebidos como props; quem resolve esses
 callbacks com `expo-router` são as rotas finas em `src/app/entrar.tsx`, `src/app/criar-conta.tsx`,
-`src/app/anunciar.tsx` e `src/app/index.tsx` (nenhuma delas é mais um reexport puro). `src/view/home.tsx`
+`src/app/anunciar.tsx` e `src/app/(tabs)/index.tsx` (nenhuma delas é mais um reexport puro). `src/view/home.tsx`
 usa `useAuthViewModel` para mostrar "Olá, {e-mail}" + botões "Anunciar"/"Sair" quando autenticado,
 ou um link "Entrar" quando visitante.
 

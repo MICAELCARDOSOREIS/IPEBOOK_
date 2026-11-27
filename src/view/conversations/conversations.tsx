@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
@@ -18,11 +18,11 @@ import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
-import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { BookCover } from "@/view/components/BookCover";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { SegmentedControl } from "@/view/components/SegmentedControl";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -44,7 +44,7 @@ export type ConversationsProps = {
   onOpenNegotiation?: (requestId: string) => void;
   onScheduleMeeting?: (requestId: string) => void;
   onOpenDelivery?: (requestId: string) => void;
-  /** "Denunciar" do painel "Sobre a troca" (web larga). */
+  /** "Denunciar" nos detalhes do livro (web larga). */
   onReportListing?: (listingId: string) => void;
   /** Proposta recebida pendente: abre os pedidos recebidos para aceitar ou recusar. */
   onOpenReceivedRequests?: () => void;
@@ -133,6 +133,7 @@ export function Conversations({
 
   // Web larga (Figma `06.01`): a conversa abre ao lado da lista, sem trocar de rota.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [bookDetailsOpen, setBookDetailsOpen] = useState(false);
   const [filter, setFilter] = useState<"active" | "completed">("active");
 
   const activeItems = useMemo(
@@ -146,6 +147,9 @@ export function Conversations({
   const visibleItems = filter === "completed" ? completedItems : activeItems;
 
   const selectedItem = visibleItems.find((item) => item.requestId === selectedId) ?? null;
+  useEffect(() => {
+    if (!wideWeb || !selectedItem) setBookDetailsOpen(false);
+  }, [wideWeb, selectedItem]);
 
   const pendingReceivedCount = useMemo(
     () => activeItems.filter((item) => item.kind === "pendingReceived").length,
@@ -153,8 +157,8 @@ export function Conversations({
   );
 
   const showPendingBanner = filter === "active" && pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests);
-  const iosFilters = (
-    <View style={styles.filterBar}>
+  const segmentedFilters = (
+    <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
       <SegmentedControl
         accessibilityLabel="Filtrar conversas"
         value={filter}
@@ -200,12 +204,16 @@ export function Conversations({
           Não foi possível apagar a conversa. Tente novamente.
         </Text>
       ) : null}
-      <View style={styles.footerCard}>
+      <View style={[styles.footerCard, wideWeb && styles.wideFooterCard]}>
         <View style={styles.footerIconBox}>
           <AppIcon name="info" size={16} color={colors.m3.primary} />
         </View>
         <View style={styles.footerTextCol}>
-          <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
+          <Text style={styles.footer}>
+            {wideWeb
+              ? "Combine pelo chat. Não compartilhe senhas ou códigos."
+              : "Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos."}
+          </Text>
           {wideWeb ? null : <Text style={styles.footerSub}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>}
         </View>
       </View>
@@ -240,7 +248,10 @@ export function Conversations({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver anúncio de ${item.listing.title}`}
-        onPress={() => guardedOpenListing(item.listing.id)}
+        onPress={() => {
+          setBookDetailsOpen(false);
+          guardedOpenListing(item.listing.id);
+        }}
         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
           styles.aboutBookCard,
           hovered ? styles.aboutBookCardHovered : null,
@@ -278,7 +289,7 @@ export function Conversations({
             >
               Conversas
             </Text>
-            {wideWeb ? (
+            {wideWeb && !hasList ? (
               <Text style={styles.subtitleWide}>
                 Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
               </Text>
@@ -313,21 +324,6 @@ export function Conversations({
                 <View style={styles.wideLoadingComposerBar}>
                   <View style={styles.skeletonInput} />
                   <View style={styles.skeletonSendBtn} />
-                </View>
-              </View>
-              <View
-                style={styles.aboutPane}
-                importantForAccessibility="no-hide-descendants"
-                testID="conversation-about-loading"
-              >
-                <View style={[styles.aboutBookCard, styles.aboutLoadingCard]}>
-                  <View style={styles.aboutBook}>
-                    <View style={styles.skeletonBookCover} />
-                    <View style={styles.aboutBookText}>
-                      <View style={styles.skeletonLineTitle} />
-                      <View style={styles.skeletonLineSub} />
-                    </View>
-                  </View>
                 </View>
               </View>
             </View>
@@ -410,22 +406,7 @@ export function Conversations({
                   </Text>
                 </View>
               ) : null}
-              {Platform.OS === "ios" ? (
-                hasIosHeader ? null : iosFilters
-              ) : (
-                <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
-                  <Chip
-                    label={`Ativas (${activeItems.length})`}
-                    selected={filter === "active"}
-                    onPress={() => setFilter("active")}
-                  />
-                  <Chip
-                    label={`Concluídas (${completedItems.length})`}
-                    selected={filter === "completed"}
-                    onPress={() => setFilter("completed")}
-                  />
-                </View>
-              )}
+              {wideWeb ? segmentedFilters : null}
               <ScrollEdgeFlatList
                 testID="conversation-list"
                 style={styles.flexOne}
@@ -436,9 +417,9 @@ export function Conversations({
                   styles.list,
                   { paddingBottom: scrollBottomPadding.withoutBottomBar },
                 ]}
-                ListHeaderComponent={hasIosHeader || showPendingBanner ? (
+                ListHeaderComponent={!wideWeb || showPendingBanner ? (
                   <>
-                    {hasIosHeader ? iosFilters : null}
+                    {!wideWeb ? segmentedFilters : null}
                     {showPendingBanner ? (
                       <Pressable
                         accessibilityRole="button"
@@ -522,10 +503,6 @@ export function Conversations({
                               <View style={styles.completedPill}>
                                 <Text style={styles.completedPillText}>Concluído</Text>
                               </View>
-                            ) : item.kind === "pendingReceived" ? (
-                              <View style={styles.badge}>
-                                <Text style={styles.badgeText}>Nova proposta</Text>
-                              </View>
                             ) : item.lastMessageAt ? (
                               <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
                             ) : item.kind === "pendingSent" ? (
@@ -543,12 +520,23 @@ export function Conversations({
                             </View>
                             <Tag variant={item.listing.modality} />
                           </View>
-                          <Text
-                            style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
-                            numberOfLines={wideWeb ? 1 : 2}
-                          >
-                            {item.preview}
-                          </Text>
+                          {item.kind === "pendingReceived" && !isCompleted ? (
+                            <View style={styles.previewBadgeRow}>
+                              <View style={styles.badge}>
+                                <Text style={styles.badgeText}>Nova proposta</Text>
+                              </View>
+                              <Text style={[styles.preview, styles.previewStatus, styles.previewFlex]} numberOfLines={1}>
+                                {item.preview}
+                              </Text>
+                            </View>
+                          ) : (
+                            <Text
+                              style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
+                              numberOfLines={wideWeb ? 1 : 2}
+                            >
+                              {item.preview}
+                            </Text>
+                          )}
                         </View>
                       </Pressable>
                       {item.kind === "pendingSent" ? (
@@ -599,6 +587,9 @@ export function Conversations({
                   initialCounterpartName={selectedItem?.otherName}
                   initialCounterpartPhotoUrl={selectedItem?.otherPhotoUrl}
                   initialModality={selectedItem?.listing.modality}
+                  bookTitle={selectedItem.listing.title}
+                  bookDetailsOpen={bookDetailsOpen}
+                  onOpenBookDetails={() => setBookDetailsOpen(true)}
                   onOpenNegotiation={guardedOpenNegotiation}
                   onScheduleMeeting={onScheduleMeeting}
                   onOpenDelivery={onOpenDelivery}
@@ -617,15 +608,16 @@ export function Conversations({
               </View>
             ) : null}
 
-            {/* Painel Direito: Detalhes da negociação e encontro recomendado */}
             {wideWeb && selectedItem ? (
-              <View style={styles.aboutPane} testID="conversation-about">
-                <View style={styles.aboutHeader} testID="conversation-about-header">
-                  <Text accessibilityRole="header" style={styles.aboutTitle}>
-                    {`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
-                  </Text>
-                </View>
-                <View style={styles.aboutBody}>
+              <BottomSheet
+                placement="right"
+                showCloseButton
+                testID="conversation-about"
+                title={`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
+                visible={bookDetailsOpen}
+                onClose={() => setBookDetailsOpen(false)}
+              >
+                <ScrollView contentContainerStyle={styles.aboutBody}>
                   {renderAboutBook(selectedItem)}
                   <View style={styles.aboutSafe}>
                     <View style={styles.aboutSafeHeader}>
@@ -640,7 +632,10 @@ export function Conversations({
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Denunciar anúncio"
-                      onPress={() => guardedReportListing(selectedItem.listing.id)}
+                      onPress={() => {
+                        setBookDetailsOpen(false);
+                        guardedReportListing(selectedItem.listing.id);
+                      }}
                       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
                         styles.aboutReportButton,
                         hovered ? styles.aboutReportButtonHovered : null,
@@ -651,8 +646,8 @@ export function Conversations({
                       <Text style={styles.aboutReport}>Denunciar anúncio</Text>
                     </Pressable>
                   ) : null}
-                </View>
-              </View>
+                </ScrollView>
+              </BottomSheet>
             ) : null}
           </View>
         )}

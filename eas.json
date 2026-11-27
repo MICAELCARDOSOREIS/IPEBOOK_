@@ -18,8 +18,7 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
-        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "http://localhost:8081/redefinir-senha",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "http://localhost:8081/redefinir-senha"
       },
       "channel": "development"
     },

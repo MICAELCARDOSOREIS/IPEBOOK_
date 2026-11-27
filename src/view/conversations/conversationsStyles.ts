@@ -3,7 +3,7 @@ import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
-export const CONVERSATIONS_FOOTER_MIN_HEIGHT = 102;
+export const CONVERSATIONS_FOOTER_MIN_HEIGHT = 76;
 
 export function createConversationsStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -271,12 +271,6 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerHigh,
     },
-    skeletonBookCover: {
-      width: 56,
-      height: 76,
-      borderRadius: tokens.radius.small,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-    },
     widePane: {
       flex: 1,
       minWidth: 0,
@@ -309,30 +303,9 @@ export function createConversationsStyles(colors: ColorPalette) {
       textAlign: "center",
       maxWidth: 320,
     },
-    aboutPane: {
-      width: 312,
-      minHeight: 0,
-      borderLeftWidth: 1,
-      borderLeftColor: colors.book.paperEdge,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    aboutHeader: {
-      minHeight: 64,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[20],
-      borderBottomWidth: 1,
-      borderBottomColor: colors.book.paperEdge,
-      backgroundColor: colors.surface,
-    },
     aboutBody: {
-      flex: 1,
+      flexGrow: 1,
       gap: tokens.spacing[14],
-      padding: tokens.spacing[16],
-    },
-    aboutTitle: {
-      ...tokens.typography.titleMedium,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSurface,
     },
     aboutBookCard: {
       backgroundColor: colors.surface,
@@ -343,9 +316,6 @@ export function createConversationsStyles(colors: ColorPalette) {
     },
     aboutBookCardHovered: {
       backgroundColor: colors.m3.surfaceContainer,
-    },
-    aboutLoadingCard: {
-      margin: tokens.spacing[16],
     },
     aboutBook: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     aboutBookText: { flex: 1, minWidth: 0, gap: tokens.spacing[4], alignItems: "flex-start" },
@@ -413,11 +383,9 @@ export function createConversationsStyles(colors: ColorPalette) {
     },
     aboutReport: { ...tokens.typography.labelLarge, fontFamily: fontFamily.medium, color: colors.error },
     filterBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
+      width: "100%",
       paddingHorizontal: tokens.spacing[16],
-      paddingBottom: tokens.spacing[8],
+      paddingBottom: tokens.spacing[12],
     },
     filterBarWide: {
       paddingHorizontal: tokens.spacing[14],
@@ -512,6 +480,12 @@ export function createConversationsStyles(colors: ColorPalette) {
     time: { ...tokens.typography.labelSmall, color: colors.m3.onSurfaceVariant },
     preview: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface },
     previewStatus: { color: colors.m3.onSurfaceVariant, fontStyle: "italic" },
+    previewBadgeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    previewFlex: { flex: 1 },
     aboutRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -533,6 +507,13 @@ export function createConversationsStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+    },
+    wideFooterCard: {
+      flex: 1,
+      alignItems: "center",
+      padding: 0,
+      borderWidth: 0,
+      backgroundColor: "transparent",
     },
     footerIconBox: {
       width: 28,
@@ -585,7 +566,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       overflow: "hidden",
     },
     rowCardPendingReceived: {
-      borderColor: colors.m3.primary,
+      borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
     rowCardPendingSent: {
@@ -644,13 +625,13 @@ export function createConversationsStyles(colors: ColorPalette) {
     pendingBanner: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.nature.sprout,
+      backgroundColor: colors.m3.secondaryContainer,
       borderRadius: tokens.radius.card,
       padding: tokens.spacing[12],
       marginHorizontal: tokens.spacing[16],
       marginBottom: tokens.spacing[12],
       borderWidth: 1,
-      borderColor: colors.nature.foliage,
+      borderColor: colors.m3.outlineVariant,
       gap: tokens.spacing[10],
     },
     pendingBannerWide: {
@@ -661,7 +642,7 @@ export function createConversationsStyles(colors: ColorPalette) {
       width: 36,
       height: 36,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.onFoliage,
+      backgroundColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -670,13 +651,13 @@ export function createConversationsStyles(colors: ColorPalette) {
       gap: 2,
     },
     pendingBannerTitle: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.labelLarge,
       fontWeight: tokens.fontWeight.bold,
-      color: colors.nature.foliageDeep,
+      color: colors.m3.onSecondaryContainer,
     },
     pendingBannerSubtitle: {
       ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
+      color: colors.m3.onSecondaryContainer,
     },
   });
 }

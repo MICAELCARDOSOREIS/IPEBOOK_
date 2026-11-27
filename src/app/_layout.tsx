@@ -87,7 +87,7 @@ function ThemedStack() {
   );
 }
 
-// Acompanhamento de erros (Spec 104): sem EXPO_PUBLIC_SENTRY_DSN, não envia nada.
+// Inicializa o acompanhador local de erros (Spec 145 / ADR 0124).
 startErrorReporting();
 
 /** Uma tela que quebra mostra o aviso amigável em vez de fechar o app (expo-router). */

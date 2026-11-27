@@ -223,9 +223,9 @@ conferir(
 );
 const pluginsSentry = plugins.filter((nome) => nome === "@sentry/react-native" || nome === "@sentry/react-native/expo");
 conferir(
-  "Plugin do Sentry registrado sem duplicação",
-  pluginsSentry.length === 1,
-  `esperado exatamente 1 registro do plugin Sentry em app.json (encontrados ${pluginsSentry.length}).`,
+  "Sem plugin nativo do Sentry (Spec 145 / ADR 0124)",
+  pluginsSentry.length === 0,
+  `o plugin do Sentry foi removido na Spec 145 (encontrados ${pluginsSentry.length}).`,
 );
 
 console.log("\n\x1b[36m▶ Assets nativos presentes e com tamanho mínimo de loja\x1b[0m");

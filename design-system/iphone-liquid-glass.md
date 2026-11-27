@@ -2,7 +2,7 @@
 
 Revisão do Figma em 24/11/2026. Responsável pela atualização: Micael Cardoso Reis.
 
-Esta é uma especificação de design, não uma declaração de implementação iOS. A primeira entrega continua Android/Web; a decisão de plataforma da [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) permanece válida. O tema claro é o único representado na revisão iPhone; os tokens históricos e ativos de tema escuro de outras plataformas não são removidos.
+Este documento registra as referências visuais do Figma em tema claro. A implementação usa abas nativas e material Liquid Glass no iOS compatível, com alternativa opaca para Reduzir Transparência. A homologação visual em iPhone segue pendente. [ADR 0123](../docs/adr/0123-liquid-glass-nativo-ios.md) · [Estado e continuidade](../docs/estado.md)
 
 ## Componentes e mapeamento
 

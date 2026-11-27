@@ -83,7 +83,6 @@ import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExp
 import type { ILogger } from "@/model/services/iLogger";
 import { SafeLogger, reportingSink } from "@/infra/services/safeLogger";
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
-import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
 import { WebPushService } from "@/infra/services/webPushService";
@@ -394,16 +393,8 @@ export const negotiationMessageUseCases = {
   listHiddenConversations: async (userId: string) => (await messageDataSource.listHiddenConversations?.(userId)) ?? {},
 };
 
-const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-/** Sem chave do Sentry (ou em teste) os erros ficam só no aparelho (Spec 104 / ADR 0080). */
-export const errorReporter: IErrorReporter =
-  process.env.NODE_ENV !== "test" && sentryDsn
-    ? new SentryErrorReporter({
-        dsn: sentryDsn,
-        environment: process.env.EXPO_PUBLIC_APP_ENV ?? (__DEV__ ? "development" : "production"),
-        release: Constants.expoConfig?.version,
-      })
-    : new MemoryErrorReporter();
+/** Acompanhamento de erros local em memória, sem envio externo (Spec 145 / ADR 0124). */
+export const errorReporter: IErrorReporter = new MemoryErrorReporter();
 
 export const logger: ILogger = new SafeLogger(
   process.env.NODE_ENV === "test"

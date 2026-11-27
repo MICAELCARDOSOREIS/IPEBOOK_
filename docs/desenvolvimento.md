@@ -3,14 +3,14 @@
 ## Backend Supabase (spec 007)
 
 O backend oficial é o Supabase, selecionado com `EXPO_PUBLIC_BACKEND=supabase` (padrão do
-[`.env.example`](../.env.example)). O projeto usa tabelas `v2_` para esta versão. As 43 migrações
-locais de `supabase/migrations/` já estão aplicadas e verificadas no projeto remoto
-(`npm run health:supabase:remote`). Configurar no `.env` a URL do projeto, a chave **publicável** e
+[`.env.example`](../.env.example)). O projeto usa tabelas `v2_` para esta versão. As migrações oficiais ficam em
+`supabase/migrations/`. Use `npm run health:supabase:remote` para conferir o projeto remoto e consulte
+o [estado do projeto](estado.md#1-estado-verificado-em-execução) para o último registro. Configure no `.env` a URL do projeto, a chave **publicável** e
 `EXPO_PUBLIC_AUTH_REDIRECT_URL`; o endereço de retorno precisa estar na lista de URLs permitidas do
 Supabase Auth. Não usar `service_role` no cliente nem registrar segredos no repositório.
 
-Fora dos testes, os adaptadores em memória deixam de ser usados quando `EXPO_PUBLIC_BACKEND=supabase`;
-eles permanecem apenas como implementação determinística da suíte automatizada. Validar localmente
+A suíte automatizada usa adaptadores em memória. Para experimentar localmente com dados voláteis,
+use `EXPO_PUBLIC_BACKEND=memory`. Validar localmente
 com `npm run validate` (inclui `npm run test:sql` via PGlite) e `npm run build:web`; esses comandos
 não aplicam migrações remotas nem verificam entrega de e-mail.
 
@@ -50,11 +50,11 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run lint` | Analisa o código com o Biome e falha apenas em erros |
 | `npm run lint:fix` | Aplica as correções seguras do Biome |
 | `npm run check:architecture` | Verifica imports entre camadas, teto de 900 linhas em `src/view/` e proibição de `.parent!` |
-| `npm run check:design-system` | Confere tokens canônicos, contrastes, 28 docs de componentes e `accessibilityViewIsModal` |
+| `npm run check:design-system` | Confere tokens canônicos, contrastes, 29 documentos de componentes e `accessibilityViewIsModal` |
 | `npm run check:numbering` | Falha se duas specs ou dois ADRs usarem o mesmo número |
 | `npm run check:build-config` | Valida `app.json`, `eas.json`, redirects/headers Web e assets nativos |
 | `npm run check:docs` | Confere sincronia das métricas atuais entre código, `docs/estado.md` e `README.md` |
-| `npm run test:sql` | Executa as 43 migrações e cenários de RLS em PostgreSQL local via PGlite |
+| `npm run test:sql` | Executa todas as migrações locais e cenários de RLS em PostgreSQL local via PGlite |
 | `npm test` | Executa a suíte unitária/integração no Jest uma vez |
 | `npm run test:coverage` | Executa o Jest com cobertura V8 (limiar ≥ 80%) e gera `coverage/relatorio-testes.json` |
 | `npm run test:e2e` | Executa os cenários E2E Web em Chrome headless via CDP (`dist-e2e/`, sem Playwright) |
@@ -70,7 +70,7 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 
 `npm start` e `npm run web` executam `scripts/servidor-dev.sh`, que inicia o Expo com `NODE_OPTIONS=--max-old-space-size=4096`, `--max-workers 4` (`EXPO_METRO_MAX_WORKERS` permite ajustar) e [`scripts/metro-sem-vazamento-ssr.cjs`](../scripts/metro-sem-vazamento-ssr.cjs) para evitar o vazamento de `SourceMap` no SSR em Node 24 (`EXPO_SSR_SOURCEMAPS=1` reativa os mapas SSR para depuração pontual). O Metro atende Android e web no mesmo processo Node: com a web aberta e o app conectado, o bundle web estático (com SSR) somado ao bundle Android passa do heap padrão do Node nesta máquina (~2,2 GB) e o processo aborta com `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`. Para usar outro valor, definir a variável no ambiente (`NODE_OPTIONS=--max-old-space-size=6144 npm start`). Flags do Expo vão depois de `--`: `npm start -- --clear` limpa o cache do Metro (sem o `--`, o npm consome a flag e ela não chega ao Expo).
 
-Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. A versão Web é validada automaticamente via `npm run test:e2e` (Chrome CDP) e a versão Android `0.2.0` foi validada em aparelho físico real; o iOS Nativo depende de macOS e segue o planejamento da [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md). Em máquinas com memória limitada ao rodar toda a suíte com cobertura, o [`jest.config.cjs`](../jest.config.cjs) limita `maxWorkers: 6` (podendo ser reduzido com `npm run test:coverage -- --maxWorkers=3`).
+Para Android e iOS, prepare o ambiente nativo e um cliente compatível com o SDK do projeto. A compilação local para iOS exige macOS. Consulte o [guia de homologação e publicação para iOS](loja/ios-app-store.md). Em máquinas com memória limitada, reduza os seis workers do Jest com `npm run test:coverage -- --maxWorkers=3`. [Configuração do Jest](../jest.config.cjs)
 
 ## Configuração e dados
 

@@ -1,6 +1,6 @@
 # IpêBook 🌳📚
 
-Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.461 testes em 328 arquivos**) baseada na norma **ISO/IEC 25010**.
+Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.465 testes em 328 arquivos**) baseada na norma **ISO/IEC 25010**.
 
 * 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
 * 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
@@ -18,9 +18,9 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 
 * Índice completo da documentação técnica e guias em [`docs/README.md`](docs/README.md).
 * Objetivo, público, modalidades e decisões de produto em [`docs/produto.md`](docs/produto.md).
-* Estado atual, métricas verificadas e histórico de entregas em [`docs/estado.md`](docs/estado.md) e no relatório executivo [`docs/status-report.md`](docs/status-report.md).
+* Estado atual, métricas verificadas e histórico de entregas em [`docs/estado.md`](docs/estado.md). O [relatório executivo de 27/11/2026](docs/status-report.md) resume o ciclo.
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
-* Sistema de design completo (tokens, 28 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md).
+* Sistema de design completo (tokens, 29 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md).
 * Especificações de cada funcionalidade (Spec Kit), da estrutura MVVM (001) às entregas mais recentes, em [`specs/`](specs/). A situação de cada uma está em [`docs/estado.md`](docs/estado.md).
 
 ---
@@ -41,7 +41,7 @@ npm run android:usb  # Túnel USB via adb reverse (independe de Wi-Fi/VPN)
 npm run ios          # Dispositivo/Simulador iOS (macOS) — ver Spec 137
 ```
 
-> **Plataformas:** **Android** (`0.2.0` publicado na Play Store e validado em aparelho real) e **Web / PWA** (publicada em [`https://ipebook.app`](https://ipebook.app), incluindo adequação ao Apple HIG no Safari do iPhone via Spec 136 / ADR 0108). O aplicativo **iOS Nativo** (Liquid Glass / Apple HIG) está especificado para implementação na [Spec 137](specs/137-ios-nativo-apple-hig/spec.md).
+> **Plataformas:** Android pela Google Play e Web/PWA em [ipebook.app](https://ipebook.app). A versão Android `0.2.5` foi enviada à faixa fechada Alpha em 26/11/2026. O iOS nativo já tem login Apple, abas nativas e Liquid Glass. A homologação em iPhone e a distribuição pelo TestFlight seguem pendentes. [Estado e continuidade](docs/estado.md) · [Guia para iOS](docs/loja/ios-app-store.md)
 
 ---
 
@@ -51,7 +51,7 @@ npm run ios          # Dispositivo/Simulador iOS (macOS) — ver Spec 137
 npm run build:web   # exporta o site estático em dist/ e prepara fontes/rotas para o Cloudflare Pages
 ```
 
-* **Web (Cloudflare Pages):** publicado em produção em **[https://ipebook.app](https://ipebook.app)** (`npx wrangler pages deploy dist --project-name ipebook --branch develop`).
+* **Web (Cloudflare Pages):** siga o [roteiro de implantação](docs/implantacao-cloudflare.md) para publicar em [ipebook.app](https://ipebook.app).
 * **Android (Google Play Console):** geração local de AAB/APK (`npm run aab:local`, `npm run apk:debug`) e envio automatizado pela API do Google Play (`npm run play:submit`, documentado em [`docs/loja/publicacao-terminal.md`](docs/loja/publicacao-terminal.md)).
 
 ---
@@ -123,10 +123,8 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 
 ## 📱 Validação manual em dispositivo
 
-A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) possuem suíte automatizada em [`.maestro/`](.maestro/README.md) (executada no Waydroid contra o development build conectado ao Metro; ramos condicionais como login Google em estado deslogado, reset completo de onboarding e encontro confirmado para entrega QR dependem das respectivas pré-condições no aparelho) e também são verificados manualmente antes de cada publicação, conforme o roteiro em
-[`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
-componentes e integração entre camadas.
-
+A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`). A suíte Android [Maestro](.maestro/README.md) foi executada no Waydroid com o development build conectado ao Metro. Login nativo, entrega por QR Code entre dois aparelhos, recebimento de push e leitores de tela também exigem conferência em aparelho físico, conforme o roteiro em
+[`docs/qualidade.md`](docs/qualidade.md).
 > **Limites do runtime de testes de componentes (Spec 126, CA7):** as suítes em `tests/components/` e `tests/components-mocked/` executam em Node sobre `tests/mocks/react-native.ts`. Esse ambiente preserva a árvore de elementos, propriedades de acessibilidade (`accessibilityRole`, `accessibilityLabel`, `accessibilityLiveRegion`), eventos e objetos `style` declarados, mas **não executa um motor de layout real** (Yoga/DOM): ele não valida largura calculada em pixels, colisão visual nem quebra efetiva de linha. Asserções de teste devem usar apenas contratos públicos (papel acessível, rótulo, `testID`, estilo declarado), sendo proibido o acoplamento estrutural via `.parent!` (vigiado por `npm run check:architecture`). A validação sensorial e de layout real permanece manual em aparelho ou navegador.
 
 ---

@@ -12,14 +12,6 @@ type NativePlayUpdateModule = {
   startUpdateFlow?: () => Promise<boolean>;
 };
 
-type NativeSentryModule = {
-  fetchNativeRelease?: () => Promise<{
-    id?: string;
-    version?: string;
-    build?: string;
-  } | null>;
-};
-
 export class GooglePlayInAppUpdateService implements IInAppUpdateService {
   async checkStoreUpdate(): Promise<StoreUpdateInfo> {
     if (Platform.OS !== "android") {
@@ -28,7 +20,6 @@ export class GooglePlayInAppUpdateService implements IInAppUpdateService {
     try {
       const modules = NativeModules as {
         IpebookPlayUpdate?: NativePlayUpdateModule;
-        RNSentry?: NativeSentryModule;
       };
       if (modules.IpebookPlayUpdate?.checkStoreUpdate) {
         const info = await modules.IpebookPlayUpdate.checkStoreUpdate();
@@ -44,16 +35,6 @@ export class GooglePlayInAppUpdateService implements IInAppUpdateService {
             typeof info?.installedVersionName === "string" && info.installedVersionName
               ? info.installedVersionName
               : undefined,
-        };
-      }
-
-      if (modules.RNSentry?.fetchNativeRelease) {
-        const release = await modules.RNSentry.fetchNativeRelease();
-        const buildCode = release?.build ? Number(release.build) : Number.NaN;
-        return {
-          isUpdateAvailable: false,
-          installedVersionCode: Number.isInteger(buildCode) && buildCode > 0 ? buildCode : undefined,
-          installedVersionName: release?.version || undefined,
         };
       }
 
