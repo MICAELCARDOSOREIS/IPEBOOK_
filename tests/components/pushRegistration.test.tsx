@@ -1,45 +1,44 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERMISSION_PROMPT_COPY } from "@/view/components/PermissionPromptDialog";
 import { PushRegistration } from "@/view/components/PushRegistration";
 
-const registro = vi.hoisted(() => ({
+const mockRegistro = {
   calls: [] as Array<string | null>,
   permissionReady: [] as boolean[],
-}));
-const auth = vi.hoisted(() => ({
+};
+const mockAuth = {
   user: { id: "u1" } as { id: string } | null,
-  actions: { refreshSession: vi.fn() },
-}));
-const prompt = vi.hoisted(() => ({
+  actions: { refreshSession: jest.fn() },
+};
+const mockPrompt = {
   state: { status: "idle" as string, granted: true },
-  actions: { refresh: vi.fn(), approve: vi.fn(), decline: vi.fn(), dismiss: vi.fn() },
-}));
-vi.mock("@/viewmodel/usePushRegistration", () => ({
+  actions: { refresh: jest.fn(), approve: jest.fn(), decline: jest.fn(), dismiss: jest.fn() },
+};
+jest.mock("@/viewmodel/usePushRegistration", () => ({
   usePushRegistration: (userId: string | null, _route: unknown, _svc: unknown, _prefs: unknown, ready: boolean) => {
-    registro.calls.push(userId);
-    registro.permissionReady.push(ready);
+    mockRegistro.calls.push(userId);
+    mockRegistro.permissionReady.push(ready);
   },
 }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: () => [{ user: auth.user, loading: false, error: null }, auth.actions],
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: () => [{ user: mockAuth.user, loading: false, error: null }, mockAuth.actions],
 }));
-vi.mock("@/viewmodel/usePermissionPromptViewModel", () => ({
-  usePermissionPromptViewModel: () => [prompt.state, prompt.actions],
+jest.mock("@/viewmodel/usePermissionPromptViewModel", () => ({
+  usePermissionPromptViewModel: () => [mockPrompt.state, mockPrompt.actions],
 }));
 
 describe("PushRegistration (Spec 096 e Spec 020)", () => {
   afterEach(() => {
-    registro.calls.length = 0;
-    registro.permissionReady.length = 0;
-    auth.user = { id: "u1" };
-    auth.actions.refreshSession.mockReset();
-    prompt.state = { status: "idle", granted: true };
-    prompt.actions.refresh.mockReset();
-    prompt.actions.approve.mockReset();
-    prompt.actions.decline.mockReset();
-    prompt.actions.dismiss.mockReset();
+    mockRegistro.calls.length = 0;
+    mockRegistro.permissionReady.length = 0;
+    mockAuth.user = { id: "u1" };
+    mockAuth.actions.refreshSession.mockReset();
+    mockPrompt.state = { status: "idle", granted: true };
+    mockPrompt.actions.refresh.mockReset();
+    mockPrompt.actions.approve.mockReset();
+    mockPrompt.actions.decline.mockReset();
+    mockPrompt.actions.dismiss.mockReset();
   });
 
   it("liga o push à conta logada e não desenha nada com a permissão concedida", async () => {
@@ -48,71 +47,71 @@ describe("PushRegistration (Spec 096 e Spec 020)", () => {
       screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
     });
     expect(screen.toJSON()).toBeNull();
-    expect(registro.calls).toContain("u1");
+    expect(mockRegistro.calls).toContain("u1");
   });
 
   it("passa nulo ao hook quando não há conta logada", async () => {
-    auth.user = null;
+    mockAuth.user = null;
     await act(async () => {
       const screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
       expect(screen.toJSON()).toBeNull();
     });
-    expect(registro.calls).toContain(null);
-    expect(prompt.actions.refresh).not.toHaveBeenCalled();
+    expect(mockRegistro.calls).toContain(null);
+    expect(mockPrompt.actions.refresh).not.toHaveBeenCalled();
   });
 
   it("T005: relê a sessão ao navegar, então o aviso sai na mesma execução do login", async () => {
-    auth.user = null;
+    mockAuth.user = null;
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<PushRegistration pathname="/criar-conta" onOpenRoute={() => {}} />);
     });
-    expect(auth.actions.refreshSession).toHaveBeenCalledTimes(1);
+    expect(mockAuth.actions.refreshSession).toHaveBeenCalledTimes(1);
 
-    auth.user = { id: "u2" };
+    mockAuth.user = { id: "u2" };
     await act(async () => {
       screen.rerender(<PushRegistration pathname="/criar-conta" onOpenRoute={() => {}} />);
     });
     await act(async () => {
       screen.rerender(<PushRegistration pathname="/anunciar" onOpenRoute={() => {}} />);
     });
-    expect(auth.actions.refreshSession).toHaveBeenCalledTimes(1);
-    expect(prompt.actions.refresh).toHaveBeenCalled();
+    expect(mockAuth.actions.refreshSession).toHaveBeenCalledTimes(1);
+    expect(mockPrompt.actions.refresh).toHaveBeenCalled();
   });
 
   it("Spec 127: navegar reavalia a permissão, então conceder em outra tela libera o token na mesma execução", async () => {
-    prompt.state = { status: "idle", granted: false };
+    mockPrompt.state = { status: "idle", granted: false };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
     });
-    expect(prompt.actions.refresh).toHaveBeenCalledTimes(1);
-    expect(registro.permissionReady.at(-1)).toBe(false);
+    expect(mockPrompt.actions.refresh).toHaveBeenCalledTimes(1);
+    expect(mockRegistro.permissionReady.at(-1)).toBe(false);
 
-    prompt.state = { status: "idle", granted: true };
+    mockPrompt.state = { status: "idle", granted: true };
     await act(async () => {
       screen.rerender(<PushRegistration pathname="/notificacoes" onOpenRoute={() => {}} />);
     });
-    expect(prompt.actions.refresh).toHaveBeenCalledTimes(2);
-    expect(registro.permissionReady.at(-1)).toBe(true);
+    expect(mockPrompt.actions.refresh).toHaveBeenCalledTimes(2);
+    expect(mockRegistro.permissionReady.at(-1)).toBe(true);
   });
 
   it("CA2: ao entrar na conta explica o motivo dos avisos antes do prompt nativo", async () => {
-    prompt.state = { status: "explain", granted: false };
+    mockPrompt.state = { status: "explain", granted: false };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
     });
-    expect(prompt.actions.refresh).toHaveBeenCalledTimes(1);
+    expect(mockPrompt.actions.refresh).toHaveBeenCalledTimes(1);
     expect(screen.getByText(PERMISSION_PROMPT_COPY.notifications.title)).toBeDefined();
     await act(async () => {
       fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.notifications.allow));
     });
-    expect(prompt.actions.approve).toHaveBeenCalledTimes(1);
+    expect(mockPrompt.actions.approve).toHaveBeenCalledTimes(1);
   });
 
   it("CA3: a recusa mostra o estado de avisos indisponíveis e fecha sem travar o app", async () => {
-    prompt.state = { status: "denied", granted: false };
+    mockPrompt.state = { status: "denied", granted: false };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
@@ -121,6 +120,6 @@ describe("PushRegistration (Spec 096 e Spec 020)", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.notifications.understood));
     });
-    expect(prompt.actions.dismiss).toHaveBeenCalledTimes(1);
+    expect(mockPrompt.actions.dismiss).toHaveBeenCalledTimes(1);
   });
 });

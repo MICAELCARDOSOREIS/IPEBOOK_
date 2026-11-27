@@ -40,6 +40,8 @@ export type PushMessage = {
   tag?: string;
   /** iOS empilha na mesma conversa os avisos com o mesmo `threadId`. */
   threadId?: string;
+  /** Contagem exibida no ícone do app no iOS. Zero limpa o selo. */
+  badge?: number;
   data: { url: string | null; type: string; notificationId: string };
 };
 
@@ -54,6 +56,18 @@ const EXPO_TOKEN = /^Expo(nent)?PushToken\[[^\]\s]+\]$/;
 /** Só aceita tokens no formato do Expo, para não enviar lixo ao serviço. */
 export function isExpoPushToken(value: unknown): value is string {
   return typeof value === "string" && EXPO_TOKEN.test(value);
+}
+
+/** A tabela recebe inscrições do cliente. O servidor só pode contatar hosts Web Push da Apple. */
+export function isApplePushEndpoint(value: string): boolean {
+  if (!/^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.push\.apple\.com\/[^\s]+$/.test(value)) return false;
+  try {
+    const endpoint = new URL(value);
+    return !endpoint.username && !endpoint.password && !endpoint.port
+      && endpoint.hostname.endsWith(".push.apple.com") && endpoint.pathname !== "/";
+  } catch {
+    return false;
+  }
 }
 
 export function channelOf(type: string): NotificationChannel {
@@ -75,7 +89,7 @@ export function isTypeMuted(type: string, mutedTypes: unknown): boolean {
  * negociação partilham `collapseId`/`tag`/`threadId` (a rota), então o novo substitui o anterior
  * em vez de empilhar uma notificação por mensagem, como fazem os apps profissionais.
  */
-export function buildPushMessage(notification: StoredNotification, token: string): PushMessage {
+export function buildPushMessage(notification: StoredNotification, token: string, unreadCount?: number): PushMessage {
   const channel = channelOf(notification.type);
   const group = notification.action_url ?? undefined;
   const message: PushMessage = {
@@ -87,6 +101,7 @@ export function buildPushMessage(notification: StoredNotification, token: string
     priority: priorityOf(notification.type),
     data: { url: notification.action_url, type: notification.type, notificationId: notification.id },
   };
+  if (unreadCount !== undefined) message.badge = unreadCount;
   if (group) {
     message.collapseId = group;
     message.tag = group;
@@ -98,6 +113,38 @@ export function buildPushMessage(notification: StoredNotification, token: string
 /** O Expo diz que o aparelho não existe mais: o token deve ser apagado (CA6). */
 export function isInvalidTokenTicket(ticket: PushTicket | undefined): boolean {
   return ticket?.status === "error" && ticket.details?.error === "DeviceNotRegistered";
+}
+
+/** Cabeçalho dedicado enviado pela trigger `v2_push_new_notification()` (Spec 143 / ADR 0119). */
+export const PUSH_WEBHOOK_HEADER = "x-push-webhook-secret";
+
+/** Resposta padronizada sem oráculo de existência, token ou preferências (Spec 143 / A2). */
+export const PUSH_ACCEPTED_RESPONSE = { processado: true } as const;
+
+/**
+ * Comparação em tempo constante (UTF-8) para segredos de webhook, evitando vazamento por timing.
+ */
+export function constantTimeEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  if (aBytes.length === 0 || bBytes.length === 0) return false;
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < maxLen; i += 1) {
+    diff |= aBytes[i % aBytes.length] ^ bBytes[i % bBytes.length];
+  }
+  return diff === 0;
+}
+
+/** Valida o cabeçalho de segredo contra `PUSH_WEBHOOK_SECRET` em tempo constante. */
+export function isAuthorizedWebhookSecret(
+  provided: string | null | undefined,
+  expected: string | null | undefined,
+): boolean {
+  if (typeof expected !== "string" || expected.trim().length === 0) return false;
+  if (typeof provided !== "string" || provided.length === 0) return false;
+  return constantTimeEqual(provided, expected);
 }
 
 /** Pega o `id` do corpo da chamada, sem confiar em nada além de um texto não vazio. */

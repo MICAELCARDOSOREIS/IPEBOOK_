@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { IPwaService } from "@/model/services/iPwaService";
 import { usePwaViewModel, type UsePwaViewModelOptions } from "@/viewmodel/usePwaViewModel";
 
@@ -9,9 +8,9 @@ const mounted: ReactTestRenderer[] = [];
 
 function createMockPwaService(overrides: Partial<IPwaService> = {}): IPwaService {
   return {
-    isSupported: vi.fn().mockReturnValue(true),
-    register: vi.fn().mockResolvedValue(true),
-    unregister: vi.fn().mockResolvedValue(true),
+    isSupported: jest.fn().mockReturnValue(true),
+    register: jest.fn().mockResolvedValue(true),
+    unregister: jest.fn().mockResolvedValue(true),
     ...overrides,
   };
 }
@@ -47,8 +46,8 @@ async function renderPwaHook(options: UsePwaViewModelOptions = { pwaService: cre
 describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
   it("auto-registra na montagem quando suportado e autoRegister for true", async () => {
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(true),
-      register: vi.fn().mockResolvedValue(true),
+      isSupported: jest.fn().mockReturnValue(true),
+      register: jest.fn().mockResolvedValue(true),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: true });
@@ -60,8 +59,8 @@ describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
 
   it("não auto-registra quando isSupported for false", async () => {
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(false),
-      register: vi.fn().mockResolvedValue(false),
+      isSupported: jest.fn().mockReturnValue(false),
+      register: jest.fn().mockResolvedValue(false),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: true });
@@ -73,8 +72,8 @@ describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
 
   it("não auto-registra quando autoRegister for explicitamente false", async () => {
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(true),
-      register: vi.fn().mockResolvedValue(true),
+      isSupported: jest.fn().mockReturnValue(true),
+      register: jest.fn().mockResolvedValue(true),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: false });
@@ -86,8 +85,8 @@ describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
 
   it("permite registrar manualmente via register()", async () => {
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(true),
-      register: vi.fn().mockResolvedValue(true),
+      isSupported: jest.fn().mockReturnValue(true),
+      register: jest.fn().mockResolvedValue(true),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: false });
@@ -105,9 +104,9 @@ describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
 
   it("permite desregistrar via unregister() e atualiza estado", async () => {
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(true),
-      register: vi.fn().mockResolvedValue(true),
-      unregister: vi.fn().mockResolvedValue(true),
+      isSupported: jest.fn().mockReturnValue(true),
+      register: jest.fn().mockResolvedValue(true),
+      unregister: jest.fn().mockResolvedValue(true),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: true });
@@ -130,8 +129,8 @@ describe("usePwaViewModel (Spec 041, ADR 0035)", () => {
     });
 
     const mockService = createMockPwaService({
-      isSupported: vi.fn().mockReturnValue(true),
-      register: vi.fn().mockReturnValue(pendingPromise),
+      isSupported: jest.fn().mockReturnValue(true),
+      register: jest.fn().mockReturnValue(pendingPromise),
     });
 
     const probe = await renderPwaHook({ pwaService: mockService, autoRegister: true });

@@ -1,6 +1,5 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Meeting } from "@/model/entities/meeting";
 import { NegotiationStatusCard } from "@/view/conversations/NegotiationStatusCard";
 
@@ -21,7 +20,7 @@ const proposedMeeting: Meeting = {
   id: "m-2",
   requestId: "r-1",
   pointName: "Praça da Bandeira (Centro)",
-  scheduledAt: "2026-11-05T15:00:00.000Z",
+  scheduledAt: new Date(Date.now() + 86_400_000).toISOString(),
   proposedBy: "other-user",
   status: "proposed",
 };
@@ -44,7 +43,7 @@ describe("NegotiationStatusCard", () => {
   });
 
   it("renderiza status de entrega concluída e ação de avaliação", async () => {
-    const onOpenRating = vi.fn();
+    const onOpenRating = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -68,9 +67,9 @@ describe("NegotiationStatusCard", () => {
   });
 
   it("renderiza encontro confirmado com ações rápidas de entrega, mapa e agenda", async () => {
-    const onOpenDelivery = vi.fn();
-    const onOpenDirections = vi.fn();
-    const onAddToCalendar = vi.fn();
+    const onOpenDelivery = jest.fn();
+    const onOpenDirections = jest.fn();
+    const onAddToCalendar = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -108,7 +107,7 @@ describe("NegotiationStatusCard", () => {
   });
 
   it("renderiza ação de reagendamento quando o encontro estiver confirmado (Spec 114)", async () => {
-    const onRescheduleMeeting = vi.fn();
+    const onRescheduleMeeting = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -129,12 +128,12 @@ describe("NegotiationStatusCard", () => {
     await act(async () => {
       fireEvent.press(btn);
     });
-    expect(onRescheduleMeeting).toHaveBeenCalledOnce();
+    expect(onRescheduleMeeting).toHaveBeenCalledTimes(1);
   });
 
   it("renderiza proposta de encontro recebida com botão de confirmação e sugerir outro horário (Spec 114)", async () => {
-    const onConfirmMeeting = vi.fn();
-    const onSuggestOtherTime = vi.fn();
+    const onConfirmMeeting = jest.fn();
+    const onSuggestOtherTime = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -166,7 +165,7 @@ describe("NegotiationStatusCard", () => {
   });
 
   it("renderiza estado sem encontro e botão para combinar", async () => {
-    const onCombineMeeting = vi.fn();
+    const onCombineMeeting = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -228,7 +227,7 @@ describe("NegotiationStatusCard", () => {
   });
 
   it("chama onOpenRating quando fornecido e não quebra se omitido", async () => {
-    const onOpenRating = vi.fn();
+    const onOpenRating = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {

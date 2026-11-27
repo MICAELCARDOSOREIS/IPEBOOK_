@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 import { useRequestList } from "@/viewmodel/useSentRequestsViewModel";
 
 export type ConversationKind = "accepted" | "pendingReceived" | "pendingSent";
@@ -43,7 +44,16 @@ export type ConversationsDeps = {
 /** Maior que qualquer data ISO: ordena a proposta recebida pendente antes das conversas. */
 const TOP_SORT_KEY = "9999";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
+
+function formatMemberName(name: string | null | undefined): string {
+  const trimmed = name?.trim() ?? "";
+  if (!trimmed || /^Usuário #[0-9A-F]{4}$/i.test(trimmed)) {
+    return COMMUNITY_MEMBER;
+  }
+  return trimmed;
+}
 const LOAD_ERROR = "Não foi possível carregar suas conversas. Tente novamente.";
+const LOAD_TIMEOUT_MS = 15_000;
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 
 /** Horário relativo do Figma `06.01`: "agora", "10 min", "9h", "Ontem", dia da semana ou data. */
@@ -76,18 +86,34 @@ async function buildItem(
   profileMemo: Map<string, Promise<{ name: string | null; photoUrl: string | null }>>,
 ): Promise<{ item: ConversationItem; sortKey: string }> {
   const { request, listing } = entry;
-  let other: { name: string | null; photoUrl: string | null };
+  let profilePromise: Promise<{ name: string | null; photoUrl: string | null }>;
   if (sent) {
     let pending = profileMemo.get(listing.ownerId);
     if (!pending) {
       pending = safely(deps.getProfile(listing.ownerId), { name: null, photoUrl: null });
       profileMemo.set(listing.ownerId, pending);
     }
-    other = await pending;
+    profilePromise = pending;
   } else {
-    other = { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
+    profilePromise = Promise.resolve({
+      name: entry.requesterName ?? null,
+      photoUrl: entry.requesterPhotoUrl ?? null,
+    });
   }
-  const base = { requestId: request.id, listing, otherName: other.name || COMMUNITY_MEMBER, otherPhotoUrl: other.photoUrl };
+
+  // Perfil e mensagens da negociação aceita correm em paralelo para reduzir o carregamento frio.
+  const messagesPromise =
+    request.status === "pending"
+      ? Promise.resolve<NegotiationMessage[] | null>(null)
+      : safely(deps.getMessages(request.id, sessionUserId), []);
+
+  const [other, messages] = await Promise.all([profilePromise, messagesPromise]);
+  const base = {
+    requestId: request.id,
+    listing,
+    otherName: formatMemberName(other.name),
+    otherPhotoUrl: other.photoUrl,
+  };
 
   if (request.status === "pending") {
     return {
@@ -97,8 +123,7 @@ async function buildItem(
     };
   }
 
-  const messages = await safely(deps.getMessages(request.id, sessionUserId), []);
-  const last = messages[messages.length - 1];
+  const last = messages?.[messages.length - 1];
   if (!last) {
     return { item: { ...base, kind: "accepted", lastMessageAt: null, preview: "Combinem os detalhes pelo chat" }, sortKey: "" };
   }
@@ -119,31 +144,43 @@ export type ConversationsActions = {
   cancelRequest: (requestId: string) => Promise<boolean>;
 };
 
+async function loadConversations(sessionUserId: string, deps: ConversationsDeps): Promise<ConversationItem[]> {
+  const [sent, received, hidden] = await Promise.all([
+    deps.listSentRequests(sessionUserId),
+    deps.listReceivedRequests(sessionUserId),
+    deps.listHiddenConversations
+      ? safely(deps.listHiddenConversations(sessionUserId), {})
+      : Promise.resolve({} as Record<string, string>),
+  ]);
+  const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
+  const profileMemo = new Map<string, Promise<{ name: string | null; photoUrl: string | null }>>();
+  const built = await Promise.all([
+    ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps, profileMemo)),
+    ...open(received).map((e) => buildItem(e, sessionUserId, false, deps, profileMemo)),
+  ]);
+  // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
+  const visible = built.filter(({ item }) => {
+    const hiddenAt = hidden[item.requestId];
+    return !hiddenAt || (item.lastMessageAt !== null && item.lastMessageAt > hiddenAt);
+  });
+  return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
+}
+
 export function useConversationsViewModel(
   sessionUserId: string | null,
   deps: ConversationsDeps,
 ): [ConversationsState, ConversationsActions] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];
-    const [sent, received, hidden] = await Promise.all([
-      deps.listSentRequests(sessionUserId),
-      deps.listReceivedRequests(sessionUserId),
-      deps.listHiddenConversations
-        ? safely(deps.listHiddenConversations(sessionUserId), {})
-        : Promise.resolve({} as Record<string, string>),
-    ]);
-    const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
-    const profileMemo = new Map<string, Promise<{ name: string | null; photoUrl: string | null }>>();
-    const built = await Promise.all([
-      ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps, profileMemo)),
-      ...open(received).map((e) => buildItem(e, sessionUserId, false, deps, profileMemo)),
-    ]);
-    // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
-    const visible = built.filter(({ item }) => {
-      const hiddenAt = hidden[item.requestId];
-      return !hiddenAt || (item.lastMessageAt !== null && item.lastMessageAt > hiddenAt);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(LOAD_ERROR)), LOAD_TIMEOUT_MS);
     });
-    return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
+    try {
+      return await Promise.race([loadConversations(sessionUserId, deps), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   }, [sessionUserId, deps]);
 
   const [state, reload] = useRequestList<ConversationItem>(
@@ -152,10 +189,18 @@ export function useConversationsViewModel(
     sessionUserId ? `conversations:${sessionUserId}` : undefined,
   );
 
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
   useEffect(() => {
     if (!sessionUserId || !deps.subscribe) return;
-    return deps.subscribe(sessionUserId, () => void reload());
-  }, [sessionUserId, deps, reload]);
+    return deps.subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, deps, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   const deleteConversation = useCallback(
     async (requestId: string) => {

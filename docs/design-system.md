@@ -3,11 +3,11 @@
 **Disciplina:** Interação Humano-Computador (IHC) & Programação para Dispositivos Móveis (PDM)  
 **Instituição:** Instituto Federal do Piauí (IFPI) — Campus Piripiri  
 **Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes, Eric Vinícius dos Santos Oliveira  
-**Versão do Documento:** 1.0  
-**Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%25C3%25AABook?t=xKQbpBwLpirB2jV2-0)  
-**Figma (modo Dev):** [Figma — IpêBook · Dev Mode](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev) — specs de cor, espaçamento e assets prontos para inspecionar, sem precisar converter manualmente. Telas individuais: [Android](../design-system/telas-android-figma.md) (137), [iPhone](../design-system/telas-iphone-figma.md) (144, fora de escopo — ADR 0008), [Web](../design-system/telas-web-figma.md) (126).  
+**Versão do Documento:** 1.1  
+**Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?t=xKQbpBwLpirB2jV2-0)  
+**Referências do Figma** — [Pranchas e componentes de Android e iPhone](../design-system/referencias-figma/README.md). Inventários por plataforma para consulta em modo Dev: [Android](../design-system/telas-android-figma.md), [iPhone](../design-system/telas-iphone-figma.md) e [Web](../design-system/telas-web-figma.md).
 **Contratos Técnicos:** [`design-system/tokens.json`](../design-system/tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
-**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md)
+**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md), [ADR 0104 — Cores canônicas](adr/0104-cores-canonicas-modalidades-e-vitrine-home.md), [ADR 0107 — Plus Jakarta Sans](adr/0107-adocao-plus-jakarta-sans-na-interface.md), [ADR 0114 — Operação exclusiva em tema claro editorial](adr/0114-remocao-do-tema-escuro.md)
 **Entrega completa (atividade IHC + PDM):** [`design-system/`](../design-system/)
 
 ---
@@ -32,7 +32,7 @@ O **Design System do IpêBook** formaliza as decisões de design, identidade vis
 
 A paleta de cores foi extraída e padronizada diretamente a partir das coleções de variáveis do arquivo oficial do Figma.
 
-### 2.1 Cores Fundamentais da Marca
+### 2.1 Cores Fundamentais da Marca (`lightColors`)
 
 | Token | Hex | Amostra | Finalidade e Justificativa de IHC |
 | :--- | :---: | :---: | :--- |
@@ -40,37 +40,46 @@ A paleta de cores foi extraída e padronizada diretamente a partir das coleçõe
 | `color.surface` | `#FCFAF5` | Creme Claro | Superfície de cartões, listas e seções elevadas, criando hierarquia de profundidade sutil sem necessidade de sombras pesadas (ADR 0056). |
 | `color.text` | `#3C302A` | Marrom Profundo | Cor principal de leitura e títulos. Proporciona alto contraste (> 8.5:1) sobre `#FCFAF5`, superando o critério WCAG AAA. |
 | `color.secondaryText`| `#645B55` | Cinza Acolhedor | Metadados, subtítulos e textos auxiliares (contraste > 4.6:1 sobre o fundo). |
-| `color.action` | `#2C5E45` | Verde Ipê Folha | Ações principais, botões afirmativos e destaque de navegação ativa. Transmite segurança e estabilidade. |
-| `color.actionDeep` | `#2F503D` | Verde Profundo | Estados pressionados de botões e cabeçalhos escuros. |
-| `color.highlight` | `#F4B942` | Amarelo-Ipê | Cor de celebração e identidade regional, remetendo à flor do Ipê Amarelo. Utilizada em detalhes de marca, marcadores e badges de reserva. |
-| `color.gold` | `#D99719` | Ouro Antigo | Variação com alto contraste para ícones e estrelas de avaliação. |
-| `color.soft` | `#E7F0EA` | Verde Névoa | Fundos de seleção, chips neutros e áreas de toque em repouso. |
+| `color.action` | `#2B6334` | Verde Ipê Folha | Ações principais, botões afirmativos e destaque de navegação ativa. Transmite segurança e estabilidade. |
+| `color.actionDeep` | `#1E4E27` | Verde Profundo | Estados pressionados de botões, cabeçalhos escuros e contraste máximo em badges de venda. |
+| `color.highlight` | `#F59E0B` | Amarelo-Ipê | Cor de celebração e identidade regional, remetendo à flor do Ipê Amarelo (junto a `colors.ipe.bloom` `#F5B718`). Utilizada em detalhes de marca, marcadores e destaques. |
+| `color.gold` | `#D97706` | Ouro Antigo | Variação com alto contraste para ícones, fita do Ipê e estrelas de avaliação. |
+| `color.soft` | `#EBF4EC` | Verde Névoa | Fundos suaves de seleção, alertas informativos e superfícies de apoio em repouso. |
 | `color.border` | `#8F8478` | Traço Suave | Divisores, contornos de inputs e linhas de separação discretas. |
 
-### 2.2 Semântica do Produto (Badges de Modalidade)
+### 2.2 Semântica do Produto (Badges de Modalidade e Status)
 
-Para garantir que pessoas com daltonismo compreendam o anúncio, **cada modalidade combina cor de fundo, cor de texto e rótulo textual explícito**:
+Para garantir que pessoas com daltonismo compreendam o anúncio, **cada modalidade combina cor de fundo, cor de texto e rótulo textual explícito** ([ADR 0104](adr/0104-cores-canonicas-modalidades-e-vitrine-home.md), `colors.badge` em [`src/view/tokens.ts`](../src/view/tokens.ts)):
 
-| Modalidade | Fundo (`background`) | Texto (`text`) | Significado no Produto |
+| Modalidade / Status | Badge canônico (`background` / `text`) | Chip / Container M3 (tema claro) | Significado no Produto |
 | :--- | :---: | :---: | :--- |
-| **Venda** | `#DCE8DE` | `#18291F` | Livro comercializado por valor financeiro em BRL. |
-| **Troca** | `#F8D88A` | `#3A2A10` | Livro disponível para permuta por outro título. |
-| **Doação** | `#F4DDD3` | `#6E3A28` | Livro disponibilizado gratuitamente para a comunidade. |
-| **Reservado** | `#F4B942` | `#3C302A` | Livro em processo ativo de negociação/encontro. |
-| **Concluído** | `#2F6B4F` | `#FFFFFF` | Negociação finalizada com sucesso. |
+| **Venda** | `#1E4E27` / `#FFFFFF` | `#DCE9DC` / `#132A17` (`secondaryContainer`) | Livro comercializado por valor financeiro em BRL. |
+| **Troca** | `#58331F` / `#FFFFFF` | `#FDE68A` / `#451A03` (`tertiaryContainer`) | Livro disponível para permuta por outro título. |
+| **Doação** | `#F5B718` / `#451A03` | `#F4DDD3` / `#6E3A28` (`doacaoContainer`) | Livro disponibilizado gratuitamente para a comunidade. |
+| **Reservado** | `#F5B718` / `#451A03` | — | Livro em processo ativo de negociação/encontro. |
+| **Disponível** | `#1E4E27` / `#FFFFFF` | — | Anúncio ativo e visível na vitrine comunitária. |
+| **Pausado** | `#52525B` / `#FFFFFF` | — | Anúncio temporariamente ocultado pelo dono. |
+| **Concluído** | `#2B6334` / `#FFFFFF` | — | Negociação finalizada com sucesso. |
 
 ### 2.3 Capas Ilustrativas (Livros sem foto)
 
-Quando um usuário cadastra um anúncio sem enviar foto da câmera, o app gera uma capa estilizada com fundo editorial:
-- **Azul Noturno:** `#253C4F` (contraste com texto `#F5EFE8`)
-- **Marrom Terra:** `#7B4A2F` (contraste com texto `#F5EFE8`)
-- **Verde Floresta:** `#30574A` (contraste com texto `#F5EFE8`)
+Quando uma pessoa cadastra um anúncio sem foto, o app (`BookCover.tsx`) gera uma capa estilizada determinística com texto em `#F5EFE8` (`cover.text`) e a paleta saturada abaixo.
+- **Azul Noturno:** `#253C4F` (`cover.blue`)
+- **Marrom Terra:** `#7B4A2F` (`cover.brown`)
+- **Verde Floresta:** `#30574A` (`cover.green`)
+- **Vinho Editorial:** `#6B2A36` (`cover.wine`)
+- **Ocre Dourado:** `#86581A` (`cover.ochre`)
+- **Fundos geométricos (`cover.artBackgrounds`):** `#3A2A20`, `#2C5232`, `#14284B`
 
 ### 2.4 Estados de Sistema e Feedback
 
-- **Sucesso:** `#2F6B4F` (confirmação de operações concluídas)
+- **Sucesso:** `#2B6334` (confirmação de operações concluídas)
 - **Erro:** `#B3261E` (mensagens de alerta e validação de formulários)
 - **Container de Erro:** `#F9DEDC` (fundo suave para caixas de erro)
+
+### 2.5 Tema Claro Editorial Exclusivo (`useTheme()`)
+
+Conforme o [ADR 0114](adr/0114-remocao-do-tema-escuro.md) (que substitui o ADR 0036 e confirma a decisão 1 do [ADR 0008](adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)), o aplicativo opera exclusivamente no tema claro editorial (`colors` em `src/view/tokens.ts`), distribuído para as telas via `useTheme()` (`src/view/theme/ThemeProvider.tsx`) e fixado na plataforma (`"userInterfaceStyle": "light"` em `app.json`).
 
 ---
 
@@ -110,17 +119,22 @@ O sistema adota uma escala métrica baseada em múltiplos de **4 e 8 dp**, garan
 | `spacing[20]` | 20 px | Preenchimento interno horizontal de botões interativos principais. |
 | `spacing[24]` | 24 px | Margem lateral padrão do aplicativo em dispositivos móveis. |
 | `spacing[32]` | 32 px | Distância entre seções independentes de conteúdo. |
-| `spacing[48]` | 48 px | Margem vertical para cabeçalhos e separação de blocos principais. |
-| `spacing[56]` | 56 px | Altura de barras de navegação inferiores e cabeçalhos fixos. |
+| `spacing[48]` | 48 px | Margem vertical para cabeçalhos e altura mínima de toque (`touchTarget`). |
+| `spacing[56]` | 56 px | Altura/largura do FAB e barras de navegação inferiores. |
 | `spacing[64]` | 64 px | Margem inferior em listas longas para evitar sobreposição pela navegação. |
+| `spacing[80]` / `[96]` | 80 / 96 px | Gutter lateral da Web larga (`WEB_GUTTER`) e respiro de rodapé. |
 
-### 4.2 Cantos Arredondados (`radius`)
+### 4.2 Cantos Arredondados (`radius` e `shapeMorph`)
 
-- **Small (`8 px`):** Botões de ação, campos de formulário e inputs de texto.
-- **Medium (`14 px`):** Cards de livros, caixas de diálogo e superfícies de destaque.
-- **Large (`18 px`):** Painéis flutuantes e modais centrais.
-- **Extra Large (`24 px`):** Folhas de ação deslizantes (*bottom sheets*).
-- **Full (`9999 px`):** Badges de modalidade e avatares de usuário. Os chips de filtro usam `radius.small` (8 px), como no Figma `02.01`–`02.04` (ver ADR 0056 e `04-componentes/chip.md`).
+- **Extra Small (`extraSmall: 4 px`):** Campos de texto contornados e miniaturas compactas.
+- **Small (`small: 8 px`):** Chips de filtro não selecionados (como no Figma `02.01`–`02.04`, ADR 0056).
+- **Card Small (`cardSmall: 12 px`):** Cartões pequenos, células iOS e miniaturas.
+- **Card (`card: 16 px`):** Cartões padrão, FAB em repouso e botões pressionados.
+- **XL / Extra Large (`xl: 20 px`, `extraLarge: 24 px`):** Bolhas de conversa, cartões amplos da Web e metamorfose ao toque (`shapeMorph.cardPressed`).
+- **XXL (`xxl: 28 px`):** Diálogos e folhas deslizantes (*bottom sheets*).
+- **Full (`full: 9999 px`):** Botões preenchidos em repouso (`shapeMorph.buttonRest`), badges de modalidade e avatares de usuário.
+
+Além da escala estática, `src/view/tokens.ts` exporta `motion`, `spring` e `shapeMorph` ([ADR 0084](adr/0084-adocao-material-3-expressive.md) / Spec 109) para animar cantos e transições com física de molas do Material 3 Expressive.
 
 ---
 
@@ -139,11 +153,12 @@ As diretrizes de IHC atendem estritamente às normas internacionais de usabilida
 - **Elementos Decorativos:** Elementos meramente estilísticos (como traços decorativos e ícones secundários) recebem `accessible={false}` para evitar poluição sonora no leitor.
 
 ### 5.3 Estados de Feedback Essenciais
-Para garantir que o usuário nunca fique desorientado, toda tela implementa quatro estados mandatórios:
-1. **Carregando (`loading`):** `ActivityIndicator` com cor temática de ação (`#2C5E45`) acompanhado de texto descritivo claro ("Carregando livros…").
+Para garantir que o usuário nunca fique desorientado, toda tela implementa os estados recomendados:
+1. **Carregando (`loading`)** — Indicadores (`ActivityIndicator` ou esqueletos de carregamento) acompanhados de rótulo acessível descritivo ("Carregando livros…").
 2. **Vazio (`empty`):** Mensagem acolhedora que explica a ausência de dados e antecipa o que acontecerá quando houver conteúdo disponível.
 3. **Erro com Recuperação (`error + retry`):** Mensagem em linguagem simples, sem termos técnicos indecifráveis, com botão de 48 dp para "Tentar novamente".
-4. **Sucesso / Preenchido (`content`):** Apresentação hierarquizada dos dados com tipografia e espaçamentos do sistema.
+4. **Offline (`offline`):** Estado dedicado (`OfflineState.tsx`) com detecção automática de retorno de rede ([ADR 0102](adr/0102-design-de-erros-e-auto-recuperacao-offline.md)).
+5. **Sucesso / Preenchido (`content`):** Apresentação hierarquizada dos dados com tipografia e espaçamentos do sistema.
 
 ### 5.4 Movimento e Transições (`motion`)
 - **Microinterações:** 100 ms a 150 ms para feedback de toque (*pressed*) e seleções rápidas.

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { ShareUseCases } from "@/usecase/shareUseCases";
 
 describe("ShareUseCases — Convite de amigos (Spec 057, Figma 08.02)", () => {

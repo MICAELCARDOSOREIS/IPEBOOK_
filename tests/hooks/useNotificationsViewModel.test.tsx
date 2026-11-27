@@ -1,12 +1,11 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AppNotification } from "@/model/entities/notification";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
-import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
+import { clearSessionNotificationsCache, useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -34,12 +33,12 @@ const mockNotifications: AppNotification[] = [
 
 function stubNotifications(overrides: Partial<INotificationUseCases> = {}): INotificationUseCases {
   return {
-    listNotifications: vi.fn().mockResolvedValue(mockNotifications),
-    markAsRead: vi.fn().mockResolvedValue(undefined),
-    markAllAsRead: vi.fn().mockResolvedValue(undefined),
-    deleteNotification: vi.fn().mockResolvedValue(undefined),
-    clearAll: vi.fn().mockResolvedValue(undefined),
-    clearRead: vi.fn().mockResolvedValue(undefined),
+    listNotifications: jest.fn().mockResolvedValue(mockNotifications),
+    markAsRead: jest.fn().mockResolvedValue(undefined),
+    markAllAsRead: jest.fn().mockResolvedValue(undefined),
+    deleteNotification: jest.fn().mockResolvedValue(undefined),
+    clearAll: jest.fn().mockResolvedValue(undefined),
+    clearRead: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -154,7 +153,7 @@ describe("useNotificationsViewModel", () => {
 
   it("captura DomainError ao falhar no carregamento", async () => {
     const useCases = stubNotifications({
-      listNotifications: vi.fn().mockRejectedValue(new DomainError("Erro ao listar")),
+      listNotifications: jest.fn().mockRejectedValue(new DomainError("Erro ao listar")),
     });
 
     const hook = await renderHook("user-1", useCases);
@@ -166,7 +165,7 @@ describe("useNotificationsViewModel", () => {
 
   it("captura erro genérico ao falhar no carregamento", async () => {
     const useCases = stubNotifications({
-      listNotifications: vi.fn().mockRejectedValue(new Error("pane")),
+      listNotifications: jest.fn().mockRejectedValue(new Error("pane")),
     });
 
     const hook = await renderHook("user-1", useCases);
@@ -178,7 +177,7 @@ describe("useNotificationsViewModel", () => {
 
   it("captura erro genérico ao falhar em markAsRead", async () => {
     const useCases = stubNotifications({
-      markAsRead: vi.fn().mockRejectedValue(new Error("Falha inesperada")),
+      markAsRead: jest.fn().mockRejectedValue(new Error("Falha inesperada")),
     });
 
     const hook = await renderHook("user-1", useCases);
@@ -193,7 +192,7 @@ describe("useNotificationsViewModel", () => {
 
   it("captura erro genérico ao falhar em markAllAsRead", async () => {
     const useCases = stubNotifications({
-      markAllAsRead: vi.fn().mockRejectedValue(new Error("Falha inesperada")),
+      markAllAsRead: jest.fn().mockRejectedValue(new Error("Falha inesperada")),
     });
 
     const hook = await renderHook("user-1", useCases);
@@ -207,8 +206,8 @@ describe("useNotificationsViewModel", () => {
 
   it("mostra a mensagem do DomainError ao falhar em marcar como lida", async () => {
     const useCases = stubNotifications({
-      markAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão")),
-      markAllAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão em lote")),
+      markAsRead: jest.fn().mockRejectedValue(new DomainError("Sem permissão")),
+      markAllAsRead: jest.fn().mockRejectedValue(new DomainError("Sem permissão em lote")),
     });
 
     const hook = await renderHook("user-1", useCases);
@@ -223,14 +222,55 @@ describe("useNotificationsViewModel", () => {
     expect(hook.current[0].actionError).toBe("Sem permissão em lote");
   });
 
+  it("mostra a mensagem do DomainError ao falhar em excluir, limpar tudo e limpar lidas", async () => {
+    const useCases = stubNotifications({
+      deleteNotification: jest.fn().mockRejectedValue(new DomainError("Falha ao excluir")),
+      clearAll: jest.fn().mockRejectedValue(new DomainError("Falha ao limpar tudo")),
+      clearRead: jest.fn().mockRejectedValue(new DomainError("Falha ao limpar lidas")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+
+    await act(async () => {
+      await hook.current[1].deleteNotification("n-1");
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao excluir");
+
+    await act(async () => {
+      await hook.current[1].clearAll();
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao limpar tudo");
+
+    await act(async () => {
+      await hook.current[1].clearRead();
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao limpar lidas");
+  });
+
+  it("tolera falha ao consultar a permissão de notificações do aparelho", async () => {
+    const push = new MemoryPushNotificationService();
+    jest.spyOn(push, "getPermissions").mockRejectedValue(new Error("sem permissão"));
+
+    const hook = await renderHook("user-1", stubNotifications(), push);
+
+    expect(hook.current[0].systemPermissionGranted).toBeNull();
+  });
+
+  it("limpa o cache de sessão de um usuário ou de todos", () => {
+    expect(() => {
+      clearSessionNotificationsCache("user-1");
+      clearSessionNotificationsCache();
+    }).not.toThrow();
+  });
+
   it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {
     let push: (() => void) | undefined;
-    const unsubscribe = vi.fn();
-    const listNotifications = vi
+    const unsubscribe = jest.fn();
+    const listNotifications = jest
       .fn()
       .mockResolvedValueOnce([mockNotifications[1]])
       .mockResolvedValueOnce(mockNotifications);
-    const subscribe = vi.fn((_userId: string, onChange: () => void) => {
+    const subscribe = jest.fn((_userId: string, onChange: () => void) => {
       push = onChange;
       return unsubscribe;
     });
@@ -251,7 +291,7 @@ describe("useNotificationsViewModel", () => {
   });
 
   it("exclui notificação individualmente via deleteNotification", async () => {
-    const deleteNotification = vi.fn().mockResolvedValue(undefined);
+    const deleteNotification = jest.fn().mockResolvedValue(undefined);
     const useCases = stubNotifications({ deleteNotification });
 
     const hook = await renderHook("user-1", useCases);
@@ -267,7 +307,7 @@ describe("useNotificationsViewModel", () => {
   });
 
   it("limpa todas as notificações via clearAll", async () => {
-    const clearAll = vi.fn().mockResolvedValue(undefined);
+    const clearAll = jest.fn().mockResolvedValue(undefined);
     const useCases = stubNotifications({ clearAll });
 
     const hook = await renderHook("user-1", useCases);
@@ -282,7 +322,7 @@ describe("useNotificationsViewModel", () => {
   });
 
   it("limpa apenas notificações lidas via clearRead", async () => {
-    const clearRead = vi.fn().mockResolvedValue(undefined);
+    const clearRead = jest.fn().mockResolvedValue(undefined);
     const useCases = stubNotifications({ clearRead });
 
     const hook = await renderHook("user-1", useCases);
@@ -301,8 +341,8 @@ describe("useNotificationsViewModel", () => {
     const originalEnv = process.env.NODE_ENV;
     try {
       process.env.NODE_ENV = "development";
-      const listNotifications = vi.fn().mockResolvedValue(mockNotifications);
-      const clearAll = vi.fn().mockResolvedValue(undefined);
+      const listNotifications = jest.fn().mockResolvedValue(mockNotifications);
+      const clearAll = jest.fn().mockResolvedValue(undefined);
       const useCases = stubNotifications({ listNotifications, clearAll });
 
       // Primeira abertura: carrega notificações e popula cache

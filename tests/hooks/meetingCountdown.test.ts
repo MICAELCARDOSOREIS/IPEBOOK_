@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { describeMeetingCountdown } from "@/view/meetingFormat";
 
 const now = new Date(2026, 9, 26, 10, 0);

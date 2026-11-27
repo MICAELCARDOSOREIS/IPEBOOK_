@@ -11,7 +11,7 @@ Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levanta
 - **Política de privacidade (URL pública):** https://ipebook.app/termos?aba=privacidade
 
 ## Descrição curta (até 80 caracteres)
-Venda, troque e doe livros com leitores de Piripiri, com encontro seguro.
+Venda, troque e doe livros com leitores de Piripiri, em pontos de encontro recomendados.
 
 ## Descrição completa
 O IpêBook conecta quem tem livros parados a quem quer ler, aqui em Piripiri (PI).
@@ -19,7 +19,7 @@ O IpêBook conecta quem tem livros parados a quem quer ler, aqui em Piripiri (PI
 - Anuncie em segundos: leia o código de barras (ISBN) e o app preenche título, autor e sinopse.
 - Encontre livros do seu bairro para comprar, trocar ou receber de doação.
 - Converse pelo chat do app, sem expor seu telefone.
-- Combine o encontro em pontos públicos e seguros da cidade, com lembrete antes do horário.
+- Combine o encontro em pontos públicos recomendados da cidade, com lembrete antes do horário.
 - Confirme a entrega pelo QR code e avalie a negociação.
 - Favoritos e alertas avisam quando aparece o livro que você procura.
 - Denuncie e bloqueie quem não respeita a comunidade; a moderação analisa cada denúncia.
@@ -42,11 +42,12 @@ Feito para a comunidade de Piripiri. Seus dados podem ser baixados ou excluídos
 - Exclusão de dados: **sim**, pelo app (Configurações > Privacidade e dados > Excluir conta) — informar também o link web da política.
 - Localização precisa (GPS): **não** coletada.
 
-## Recursos visuais a produzir
-- Ícone 512×512 (base em `assets/`), imagem de destaque 1024×500.
-- Pelo menos 4 capturas de tela do celular: Início, Detalhe do livro, Chat, Encontro combinado.
+## Recursos visuais produzidos (`docs/loja/imagens/`)
+- Ícone 512×512: [`imagens/icone-512.png`](imagens/icone-512.png) (base em `assets/`).
+- Imagem de destaque 1024×500: [`imagens/destaque-1024x500.png`](imagens/destaque-1024x500.png).
+- Capturas de tela: [`imagens/tela-inicio.png`](imagens/tela-inicio.png), [`imagens/captura-explorar.png`](imagens/captura-explorar.png), [`imagens/captura-detalhe-livro.png`](imagens/captura-detalhe-livro.png), [`imagens/captura-anunciar.png`](imagens/captura-anunciar.png), [`imagens/captura-encontro.png`](imagens/captura-encontro.png), [`imagens/tela-entrar.png`](imagens/tela-entrar.png) e [`imagens/tela-cadastro.png`](imagens/tela-cadastro.png).
 
-## Antes de enviar
-- Política de privacidade revisada e publicada em URL pública.
-- Build de produção com `EXPO_PUBLIC_SENTRY_DSN` configurado (se for usar o Sentry).
-- Teste interno (faixa "Teste interno" da Play Console) com pelo menos duas contas reais.
+## Checklist de envio e acompanhamento
+- Política de privacidade revisada juridicamente antes da promoção para produção aberta.
+- Build de produção com `EXPO_PUBLIC_SENTRY_DSN` configurado (para uso do Sentry).
+- Build Android `0.2.0` enviada à Play Store e validada em aparelho real com duas contas (2026-11-16).

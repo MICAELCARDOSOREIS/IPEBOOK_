@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthError, ExpiredLinkError } from "@/model/errors";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
@@ -25,7 +24,7 @@ afterEach(async () => {
 
 describe("ViewModel de nova senha", () => {
   it("confirma atualização bem sucedida", async () => {
-    const update = vi.fn().mockResolvedValue(undefined);
+    const update = jest.fn().mockResolvedValue(undefined);
     const hook = await renderHook(update);
     await act(async () => { await hook.current[1].submit("ipebook://redefinir-senha?code=abc", "nova-senha"); });
     expect(update).toHaveBeenCalledWith("ipebook://redefinir-senha?code=abc", "nova-senha");

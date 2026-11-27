@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
@@ -18,7 +17,7 @@ async function renderHook(
 ) {
   let result!: ReturnType<typeof useReportUserViewModel>;
   function Probe() {
-    result = useReportUserViewModel({ submitReport: vi.fn(), submitUserReport }, rateLimiter);
+    result = useReportUserViewModel({ submitReport: jest.fn(), submitUserReport }, rateLimiter);
     return null;
   }
   await act(async () => { mounted.push(create(createElement(Probe))); });
@@ -27,7 +26,7 @@ async function renderHook(
 
 describe("useReportUserViewModel (Spec 091)", () => {
   it("exige sessão e motivo antes de enviar", async () => {
-    const submit = vi.fn();
+    const submit = jest.fn();
     const hook = await renderHook(submit);
     await act(async () => { await hook.current[1].submit("ana", null); });
     expect(hook.current[0].error).toMatch(/entrar/);
@@ -37,7 +36,7 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("envia com motivo e detalhes e marca sucesso", async () => {
-    const submit = vi.fn().mockResolvedValue({});
+    const submit = jest.fn().mockResolvedValue({});
     const hook = await renderHook(submit);
     await act(async () => { hook.current[1].setReason("fake_profile"); hook.current[1].setDetails("foto roubada"); });
     let ok = false;
@@ -48,7 +47,7 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("mostra a mensagem de domínio quando falha", async () => {
-    const hook = await renderHook(vi.fn().mockRejectedValue(new ValidationError("Você já denunciou esta pessoa.")));
+    const hook = await renderHook(jest.fn().mockRejectedValue(new ValidationError("Você já denunciou esta pessoa.")));
     await act(async () => { hook.current[1].setReason("other"); });
     await act(async () => { await hook.current[1].submit("ana", "me"); });
     expect(hook.current[0].error).toBe("Você já denunciou esta pessoa.");
@@ -56,7 +55,7 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("trata erro genérico não-domínio ao submeter denúncia", async () => {
-    const hook = await renderHook(vi.fn().mockRejectedValue(new Error("Erro de rede")));
+    const hook = await renderHook(jest.fn().mockRejectedValue(new Error("Erro de rede")));
     await act(async () => { hook.current[1].setReason("other"); });
     let ok = true;
     await act(async () => { ok = await hook.current[1].submit("ana", "me"); });
@@ -65,7 +64,7 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("bloqueia denúncia da própria conta", async () => {
-    const submit = vi.fn();
+    const submit = jest.fn();
     const hook = await renderHook(submit);
     await act(async () => { hook.current[1].setReason("other"); });
     let ok = true;
@@ -76,11 +75,11 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("aplica o limite de tentativas por usuário", async () => {
-    const submit = vi.fn().mockResolvedValue({});
+    const submit = jest.fn().mockResolvedValue({});
     const limiter = {
-      checkAndRecord: vi.fn(() => ({ allowed: false, remainingAttempts: 0, retryAfterMs: 30_000 })),
-      reset: vi.fn(),
-      getTimeUntilResetMs: vi.fn(() => 30_000),
+      checkAndRecord: jest.fn(() => ({ allowed: false, remainingAttempts: 0, retryAfterMs: 30_000 })),
+      reset: jest.fn(),
+      getTimeUntilResetMs: jest.fn(() => 30_000),
     } as unknown as IRateLimiter;
     const hook = await renderHook(submit, limiter);
     await act(async () => { hook.current[1].setReason("other"); });
@@ -93,7 +92,7 @@ describe("useReportUserViewModel (Spec 091)", () => {
   });
 
   it("envia sem detalhes preenchidos passando undefined", async () => {
-    const submit = vi.fn().mockResolvedValue({});
+    const submit = jest.fn().mockResolvedValue({});
     const hook = await renderHook(submit);
     await act(async () => { hook.current[1].setReason("fake_profile"); });
     let ok = false;

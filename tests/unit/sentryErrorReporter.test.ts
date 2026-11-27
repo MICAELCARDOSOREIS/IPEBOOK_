@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 
 
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
@@ -6,7 +5,7 @@ import { reportingSink } from "@/infra/services/safeLogger";
 import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 
 function fakeSentry() {
-  return { init: vi.fn(), captureException: vi.fn() };
+  return { init: jest.fn(), captureException: jest.fn() };
 }
 
 describe("SentryErrorReporter (Spec 104)", () => {
@@ -45,7 +44,7 @@ describe("reportingSink (Spec 104)", () => {
     const reporter = new MemoryErrorReporter();
     reporter.init();
     const sink = reportingSink(reporter);
-    const spies = [vi.spyOn(console, "error").mockImplementation(() => {}), vi.spyOn(console, "warn").mockImplementation(() => {}), vi.spyOn(console, "log").mockImplementation(() => {})];
+    const spies = [jest.spyOn(console, "error").mockImplementation(() => {}), jest.spyOn(console, "warn").mockImplementation(() => {}), jest.spyOn(console, "log").mockImplementation(() => {})];
     sink({ timestamp: "t", level: "error", message: "Push falhou", error: "rede", context: { rota: "/x" } });
     sink({ timestamp: "t", level: "error", message: "Sem detalhe" });
     sink({ timestamp: "t", level: "warn", message: "aviso" });

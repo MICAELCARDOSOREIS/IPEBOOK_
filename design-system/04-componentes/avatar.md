@@ -1,10 +1,11 @@
 # Avatar
 
-> [!IMPORTANT]
-> **PERTENCE A OUTRA ISSUE (ADR 0019)**: Vinculado ao fluxo de perfil de usuário (Issues #55 e #73 — Maria Clara). Não implementar nesta etapa de alinhamento da beta.
+> [!NOTE]
+> **IMPLEMENTADO (Spec 078)**: Implementado e ativo em [`src/view/components/Avatar.tsx`](../../src/view/components/Avatar.tsx). Quando não há foto de perfil, exibe o medalhão do ipê (`IpeMark`) sobre `colors.ipe.container` (substituindo as iniciais do rascunho inicial).
 
 Origem no sistema base: Material 3, Avatar (imagem circular de perfil). Situação: **Adaptado** —
-M3 não prescreve o que mostrar sem foto; o IpêBook usa iniciais sobre `primary-container`.
+M3 não prescreve o que mostrar sem foto; o IpêBook usa a marca do ipê (`IpeMark`) sobre
+`colors.ipe.container`.
 
 ## Quando usar
 
@@ -16,8 +17,8 @@ M3 não prescreve o que mostrar sem foto; o IpêBook usa iniciais sobre `primary
 
 ## Anatomia
 
-1. Círculo de fundo (`primary-container` quando sem foto)
-2. Foto (quando houver) ou iniciais (`on-primary-container`)
+1. Círculo de fundo (`colors.ipe.container` quando sem foto)
+2. Foto (quando houver) ou medalhão `IpeMark`
 
 ## Variantes
 
@@ -31,35 +32,23 @@ M3 não prescreve o que mostrar sem foto; o IpêBook usa iniciais sobre `primary
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
 | Com foto | Imagem recortada em círculo | Estático ou tocável conforme o contexto | Nome completo no rótulo acessível |
-| Sem foto | Iniciais sobre `primary-container` | Idem | Nome completo no rótulo acessível |
+| Sem foto | `IpeMark` sobre `colors.ipe.container` | Idem | Nome completo no rótulo acessível |
 
 ## Acessibilidade
 
 - Não é o alvo de toque principal da linha — quando tocável, a linha inteira responde, com alvo
   mínimo de 48 dp.
-- `accessibilityLabel` sempre com o nome completo da pessoa, nunca só "Avatar" ou as iniciais.
+- `accessibilityLabel` sempre com o nome completo da pessoa, nunca só "Avatar".
 
 ## Faça e evite
 
-- **Faça:** gerar as iniciais a partir do nome completo (duas primeiras letras de nome e
-  sobrenome).
-- **Evite:** mostrar um ícone genérico de pessoa — use iniciais, que identificam melhor.
+- **Faça:** informar o nome completo em `name` para que leitores de tela identifiquem o leitor mesmo no fallback sem foto.
+- **Evite:** exibir textos genéricos ou letras isoladas no fallback — o padrão implementado do produto é `IpeMark`.
 
 ## Código
 
 ```tsx
-import { Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { Avatar } from "@/view/components/Avatar";
 
-function Avatar({ nome, tamanho = 40 }: { nome: string; tamanho?: number }) {
-  const iniciais = nome.split(" ").slice(0, 2).map((p) => p[0]).join("").toUpperCase();
-  return (
-    <View
-      accessibilityLabel={nome}
-      style={{ width: tamanho, height: tamanho, borderRadius: tokens.radius.full, backgroundColor: tokens.colors.soft, alignItems: "center", justifyContent: "center" }}
-    >
-      <Text style={{ color: tokens.colors.action, ...tokens.typography.labelMedium }}>{iniciais}</Text>
-    </View>
-  );
-}
+<Avatar name="Maria Clara" photoUrl={user.photoUrl} size={40} />
 ```

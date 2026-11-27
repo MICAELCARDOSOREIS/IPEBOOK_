@@ -1,23 +1,20 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { tokens } from "@/view/tokens";
 
-// Mock do expo-router com vi.hoisted
-const { mockRouter } = vi.hoisted(() => ({
-  mockRouter: {
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    canGoBack: vi.fn(),
+// Mock do expo-router para Jest (criado dentro da fábrica para respeitar o hoisting)
+jest.mock("expo-router", () => ({
+  __esModule: true,
+  router: {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(),
   },
 }));
 
-vi.mock("expo-router", () => ({
-  router: mockRouter,
-}));
-
-vi.mock("expo-router/html", () => ({
+jest.mock("expo-router/html", () => ({
+  __esModule: true,
   useServerDocumentContext: () => ({
     htmlAttributes: { className: "html-root" },
     bodyAttributes: { className: "body-root" },
@@ -30,6 +27,17 @@ vi.mock("expo-router/html", () => ({
 import RootHtml from "@/app/+html";
 import { _resetPushOnceState, backOnce, canonicalizeHref, pushOnce, replaceOnce } from "@/view/pushOnce";
 
+const mockRouter = (
+  jest.requireMock("expo-router") as {
+    router: {
+      push: ReturnType<typeof jest.fn>;
+      replace: ReturnType<typeof jest.fn>;
+      back: ReturnType<typeof jest.fn>;
+      canGoBack: ReturnType<typeof jest.fn>;
+    };
+  }
+).router;
+
 describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () => {
   beforeEach(() => {
     _resetPushOnceState();
@@ -37,7 +45,7 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
     mockRouter.replace.mockClear();
     mockRouter.back.mockClear();
     if (!mockRouter.canGoBack) {
-      mockRouter.canGoBack = vi.fn();
+      mockRouter.canGoBack = jest.fn();
     } else {
       mockRouter.canGoBack.mockClear();
     }
@@ -72,7 +80,7 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
 
     it("mantém as capacidades de PWA standalone no iOS", () => {
       expect(htmlSource).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
-      expect(htmlSource).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="default" />');
+      expect(htmlSource).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />');
       expect(htmlSource).toContain('<meta name="apple-mobile-web-app-title" content="IpêBook" />');
     });
   });
@@ -122,8 +130,7 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
     });
 
     it("chama router.back() se router.canGoBack não for função", () => {
-      // @ts-expect-error teste de robustez em runtime
-      mockRouter.canGoBack = undefined;
+      (mockRouter as { canGoBack?: unknown }).canGoBack = undefined;
       backOnce();
       expect(mockRouter.back).toHaveBeenCalledTimes(1);
     });

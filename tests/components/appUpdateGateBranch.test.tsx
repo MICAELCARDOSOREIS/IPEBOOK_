@@ -1,6 +1,5 @@
 import React from "react";
 import renderer, { act } from "react-test-renderer";
-import { describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { AppUpdateGate } from "@/view/components/AppUpdateGate";
 import * as di from "@/di/container";
@@ -9,10 +8,10 @@ describe("AppUpdateGate branches", () => {
   it("renderiza modal obrigatorio e aciona openStore", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const openStoreMock = vi.fn(async () => {});
-    const dismissMock = vi.fn(async () => {});
+    const openStoreMock = jest.fn(async () => {});
+    const dismissMock = jest.fn(async () => {});
 
-    vi.spyOn(di, "makeAppUpdateViewModel").mockReturnValue({
+    jest.spyOn(di, "makeAppUpdateViewModel").mockReturnValue({
       status: "required",
       policy: {
         platform: "android",
@@ -38,17 +37,17 @@ describe("AppUpdateGate branches", () => {
       expect(openStoreMock).toHaveBeenCalled();
     } finally {
       Platform.OS = originalOS;
-      vi.restoreAllMocks();
+      jest.restoreAllMocks();
     }
   });
 
   it("renderiza modal opcional e aciona dismiss", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const openStoreMock = vi.fn(async () => {});
-    const dismissMock = vi.fn(async () => {});
+    const openStoreMock = jest.fn(async () => {});
+    const dismissMock = jest.fn(async () => {});
 
-    vi.spyOn(di, "makeAppUpdateViewModel").mockReturnValue({
+    jest.spyOn(di, "makeAppUpdateViewModel").mockReturnValue({
       status: "optional",
       policy: {
         platform: "android",
@@ -74,7 +73,7 @@ describe("AppUpdateGate branches", () => {
       expect(dismissMock).toHaveBeenCalled();
     } finally {
       Platform.OS = originalOS;
-      vi.restoreAllMocks();
+      jest.restoreAllMocks();
     }
   });
 });

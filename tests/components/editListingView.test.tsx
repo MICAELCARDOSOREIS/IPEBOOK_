@@ -1,34 +1,35 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
+import * as container from "@/di/container";
 import type { EditListingState, EditListingActions } from "@/viewmodel/useEditListingViewModel";
 import EditListing from "@/view/listings/editListing";
 
-vi.mock("@/viewmodel/useEditListingViewModel", () => ({
-  useEditListingViewModel: vi.fn(),
+jest.mock("@/viewmodel/useEditListingViewModel", () => ({
+  useEditListingViewModel: jest.fn(),
 }));
 
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
-const mockedUseEditListingViewModel = vi.mocked(useEditListingViewModel);
+const mockedUseEditListingViewModel = jest.mocked(useEditListingViewModel);
 
 function mockViewModel(state: EditListingState, actions: Partial<EditListingActions> = {}) {
   const fullActions: EditListingActions = {
-    load: vi.fn().mockResolvedValue(undefined),
-    setTitle: vi.fn(),
-    setAuthor: vi.fn(),
-    setCategory: vi.fn(),
-    setModality: vi.fn(),
-    setPrice: vi.fn(),
-    setNeighborhood: vi.fn(),
-    setCondition: vi.fn(),
-    setDescription: vi.fn(),
-    setPhotoUrl: vi.fn(),
-    addPhoto: vi.fn(),
-    removePhoto: vi.fn(),
-    setIsBox: vi.fn(),
-    setBoxVolumesCount: vi.fn(),
-    submit: vi.fn().mockResolvedValue(null),
+    load: jest.fn().mockResolvedValue(undefined),
+    setTitle: jest.fn(),
+    setAuthor: jest.fn(),
+    setCategory: jest.fn(),
+    setModality: jest.fn(),
+    setPrice: jest.fn(),
+    setNeighborhood: jest.fn(),
+    setCondition: jest.fn(),
+    setDescription: jest.fn(),
+    setPhotoUrl: jest.fn(),
+    addPhoto: jest.fn(),
+    setPhotoAt: jest.fn(),
+    removePhoto: jest.fn(),
+    setIsBox: jest.fn(),
+    setBoxVolumesCount: jest.fn(),
+    submit: jest.fn().mockResolvedValue(null),
     ...actions,
   };
   mockedUseEditListingViewModel.mockReturnValue([state, fullActions]);
@@ -116,7 +117,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     expect(screen.getByDisplayValue("Marcas leves")).toBeDefined();
     expect(screen.getByLabelText("Categoria Romance").props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Conservação Bom estado").props.accessibilityState.checked).toBe(true);
-    expect(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Ponto de encontro Praça da Bandeira").props.accessibilityState.checked).toBe(false);
   });
 
   it("permite alterar modalidade e oculta preço quando não é venda", async () => {
@@ -135,9 +136,9 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
   });
 
   it("submete alterações e chama onSaved ao obter sucesso", async () => {
-    const onSaved = vi.fn();
+    const onSaved = jest.fn();
     const actions = mockViewModel(loadedState, {
-      submit: vi.fn().mockResolvedValue(loadedState.book),
+      submit: jest.fn().mockResolvedValue(loadedState.book),
     });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -157,7 +158,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
   });
 
   it("chama onCancel ao clicar em Cancelar", async () => {
-    const onCancel = vi.fn();
+    const onCancel = jest.fn();
     mockViewModel(loadedState);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -178,7 +179,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
 
 describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
   it("desmarca categoria, conservação e local ao tocar no chip já escolhido", async () => {
-    const actions = mockViewModel(loadedState);
+    const actions = mockViewModel({ ...loadedState, neighborhood: "Praça da Bandeira" });
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -188,7 +189,7 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Categoria Romance"));
       fireEvent.press(screen.getByLabelText("Conservação Bom estado"));
-      fireEvent.press(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)"));
+      fireEvent.press(screen.getByLabelText("Ponto de encontro Praça da Bandeira"));
     });
 
     expect(actions.setCategory).toHaveBeenCalledWith("");
@@ -257,5 +258,131 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
 
     const row = StyleSheet.flatten(screen.getByTestId("edit-listing-category-row").props.style);
     expect(row.flexWrap).toBe("wrap");
+  });
+
+  it("aciona foto, campos de foco/submit e troca de modalidade na edição", async () => {
+    const actions = mockViewModel({
+      ...loadedState,
+      photoUrl: "https://cdn.ipebook.app/antiga.jpg",
+    });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" onCancel={jest.fn()} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Remover foto da capa" }));
+    });
+    expect(actions.setPhotoUrl).toHaveBeenCalledWith("");
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Alterar foto da capa" }));
+    });
+    expect(screen.getByLabelText("Escolher foto da galeria")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Fechar ao tocar fora" }));
+    });
+    // Campo de URL da capa fica recolhido por padrão mesmo quando já existe foto
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Editar link da capa" }));
+    });
+    expect(screen.getByLabelText("URL da foto da capa")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ocultar link da capa" }));
+    });
+    expect(screen.queryByLabelText("URL da foto da capa")).toBeNull();
+
+    await act(async () => {
+      fireEvent(screen.getByLabelText("Título do livro"), "focus");
+      fireEvent(screen.getByLabelText("Título do livro"), "submitEditing");
+      fireEvent(screen.getByLabelText("Autor do livro"), "focus");
+      fireEvent(screen.getByLabelText("Autor do livro"), "submitEditing");
+      fireEvent(screen.getByLabelText("Descrição"), "focus");
+      fireEvent(screen.getByLabelText("Preço do livro"), "focus");
+      fireEvent.press(screen.getByLabelText("Modalidade Troca"));
+    });
+
+    expect(actions.setModality).toHaveBeenCalledWith("trade");
+  });
+
+  it("permite adicionar e remover fotos da lombada e do verso na tela Editar anúncio", async () => {
+    const choose = jest
+      .fn()
+      .mockResolvedValueOnce("https://cdn.ipebook.app/foto-lombada-1.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/foto-verso-1.jpg");
+    const photoSpy = jest
+      .spyOn(container, "makeListingPhotoViewModel")
+      .mockReturnValue([{ uploading: false, error: null }, { choose, clearError: jest.fn() }]);
+
+    try {
+      const actions = mockViewModel({
+        ...loadedState,
+        photoUrl: "https://cdn.ipebook.app/capa.jpg",
+        photos: [],
+      });
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+      });
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar lombada"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library", "spine");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(0, "https://cdn.ipebook.app/foto-lombada-1.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar verso"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Tirar foto com a câmera"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("camera", "back");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(1, "https://cdn.ipebook.app/foto-verso-1.jpg");
+
+      // Remoção limpa cada slot independentemente
+      const filledActions = mockViewModel({
+        ...loadedState,
+        photoUrl: "https://cdn.ipebook.app/capa.jpg",
+        photos: ["https://cdn.ipebook.app/foto-lombada-1.jpg", "https://cdn.ipebook.app/foto-verso-1.jpg"],
+      });
+      await act(async () => {
+        screen.rerender(<EditListing bookId="b1" sessionUserId="user-1" />);
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Remover lombada" }));
+        fireEvent.press(screen.getByRole("button", { name: "Remover verso" }));
+      });
+      expect(filledActions.setPhotoAt).toHaveBeenCalledWith(0, "");
+      expect(filledActions.setPhotoAt).toHaveBeenCalledWith(1, "");
+    } finally {
+      photoSpy.mockRestore();
+    }
+  });
+
+  it("exibe prévia formatada do preço, barra fixa de ações no mobile e remove caixa falsa de localidade", async () => {
+    mockViewModel({ ...loadedState, price: "5" });
+
+    const screen = await render(
+      <EditListing bookId="b1" sessionUserId="user-1" onCancel={jest.fn()} />,
+    );
+
+    expect(screen.getByText("Será exibido como R$ 5,00")).toBeDefined();
+    expect(screen.getByTestId("edit-listing-action-bar")).toBeDefined();
+    expect(screen.getByText("Retirada presencial em Piripiri, PI")).toBeDefined();
+    expect(screen.queryByText("Localidade da beta")).toBeNull();
+    expect(screen.queryByText(/Beta exclusiva/i)).toBeNull();
   });
 });

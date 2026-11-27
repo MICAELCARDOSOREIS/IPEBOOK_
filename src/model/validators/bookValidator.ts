@@ -25,39 +25,10 @@ const MAX_PHOTO_URL_LENGTH = 2048;
 function isValidHttpUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
+    return parsed.protocol === "https:";
   } catch {
     return false;
   }
-}
-
-export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
-  return {
-    id: input.id?.trim(),
-    title: input.title?.trim(),
-    author: input.author?.trim(),
-    ...(input.category !== undefined ? { category: input.category?.trim() } : {}),
-    ...(input.ownerId !== undefined ? { ownerId: input.ownerId?.trim() } : {}),
-    ...(input.modality !== undefined ? { modality: input.modality } : {}),
-    ...(input.price !== undefined ? { price: input.price } : {}),
-    ...(input.city !== undefined ? { city: input.city?.trim() } : {}),
-    ...(input.state !== undefined ? { state: input.state?.trim() } : {}),
-    ...(input.neighborhood !== undefined ? { neighborhood: input.neighborhood?.trim() } : {}),
-    ...(input.condition !== undefined ? { condition: input.condition } : {}),
-    ...(input.description !== undefined ? { description: input.description?.trim() || undefined } : {}),
-    ...(input.photoUrl !== undefined ? { photoUrl: input.photoUrl?.trim() || undefined } : {}),
-    ...(input.photos !== undefined
-      ? {
-          photos: Array.isArray(input.photos)
-            ? input.photos.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean)
-            : undefined,
-        }
-      : {}),
-    ...(input.isBox !== undefined ? { isBox: input.isBox === true } : {}),
-    ...(typeof input.boxVolumesCount === "number" && Number.isInteger(input.boxVolumesCount)
-      ? { boxVolumesCount: input.boxVolumesCount }
-      : {}),
-  };
 }
 
 export function validateBookPayload(input: unknown): BookValidationResult {
@@ -152,7 +123,7 @@ export function validateBookPayload(input: unknown): BookValidationResult {
     } else if (raw.photoUrl.length > MAX_PHOTO_URL_LENGTH) {
       errors.push(`URL da foto de capa deve conter no máximo ${MAX_PHOTO_URL_LENGTH} caracteres.`);
     } else if (!isValidHttpUrl(raw.photoUrl)) {
-      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("URL da foto de capa deve ser um endereço HTTPS válido.");
     }
   }
 
@@ -171,7 +142,7 @@ export function validateBookPayload(input: unknown): BookValidationResult {
           errors.push(`Cada URL de foto deve conter no máximo ${MAX_PHOTO_URL_LENGTH} caracteres.`);
           break;
         } else if (!isValidHttpUrl(item)) {
-          errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
+          errors.push("Cada foto da galeria deve ser um endereço HTTPS válido.");
           break;
         }
       }
@@ -239,7 +210,7 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
 
   if (raw.photoUrl !== undefined && raw.photoUrl !== null && raw.photoUrl !== "") {
     if (typeof raw.photoUrl !== "string" || !isValidHttpUrl(raw.photoUrl)) {
-      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("URL da foto de capa deve ser um endereço HTTPS válido.");
     }
   }
 
@@ -247,7 +218,7 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
     if (!Array.isArray(raw.photos) || raw.photos.length > MAX_PHOTOS) {
       errors.push(`Galeria de fotos deve ser uma lista de no máximo ${MAX_PHOTOS} itens.`);
     } else if (raw.photos.some((item) => typeof item !== "string" || !isValidHttpUrl(item))) {
-      errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
+      errors.push("Cada foto da galeria deve ser um endereço HTTPS válido.");
     }
   }
 
@@ -265,10 +236,4 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
   }
 
   return { isValid: errors.length === 0, errors };
-}
-
-export function formatBookDisplay(book: Pick<Book, "title" | "author">): string {
-  const title = book.title?.trim() || "Sem título";
-  const author = book.author?.trim() || "Autor desconhecido";
-  return `${title} — ${author}`;
 }

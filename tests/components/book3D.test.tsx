@@ -1,6 +1,5 @@
 import type React from "react";
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { Book3D } from "@/view/components/Book3D";
 
 const LABEL = "Capa de Capitães da Areia, em 3D. Use as ações para girar o livro.";
@@ -104,6 +103,42 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.getByLabelText("Foto da capa de Capitães da Areia")).toBeDefined();
   });
 
+  it("com foto da lombada e do verso, exibe as fotos reais nas faces correspondentes do livro 3D", async () => {
+    const spine = await open({
+      startAngle: 90,
+      spinePhotoUrl: "https://exemplo.com/foto-lombada-1.jpg",
+    });
+    expect(spine.getByLabelText("Foto da lombada de Capitães da Areia")).toBeDefined();
+
+    const back = await open({
+      startAngle: 180,
+      backPhotoUrl: "https://exemplo.com/foto-verso-1.jpg",
+    });
+    expect(back.getByLabelText("Foto do verso de Capitães da Areia")).toBeDefined();
+  });
+
+  it("com apenas foto do verso, mantém lombada ilustrativa e mostra foto real no verso", async () => {
+    const spine = await open({
+      startAngle: 90,
+      backPhotoUrl: "https://exemplo.com/foto-verso-1.jpg",
+    });
+    expect(spine.queryByLabelText("Foto da lombada de Capitães da Areia")).toBeNull();
+    expect(spine.getByText("Capitães da Areia")).toBeDefined();
+  });
+
+  it("volta para a arte ilustrativa se a foto da lombada ou do verso falhar ao carregar", async () => {
+    const back = await open({
+      startAngle: 180,
+      description: "Sinopse de fallback.",
+      backPhotoUrl: "https://exemplo.com/quebrada-verso.jpg",
+    });
+    const img = back.getByLabelText("Foto do verso de Capitães da Areia");
+    await act(async () => {
+      img.props.onError?.();
+    });
+    expect(back.getByText("Sinopse de fallback.")).toBeDefined();
+  });
+
   it("a animação de entrada começa girada e termina em leve perspectiva mostrando a capa e o corte das páginas", async () => {
     const screen = await open({ intro: true });
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 700)); });
@@ -138,12 +173,20 @@ describe("Book3D: gesto de arrastar", () => {
       return { panHandlers: {} };
     };
     try {
-      const onPress = vi.fn();
+      const onPress = jest.fn();
       const screen = await open({ onPress });
       const gesture = created[created.length - 1];
       gesture.onPanResponderGrant();
       gesture.onPanResponderRelease({}, { dx: 2, dy: 1, vx: 0 });
       expect(onPress).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        gesture.onPanResponderGrant();
+        gesture.onPanResponderMove({}, { dx: 18, dy: 56 });
+      });
+      expect(screen.queryByTestId("book3d-face-left")).toBeNull();
+      expect(gesture.onPanResponderTerminationRequest()).toBe(true);
+      gesture.onPanResponderTerminate();
 
       await act(async () => {
         gesture.onPanResponderGrant();
@@ -194,6 +237,9 @@ describe("Book3D: gesto de arrastar", () => {
       const screen = await open({ description: "Sinopse na contracapa." });
       const gesture = created[created.length - 1];
       await act(async () => {
+        gesture.onPanResponderGrant();
+        gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
+        await new Promise((resolve) => setTimeout(resolve, 100));
         gesture.onPanResponderGrant();
         gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
         await new Promise((resolve) => setTimeout(resolve, 650));

@@ -70,10 +70,10 @@ export function buildBookOpenGraph(book: OpenGraphBookInput): OpenGraphMetadata 
   const location = rawBairro?.trim() ? `no bairro ${rawBairro.trim()}, Piripiri - PI` : "em Piripiri - PI";
 
   const boxDetail = isBox ? `Coleção completa com ${book.boxVolumesCount} volumes. ` : "";
-  const description = `${modality} ${location}. ${boxDetail}Acesse o IpêBook para ver detalhes e combinar a entrega segura!`;
+  const description = `${modality} ${location}. ${boxDetail}Acesse o IpêBook para ver detalhes e combinar a entrega!`;
 
   const validPhoto =
-    book.photoUrl && book.photoUrl.startsWith("http")
+    book.photoUrl && /^https:\/\//i.test(book.photoUrl)
       ? book.photoUrl
       : getIllustrativeCoverUrl(book.id);
 
@@ -111,11 +111,11 @@ export function buildOpenGraphHtmlTags(meta: OpenGraphMetadata): string {
 export function injectOpenGraphIntoHtml(html: string, meta: OpenGraphMetadata): string {
   let result = html;
 
-  // Substitui ou injeta o <title>
+  // Substitui ou injeta o <title> usando callbacks para neutralizar padrões especiais ($&, $`, $').
   if (result.includes("<title>")) {
-    result = result.replace(/<title>.*?<\/title>/i, `<title>${escapeHtml(meta.title)}</title>`);
+    result = result.replace(/<title>.*?<\/title>/i, () => `<title>${escapeHtml(meta.title)}</title>`);
   } else if (result.includes("<head>")) {
-    result = result.replace("<head>", `<head>\n    <title>${escapeHtml(meta.title)}</title>`);
+    result = result.replace("<head>", () => `<head>\n    <title>${escapeHtml(meta.title)}</title>`);
   }
 
   // Remove meta tags og:* e twitter:* pré-existentes para evitar duplicações
@@ -125,7 +125,7 @@ export function injectOpenGraphIntoHtml(html: string, meta: OpenGraphMetadata): 
   // Injeta as novas tags antes de </head>
   const tags = buildOpenGraphHtmlTags(meta);
   if (result.includes("</head>")) {
-    result = result.replace("</head>", `    ${tags}\n  </head>`);
+    result = result.replace("</head>", () => `    ${tags}\n  </head>`);
   } else {
     result += `\n${tags}`;
   }

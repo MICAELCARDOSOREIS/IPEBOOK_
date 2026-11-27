@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { webBetaRedirect } from "@/view/webBetaMode";
 
 describe("webBetaRedirect (Spec 108, site só com o convite do beta)", () => {

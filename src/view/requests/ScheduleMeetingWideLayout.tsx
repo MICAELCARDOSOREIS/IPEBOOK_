@@ -4,15 +4,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS, type MeetingPoint } from "@/model/entities/meetingPoint";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
+import { triggerHaptic } from "@/view/haptics";
 import { withPress } from "@/view/pressFeedback";
-import { MeetingMap } from "@/view/requests/MeetingMap";
-import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type OptionChipProps = {
   label: string;
@@ -27,14 +28,34 @@ export type OptionChipProps = {
 export function OptionChip({ label, accessibilityLabel, selected, onPress, compact }: OptionChipProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   return (
     <Pressable
       accessibilityRole="radio"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: selected }}
-      onPress={onPress}
-      style={withPress([styles.chip, compact && styles.chipCompact, selected && styles.chipSelected, selected && styles.chipWithCheck])}
+      onPress={() => {
+        if (isIos) triggerHaptic("selection");
+        onPress();
+      }}
+      style={withPress([
+        styles.chip,
+        compact && styles.chipCompact,
+        selected && styles.chipSelected,
+        selected && styles.chipWithCheck,
+        isIos && (iosGlass ? styles.iosChipGlass : styles.iosChipOpaque),
+        isIos && selected && styles.iosChipSelected,
+      ])}
     >
+      {iosGlass ? (
+        <IosGlassBackdrop
+          isInteractive
+          tintColor={selected ? colors.m3.secondaryContainer : undefined}
+          style={styles.iosChipGlassShape}
+        />
+      ) : null}
       {selected ? <AppIcon name="check" size={compact ? 16 : 18} color={colors.m3.onSecondaryContainer} /> : null}
       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
     </Pressable>
@@ -43,7 +64,6 @@ export function OptionChip({ label, accessibilityLabel, selected, onPress, compa
 
 export type ScheduleMeetingWideLayoutProps = {
   rescheduling: boolean;
-  hasMap: boolean;
   windowWidth: number;
   windowHeight: number;
   pointName: string | null;
@@ -60,7 +80,6 @@ export type ScheduleMeetingWideLayoutProps = {
   errorRef: React.RefObject<any>;
   onBack: () => void;
   onSelectPoint: (name: string) => void;
-  onSelectFromMap: (name: string) => void;
   onSelectDay: (index: number) => void;
   onSelectHour: (hour: number) => void;
   onSubmit: () => void;
@@ -71,7 +90,6 @@ export type ScheduleMeetingWideLayoutProps = {
  */
 export function ScheduleMeetingWideLayout({
   rescheduling,
-  hasMap,
   windowWidth,
   windowHeight,
   pointName,
@@ -88,7 +106,6 @@ export function ScheduleMeetingWideLayout({
   errorRef,
   onBack,
   onSelectPoint,
-  onSelectFromMap,
   onSelectDay,
   onSelectHour,
   onSubmit,
@@ -102,7 +119,7 @@ export function ScheduleMeetingWideLayout({
     <View style={styles.page}>
       <SafeAreaView style={styles.safe}>
         <TopAppBar
-          contentMaxWidth={1180}
+          contentMaxWidth={WEB_MAX_WIDTH}
           title={rescheduling ? "Reagendar encontro" : "Combinar encontro"}
           onBack={onBack}
         />
@@ -123,7 +140,7 @@ export function ScheduleMeetingWideLayout({
                   <Text style={styles.wideBody}>
                     {rescheduling
                       ? "Escolha uma nova data e envie a sugestão para a outra pessoa."
-                      : "Ponto público e seguro em Piripiri para realizar a entrega presencial."}
+                      : "Ponto público recomendado em Piripiri para a entrega presencial."}
                   </Text>
                 </View>
 
@@ -131,7 +148,7 @@ export function ScheduleMeetingWideLayout({
                 <View style={styles.whereHeader}>
                   <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
                   <Text style={styles.whereHint}>
-                    {hasMap ? "Clique num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro em Piripiri."}
+                    Escolha um dos pontos públicos recomendados em Piripiri.
                   </Text>
                 </View>
 
@@ -254,21 +271,17 @@ export function ScheduleMeetingWideLayout({
                     <AppIcon name="place" size={18} color={colors.m3.primary} />
                     <Text style={styles.wideMapCardTitle}>Pontos de Encontro em Piripiri</Text>
                   </View>
-                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos oficiais</Text>
+                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos recomendados</Text>
                 </View>
 
                 <View style={[styles.wideMapViewport, { height: mapViewportHeight }]}>
-                  {hasMap ? (
-                    <MeetingMap selectedName={pointName} compactPadding onSelect={onSelectFromMap} />
-                  ) : (
-                    <View style={styles.wideMapEmptyFallback}>
-                      <AppIcon name="place" size={32} color={colors.m3.primary} />
-                      <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
-                      <Text style={styles.wideMapEmptyFallbackText}>
-                        Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.wideMapEmptyFallback}>
+                    <AppIcon name="place" size={32} color={colors.m3.primary} />
+                    <Text style={styles.wideMapEmptyFallbackTitle}>4 pontos recomendados em Piripiri</Text>
+                    <Text style={styles.wideMapEmptyFallbackText}>
+                      Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={styles.wideMapCardFooter}>
@@ -280,12 +293,12 @@ export function ScheduleMeetingWideLayout({
                     </View>
                     <View style={styles.wideMapFooterTextCol}>
                       <Text numberOfLines={1} style={styles.wideMapFooterTitle}>
-                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado ou no mapa"}
+                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado"}
                       </Text>
                       <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
                         {selectedPoint
                           ? `${selectedPoint.address} · ${selectedPoint.recommendedTime}`
-                          : "Pontos monitorados e centrais em Piripiri, ideais para troca segura de livros."}
+                          : "Locais públicos recomendados para trocar livros em Piripiri."}
                       </Text>
                     </View>
                   </View>
@@ -300,7 +313,7 @@ export function ScheduleMeetingWideLayout({
                 </View>
                 <Text style={styles.wideSafetyText}>
                   • Prefira horários durante o dia e com circulação de pedestres.{"\n"}
-                  • Encontros nos pontos sugeridos garantem visibilidade e tranquilidade.{"\n"}
+                  • Escolham um local público onde seja fácil se encontrar.{"\n"}
                   • Confira o estado do livro no momento da entrega presencial.
                 </Text>
               </View>
@@ -357,13 +370,33 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
     },
-    chipCompact: { width: 52, paddingHorizontal: 0, alignItems: "center" },
+    chipCompact: { minWidth: 52, paddingHorizontal: tokens.spacing[8], alignItems: "center" },
     chipWithCheck: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[4] },
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.m3.secondaryContainer,
       borderRadius: tokens.shapeMorph.chipSelected,
       borderWidth: 0,
+    },
+    iosChipGlass: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderColor: "transparent",
+      backgroundColor: "transparent",
+      overflow: "hidden",
+    },
+    iosChipOpaque: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    iosChipSelected: {
+      borderWidth: 1.5,
+      borderColor: colors.m3.primary,
+    },
+    iosChipGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
     },
     chipText: {
       ...tokens.typography.bodyMedium,
@@ -387,12 +420,13 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[48],
     },
     wideContainer: {
-      maxWidth: 1180,
+      maxWidth: WEB_MAX_WIDTH,
       width: "100%",
       alignSelf: "center",
       flexDirection: "row",
-      gap: tokens.spacing[24],
-      padding: tokens.spacing[24],
+      gap: tokens.spacing[32],
+      paddingHorizontal: WEB_GUTTER,
+      paddingVertical: tokens.spacing[24],
       alignItems: "flex-start",
     },
     wideContainerStacked: {
@@ -405,13 +439,12 @@ function createStyles(colors: ColorPalette) {
       minWidth: "100%",
     },
     wideFormCol: {
-      flex: 1,
+      flex: 1.1,
       minWidth: 320,
-      maxWidth: 560,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       overflow: "hidden",
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.05,
@@ -424,7 +457,7 @@ function createStyles(colors: ColorPalette) {
     },
     wideFormFooter: {
       borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
       backgroundColor: colors.m3.surfaceContainerLow,
       padding: tokens.spacing[16],
     },
@@ -451,7 +484,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: colors.surface,
     },
     widePlaceCardSelected: {
@@ -542,7 +575,6 @@ function createStyles(colors: ColorPalette) {
     wideMapColumn: {
       flex: 1,
       minWidth: 320,
-      maxWidth: 580,
       gap: tokens.spacing[16],
     },
     wideMapSticky: {
@@ -553,7 +585,7 @@ function createStyles(colors: ColorPalette) {
     wideMapCard: {
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerHigh,
       shadowColor: colors.m3.shadow,
@@ -566,7 +598,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[12],
       backgroundColor: colors.m3.surfaceContainerLow,
       borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
+      borderBottomColor: colors.book.paperEdge,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",

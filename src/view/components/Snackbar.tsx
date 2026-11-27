@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text } from "react-native";
+import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type SnackbarProps = {
   visible: boolean;
@@ -26,10 +28,20 @@ export function Snackbar({
   onDismiss,
   duration = 4000,
 }: SnackbarProps) {
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors, resolvedScheme), [colors, resolvedScheme]);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useRef(new Animated.Value(0.95)).current;
-  const guardedAction = useGuardedPress(onAction);
+  const guardedAction = useGuardedPress(
+    onAction
+      ? () => {
+          if (isIos) triggerHaptic("light");
+          onAction();
+        }
+      : undefined,
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -46,7 +58,7 @@ export function Snackbar({
           toValue: 1,
           tension: tokens.spring.spatialStandard.tension,
           friction: tokens.spring.spatialStandard.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {
@@ -67,11 +79,21 @@ export function Snackbar({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        isIos && (iosGlass ? styles.iosGlassContainer : styles.iosOpaqueContainer),
+        { transform: [{ scale }] },
+      ]}
+    >
+      {iosGlass ? (
+        <IosGlassBackdrop style={styles.iosGlassShape} />
+      ) : null}
       <Text
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
-        style={styles.message}
+        maxFontSizeMultiplier={1.3}
+        style={[styles.message, isIos && styles.iosMessage]}
       >
         {message}
       </Text>
@@ -82,16 +104,16 @@ export function Snackbar({
           onPress={guardedAction}
           style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
         >
-          <Text style={styles.actionText}>{actionLabel}</Text>
+          <Text maxFontSizeMultiplier={1.3} style={[styles.actionText, isIos && styles.iosActionText]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </Animated.View>
   );
 }
 
-function createStyles(colors: ColorPalette, resolvedScheme: "light" | "dark") {
-  // M3 Snackbar: superfície inversa (escura no tema claro, clara no tema escuro) e rótulo de ação contrastante.
-  const actionColor = resolvedScheme === "dark" ? colors.m3.onPrimary : colors.m3.primaryContainer;
+function createStyles(colors: ColorPalette) {
+  // M3 Snackbar: superfície inversa e rótulo de ação contrastante.
+  const actionColor = colors.m3.primaryContainer;
   return StyleSheet.create({
     container: {
       flexDirection: "row",
@@ -129,6 +151,36 @@ function createStyles(colors: ColorPalette, resolvedScheme: "light" | "dark") {
       ...tokens.typography.labelMedium,
       color: actionColor,
       fontWeight: tokens.fontWeight.bold,
+    },
+    iosGlassContainer: {
+      backgroundColor: "transparent",
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: "transparent",
+      shadowColor: "#2e2b21",
+      shadowOpacity: 0.14,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      overflow: "hidden",
+    },
+    iosOpaqueContainer: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    iosMessage: {
+      color: colors.m3.onSurface,
+    },
+    iosActionText: {
+      color: colors.action,
     },
   });
 }

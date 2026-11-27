@@ -1,20 +1,25 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { Platform, StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
+import { Platform, Share, StyleSheet } from "react-native";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsState, MyListingsActions } from "@/viewmodel/useMyListingsViewModel";
 import MyListingsScreen, { MyListings } from "@/view/listings/myListings";
+import { MyListingsListingsTab } from "@/view/listings/myListingsListingsTab";
 
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
-  useMyListingsViewModel: vi.fn(),
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(),
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({
+  useMyListingsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
-vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: vi.fn() }));
+
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(),
+}));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
+jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: jest.fn() }));
 
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -22,14 +27,14 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 
-const mockedUseMyListingsViewModel = vi.mocked(useMyListingsViewModel);
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+const mockedUseMyListingsViewModel = jest.mocked(useMyListingsViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 function mockReceived(items: RequestWithListing[]) {
-  vi.mocked(useReceivedRequestsViewModel).mockReturnValue([
+  jest.mocked(useReceivedRequestsViewModel).mockReturnValue([
     { items, loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
-    { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+    { reload: jest.fn(), accept: jest.fn(), reject: jest.fn() },
   ]);
 }
 mockReceived([]);
@@ -49,9 +54,9 @@ function mockViewModel(
     ...state,
   };
   const fullActions: MyListingsActions = {
-    reload: vi.fn().mockResolvedValue(undefined),
-    cancelListing: vi.fn().mockResolvedValue(true),
-    togglePauseListing: vi.fn().mockResolvedValue(true),
+    reload: jest.fn().mockResolvedValue(undefined),
+    cancelListing: jest.fn().mockResolvedValue(true),
+    togglePauseListing: jest.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseMyListingsViewModel.mockReturnValue([fullState, fullActions]);
@@ -137,7 +142,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
         requesterName: "Bia",
       },
     ]);
-    const onNavigateToNegotiationDetail = vi.fn();
+    const onNavigateToNegotiationDetail = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -160,7 +165,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     mockReceived([
       { request: { id: "r20", listingId: "b20", requesterId: "u-lu", status: "pending" }, listing: book, requesterName: "Lucas" },
     ]);
-    const onNavigateToReceivedRequests = vi.fn();
+    const onNavigateToReceivedRequests = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" onNavigateToReceivedRequests={onNavigateToReceivedRequests} />);
@@ -189,13 +194,13 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
 
     expect(screen.queryByText("Cada livro, uma conversa.")).toBeNull();
     expect(
-      screen.getByText("Toque em um livro para editar, pausar ou marcar como concluído."),
+      screen.getByText("Toque em um livro para gerenciar, pausar ou abrir a conversa."),
     ).toBeDefined();
   });
 
   it("exibe mensagem e botão de cadastrar quando não há anúncios", async () => {
     mockViewModel({ books: [], loading: false, error: null });
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToCreateListing = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -218,7 +223,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     mockViewModel({ books: [livro] });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" onNavigateToCreateListing={vi.fn()} />);
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToCreateListing={jest.fn()} />);
     });
     const fabs = screen.getAllByLabelText("Anunciar livro");
     expect(fabs).toHaveLength(1);
@@ -240,7 +245,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       neighborhood: "Centro",
     };
     mockViewModel({ books: [fakeBook], loading: false, error: null });
-    const onNavigateToManageListing = vi.fn();
+    const onNavigateToManageListing = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -302,20 +307,20 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     mockViewModel({ books: [], loading: false, error: "Erro de conexão." });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<MyListings sessionUserId="user-1" />); });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("MyListingsScreen redireciona para login se o usuário não estiver autenticado", async () => {
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: false, error: null },
-      { signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signIn: jest.fn(), signUp: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
-    const onRequireSignIn = vi.fn();
+    const onRequireSignIn = jest.fn();
 
     await act(async () => {
       await render(<MyListingsScreen onRequireSignIn={onRequireSignIn} />);
@@ -339,8 +344,8 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       { request: { id: "r2", listingId: "b10", requesterId: "u-bruno", status: "accepted" }, listing: book, requesterName: null },
       { request: { id: "r3", listingId: "b10", requesterId: "u-caio", status: "rejected" }, listing: book, requesterName: "Caio" },
     ]);
-    const onNavigateToReceivedRequests = vi.fn();
-    const onNavigateToNegotiationDetail = vi.fn();
+    const onNavigateToReceivedRequests = jest.fn();
+    const onNavigateToNegotiationDetail = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -365,8 +370,8 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
     expect(screen.getByText("Pessoa da comunidade · negociação aceita · Troca")).toBeDefined();
     expect(screen.queryByText(/Caio/)).toBeNull();
-    // A barra de abas e filtros permanece acessível no topo para retorno em 1 toque
-    expect(screen.getByText("Todos (1)")).toBeDefined();
+    // A barra de abas permanece acessível no topo para retorno em 1 toque
+    expect(screen.getByLabelText("Anúncios")).toBeDefined();
     expect(screen.getByText("Tudo pela conversa")).toBeDefined();
 
     const rows = screen.getAllByRole("button", { name: "Abrir proposta para Dom Casmurro" });
@@ -382,6 +387,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
   });
 
   it("aba Propostas sem propostas mostra estado próprio e volta para Anúncios (Spec 075, CA5)", async () => {
+    mockReceived([]);
     mockViewModel({
       books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
     });
@@ -423,7 +429,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       { request: { id: "r20", listingId: "b20", requesterId: "u-ana", status: "accepted" }, listing: entregue, requesterName: "Ana" },
       { request: { id: "r21", listingId: "b21", requesterId: "u-bia", status: "accepted" }, listing: reservado, requesterName: "Bia" },
     ]);
-    const onNavigateToNegotiationDetail = vi.fn();
+    const onNavigateToNegotiationDetail = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" onNavigateToNegotiationDetail={onNavigateToNegotiationDetail} />);
@@ -488,7 +494,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       status: "available",
     };
     mockViewModel({ books: [livro] });
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToCreateListing = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -531,10 +537,16 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar anúncios por situação"));
+    });
+
     expect(screen.getByText("Todos (2)")).toBeDefined();
     expect(screen.getByText("Ativos (1)")).toBeDefined();
     expect(screen.getByText("Pausados (1)")).toBeDefined();
-    expect(screen.getByText("Reservados (0)")).toBeDefined();
+    // Chips sem itens somem para não poluir a Estante.
+    expect(screen.queryByText("Reservados (0)")).toBeNull();
+    expect(screen.queryByText("Concluídos (0)")).toBeNull();
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Filtrar por Pausados"));
@@ -543,15 +555,47 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.queryByText("Dom Casmurro")).toBeNull();
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Reservados"));
+      fireEvent.press(screen.getByLabelText("Filtro ativo: Pausados"));
     });
-    expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
-
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Ver todos os anúncios" }));
+      fireEvent.press(screen.getByLabelText("Filtrar por Todos"));
     });
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("O Quinze")).toBeDefined();
+  });
+
+  it("mostra estado vazio contextual e volta para Todos quando o filtro não tem anúncios (Issue #161)", async () => {
+    const books: Book[] = [
+      { id: "b1", title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 25, ownerId: "user-1", status: "available" },
+    ];
+    const onStatusFilterChange = jest.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListingsListingsTab books={books} statusFilter="reserved" onStatusFilterChange={onStatusFilterChange} />,
+      );
+    });
+    expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver todos os anúncios" }));
+    });
+    expect(onStatusFilterChange).toHaveBeenCalledWith("all");
+  });
+
+  it("tocar em livro reservado leva direto à negociação ativa sem faixa extra", async () => {
+    const book: Book = { id: "b-res", title: "O alquimista", author: "Paulo Coelho", modality: "sale", price: 5, ownerId: "user-1", status: "reserved" };
+    const onOpen = jest.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListingsListingsTab books={[book]} statusFilter="all" onStatusFilterChange={jest.fn()} onNavigateToNegotiationForBook={onOpen} />,
+      );
+    });
+    expect(screen.queryByLabelText("Abrir conversa sobre O alquimista")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver negociação de O alquimista"));
+    });
+    expect(onOpen).toHaveBeenCalledWith("b-res");
   });
 
   it("renderiza a aba Concluídos e exibe estado vazio ou livros finalizados (Spec 064, Figma 05.01)", async () => {
@@ -602,7 +646,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
 
   it("exibe botão de voltar quando onBack é fornecido (Spec 064)", async () => {
     mockViewModel({ books: [] });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" onBack={onBack} />);
@@ -629,6 +673,13 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
     const style = StyleSheet.flatten(screen.getByTestId("my-listings-tablist").props.style);
     expect(style.borderRadius).toBe(trackRadius);
+    expect(style.justifyContent).not.toBe("space-between");
+
+    const statsRowStyle = StyleSheet.flatten(screen.getByTestId("my-listings-stats-row").props.style);
+    expect(statsRowStyle.marginTop ?? 0).toBeGreaterThanOrEqual(0);
+
+    const headerStyle = StyleSheet.flatten(screen.getByTestId("my-listings-header").props.style);
+    expect(headerStyle.paddingBottom).toBeGreaterThanOrEqual(12);
     Platform.OS = originalOS;
   });
 
@@ -646,5 +697,28 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     const shareBtn = screen.getByLabelText("Compartilhar Dom Casmurro no WhatsApp");
     expect(shareBtn).toBeDefined();
     fireEvent.press(shareBtn);
+  });
+
+  it("mostra o erro do compartilhamento na estante em vez de falhar em silêncio (Spec 118)", async () => {
+    mockViewModel({
+      books: [
+        { id: "b-whats-2", title: "Memórias Póstumas", author: "Machado de Assis", modality: "trade", ownerId: "user-1", status: "available" },
+      ],
+    });
+    const linking = await import("expo-linking");
+    jest.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = jest.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Compartilhar Memórias Póstumas no WhatsApp"));
+    });
+
+    expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
+    shareSpy.mockRestore();
   });
 });

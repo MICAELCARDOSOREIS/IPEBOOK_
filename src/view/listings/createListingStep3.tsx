@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import {
   BOOK_CATEGORIES,
   BOOK_CONDITIONS,
@@ -8,6 +8,7 @@ import {
   type BookCategory,
   type BookCondition,
 } from "@/model/entities/book";
+import { DEFAULT_PIRIPIRI_LOCATION, PIRIPIRI_MEETING_POINT_NAMES } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -15,6 +16,7 @@ import { categoryTone } from "@/view/categoryTone";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { TextField } from "@/view/components/TextField";
 
 /** Categorias canônicas sugeridas para publicação (ADR 0109). */
@@ -48,6 +50,7 @@ export function CreateListingStep3({
   condition,
   category,
   description,
+  neighborhood = "",
   isBox = false,
   boxVolumesCount = "",
   loading,
@@ -56,11 +59,12 @@ export function CreateListingStep3({
   onSetCondition,
   onSetCategory,
   onSetDescription,
+  onSetNeighborhood,
   onSetIsBox,
   onSetBoxVolumesCount,
   onFocusField,
 }: CreateListingStep3Props) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const displayedCategories = useMemo(() => {
@@ -109,7 +113,7 @@ export function CreateListingStep3({
               size="regular"
               label={cat}
               accessibilityLabel={`Categoria ${cat}`}
-              tone={categoryTone(cat, resolvedScheme)}
+              tone={categoryTone(cat)}
               selected={category === cat}
               onPress={() => onSetCategory(category === cat ? "" : cat)}
               disabled={loading}
@@ -119,7 +123,7 @@ export function CreateListingStep3({
       </View>
 
       {/* 3. Formato do anúncio (Box ou Coleção) */}
-      <View style={styles.boxCard}>
+      <IosCardSurface variant="neutral" style={styles.boxCard}>
         <Checkbox
           label="Box ou coleção de livros"
           description="Marque se este anúncio reúne mais de um volume"
@@ -130,19 +134,48 @@ export function CreateListingStep3({
         {isBox ? (
           <View style={styles.boxVolumesContainer}>
             <TextField
-              label="Quantidade de volumes (opcional)"
+              label="Volumes (opcional)"
+              labelBackgroundColor={Platform.OS === "ios" ? colors.m3.surfaceContainerLowest : colors.surface}
               value={boxVolumesCount}
               onChangeText={(text) => onSetBoxVolumesCount?.(text)}
               editable={!loading}
               placeholder="Ex: 3, 5, 7"
               keyboardType="number-pad"
+              iosKeyboardDone
+              returnKeyType="done"
               helperText="De 2 a 100 volumes componentes da coleção"
             />
           </View>
         ) : null}
+      </IosCardSurface>
+
+      {/* 4. Local de retirada em Piripiri */}
+      <View style={styles.field}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>Local de retirada</Text>
+          <Text style={styles.sectionHint}>Opcional · padrão Piripiri</Text>
+        </View>
+        <View style={styles.chipRow}>
+          {PIRIPIRI_MEETING_POINT_NAMES.map((locationName) => {
+            const isSelected = neighborhood === locationName;
+            return (
+              <Chip
+                key={locationName}
+                size="regular"
+                label={locationName}
+                accessibilityLabel={`Local de retirada ${locationName}`}
+                selected={isSelected}
+                onPress={() =>
+                  onSetNeighborhood?.(isSelected ? DEFAULT_PIRIPIRI_LOCATION : locationName)
+                }
+                disabled={loading}
+              />
+            );
+          })}
+        </View>
       </View>
 
-      {/* 4. Descrição detalhada do anúncio */}
+      {/* 5. Descrição detalhada do anúncio */}
       <View
         style={styles.field}
         onLayout={(event) => {
@@ -151,6 +184,7 @@ export function CreateListingStep3({
       >
         <TextField
           label="Descrição"
+          labelBackgroundColor={wideWeb ? colors.m3.surfaceContainerLow : undefined}
           value={description}
           onChangeText={onSetDescription}
           editable={!loading}
@@ -203,9 +237,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     boxCard: {
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[12],
     },
     boxVolumesContainer: {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated } from "react-native";
+import { AccessibilityInfo, Animated, Platform } from "react-native";
 import { tokens } from "@/view/tokens";
 
 export type ExpressivePressOptions = {
@@ -50,7 +50,7 @@ export function useExpressivePress({
         toValue,
         tension: tokens.spring.spatialFast.tension,
         friction: tokens.spring.spatialFast.friction,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       }).start();
     },
     [scale],

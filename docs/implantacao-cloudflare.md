@@ -35,11 +35,17 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 
 | Variável | Valor Recomendado / Descrição |
 |---|---|
-| `NODE_VERSION` | `20.18.0` (ou `>= 20.0.0`) |
+| `NODE_VERSION` | `24` (ou `>= 20.18.0`, alinhado ao Node 24 da CI) |
 | `EXPO_PUBLIC_BACKEND` | `supabase` |
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
 | `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/redefinir-senha` (retorno da recuperação de senha; entra no bundle durante o build) |
+| `APPLE_TEAM_ID` | Identificador público de 10 caracteres da equipe Apple Developer. Em produção, gera `/.well-known/apple-app-site-association` para os links de recuperação originados no app iOS. |
+| `EXPO_PUBLIC_WEB_PUSH_VAPID_KEY` | Chave pública opcional de Web Push. Habilite após preparar a migração e a função de envio no Supabase. |
+
+Verifique que `https://ipebook.app/.well-known/apple-app-site-association` responde com HTTP 200, JSON e sem redirecionamento. O arquivo associa somente `/redefinir-senha?origem=ios` ao app. Inclua essa URL entre os retornos permitidos no Supabase Auth. Solicitações feitas no Safari continuam usando a URL sem o marcador, no mesmo navegador que iniciou o fluxo PKCE.
+
+Para Web Push, aplique a migração `web_push_iphone` num ambiente de homologação, configure `WEB_PUSH_VAPID_PUBLIC_KEY` e `WEB_PUSH_VAPID_PRIVATE_KEY` como segredos da Edge Function `enviar-push` e implante a revisão da função. A variável pública do Pages recebe apenas a mesma chave pública. No iPhone, abra o IpêBook pela Tela de Início, ative avisos na central e verifique o recebimento com o app fechado. Confira também a remoção da inscrição ao desativar avisos ou sair da conta.
 
 ### 2.4 Configuração de Domínio Próprio (Custom Domain `ipebook.app`)
 Para vincular o domínio próprio ao projeto no Cloudflare Pages:
@@ -79,8 +85,8 @@ Após a conclusão da implantação pela Cloudflare:
 5. **Tratamento de 404:** Acessar `https://ipebook.app/rota-inexistente-12345` e conferir a apresentação da tela de recurso não encontrado (`+not-found.html`) com status 404.
 6. **Autenticação:** Testar login ou cadastro com credenciais válidas e verificar persistência de sessão e permissões RLS.
 7. **Rotas dinâmicas novas:** além de `/livro/<id>`, abrir direto `/conversa/<id>`, `/perfil/<id>` e `/denunciar-pessoa/<id>` (F5). Todas dependem de uma regra em `public/_redirects`; `npm run check:build-config` (também na CI) reprova a integração se alguma rota dinâmica de `src/app` ficar sem regra.
-8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN não é bloqueada pela CSP (`openlibrary.org`, `www.googleapis.com` e `covers.openlibrary.org` estão liberados em `public/_headers`).
-9. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.app` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
+8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN e capas externas não são bloqueadas pela CSP (`brasilapi.com.br`, `api.crossref.org`, `openlibrary.org`, `www.googleapis.com`, `covers.openlibrary.org`, `*.archive.org` e `books.google.com` estão liberados em `public/_headers`).
+9. **Cabeçalhos HTTP e Open Graph:** Inspecionar resposta com `curl -I https://ipebook.app` para validar `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`, e testar um crawler em `/livro/<id>` para validar os cards Open Graph gerados por `functions/livro/[id].ts`.
 
 ---
 

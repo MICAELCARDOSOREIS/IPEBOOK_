@@ -1,6 +1,8 @@
 node_modules/
 .expo/
 dist/
+dist-dev/
+dist-e2e/
 coverage/
 .env*
 !.env.example
@@ -37,6 +39,9 @@ google-services.json
 service-account*.json
 
 .env.local
+
+# Cloudflare Pages / Wrangler (temporários de deploy)
+.wrangler/
 
 # Chave da conta de serviço da Google Play (link para ~/.config/ipebook)
 credenciais/

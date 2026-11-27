@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
+  type FlatList,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
+  type TextInputProps,
   View,
 } from "react-native";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import * as Linking from "expo-linking";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
   makeDeliveryStatus,
@@ -21,45 +21,56 @@ import {
 } from "@/di/container";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
+import { buildDirectionsUrl } from "@/view/directionsUrl";
+import { triggerHaptic } from "@/view/haptics";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { createChatStyles } from "./chatStyles";
 import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { TopAppBarBackButton } from "@/view/components/TopAppBar";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
-import { LoadingState } from "@/view/components/LoadingState";
 import { Tag } from "@/view/components/Tag";
 import { Avatar } from "@/view/components/Avatar";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
-
 import { withPress } from "@/view/pressFeedback";
+
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 const SUGGESTIONS = [
   "O livro ainda está disponível?",
-  "Podemos combinar num ponto seguro?",
+  "Podemos combinar em um ponto recomendado?",
   "Qual horário fica bom para você?",
 ];
 
 export type ChatProps = {
   requestId: string;
   sessionUserId: string;
+  focusKey?: number;
   onBack?: () => void;
-  /** "Combinar": abre a negociação para marcar o encontro (`/negociacao/[id]`). */
+  /** "Combinar" marca o encontro; o cartão do livro abre o acompanhamento (`/negociacao/[id]`). */
   onOpenNegotiation?: (requestId: string) => void;
   /** Atalho direto para a tela de entrega do livro (`/negociacao/[id]/entrega`). */
   onOpenDelivery?: (requestId: string) => void;
   /** Atalho direto para agendar o encontro (`/negociacao/[id]/encontro`). */
   onScheduleMeeting?: (requestId: string) => void;
-  /** Painel da web larga: a lista e o "Combinar encontro" já estão nas colunas vizinhas. */
+  onDeleteConversation?: () => void;
+  /** Painel da web larga entre a lista e os detalhes do livro. */
   embedded?: boolean;
+  /** Dados já conhecidos pela lista para evitar flash genérico enquanto o detalhe carrega. */
+  initialCounterpartName?: string;
+  initialCounterpartPhotoUrl?: string | null;
+  initialModality?: "sale" | "trade" | "donation";
   /** Provedor de status de rede (Spec 130 / ADR 0101). */
   networkStatusDataSource?: INetworkStatusDataSource;
 };
@@ -68,20 +79,47 @@ export type ChatProps = {
 export function Chat({
   requestId,
   sessionUserId,
+  focusKey,
   onBack,
   onOpenNegotiation,
   onOpenDelivery,
   onScheduleMeeting,
+  onDeleteConversation,
   embedded = false,
+  initialCounterpartName,
+  initialCounterpartPhotoUrl,
+  initialModality,
   networkStatusDataSource = defaultNetworkStatusDataSource,
 }: ChatProps) {
   const { isOnline } = useNetworkStatus(networkStatusDataSource);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const isKeyboardVisible = useKeyboardVisible();
+  const styles = useMemo(() => createChatStyles(colors), [colors]);
   const [detailState, detailActions] = makeRequestDetailViewModel(requestId, sessionUserId);
   const [state, actions] = makeNegotiationChatViewModel(requestId, sessionUserId);
   const [meetingState, meetingActions] = makeMeetingViewModel(requestId, sessionUserId);
+
+  const syncAllSilently = () => {
+    void (detailActions.refresh ?? detailActions.reload)();
+    void (actions.refresh ?? actions.reload)();
+    void (meetingActions.refresh ?? meetingActions.reload)();
+  };
+
+  useOnRefocus(focusKey, syncAllSilently);
+  useReloadOnReconnect(isOnline, syncAllSilently);
+
+  // Quando o anunciante aceita a proposta enquanto o leitor está na tela, libera mensagens e encontro ao vivo.
+  const prevRequestStatusRef = useRef(detailState.detail?.request.status);
+  useEffect(() => {
+    const nextStatus = detailState.detail?.request.status;
+    if (prevRequestStatusRef.current === "pending" && nextStatus === "accepted") {
+      void (actions.refresh ?? actions.reload)();
+      void (meetingActions.refresh ?? meetingActions.reload)();
+    }
+    prevRequestStatusRef.current = nextStatus;
+  }, [detailState.detail?.request.status, actions, meetingActions]);
+  const [conversationOptionsOpen, setConversationOptionsOpen] = useState(false);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
 
@@ -89,6 +127,10 @@ export function Chat({
   const guardedOpenNegotiation = useGuardedPress((id: string) => onOpenNegotiation?.(id));
   const guardedOpenDelivery = useGuardedPress((id: string) => onOpenDelivery?.(id));
   const guardedScheduleMeeting = useGuardedPress((id: string) => onScheduleMeeting?.(id));
+
+  const openScheduling = onScheduleMeeting
+    ? () => guardedScheduleMeeting(requestId)
+    : onOpenNegotiation ? () => guardedOpenNegotiation(requestId) : undefined;
 
   const handleAcceptProposal = async () => {
     setRespondingProposal(true);
@@ -115,12 +157,14 @@ export function Chat({
       setRespondingProposal(false);
     }
   };
-  // Entrega concluída por QR (Spec 095): não há mais o que combinar.
-  const delivery = makeDeliveryStatus(requestId, sessionUserId);
+
+  // Entrega concluída por QR (Spec 095): passa focusKey e assina tempo real para atualizar sem sair da conversa.
+  const delivery = makeDeliveryStatus(requestId, sessionUserId, focusKey ?? 0);
   const listRef = useRef<FlatList<ChatTimelineItem>>(null);
 
   const detail = detailState.detail;
-  const name = detail?.counterpartName ?? COMMUNITY_MEMBER;
+  const name = detail?.counterpartName ?? initialCounterpartName ?? COMMUNITY_MEMBER;
+  const counterpartPhotoUrl = detail?.counterpartPhotoUrl ?? initialCounterpartPhotoUrl ?? undefined;
 
   const events = useMemo<ChatEvent[]>(() => {
     const list: ChatEvent[] = [];
@@ -161,12 +205,22 @@ export function Chat({
   );
   const canSend = state.inputText.trim().length > 0 && !state.isSending && isOnline;
   const isWebStandalone = wideWeb && !embedded;
+  const effectiveModality = detail?.book.modality ?? initialModality;
+  const pendingProposalIcon: AppIconName =
+    effectiveModality === "sale" ? "category" : effectiveModality === "donation" ? "heart" : "swap";
+  const modalityLabel = effectiveModality
+    ? effectiveModality === "trade"
+      ? "Troca"
+      : effectiveModality === "sale"
+        ? "Venda"
+        : "Doação"
+    : "";
 
   const handleOpenDirections = () => {
     if (!meetingState.meeting) return;
     const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meetingState.meeting?.pointName);
     const query = point ? `${point.name}, ${point.address}` : `${meetingState.meeting.pointName}, Piripiri - PI`;
-    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+    void Linking.openURL(buildDirectionsUrl(query));
   };
 
   const handleAddToCalendar = async () => {
@@ -218,225 +272,247 @@ export function Chat({
         accessibilityLabel={`${mine ? "Você" : name} às ${time}: ${item.message.content}`}
         style={[
           styles.bubble,
-          isWebStandalone && styles.bubbleWide,
+          wideWeb && styles.bubbleWide,
           mine ? styles.bubbleMine : styles.bubbleOther,
           item.grouped ? styles.bubbleGrouped : null,
         ]}
       >
-        <Text style={styles.bubbleText}>{item.message.content}</Text>
+        <Text style={[styles.bubbleText, mine && styles.bubbleMineText]}>{item.message.content}</Text>
         <Text style={styles.bubbleTime}>{time}</Text>
       </View>
     );
   };
 
-  return (
-    <SafeAreaView edges={["top", "left", "right", "bottom"]} style={[styles.page, isWebStandalone && styles.pageWeb]}>
-      <View style={isWebStandalone ? styles.webWrapper : styles.flex}>
-        <View style={isWebStandalone ? styles.webCard : styles.flex}>
-          {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
-          <View style={[styles.header, isWebStandalone && styles.headerWide]}>
-            {embedded ? null : (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Voltar"
-                hitSlop={8}
-                onPress={guardedBack}
-                style={withPress(styles.backButton)}
-              >
-                <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-              </Pressable>
-            )}
-            <Avatar name={name} photoUrl={detail?.counterpartPhotoUrl ?? undefined} size={isWebStandalone ? 44 : 40} />
-            <View style={styles.headerInfo}>
-              <Text accessibilityRole="header" style={[styles.headerTitle, isWebStandalone && styles.headerTitleWide]} numberOfLines={1}>
-                {name}
-              </Text>
-              {isWebStandalone && detail ? (
-                <Text style={styles.headerSubtitle} numberOfLines={1}>
-                  {`Negociação de "${detail.book.title}" · ${detail.book.modality === "trade" ? "Troca" : detail.book.modality === "sale" ? "Venda" : "Doação"}`}
-                </Text>
+  const scrollUnderHeader = Platform.OS === "ios" && !embedded
+    && !state.isLoading && !state.error && detail?.request.status !== "pending" && timeline.length > 0;
+  const chatHeader = (
+    <>
+      {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
+      <View
+        style={[styles.header, wideWeb && styles.headerWide, wideWeb && embedded && styles.headerEmbeddedWide, scrollUnderHeader && { backgroundColor: "transparent", borderBottomWidth: 0 }]}
+        testID={wideWeb && embedded ? "conversation-chat-header" : undefined}
+      >
+        {embedded ? null : Platform.OS === "ios" ? (
+          <TopAppBarBackButton onBack={guardedBack} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            hitSlop={8}
+            onPress={guardedBack}
+            style={withPress(styles.backButton)}
+          >
+            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+          </Pressable>
+        )}
+        <Avatar name={name} photoUrl={counterpartPhotoUrl} size={wideWeb ? 44 : 40} />
+        <View style={styles.headerInfo}>
+          <Text accessibilityRole="header" style={[styles.headerTitle, wideWeb && styles.headerTitleWide]} numberOfLines={1}>
+            {name}
+          </Text>
+          {isWebStandalone && detail ? (
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {`Negociação de "${detail.book.title}" · ${modalityLabel}`}
+            </Text>
+          ) : detail && !embedded ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+              onPress={() => guardedOpenNegotiation(requestId)}
+              style={withPress(styles.headerBookLink, colors.m3.focusRing)}
+            >
+              <Text style={[styles.headerSubtitle, styles.linkBookTitle]} numberOfLines={1}>{detail.book.title}</Text>
+              {modalityLabel ? (
+                <>
+                  <Text style={styles.headerSubtitle}>·</Text>
+                  <Text style={styles.headerSubtitle}>{modalityLabel}</Text>
+                </>
               ) : null}
+              <AppIcon name="chevronRight" size={14} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          ) : embedded && modalityLabel ? (
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {`Bate-papo da negociação · ${modalityLabel}`}
+            </Text>
+          ) : null}
+        </View>
+        {onDeleteConversation ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Opções da conversa"
+            accessibilityState={{ expanded: conversationOptionsOpen }}
+            onPress={() => setConversationOptionsOpen((open) => !open)}
+            style={withPress(styles.backButton, colors.m3.focusRing)}
+          >
+            <AppIcon name="more" size={22} color={colors.m3.onSurface} />
+          </Pressable>
+        ) : null}
+      </View>
+      {conversationOptionsOpen && onDeleteConversation ? (
+        <View style={styles.conversationOptions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setConversationOptionsOpen(false);
+              onDeleteConversation();
+            }}
+            style={withPress(styles.conversationDelete, colors.m3.focusRing)}
+          >
+            <Text style={styles.conversationDeleteLabel}>Apagar conversa</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </>
+  );
+  const meetingStrip = (
+    <>
+      {detail?.request.status === "accepted" &&
+        (meetingState.loading || meetingState.error || meetingState.meeting || delivery.completed || openScheduling) &&
+        (wideWeb || !isKeyboardVisible) ? (
+        <View style={[styles.embeddedStatusStrip, !wideWeb && styles.narrowStatusStrip]}>
+          {meetingState.loading && !delivery.completed ? (
+            <Text style={styles.headerSubtitle}>Carregando encontro…</Text>
+          ) : meetingState.error && !delivery.completed ? (
+            <Pressable accessibilityRole="button" onPress={() => void meetingActions.reload()} style={withPress(styles.headerBookLink)}>
+              <Text style={styles.headerSubtitle}>Não foi possível carregar o encontro. Tentar novamente</Text>
+            </Pressable>
+          ) : (
+            <NegotiationStatusCard
+              embedded
+              meeting={meetingState.meeting}
+              requestStatus={detail.request.status}
+              counterpartName={name}
+              sessionUserId={sessionUserId}
+              deliveryCompleted={Boolean(delivery.completed)}
+              busy={meetingState.busy}
+              combineAccessibilityLabel="Combinar encontro na negociação"
+              combineButtonLabel={wideWeb ? "Combinar encontro" : "Combinar"}
+              onCombineMeeting={openScheduling}
+              onConfirmMeeting={() => void meetingActions.confirm()}
+              onSuggestOtherTime={openScheduling}
+              onRescheduleMeeting={openScheduling}
+              onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
+              onOpenDirections={handleOpenDirections}
+              onAddToCalendar={() => void handleAddToCalendar()}
+            />
+          )}
+          {meetingState.actionError ? (
+            <Text accessibilityRole="alert" style={styles.conversationDeleteLabel}>{meetingState.actionError}</Text>
+          ) : null}
+        </View>
+      ) : null}
+
+    </>
+  );
+
+  const chatBody = (
+    <View style={isWebStandalone ? styles.webWrapper : styles.flex}>
+      <View style={isWebStandalone ? styles.webCard : styles.flex}>
+        {scrollUnderHeader ? null : chatHeader}
+        <View style={styles.flex}>
+          {scrollUnderHeader ? null : meetingStrip}
+
+          {detail?.isOwner && detail.request.status === "pending" ? (
+            <OwnerPendingProposalCard
+              counterpartName={name}
+              initialMessage={detail.request.initialMessage}
+              offeredBook={detail.offeredBook}
+              modality={effectiveModality}
+              isWebStandalone={isWebStandalone}
+              responding={respondingProposal}
+              error={proposalError}
+              onAccept={() => void handleAcceptProposal()}
+              onReject={() => void handleRejectProposal()}
+            />
+          ) : null}
+
+          {detail && !detail.isOwner && detail.request.status === "pending" ? (
+            <BuyerPendingProposalBanner
+              initialMessage={detail.request.initialMessage}
+              offeredBook={detail.offeredBook}
+              isWebStandalone={isWebStandalone}
+            />
+          ) : null}
+
+          {state.isLoading ? (
+            <View style={styles.loadingContainer} accessibilityLabel="Carregando mensagens">
+              <View style={styles.skeletonBubbleOther} />
+              <View style={styles.skeletonBubbleMine} />
+              <View style={styles.skeletonBubbleOtherShort} />
             </View>
-            {isWebStandalone && detail && detail.request.status === "accepted" && !delivery.completed ? (
+          ) : detail?.request.status === "pending" ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
+                <AppIcon name={pendingProposalIcon} size={28} color={colors.nature.foliage} />
+              </View>
+              <Text style={styles.emptyTitle}>Proposta em análise</Text>
+              <Text style={styles.emptyBody}>
+                {detail.isOwner
+                  ? "Avalie a proposta acima. Ao aceitar, o livro será reservado e o canal de mensagens será ativado para combinar a entrega em Piripiri."
+                  : "Sua solicitação foi enviada. Assim que o anunciante aceitar, o canal de mensagens será liberado para vocês combinarem o encontro."}
+              </Text>
+            </View>
+          ) : state.error ? (
+            <View style={styles.loadingContainer}>
+              <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            </View>
+          ) : timeline.length === 0 ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
+                <AppIcon name="chat" size={28} color={colors.m3.onSecondaryContainer} />
+              </View>
+              <Text style={styles.emptyTitle}>Comece a conversa</Text>
+              <Text style={styles.emptyBody}>Combine pelo chat um encontro em um dos pontos recomendados de Piripiri.</Text>
+              <View style={styles.suggestions}>
+                {SUGGESTIONS.map((text) => (
+                  <Chip key={text} label={text} size="compact" selected={false} onPress={() => actions.setInputText(text)} />
+                ))}
+              </View>
+            </View>
+          ) : (
+            <ScrollEdgeFlatList
+              ref={listRef}
+              style={styles.flex}
+              {...standardVerticalScrollProps}
+              data={timeline}
+              keyExtractor={(item) => item.key}
+              renderItem={renderItem}
+              contentContainerStyle={[styles.list, wideWeb && styles.listWide]}
+              initialNumToRender={timeline.length}
+              onContentSizeChange={scrollToLatest}
+              onLayout={scrollToLatest}
+            />
+          )}
+
+          {state.sendError ? (
+            <View accessibilityRole="alert" style={styles.sendErrorCard}>
+              <AppIcon name="error" size={18} color={colors.error} />
+              <Text style={styles.sendErrorText}>{state.sendError}</Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Combinar encontro na negociação"
-                onPress={() => guardedOpenNegotiation(requestId)}
-                style={withPress(styles.webCombineButton)}
+                accessibilityLabel="Reenviar mensagem"
+                onPress={() => void actions.retryLastMessage()}
+                hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
               >
-                <AppIcon name="place" size={16} color={colors.m3.onPrimary} />
-                <Text style={styles.webCombineButtonText}>Combinar encontro</Text>
+                <Text style={styles.retryText}>Reenviar</Text>
               </Pressable>
-            ) : null}
-          </View>
-          {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088); aqui só o layout do chat. */}
-          <View style={styles.flex}>
-            {/* Embutido na web larga, o livro já aparece no painel "Sobre a negociação" ao lado. */}
-            {detail && !embedded ? (
-              <View style={[styles.bookCard, isWebStandalone && styles.bookCardWide]}>
-                <View style={styles.bookRow}>
-                  <BookCover
-                    id={detail.book.id}
-                    title={detail.book.title}
-                    photoUrl={detail.book.photoUrl}
-                    variant="list"
-                    width={36}
-                  />
-                  <View style={styles.bookText}>
-                    <Text style={styles.bookTitle} numberOfLines={1}>
-                      {detail.book.title}
-                    </Text>
-                    <View style={styles.bookMetaRow}>
-                      <Tag variant={detail.book.modality} />
-                      {detail.book.modality === "sale" && detail.book.price != null ? (
-                        <Text style={styles.bookPrice}>{formatPrice(detail.book.price)}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-                  {/* Se a negociação estiver aceita e ainda sem encontro marcado, exibe o botão direto na linha compacta */}
-                  {detail.request.status === "accepted" && !meetingState.meeting && !delivery.completed ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Combinar encontro na negociação"
-                      onPress={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                      style={withPress(styles.combine)}
-                    >
-                      <Text style={styles.combineText}>Combinar</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
+            </View>
+          ) : null}
 
-                {/* Exibe o status do encontro somente quando há encontro agendado/proposto ou entrega concluída */}
-                {detail.request.status === "accepted" && (meetingState.meeting || delivery.completed) ? (
-                  <NegotiationStatusCard
-                    embedded
-                    combineAccessibilityLabel="Combinar encontro na negociação"
-                    meeting={meetingState.meeting}
-                    requestStatus={detail.request.status}
-                    counterpartName={name}
-                    sessionUserId={sessionUserId}
-                    deliveryCompleted={Boolean(delivery.completed)}
-                    onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                    onConfirmMeeting={() => void meetingActions.confirm()}
-                    onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                    onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                    onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
-                    onOpenDirections={handleOpenDirections}
-                    onAddToCalendar={() => void handleAddToCalendar()}
-                  />
-                ) : null}
-              </View>
-            ) : null}
-
-            {detail && embedded && detail.request.status === "accepted" ? (
-              <NegotiationStatusCard
-                meeting={meetingState.meeting}
-                requestStatus={detail.request.status}
-                counterpartName={name}
-                sessionUserId={sessionUserId}
-                deliveryCompleted={Boolean(delivery.completed)}
-                onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onConfirmMeeting={() => void meetingActions.confirm()}
-                onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
-                onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
-                onOpenDirections={handleOpenDirections}
-                onAddToCalendar={() => void handleAddToCalendar()}
-              />
-            ) : null}
-
-            {detail && detail.isOwner && detail.request.status === "pending" ? (
-              <OwnerPendingProposalCard
-                counterpartName={name}
-                initialMessage={detail.request.initialMessage}
-                offeredBook={detail.offeredBook}
-                isWebStandalone={isWebStandalone}
-                responding={respondingProposal}
-                error={proposalError}
-                onAccept={() => void handleAcceptProposal()}
-                onReject={() => void handleRejectProposal()}
-              />
-            ) : null}
-
-            {detail && !detail.isOwner && detail.request.status === "pending" ? (
-              <BuyerPendingProposalBanner
-                initialMessage={detail.request.initialMessage}
-                offeredBook={detail.offeredBook}
-                isWebStandalone={isWebStandalone}
-              />
-            ) : null}
-
-            {state.isLoading ? (
-              <View style={styles.loadingContainer}>
-                <LoadingState label="Carregando mensagens" />
-              </View>
-            ) : detail?.request.status === "pending" ? (
-              <View style={styles.empty}>
-                <View style={styles.emptyIcon}>
-                  <AppIcon name="swap" size={28} color={colors.nature.foliage} />
-                </View>
-                <Text style={styles.emptyTitle}>Proposta em análise</Text>
-                <Text style={styles.emptyBody}>
-                  {detail.isOwner
-                    ? "Avalie a proposta acima. Ao aceitar, o livro será reservado e o canal de mensagens será ativado para combinar a entrega em Piripiri."
-                    : "Sua solicitação foi enviada. Assim que o anunciante aceitar, o canal de mensagens será liberado para vocês combinarem o encontro."}
-                </Text>
-              </View>
-            ) : state.error ? (
-              <View style={styles.loadingContainer}>
-                <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-              </View>
-            ) : timeline.length === 0 ? (
-              <View style={styles.empty}>
-                <View style={styles.emptyIcon}>
-                  <AppIcon name="chat" size={28} color={colors.m3.onSecondaryContainer} />
-                </View>
-                <Text style={styles.emptyTitle}>Comece a conversa</Text>
-                <Text style={styles.emptyBody}>Combine pelo chat e encontre em um ponto seguro de Piripiri.</Text>
-                <View style={styles.suggestions}>
-                  {SUGGESTIONS.map((text) => (
-                    <Chip key={text} label={text} size="compact" selected={false} onPress={() => actions.setInputText(text)} />
-                  ))}
-                </View>
-              </View>
-            ) : (
-              <FlatList
-                ref={listRef}
-                style={styles.flex}
-                {...standardVerticalScrollProps}
-                data={timeline}
-                keyExtractor={(item) => item.key}
-                renderItem={renderItem}
-                contentContainerStyle={[styles.list, isWebStandalone && styles.listWide]}
-                initialNumToRender={timeline.length}
-                onContentSizeChange={scrollToLatest}
-                onLayout={scrollToLatest}
-              />
-            )}
-
-            {state.sendError ? (
-              <View accessibilityRole="alert" style={styles.sendErrorCard}>
-                <AppIcon name="error" size={18} color={colors.error} />
-                <Text style={styles.sendErrorText}>{state.sendError}</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="Reenviar mensagem" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
-                  <Text style={styles.retryText}>Reenviar</Text>
-                </Pressable>
-              </View>
-            ) : null}
-
-            {delivery.completed ? (
-              <View style={styles.closedNotice} accessibilityLiveRegion="polite">
-                <Text style={styles.closedNoticeText}>Negociação concluída. A conversa ficou só para consulta.</Text>
-              </View>
-            ) : detail?.request.status === "pending" ? (
-              <View style={styles.closedNotice} accessibilityLiveRegion="polite">
-                <Text style={styles.closedNoticeText}>
-                  {detail.isOwner
-                    ? "Aceite a proposta acima para liberar o bate-papo e combinar o encontro."
-                    : "Aguardando o anunciante aceitar a proposta para liberar o bate-papo."}
-                </Text>
-              </View>
-            ) : (
+          {delivery.completed ? (
+            <View style={styles.closedNotice} accessibilityLiveRegion="polite">
+              <Text style={styles.closedNoticeText}>Negociação concluída. A conversa ficou só para consulta.</Text>
+            </View>
+          ) : detail?.request.status === "pending" ? (
+            <View style={styles.closedNotice} accessibilityLiveRegion="polite">
+              <Text style={styles.closedNoticeText}>
+                {detail.isOwner
+                  ? "Aceite a proposta acima para liberar o bate-papo e combinar o encontro."
+                  : "Aguardando o anunciante aceitar a proposta para liberar o bate-papo."}
+              </Text>
+            </View>
+          ) : (
             <>
               {state.inputText.length >= 800 ? (
                 <View style={styles.charCountRow}>
@@ -457,13 +533,38 @@ export function Chat({
                   <Text style={styles.offlineNoticeText}>Sem conexão para enviar mensagens</Text>
                 </View>
               ) : null}
-              <View style={[styles.composer, isWebStandalone && styles.composerWide]}>
+              {detail?.request.status === "accepted" &&
+              meetingState.meeting &&
+              meetingState.meeting.status !== "cancelled" &&
+              state.messages.length === 0 &&
+              !state.inputText.trim() &&
+              isOnline &&
+              !state.isSending ? (
+                <View style={styles.quickRepliesRow}>
+                  {["Estou chegando", "Já estou aqui", "Qual ponto?"].map((reply) => (
+                    <Pressable
+                      key={reply}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Sugestão de mensagem: ${reply}`}
+                      onPress={() => actions.setInputText(reply)}
+                      style={withPress(styles.quickReplyChip)}
+                    >
+                      <Text style={styles.quickReplyText}>{reply}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+              <View
+                style={[styles.composer, wideWeb && styles.composerWide, wideWeb && embedded && styles.composerEmbeddedWide]}
+                testID={wideWeb && embedded ? "conversation-chat-footer" : undefined}
+              >
                 <TextInput
                   accessibilityLabel="Campo de mensagem"
                   value={state.inputText}
                   onChangeText={actions.setInputText}
-                  onKeyPress={(e: any) => {
-                    if (Platform.OS === "web" && e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
+                  onKeyPress={(e: Parameters<NonNullable<TextInputProps["onKeyPress"]>>[0] & { preventDefault?: () => void }) => {
+                    const nativeEvent = e.nativeEvent as { key: string; shiftKey?: boolean };
+                    if (Platform.OS === "web" && nativeEvent.key === "Enter" && !nativeEvent.shiftKey) {
                       e.preventDefault?.();
                       if (canSend) {
                         void actions.sendMessage();
@@ -474,6 +575,7 @@ export function Chat({
                   placeholderTextColor={colors.m3.onSurfaceVariant}
                   multiline
                   maxLength={1000}
+                  {...(Platform.OS === "web" ? ({ rows: 1 } as never) : {})}
                   style={styles.input}
                 />
                 <Pressable
@@ -483,9 +585,10 @@ export function Chat({
                   disabled={!canSend}
                   onPress={() => {
                     if (!canSend) return;
+                    if (Platform.OS === "ios") triggerHaptic("light");
                     void actions.sendMessage();
                   }}
-                  style={withPress([styles.send, canSend ? styles.sendActive : null])}
+                  style={withPress([styles.send, canSend ? styles.sendActive : styles.sendDisabled])}
                 >
                   {state.isSending ? (
                     <ActivityIndicator color={colors.m3.onPrimary} />
@@ -495,11 +598,72 @@ export function Chat({
                 </Pressable>
               </View>
             </>
-            )}
-          </View>
+          )}
         </View>
       </View>
-    </SafeAreaView>
+      {isWebStandalone && detail ? (
+        <View style={styles.webSidePane}>
+          <View style={styles.webSideHeader}>
+            <Text style={styles.webSideHeaderTitle}>Sobre a negociação</Text>
+          </View>
+          <View style={styles.webSideBody}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir negociação de ${detail.book.title}`}
+              onPress={() => guardedOpenNegotiation(requestId)}
+              style={withPress([styles.bookCard, styles.bookCardWide])}
+            >
+              <View style={styles.bookRow}>
+                <BookCover
+                  id={detail.book.id}
+                  title={detail.book.title}
+                  photoUrl={detail.book.photoUrl}
+                  variant="list"
+                  width={44}
+                />
+                <View style={styles.bookText}>
+                  <Text style={styles.bookTitle} numberOfLines={2}>
+                    {detail.book.title}
+                  </Text>
+                  <View style={styles.bookMetaRow}>
+                    <Tag variant={detail.book.modality} />
+                    {detail.book.modality === "sale" && detail.book.price != null ? (
+                      <Text style={styles.bookPrice}>{formatPrice(detail.book.price)}</Text>
+                    ) : null}
+                  </View>
+                </View>
+                <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
+              </View>
+            </Pressable>
+
+            <View style={styles.webSafeCard}>
+              <View style={styles.webSafeHeader}>
+                <AppIcon name="place" size={16} color={colors.nature.foliage} />
+                <Text style={styles.webSafeTitle}>Encontro recomendado</Text>
+              </View>
+              <Text style={styles.webSafeText}>
+                Locais públicos e horário de movimento em Piripiri.
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+
+  if (embedded) {
+    return <View style={styles.embeddedPage}>{chatBody}</View>;
+  }
+
+  return (
+    <ScrollEdgeScreen
+      header={scrollUnderHeader ? <>{chatHeader}{meetingStrip}</> : null}
+      scrolling={scrollUnderHeader}
+      edges={Platform.OS === "ios" && isKeyboardVisible ? ["top", "left", "right"] : ["top", "left", "right", "bottom"]}
+      style={[styles.page, isWebStandalone && styles.pageWeb]}
+    >
+      {chatBody}
+    </ScrollEdgeScreen>
   );
 }
 
@@ -512,311 +676,4 @@ export default function ChatScreen({ onRequireSignIn, ...props }: ChatScreenProp
   }, [authState.loading, authState.user, onRequireSignIn]);
   if (authState.loading || !authState.user) return null;
   return <Chat sessionUserId={authState.user.id} {...props} />;
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    closedNotice: { padding: tokens.spacing[16], backgroundColor: colors.m3.surfaceContainer },
-    closedNoticeText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
-    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
-    flex: { flex: 1, minHeight: 0 },
-    loadingContainer: { flex: 1, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[12] },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      minHeight: 64,
-      paddingHorizontal: tokens.spacing[8],
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-    },
-    backButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
-      alignItems: "center",
-      justifyContent: "center",
-      ...(typeof Platform !== "undefined" && Platform.OS === "web"
-        ? ({ cursor: "pointer", userSelect: "none" } as never)
-        : {}),
-    },
-    headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    bookCard: {
-      gap: tokens.spacing[8],
-      marginHorizontal: tokens.spacing[16],
-      marginTop: tokens.spacing[6],
-      marginBottom: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.04,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-    },
-    bookRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[10] },
-    bookText: { flex: 1, minWidth: 0, gap: 2, alignItems: "flex-start" },
-    bookTitle: {
-      ...tokens.typography.labelLarge,
-      fontFamily: fontFamily.semiBold,
-      fontSize: 15,
-      lineHeight: 20,
-      color: colors.m3.onSurface,
-    },
-    bookAuthor: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-    },
-    bookMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      marginTop: 2,
-    },
-    bookPrice: {
-      ...tokens.typography.labelSmall,
-      fontFamily: fontFamily.semiBold,
-      color: colors.nature.foliageDeep,
-    },
-    // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
-    combine: {
-      minHeight: 34,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[14],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.sprout,
-      borderWidth: 1,
-      borderColor: `${colors.nature.foliage}40`,
-    },
-    combineText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.nature.foliageDeep,
-    },
-    center: { flex: 1, alignItems: "center", justifyContent: "center" },
-    // Espaço no fim para a última mensagem não colar no campo de digitar (Spec 089).
-    list: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24] },
-    dayRow: { alignItems: "center", paddingVertical: tokens.spacing[4], marginTop: tokens.spacing[8] },
-    dayLabel: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      overflow: "hidden",
-    },
-    bubble: {
-      marginTop: tokens.spacing[12],
-      maxWidth: "78%",
-      paddingHorizontal: tokens.spacing[14],
-      paddingTop: tokens.spacing[10],
-      paddingBottom: tokens.spacing[8],
-      borderRadius: tokens.radius.large,
-      gap: tokens.spacing[4],
-    },
-    bubbleGrouped: { marginTop: tokens.spacing[4] },
-    bubbleMine: {
-      alignSelf: "flex-end",
-      backgroundColor: colors.m3.secondaryContainer,
-      borderBottomRightRadius: tokens.radius.bubbleCorner,
-    },
-    bubbleOther: {
-      alignSelf: "flex-start",
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      borderBottomLeftRadius: tokens.radius.bubbleCorner,
-    },
-    bubbleText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    bubbleTime: { ...tokens.typography.labelSmall, color: colors.m3.onSurfaceVariant, alignSelf: "flex-end" },
-    empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], padding: tokens.spacing[24] },
-    emptyIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: tokens.radius.circle64,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    emptyTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 300 },
-    suggestions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: tokens.spacing[8], marginTop: tokens.spacing[8] },
-    sendErrorCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      marginHorizontal: tokens.spacing[16],
-      marginVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.errorContainer,
-      borderWidth: 1,
-      borderColor: colors.error,
-    },
-    sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.text, fontWeight: "500" },
-    retryText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.bold, color: colors.error },
-    charCountRow: {
-      alignItems: "flex-end",
-      paddingHorizontal: tokens.spacing[20],
-      paddingTop: tokens.spacing[4],
-      backgroundColor: colors.surface,
-    },
-    charCountText: {
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSurfaceVariant,
-    },
-    charCountWarn: {
-      color: colors.error,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    composer: {
-      flexDirection: "row",
-      alignItems: "flex-end",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      backgroundColor: colors.surface,
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-    },
-    input: {
-      flex: 1,
-      minHeight: 48,
-      maxHeight: 120,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      borderRadius: tokens.radius.extraLarge,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      color: colors.m3.onSurface,
-      ...tokens.typography.bodyLarge,
-    },
-    send: {
-      width: 48,
-      height: 48,
-      borderRadius: tokens.radius.extraLarge,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    sendActive: { backgroundColor: colors.m3.primary },
-    eventRow: {
-      alignItems: "center",
-      marginVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-    },
-    eventBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.nature.sprout,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: `${colors.nature.foliage}40`,
-    },
-    eventText: {
-      ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    pageWeb: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-    },
-    webWrapper: {
-      flex: 1,
-      width: "100%",
-      maxWidth: 960,
-      alignSelf: "center",
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[16],
-    },
-    webCard: {
-      flex: 1,
-      minHeight: 0,
-      backgroundColor: colors.background,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      overflow: "hidden",
-    },
-    headerWide: {
-      paddingHorizontal: tokens.spacing[20],
-      paddingVertical: tokens.spacing[12],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-    },
-    headerInfo: {
-      flex: 1,
-      gap: 2,
-    },
-    headerTitleWide: {
-      ...tokens.typography.titleMedium,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    headerSubtitle: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    webCombineButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-    },
-    webCombineButtonText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    bookCardWide: {
-      marginHorizontal: tokens.spacing[20],
-      marginTop: tokens.spacing[12],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    listWide: {
-      paddingHorizontal: tokens.spacing[24],
-    },
-    bubbleWide: {
-      maxWidth: 540,
-    },
-    composerWide: {
-      paddingHorizontal: tokens.spacing[20],
-      paddingVertical: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-    },
-    offlineNotice: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[6],
-      paddingVertical: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    offlineNoticeText: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-    },
-  });
 }

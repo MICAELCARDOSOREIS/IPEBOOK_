@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const store = new Map<string, string>();
+const mockStore = new Map<string, string>();
 
-vi.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStore.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStore.set(key, value);
     }),
   },
 }));
@@ -18,7 +18,7 @@ import {
 
 describe("AsyncStoragePermissionAskDataSource (Spec 020)", () => {
   beforeEach(() => {
-    store.clear();
+    mockStore.clear();
   });
 
   it("começa sem pergunta registrada", async () => {
@@ -32,11 +32,11 @@ describe("AsyncStoragePermissionAskDataSource (Spec 020)", () => {
     await notifications.markAsked();
     expect(await notifications.hasAsked()).toBe(true);
     expect(await photos.hasAsked()).toBe(false);
-    expect(store.get(permissionAskKey("notifications"))).toBe("1");
+    expect(mockStore.get(permissionAskKey("notifications"))).toBe("1");
   });
 
   it("qualquer valor que não seja o marcado conta como não perguntado", async () => {
-    store.set(permissionAskKey("photos"), "sim");
+    mockStore.set(permissionAskKey("photos"), "sim");
     expect(await new AsyncStoragePermissionAskDataSource("photos").hasAsked()).toBe(false);
   });
 });

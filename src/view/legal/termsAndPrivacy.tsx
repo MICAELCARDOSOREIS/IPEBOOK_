@@ -1,21 +1,28 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { type ComponentRef, useMemo, useRef, useState } from "react";
+import { Platform, Pressable, type PressableProps, StyleSheet, Text, View } from "react-native";
 import { LEGAL_LAST_UPDATED, PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { SegmentedControl } from "@/view/components/SegmentedControl";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
-const TERMS_WIDE_MAX_WIDTH = 1240;
+const TERMS_WIDE_MAX_WIDTH = WEB_MAX_WIDTH;
+
+const legalTabs = [
+  { key: "terms", label: "Termos de Uso" },
+  { key: "privacy", label: "Privacidade (LGPD)" },
+] as const;
+type LegalTab = (typeof legalTabs)[number]["key"];
 
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
-  initialTab?: "terms" | "privacy";
+  initialTab?: LegalTab;
   onNavigateToDeleteAccount?: () => void;
 };
 
@@ -33,17 +40,48 @@ export default function TermsAndPrivacy({
   const guardedDeleteAccount = useGuardedPress(onNavigateToDeleteAccount);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
+  const [activeTab, setActiveTab] = useState<LegalTab>(initialTab);
+  const tabRefs = useRef<Partial<Record<LegalTab, ComponentRef<typeof Pressable> | null>>>({});
+  const isWeb = Platform.OS === "web";
+  const inactiveTab = activeTab === "terms" ? "privacy" : "terms";
   // Web larga: coluna mais larga, com as cláusulas em duas colunas.
   const wide = useIsWideWeb();
   const columns = useWebColumns(2, 3);
-  const columnWidth = { width: webColumnWidth(columns) };
+  const columnWidth =
+    isWeb
+      ? ({ width: `calc((100% - ${(columns - 1) * 16}px) / ${columns})` as unknown as `${number}%` })
+      : { width: webColumnWidth(columns) };
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
+  function handleTabKey(event: Parameters<NonNullable<PressableProps["onKeyDown"]>>[0], tab: LegalTab) {
+    const key = (event.nativeEvent as unknown as KeyboardEvent).key;
+    let nextTab: LegalTab;
+    switch (key) {
+      case "ArrowLeft":
+      case "ArrowRight":
+        nextTab = tab === "terms" ? "privacy" : "terms";
+        break;
+      case "Home":
+        nextTab = "terms";
+        break;
+      case "End":
+        nextTab = "privacy";
+        break;
+      case " ":
+      case "Enter":
+        nextTab = tab;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    setActiveTab(nextTab);
+    tabRefs.current[nextTab]?.focus?.();
+  }
+
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -54,36 +92,64 @@ export default function TermsAndPrivacy({
               Consulte os documentos que orientam o uso do IpêBook.
             </Text>
           </View>
-          <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel="Termos de Uso"
-              accessibilityState={{ selected: activeTab === "terms" }}
-              onPress={() => setActiveTab("terms")}
-              style={withPress([styles.tab, activeTab === "terms" && styles.activeTab])}
+          {Platform.OS === "ios" && !wide ? (
+            <SegmentedControl
+              testID="terms-privacy-tablist"
+              accessibilityLabel="Documentos do IpêBook"
+              value={activeTab}
+              onChange={setActiveTab}
+              options={legalTabs.map(({ key, label }) => ({ value: key, label }))}
+            />
+          ) : (
+            <View
+              testID="terms-privacy-tablist"
+              accessibilityRole="tablist"
+              accessibilityLabel="Documentos do IpêBook"
+              style={styles.tabs}
             >
-              <Text style={[styles.tabText, activeTab === "terms" && styles.activeTabText]}>
-                Termos de Uso
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel="Privacidade (LGPD)"
-              accessibilityState={{ selected: activeTab === "privacy" }}
-              onPress={() => setActiveTab("privacy")}
-              style={withPress([styles.tab, activeTab === "privacy" && styles.activeTab])}
-            >
-              <Text style={[styles.tabText, activeTab === "privacy" && styles.activeTabText]}>
-                Privacidade (LGPD)
-              </Text>
-            </Pressable>
-          </View>
+              {legalTabs.map(({ key, label }) => {
+                const selected = activeTab === key;
+                return (
+                  <Pressable
+                    key={key}
+                    ref={(tab) => { tabRefs.current[key] = tab; }}
+                    accessibilityRole="tab"
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected }}
+                    nativeID={isWeb ? `legal-tab-${key}` : undefined}
+                    aria-controls={isWeb ? `legal-panel-${key}` : undefined}
+                    aria-selected={isWeb ? selected : undefined}
+                    tabIndex={isWeb ? (selected ? 0 : -1) : undefined}
+                    onKeyDown={isWeb ? (event) => handleTabKey(event, key) : undefined}
+                    onPress={() => setActiveTab(key)}
+                    style={withPress([styles.tab, selected && styles.activeTab])}
+                  >
+                    <Text style={[styles.tabText, selected && styles.activeTabText]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
-          <View style={[styles.cardList, wide && styles.cardListWide]}>
+          {isWeb && (
+            <View
+              nativeID={`legal-panel-${inactiveTab}`}
+              role="tabpanel"
+              aria-labelledby={`legal-tab-${inactiveTab}`}
+              style={styles.inactivePanel}
+            />
+          )}
+          <View
+            nativeID={isWeb ? `legal-panel-${activeTab}` : undefined}
+            role={isWeb ? "tabpanel" : undefined}
+            aria-labelledby={isWeb ? `legal-tab-${activeTab}` : undefined}
+            tabIndex={isWeb ? 0 : undefined}
+            style={[styles.cardList, wide && styles.cardListWide]}
+          >
             <Text style={[styles.updatedDate, wide && styles.fullRow]}>{`Última atualização: ${LEGAL_LAST_UPDATED}`}</Text>
             {sections.map((section) => (
               <View key={section.title} style={[styles.sectionCard, wide && columnWidth]}>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>
                   {section.title}
                 </Text>
                 {section.paragraphs.map((p, index) => (
@@ -95,7 +161,7 @@ export default function TermsAndPrivacy({
             ))}
             {activeTab === "privacy" && onNavigateToDeleteAccount ? (
               <View style={[styles.sectionCard, wide && styles.fullRow]}>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>
                   Portabilidade e Exclusão (LGPD — Art. 18)
                 </Text>
                 <Text style={styles.paragraph}>
@@ -115,8 +181,8 @@ export default function TermsAndPrivacy({
             ) : null}
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -150,7 +216,7 @@ function createStyles(colors: ColorPalette) {
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
+    borderBottomColor: colors.book.paperEdge,
     marginBottom: tokens.spacing[16],
   },
   tab: {
@@ -182,6 +248,7 @@ function createStyles(colors: ColorPalette) {
   cardList: {
     gap: tokens.spacing[12],
   },
+  inactivePanel: { display: "none" },
   sectionCard: {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,

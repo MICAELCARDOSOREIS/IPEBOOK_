@@ -1,6 +1,7 @@
 import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { DomainError } from "@/model/errors";
-import type { IBookRequestUseCases, RequestWithListing } from "@/usecase/iBookRequestUseCases";
+import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type { RequestWithListing };
 
@@ -14,6 +15,10 @@ export type RequestListState = ListState<RequestWithListing>;
 
 const LOAD_ERROR = "Não foi possível carregar os pedidos. Tente novamente.";
 const sessionRequestListCache = new Map<string, readonly unknown[]>();
+
+registerSessionMemoryCache(() => {
+  sessionRequestListCache.clear();
+});
 
 export function messageOf(error: unknown, fallback: string): string {
   return error instanceof DomainError ? error.message : fallback;
@@ -66,17 +71,4 @@ export function useRequestList<T = RequestWithListing>(
   }, [reload]);
 
   return [state, reload, active];
-}
-
-export function useSentRequestsViewModel(
-  sessionUserId: string | null,
-  useCases: IBookRequestUseCases,
-): [RequestListState, { reload: () => Promise<void> }] {
-  const load = useCallback(() => useCases.listSentRequests(sessionUserId), [useCases, sessionUserId]);
-  const [state, reload] = useRequestList(
-    load,
-    LOAD_ERROR,
-    sessionUserId ? `sent:${sessionUserId}` : undefined,
-  );
-  return [state, { reload }];
 }

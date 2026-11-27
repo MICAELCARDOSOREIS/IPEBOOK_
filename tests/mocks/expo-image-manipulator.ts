@@ -1,4 +1,4 @@
-// O runtime nativo do expo-image-manipulator não roda no Node; os testes que precisam dele usam vi.mock.
+// O runtime nativo do expo-image-manipulator não roda no Node; os testes que precisam dele usam jest.mock.
 export const SaveFormat = { JPEG: "jpeg", PNG: "png", WEBP: "webp" } as const;
 
 export const ImageManipulator = {

@@ -1,4 +1,4 @@
-# Especificação 135 — [PWA/iOS] Adequar telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web
+# Especificação 136 — [PWA/iOS] Adequar telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web
 
 **Estado:** Especificada em 2026-11-11  
 **Responsável:** Maria Clara Almeida Martins (`pessoa:maria-clara`)  
@@ -47,7 +47,14 @@ Enquanto a versão Android segue estritamente o Material Design 3 e a versão We
 | CA2 | Regras CSS para prevenção de zoom (`font-size: 16px`), bloqueio de rubber-banding (`overscroll-behavior-y: none`) e remoção de tap highlight cinza estão presentes no HTML raiz da Web. | Teste unitário e verificação de `+html.tsx`. |
 | CA3 | A barra flutuante de navegação respeita a safe area do Home Indicator via `env(safe-area-inset-bottom)`. | Regra CSS presente em `+html.tsx` e padding calculado. |
 | CA4 | Tags `apple-touch-icon` estão configuradas com ícones de alta resolução e dimensões adequadas (180x180, 192x192, 512x512). | Inspeção de `+html.tsx` e existência dos assets. |
-| CA5 | `backOnce` previne bloqueio de usuário quando `router.canGoBack()` for falso, redirecionando para a rota de fallback. | Teste unitário em `tests/unit/pwaIphoneAppleHig.test.ts`. |
+| CA5 | `backOnce` previne bloqueio de usuário quando `router.canGoBack()` for falso, redirecionando para a rota de fallback. | Teste unitário em `tests/unit/pwaIphoneAppleHig.test.tsx`. |
 | CA6 | Alvos de toque nos componentes de topo e navegação mantêm conformidade com o piso mínimo de 44×44 pt do Apple HIG. | Teste unitário de acessibilidade interativa. |
 | CA7 | O comportamento e visual do Android (MD3) e Web Desktop permanecem 100% inalterados. | Testes existentes verdes sem regressões. |
 | CA8 | Suíte completa de validação passa com 100% de sucesso (`npm run typecheck`, `npm run check:architecture`, `npm run test`). | Comandos executados com código de saída 0. |
+
+## Avisos com o IpêBook instalado
+
+- Quem usa o IpêBook instalado pela Tela de Início pode ativar ou desativar avisos pelo botão da Central de notificações. O sistema só pede permissão em resposta ao toque.
+- O Safari sem instalação e os ambientes sem chave pública continuam mostrando os avisos na central, sem pedir permissão de envio em segundo plano.
+- Após ativar, uma notificação genérica abre a central ao toque. O aviso na tela bloqueada não contém dados de propostas, pessoas ou conversas. As preferências por tipo continuam valendo.
+- Ao sair da conta, desativar a inscrição deste dispositivo. Inscrições inválidas são removidas no envio. A entrega será homologada com iPhone e backend de teste configurado.

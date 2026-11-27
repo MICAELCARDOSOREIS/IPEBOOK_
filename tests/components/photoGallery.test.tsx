@@ -1,6 +1,5 @@
 import type React from "react";
 import { act, fireEvent, render, cleanup } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 
@@ -34,6 +33,13 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
     expect(typeof style.width).toBe("number");
     expect(typeof style.height).toBe("number");
     expect(style.width).toBeGreaterThan(0);
+    expect(image.props.resizeMethod).toBe("resize");
+    expect(image.props.fadeDuration).toBe(0);
+  });
+
+  it("não monta a lista de fotos quando visible=false", async () => {
+    const screen = await renderGallery({ visible: false });
+    expect(screen.queryByTestId("photo-gallery-list")).toBeNull();
   });
 
   it("foto que não carrega (bloqueada ou fora do ar) mostra um aviso em vez da tela preta", async () => {
@@ -82,7 +88,7 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
   });
 
   it("aciona onClose ao tocar em Fechar", async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     const screen = await renderGallery({ onClose });
     fireEvent.press(screen.getByLabelText("Fechar galeria de fotos"));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -120,7 +126,7 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
     it("Esc fecha a galeria", async () => {
       Platform.OS = "web";
       const fakeDocument = installFakeDocument();
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       await renderGallery({ onClose });
 
       fakeDocument.dispatch({ key: "Escape" });
@@ -142,7 +148,7 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
     it("não reage a teclado fora da Web", async () => {
       Platform.OS = "ios";
       const fakeDocument = installFakeDocument();
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       await renderGallery({ onClose });
 
       fakeDocument.dispatch({ key: "Escape" });

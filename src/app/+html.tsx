@@ -16,12 +16,16 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+        {/* Título estático (Spec 025): crawlers que não executam JavaScript e o flash da aba antes
+            da hidratação precisam do <title> no HTML inicial; o título por rota é ajustado em
+            runtime via pageTitleFor/webMeta. */}
+        <title>IpêBook · Livros usados em Piripiri, PI</title>
         <meta name="format-detection" content="telephone=no" />
-        <meta name="theme-color" content={tokens.colors.action} />
+        <meta name="theme-color" content={tokens.colors.surface} />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="IpêBook" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icone-192.png" />
@@ -36,7 +40,7 @@ export default function Root({ children }: PropsWithChildren) {
           dangerouslySetInnerHTML={{
             __html: [
               `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent;-webkit-tap-highlight-color:transparent}`,
-              `html,body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}`,
+              `html,body,#root{background-color:${tokens.colors.surface};overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}`,
               `body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}`,
               // Apple HIG / Safari iOS: campos com fonte < 16px provocam zoom automático indesejado na tela.
               `@supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px!important}}`,
@@ -44,13 +48,11 @@ export default function Root({ children }: PropsWithChildren) {
               // Safe area do Home Indicator no dock flutuante (ADR 0108 / Spec 135)
               `[data-testid="navigation-bar-tablist"]{padding-bottom:max(12px,calc(8px + env(safe-area-inset-bottom,0px)))!important}`,
               // Foco de teclado visível nos dois temas: anel escuro com halo claro (WCAG 2.4.7).
-              `:focus-visible{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer};border-radius:${tokens.radius.small}px}`,
+              `:focus-visible,[data-testid="web-header-search"]:focus-within{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer}}`,
+              `:focus-visible{border-radius:${tokens.radius.small}px}`,
+              `[data-testid="web-header-search"] input:focus-visible{outline:none;box-shadow:none}`,
               `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
               `[aria-disabled="true"]{cursor:not-allowed}`,
-              // Pino do mapa (web): o círculo é desenhado com 36px; uma extensão invisível de
-              // ${(tokens.accessibility.touchTarget - 36) / 2}px leva a área de toque aos ${tokens.accessibility.touchTarget}px
-              // mínimos sem mudar o desenho (Spec 125, ADR 0097). O elemento já é posicionado pelo CSS do mapbox-gl.
-              `[data-pino-mapa][aria-pressed="false"]::after{content:"";position:absolute;inset:-${(tokens.accessibility.touchTarget - 36) / 2}px}`,
               `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,
             ].join(""),
           }}
@@ -60,11 +62,7 @@ export default function Root({ children }: PropsWithChildren) {
       <body {...bodyAttributes}>
         {children}
         {bodyNodes}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});});}`,
-          }}
-        />
+        <script src="/sw-register.js" defer />
       </body>
     </html>
   );

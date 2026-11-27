@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IRatingUseCases, ReceivedRating } from "@/usecase/iRatingUseCases";
 import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
@@ -64,7 +63,7 @@ describe("testes de hook: useReceivedRatingsViewModel (ISO/IEC 25010 - Confiabil
   });
 
   it("recarrega ao chamar reload", async () => {
-    const listReceivedRatings = vi.fn().mockResolvedValue([fakeRating]);
+    const listReceivedRatings = jest.fn().mockResolvedValue([fakeRating]);
     const hook = await renderHook("bia", { listReceivedRatings });
     expect(listReceivedRatings).toHaveBeenCalledTimes(1);
 
@@ -91,7 +90,7 @@ describe("testes de hook: useReceivedRatingsViewModel (ISO/IEC 25010 - Confiabil
     const firstPromise = new Promise<ReceivedRating[]>((r) => { resolveFirst = r; });
     const secondPromise = new Promise<ReceivedRating[]>((r) => { resolveSecond = r; });
 
-    const listReceivedRatings = vi
+    const listReceivedRatings = jest
       .fn()
       .mockReturnValueOnce(firstPromise)
       .mockReturnValueOnce(secondPromise);
@@ -122,7 +121,7 @@ describe("testes de hook: useReceivedRatingsViewModel (ISO/IEC 25010 - Confiabil
     const firstPromise = new Promise<ReceivedRating[]>((_, rej) => { rejectFirst = rej; });
     const secondPromise = new Promise<ReceivedRating[]>((r) => { resolveSecond = r; });
 
-    const listReceivedRatings = vi
+    const listReceivedRatings = jest
       .fn()
       .mockReturnValueOnce(firstPromise)
       .mockReturnValueOnce(secondPromise);
@@ -147,9 +146,9 @@ describe("testes de hook: useReceivedRatingsViewModel (ISO/IEC 25010 - Confiabil
 
   it("encerra o carregamento imediatamente quando sessionUserId é nulo", async () => {
     const useCases: IRatingUseCases = {
-      getNegotiationRating: vi.fn(),
-      submitRating: vi.fn(),
-      listReceivedRatings: vi.fn().mockResolvedValue([]),
+      getNegotiationRating: jest.fn(),
+      submitRating: jest.fn(),
+      listReceivedRatings: jest.fn().mockResolvedValue([]),
     };
     let result!: ReturnType<typeof useReceivedRatingsViewModel>;
     function NullUserProbe() {

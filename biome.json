@@ -11,7 +11,7 @@
       "scripts/**",
       "app.config.js",
       "metro.config.js",
-      "vitest.config.mts"
+      "jest.config.cjs"
     ]
   },
   "formatter": {
@@ -41,5 +41,17 @@
   },
   "javascript": {
     "globals": ["__DEV__"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/+html.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noReactNativeRawText": "off"
+          }
+        }
+      }
+    }
+  ]
 }

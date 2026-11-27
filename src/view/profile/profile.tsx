@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
+import { type EdgeInsets, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
   makeProfilePhotoViewModel,
@@ -18,25 +18,26 @@ import {
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { sanitizeTextInput } from "@/model/validators/textSanitizer";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { ReaderCard } from "@/view/components/ReaderCard";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 export type ProfileProps = {
   onNavigateToSignIn?: () => void;
   /** Quando presente, exibe a barra superior com "Editar perfil" (Figma `07.02`). */
@@ -88,8 +89,12 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
+  const contentMaxWidth = wide ? WEB_MAX_WIDTH : 560;
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   const [authState] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
@@ -163,7 +168,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   if (authState.loading) {
     return (
-      <ScreenContainer maxWidth={560} paddingTop={tokens.spacing[12]}>
+      <ScreenContainer maxWidth={contentMaxWidth} paddingHorizontal={wide ? WEB_GUTTER : undefined} paddingTop={tokens.spacing[12]}>
         <LoadingState label="Carregando sessão" />
       </ScreenContainer>
     );
@@ -172,12 +177,14 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   if (!userId) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={contentMaxWidth}
+        paddingHorizontal={wide ? WEB_GUTTER : undefined}
         paddingTop={tokens.spacing[12]}
         paddingBottom={tokens.spacing[32]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={guardedBack} />}
       >
-        <View style={styles.guestCard}>
+        <View style={[styles.guestCard, isIos && (iosGlass ? styles.iosGlassSection : styles.iosOpaqueSection)]}>
+          {iosGlass ? <IosGlassBackdrop style={styles.iosGlassShape} /> : null}
           <Text style={styles.guestTitle}>Entre para editar seu perfil</Text>
           <Text style={styles.guestText}>
             Suas informações ficam guardadas na sua conta. Entre ou crie uma para continuar.
@@ -215,8 +222,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     preferencesActions.reload();
   }
 
-  const contentMaxWidth = wide ? 1040 : 560;
-
   return (
     <ScreenContainer
       maxWidth={contentMaxWidth}
@@ -240,7 +245,15 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             onCancel={() => setDiscardOpen(false)}
           />
           {!wide && state.profile && !loading && !isKeyboardVisible ? (
-            <View pointerEvents="box-none" style={styles.stickyActionContainer}>
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.stickyActionContainer,
+                iosGlass && styles.iosGlassSticky,
+                Platform.OS === "ios" && { paddingBottom: insets.bottom },
+              ]}
+            >
+              {iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
               <View style={styles.stickyActionContent}>
                 <FilledButton
                   label="Salvar alterações"
@@ -312,10 +325,12 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                         onPress={() => void pickPhoto("library")}
                         style={({ pressed }) => [
                           styles.photoButton,
+                          iosGlass && styles.iosGlassPhotoButton,
                           pressed && styles.photoButtonPressed,
                           (photo.uploading || saving) && styles.photoButtonDisabled,
                         ]}
                       >
+                        {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
                         <AppIcon name="photo" size={18} color={colors.m3.primary} />
                         <Text numberOfLines={1} style={styles.photoButtonText}>
                           Escolher foto
@@ -328,10 +343,12 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                         onPress={() => void pickPhoto("camera")}
                         style={({ pressed }) => [
                           styles.photoButton,
+                          iosGlass && styles.iosGlassPhotoButton,
                           pressed && styles.photoButtonPressed,
                           (photo.uploading || saving) && styles.photoButtonDisabled,
                         ]}
                       >
+                        {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
                         <AppIcon name="camera" size={18} color={colors.m3.primary} />
                         <Text numberOfLines={1} style={styles.photoButtonText}>
                           Tirar foto
@@ -453,9 +470,13 @@ function FormSection({
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   return (
-    <View style={styles.formSection}>
+    <View style={[styles.formSection, isIos && (iosGlass ? styles.iosGlassSection : styles.iosOpaqueSection)]}>
+      {iosGlass ? <IosGlassBackdrop style={styles.iosGlassShape} /> : null}
       <View style={styles.formSectionHeader}>
         <View style={styles.formSectionIcon}>
           <AppIcon name={icon} size={18} color={colors.ipe.onContainer} />
@@ -507,6 +528,35 @@ function createStyles(colors: ColorPalette, insets?: EdgeInsets) {
     },
     photoButtonDisabled: {
       opacity: 0.5,
+    },
+    iosGlassPhotoButton: {
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassSection: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosOpaqueSection: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xxl,
+      overflow: "hidden",
+    },
+    iosGlassSticky: {
+      backgroundColor: "transparent",
+      borderTopColor: "transparent",
+      overflow: "hidden",
     },
     photoButtonText: {
       ...tokens.typography.labelMedium,
@@ -644,7 +694,7 @@ function createStyles(colors: ColorPalette, insets?: EdgeInsets) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[10],
-      paddingBottom: Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
+      paddingBottom: Platform.OS === "ios" ? tokens.spacing[12] : Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
     },
     guestCard: {
       gap: tokens.spacing[16],

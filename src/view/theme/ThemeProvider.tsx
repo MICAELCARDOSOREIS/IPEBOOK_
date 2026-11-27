@@ -1,45 +1,43 @@
-import { createContext, useContext, type ReactNode } from "react";
-import { makeThemeViewModel } from "@/di/container";
-import type { ThemePreference } from "@/model/entities/themePreference";
-import { type ResolvedScheme } from "@/viewmodel/useThemeViewModel";
-import { colors, darkColors, type ColorPalette } from "@/view/tokens";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { Platform } from "react-native";
+import { colors, type ColorPalette } from "@/view/tokens";
 
 export type ThemeContextValue = {
-  preference: ThemePreference;
-  resolvedScheme: ResolvedScheme;
   colors: ColorPalette;
-  setPreference: (preference: ThemePreference) => Promise<void>;
 };
 
 const defaultValue: ThemeContextValue = {
-  preference: "light",
-  resolvedScheme: "light",
   colors,
-  setPreference: async () => undefined,
 };
 
 const ThemeContext = createContext<ThemeContextValue>(defaultValue);
 
-/** Distribui o tema resolvido (claro/escuro) para a árvore (ADR 0036). Envolver em `src/app/_layout.tsx`. */
+/** Distribui a paleta de cores do tema claro editorial para a árvore (ADR 0114). Envolver em `src/app/_layout.tsx`. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [state, actions] = makeThemeViewModel();
-  const resolvedColors = state.resolvedScheme === "dark" ? darkColors : colors;
+  // Na Web e PWA, sincroniza o fundo do documento e a meta tag theme-color com a superfície editorial
+  // para evitar vazamento de cores diferentes na status bar e safe area inferior.
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return;
+    document.documentElement.style.backgroundColor = colors.surface;
+    document.body.style.backgroundColor = colors.surface;
+    const rootEl = document.getElementById("root");
+    if (rootEl) {
+      rootEl.style.backgroundColor = colors.surface;
+    }
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute("content", colors.surface);
+    }
+  }, []);
 
   return (
-    <ThemeContext.Provider
-      value={{
-        preference: state.preference,
-        resolvedScheme: state.resolvedScheme,
-        colors: resolvedColors,
-        setPreference: actions.setPreference,
-      }}
-    >
+    <ThemeContext.Provider value={defaultValue}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-/** Cores e tema resolvidos para o componente atual. Fora do `ThemeProvider`, cai no tema claro. */
+/** Cores do tema claro editorial para o componente atual. */
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }

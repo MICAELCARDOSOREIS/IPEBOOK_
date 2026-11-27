@@ -1,7 +1,6 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { AccessibilityInfo } from "react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -36,14 +35,14 @@ afterEach(() => {
 
 describe("useFormErrorAnnouncer (Spec 042 / Issue #147)", () => {
   it("não anuncia nada quando não há erro", () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     renderHook(null);
     expect(announceSpy).not.toHaveBeenCalled();
     announceSpy.mockRestore();
   });
 
   it("anuncia a mensagem quando o erro aparece", () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const hook = renderHook(null);
     hook.rerender("Selecione um motivo para a denúncia.");
     expect(announceSpy).toHaveBeenCalledWith("Selecione um motivo para a denúncia.");
@@ -51,7 +50,7 @@ describe("useFormErrorAnnouncer (Spec 042 / Issue #147)", () => {
   });
 
   it("não repete o anúncio quando a mesma mensagem persiste", () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const hook = renderHook("Erro genérico.");
     hook.rerender("Erro genérico.");
     expect(announceSpy).toHaveBeenCalledTimes(1);
@@ -59,7 +58,7 @@ describe("useFormErrorAnnouncer (Spec 042 / Issue #147)", () => {
   });
 
   it("anuncia novamente quando a mensagem de erro muda", () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const hook = renderHook("Primeiro erro.");
     hook.rerender("Segundo erro.");
     expect(announceSpy).toHaveBeenNthCalledWith(1, "Primeiro erro.");
@@ -69,7 +68,7 @@ describe("useFormErrorAnnouncer (Spec 042 / Issue #147)", () => {
 
   it("foca o elemento referenciado quando o erro aparece", () => {
     const hook = renderHook(null);
-    const focus = vi.fn();
+    const focus = jest.fn();
     (hook.ref as { current: unknown }).current = { focus };
     hook.rerender("Erro com foco.");
     expect(focus).toHaveBeenCalledTimes(1);

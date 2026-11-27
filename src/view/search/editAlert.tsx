@@ -4,34 +4,42 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { BookModality } from "@/model/entities/book";
 import { ALL_ALERT_MODALITIES } from "@/model/entities/searchAlert";
 import { Chip } from "@/view/components/Chip";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
-import { makeSearchAlertsViewModel } from "@/di/container";
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type EditAlertProps = {
   alertId: string;
   userId: string | null;
+  sessionLoading?: boolean;
   onBack: () => void;
   /** Volta ao gerenciamento depois de salvar. */
   onSaved: () => void;
 };
 
 /** Figma `02.10 · Editar alerta` (`254:4437`). */
-export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAlertProps) {
+export default function EditAlert({ alertId, userId, sessionLoading = false, onBack, onSaved }: EditAlertProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeSearchAlertsViewModel(userId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const alert = state.alerts.find((item) => item.id === alertId);
+  const loadError = state.loadError ?? (!alert ? state.error : null);
   const [term, setTerm] = useState("");
   const [modalities, setModalities] = useState<readonly BookModality[]>(ALL_ALERT_MODALITIES);
   const [loadedId, setLoadedId] = useState<string | null>(null);
@@ -53,16 +61,34 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
     );
   };
 
-  if (state.loading) {
+  if (sessionLoading || state.loading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
+    );
+  }
+
+  if (loadError && !alert) {
+    return (
+      <ScreenContainer
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
+      >
+        {isOnline ? (
+          <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+        ) : (
+          <OfflineState onRetry={() => void actions.reload()} />
+        )}
       </ScreenContainer>
     );
   }
@@ -70,11 +96,11 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (!alert) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <Text accessibilityRole="header" style={styles.headline}>
           Alerta não encontrado
@@ -86,12 +112,12 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
   return (
     <ScreenContainer
-      maxWidth={560}
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
       paddingHorizontal={tokens.spacing[24]}
       paddingTop={tokens.spacing[24]}
       paddingBottom={scrollBottomPadding.withoutBottomBar}
-      header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-      contentStyle={styles.content}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+      contentStyle={[styles.content, wide && styles.contentWide]}
     >
       <Text accessibilityRole="header" style={styles.headline}>
         Ajuste sua busca.
@@ -102,13 +128,16 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
       <TextField
         label="O que você procura?"
+        labelBackgroundColor={wide ? colors.m3.surfaceContainerLow : undefined}
         value={term}
         onChangeText={setTerm}
         maxLength={100}
+        returnKeyType="done"
       />
 
       <TextField
         label="Cidade"
+        labelBackgroundColor={wide ? colors.m3.surfaceContainerLow : undefined}
         value={ALERT_CITY}
         onChangeText={() => {}}
         editable={false}
@@ -171,6 +200,15 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[24],
     paddingTop: tokens.spacing[24],
     gap: tokens.spacing[16],
+  },
+  contentWide: {
+    maxWidth: 680,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.xl,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[28],
+    marginTop: tokens.spacing[16],
   },
   headline: {
     ...tokens.typography.displayLarge,

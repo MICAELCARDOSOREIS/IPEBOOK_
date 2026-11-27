@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 
 describe("normalizeInstagramHandle (regra única do @perfil)", () => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { DomainError } from "@/model/errors";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type PublicProfileState = {
   profile: PublicProfile | null;
@@ -15,6 +16,10 @@ export type PublicProfileActions = {
 
 const GENERIC_ERROR = "Não foi possível carregar o perfil. Tente novamente.";
 const sessionPublicProfileCache = new Map<string, PublicProfile>();
+
+registerSessionMemoryCache(() => {
+  sessionPublicProfileCache.clear();
+});
 
 export function usePublicProfileViewModel(
   userId: string,

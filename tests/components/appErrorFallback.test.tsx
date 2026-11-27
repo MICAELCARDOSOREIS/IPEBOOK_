@@ -1,12 +1,11 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { AppErrorFallback } from "@/view/components/AppErrorFallback";
 
 describe("AppErrorFallback (Spec 104)", () => {
   it("avisa sem detalhes técnicos, envia o erro e permite tentar de novo", async () => {
     const reporter = new MemoryErrorReporter();
-    const retry = vi.fn();
+    const retry = jest.fn();
     const error = new Error("TypeError interno");
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -23,7 +22,7 @@ describe("AppErrorFallback (Spec 104)", () => {
 describe("startErrorReporting (Spec 104)", () => {
   it("inicia o acompanhamento recebido", async () => {
     const { startErrorReporting } = await import("@/viewmodel/errorReporting");
-    const reporter = { init: vi.fn(), captureException: vi.fn() };
+    const reporter = { init: jest.fn(), captureException: jest.fn() };
     startErrorReporting(reporter);
     expect(reporter.init).toHaveBeenCalledTimes(1);
   });

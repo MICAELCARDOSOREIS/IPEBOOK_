@@ -45,21 +45,14 @@ proposta"), nunca "OK" ou caixa-alta, sem emoji na interface.
   IpêBook reserva uma segunda família (Source Serif 4 Bold) só para pontos de marca.
 - **O porquê:** Usar a serifa só no logotipo, no título de tela raiz e no título do livro cria um
   momento de marca sem tornar a interface inteira "decorada" — texto corrido e botões continuam
-  na escala neutra do M3 (Roboto).
+  na escala de interface sem-serifa (**Plus Jakarta Sans**, [ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)).
 - **Na prática:** `fontFamily.brand` (`SourceSerif4_700Bold`) só em `displayLarge`/título de
   capa; todo o resto usa `fontFamily.regular/medium/semiBold` (ver
   [02-tokens.md](02-tokens.md)).
 - **Evite:** Serifa em botão, campo de texto ou qualquer texto corrido.
 
-## Princípio 5: O tema acompanha a preferência da pessoa
+## Princípio 5 — A superfície editorial é clara em todas as plataformas
 
-- **Origem:** Adaptado. A decisão original de adiar o tema escuro foi substituída pela
-  [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md), que prioriza acessibilidade e
-  preferência do sistema.
-- **O porquê:** Pessoas devem poder usar o app com o tema do sistema ou escolher claro/escuro
-  sem alterar a estrutura dos componentes.
-- **Na prática:** `ThemeProvider` resolve a preferência e fornece `colors` por `useTheme()`.
-  Componentes já migrados usam a paleta resolvida; telas ainda não migradas mantêm a paleta
-  clara por compatibilidade e devem ser migradas antes de receber novas variações visuais.
-- **Evite:** adicionar hexágonos literais, criar uma paleta paralela ou usar `useColorScheme`
-  diretamente em componentes; a resolução deve passar pelo ViewModel e pelo `ThemeProvider`.
+O [ADR 0114](../docs/adr/0114-remocao-do-tema-escuro.md) estabelece o tema claro editorial no
+Android, no iPhone e na Web. `ThemeProvider` distribui a paleta por `useTheme()`. Use os papéis
+semânticos de cor para preservar a superfície de papel pólen e o contraste dos controles.

@@ -1,6 +1,5 @@
 
 import { act, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BookCover } from "@/view/components/BookCover";
 import { bookCoverCache } from "@/viewmodel/bookCoverCache";
 
@@ -105,6 +104,15 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
     expect(bookCoverCache.isLoaded("https://imagens.ipebook.app/capas/iracema.jpg")).toBe(true);
   });
 
+  it("volta à capa ilustrativa quando uma foto anteriormente carregada falha offline", async () => {
+    const url = "https://imagens.ipebook.app/iracema.jpg";
+    bookCoverCache.setLoaded(url);
+    const cover = await render(<BookCover id="a1" title="Iracema" photoUrl={url} maxRetries={0} />);
+
+    await act(async () => cover.getByLabelText("Foto da capa de Iracema").props.onError());
+    expect(cover.getByLabelText("Capa ilustrativa de Iracema")).toBeDefined();
+  });
+
   it("renderiza imediatamente sem skeleton se a URL já estiver no cache (RN-01)", async () => {
     bookCoverCache.setLoaded("https://imagens.ipebook.app/capas/ja-cacheada.jpg");
 
@@ -124,7 +132,7 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
   });
 
   it("recorre ao fallback gracioso da capa ilustrativa após esgotamento de retries (RN-03, RN-04)", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
       const { getByLabelText, queryByTestId } = await render(
         <BookCover
@@ -146,7 +154,7 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
 
       // Avança o backoff
       await act(async () => {
-        vi.advanceTimersByTime(100);
+        jest.advanceTimersByTime(100);
       });
 
       // 2º erro -> esgota retries e cai no fallback
@@ -162,13 +170,13 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
       expect(fallback.props.accessibilityRole).toBe("image");
       expect(bookCoverCache.hasFailed("https://imagens.ipebook.app/capas/auto.jpg")).toBe(true);
     } finally {
-      vi.clearAllTimers();
-      vi.useRealTimers();
+      jest.clearAllTimers();
+      jest.useRealTimers();
     }
   });
 
   it("aciona retry e fallback gracioso quando expira o timeout (RN-02)", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
       const { getByLabelText, queryByTestId } = await render(
         <BookCover
@@ -183,24 +191,24 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
 
       // Expira o 1º timeout de 500ms
       await act(async () => {
-        vi.advanceTimersByTime(500);
+        jest.advanceTimersByTime(500);
       });
 
       // Avança o backoff de 100ms
       await act(async () => {
-        vi.advanceTimersByTime(100);
+        jest.advanceTimersByTime(100);
       });
 
       // Expira o 2º timeout de 500ms (esgotando os retries)
       await act(async () => {
-        vi.advanceTimersByTime(500);
+        jest.advanceTimersByTime(500);
       });
 
       expect(queryByTestId("book-cover-skeleton")).toBeNull();
       expect(getByLabelText("Capa ilustrativa de Grande Sertão: Veredas")).toBeDefined();
     } finally {
-      vi.clearAllTimers();
-      vi.useRealTimers();
+      jest.clearAllTimers();
+      jest.useRealTimers();
     }
   });
 

@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { makeAuthViewModel, makeReceivedRequestsViewModel } from "@/di/container";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -16,6 +17,7 @@ export const COMMUNITY_MEMBER = "Pessoa da comunidade";
 
 export type ReceivedRequestsProps = {
   sessionUserId: string;
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToNegotiationDetail?: (requestId: string) => void;
   onOpenChat?: (requestId: string) => void;
@@ -23,11 +25,15 @@ export type ReceivedRequestsProps = {
 
 export function ReceivedRequests({
   sessionUserId,
+  focusKey,
   onBack,
   onNavigateToNegotiationDetail,
   onOpenChat,
 }: ReceivedRequestsProps) {
   const [state, actions] = makeReceivedRequestsViewModel(sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [pendingAccept, setPendingAccept] = useState<{ requestId: string; requesterName: string | null } | null>(null);
   const { colors } = useTheme();
@@ -72,7 +78,6 @@ export function ReceivedRequests({
       onRetry={() => void actions.reload()}
       onBack={guardedBack}
       showHeroDescription={false}
-      showPendingSummary
       feedbackMessage={feedbackMessage}
       onDismissFeedback={() => setFeedbackMessage(null)}
       renderExtra={(item) => {
@@ -161,12 +166,12 @@ export function ReceivedRequests({
               </>
             ) : null}
             {request.status === "accepted" ? (
-              <View style={s.actions}>
+              <View style={s.pendingActions}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Ver detalhes do encontro"
                   onPress={() => guardedNavigateToNegotiationDetail?.(request.id)}
-                  style={withPress(s.primary)}
+                  style={withPress([s.primary, s.fullWidthAction])}
                 >
                   <Text style={s.primaryText}>Ver detalhes do encontro</Text>
                 </Pressable>
@@ -175,7 +180,7 @@ export function ReceivedRequests({
                     accessibilityRole="button"
                     accessibilityLabel={`Conversar com ${requesterName ?? COMMUNITY_MEMBER}`}
                     onPress={() => onOpenChat(request.id)}
-                    style={withPress(s.chatButton)}
+                    style={withPress([s.chatButton, s.fullWidthAction])}
                   >
                     <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
                     <Text style={s.chatButtonText}>Conversar</Text>
@@ -205,6 +210,7 @@ export function ReceivedRequests({
 }
 
 export type ReceivedRequestsScreenProps = {
+  focusKey?: number;
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToNegotiationDetail?: (requestId: string) => void;
@@ -212,6 +218,7 @@ export type ReceivedRequestsScreenProps = {
 };
 
 export default function ReceivedRequestsScreen({
+  focusKey,
   onBack,
   onRequireSignIn,
   onNavigateToNegotiationDetail,
@@ -227,6 +234,7 @@ export default function ReceivedRequestsScreen({
   return (
     <ReceivedRequests
       sessionUserId={authState.user.id}
+      focusKey={focusKey}
       onBack={onBack}
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
       onOpenChat={onOpenChat}

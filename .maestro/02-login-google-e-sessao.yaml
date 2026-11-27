@@ -1,0 +1,50 @@
+appId: com.ipebook.app
+name: Fluxo nativo de login com Google e validação de sessão (Android)
+tags:
+  - android
+  - auth
+  - hardware-nativo
+---
+- launchApp:
+    stopApp: false
+- runFlow:
+    when:
+      visible: "Já tenho conta"
+    commands:
+      - tapOn: "Já tenho conta"
+- runFlow:
+    when:
+      visible: "Entrar no aplicativo"
+    commands:
+      - tapOn: "Entrar no aplicativo"
+- runFlow:
+    when:
+      visible: "Continuar com Google"
+    commands:
+      - assertVisible: "Continuar com Google"
+      - tapOn: "Continuar com Google"
+      # O seletor nativo de contas Google (Play Services) é exibido fora do processo do app.
+      - extendedWaitUntil:
+          visible: "(Escolha uma conta|Choose an account|.*Fazer login.*|.*Continuar como.*|.*Conta do Google.*|.*Google Account.*|Adicionar conta.*|Cancelar|home-top-profile-button)"
+          timeout: 15000
+- runFlow:
+    when:
+      visible:
+        id: "home-top-profile-button"
+    commands:
+      - tapOn:
+          id: "home-top-profile-button"
+      - assertVisible: "Meu perfil"
+      - assertVisible: "Abrir configurações"
+      - tapOn: "Editar perfil"
+      - assertVisible: "Seu perfil, do seu jeito."
+      - back
+      - runFlow:
+          when:
+            visible: "Descartar alterações?"
+          commands:
+            - tapOn: "Descartar"
+      - assertVisible: "Meu perfil"
+      - waitForAnimationToEnd
+      - back
+      - assertVisible: "Encontre sua próxima história."

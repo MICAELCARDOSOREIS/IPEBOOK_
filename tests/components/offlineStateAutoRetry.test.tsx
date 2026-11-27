@@ -1,11 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { OfflineState } from "@/view/components/OfflineState";
 
 describe("OfflineState — Auto-recuperação e design acolhedor (Spec 131 / ADR 0102)", () => {
   it("renderiza o card centralizado e permite tentar novamente manualmente", async () => {
-    const onRetry = vi.fn();
+    const onRetry = jest.fn();
     const networkDataSource = new MemoryNetworkStatusDataSource(false);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -22,7 +21,7 @@ describe("OfflineState — Auto-recuperação e design acolhedor (Spec 131 / ADR
   });
 
   it("dispara onRetry automaticamente quando a rede volta a ficar online", async () => {
-    const onRetry = vi.fn();
+    const onRetry = jest.fn();
     const networkDataSource = new MemoryNetworkStatusDataSource(false);
 
     await act(async () => {

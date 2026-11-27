@@ -8,6 +8,7 @@ const other = '33333333-3333-4333-8333-333333333333';
 await db.exec(`create schema auth;
 create role anon nologin;
 create role authenticated nologin;
+create role service_role nologin bypassrls;
 create table auth.users (id uuid primary key);
 create function auth.uid() returns uuid stable language sql as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
@@ -407,15 +408,15 @@ const discarded = await db.query(`select id from public.v2_books where id = '${d
 if (discarded.rows.length !== 0) throw new Error('Dono não conseguiu descartar o próprio rascunho');
 process.stdout.write('Rascunhos de anúncio (Spec 017): verificado com sucesso\n');
 
-// Spec 086: tabelas das conversas e notificações publicadas no Realtime
+// Spec 086 + 202611260001: tabelas das conversas, notificações, encontros e entregas publicadas no Realtime
 const realtime = await db.query(
   "select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by tablename",
 );
 const publicadas = realtime.rows.map((row) => row.tablename).join(',');
-if (publicadas !== 'v2_book_requests,v2_negotiation_messages,v2_notifications') {
+if (publicadas !== 'v2_book_requests,v2_deliveries,v2_meetings,v2_negotiation_messages,v2_notifications') {
   throw new Error(`Publicação de tempo real incompleta: ${publicadas}`);
 }
-process.stdout.write('Tempo real de conversas e notificações (Spec 086): verificado com sucesso\n');
+process.stdout.write('Tempo real de conversas, notificações, encontros e entregas: verificado com sucesso\n');
 
 // Spec 095 / ADR 0070: conclusão da entrega por QR code (pedido bbbb; dono = owner, leitor = reader).
 const pedido = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -629,7 +630,8 @@ await as('authenticated', moderador, `select public.v2_moderation_resolve('user'
 const pausadoSuspenso = await db.query(`select status from public.v2_books where id = '${livro102}'`);
 if (pausadoSuspenso.rows[0]?.status !== 'paused') throw new Error('Suspensão não pausou os anúncios da conta');
 await denied('Conta suspensa publica anúncio', () => as('authenticated', vendedor, `insert into public.v2_books (owner_id, title, author, modality) values ('${vendedor}', 'Novo', 'Autor', 'donation')`));
-await denied('Conta suspensa reativa anúncio', () => as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`));
+const reativacaoSuspensa = await as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}' returning id`);
+if (reativacaoSuspensa.rows.length !== 0) throw new Error('Conta suspensa reativou anúncio');
 await denied('Conta suspensa pede livro', () => as('authenticated', vendedor, `insert into public.v2_book_requests (listing_id, requester_id) values ('${livro101}', '${vendedor}')`));
 // Spec 107: auditoria de segurança — a suspensão cobre o resto, não se apaga com a exclusão e não é consultável.
 await denied('Conta suspensa denuncia pessoa', () => as('authenticated', vendedor, `insert into public.v2_user_reports (reporter_id, reported_user_id, reason) values ('${vendedor}', '${reader}', 'other')`));
@@ -820,6 +822,132 @@ await denied('Usuário autenticado remove política de versão', () =>
   as('authenticated', owner, `delete from public.v2_app_version_policy where platform = 'android'`)
 );
 process.stdout.write('Política de versão do app (Spec 128): verificada com sucesso\n');
+
+// Spec 143 / ADR 0119: endurecimento de segurança, RLS e LGPD (A1, A2, A3, M4, M6, M7).
+await db.exec('reset role');
+const secOwner = '14300001-0000-4000-8000-000000000001';
+const secReader = '14300002-0000-4000-8000-000000000002';
+const secSuspended = '14300003-0000-4000-8000-000000000003';
+const secBetaUser = '14300004-0000-4000-8000-000000000004';
+await db.exec(`
+  alter table auth.users add column if not exists email text;
+  insert into auth.users (id, email) values
+    ('${secOwner}', 'sec.owner@ipebook.app'),
+    ('${secReader}', 'sec.reader@ipebook.app'),
+    ('${secSuspended}', 'sec.suspended@ipebook.app'),
+    ('${secBetaUser}', 'sec.beta@ipebook.app');
+`);
+
+// A1: máquina de estados em v2_books
+const secBookAvail = '14310001-0000-4000-8000-000000000001';
+const secBookReserved = '14310002-0000-4000-8000-000000000002';
+const secBookDelivered = '14310003-0000-4000-8000-000000000003';
+const secBookHold = '14310004-0000-4000-8000-000000000004';
+const secBookDraft = '14310005-0000-4000-8000-000000000005';
+await as('authenticated', secOwner, `insert into public.v2_books (id, owner_id, title, author, modality) values
+  ('${secBookAvail}', '${secOwner}', 'Livro A1 Disponível', 'Autora', 'donation'),
+  ('${secBookReserved}', '${secOwner}', 'Livro A1 Reservado', 'Autora', 'donation'),
+  ('${secBookDelivered}', '${secOwner}', 'Livro A1 Entregue', 'Autora', 'donation'),
+  ('${secBookHold}', '${secOwner}', 'Livro A1 Retido', 'Autora', 'donation')`);
+await db.exec(`reset role;
+  update public.v2_books set status = 'reserved' where id = '${secBookReserved}';
+  update public.v2_books set status = 'delivered' where id = '${secBookDelivered}';
+  update public.v2_books set status = 'paused', moderation_hold = true where id = '${secBookHold}';`);
+await denied('A1: anúncio publicado volta para draft', () => as('authenticated', secOwner, `update public.v2_books set status = 'draft' where id = '${secBookAvail}'`));
+await denied('A1: dono altera status de anúncio reservado', () => as('authenticated', secOwner, `update public.v2_books set status = 'available' where id = '${secBookReserved}'`));
+await denied('A1: dono pausa anúncio reservado', () => as('authenticated', secOwner, `update public.v2_books set status = 'paused' where id = '${secBookReserved}'`));
+await denied('A1: dono altera status de anúncio entregue', () => as('authenticated', secOwner, `update public.v2_books set status = 'available' where id = '${secBookDelivered}'`));
+await denied('A1: dono altera status de anúncio em moderation_hold', () => as('authenticated', secOwner, `update public.v2_books set status = 'available' where id = '${secBookHold}'`));
+// Fluxos legítimos preservados: rascunho -> available, available <-> paused, e service_role/SECURITY DEFINER
+await as('authenticated', secOwner, `insert into public.v2_books (id, owner_id, title, author, modality, status, draft_step) values ('${secBookDraft}', '${secOwner}', 'Rascunho A1', 'Autora', 'donation', 'draft', 1)`);
+await as('authenticated', secOwner, `update public.v2_books set status = 'available' where id = '${secBookDraft}'`);
+await as('authenticated', secOwner, `update public.v2_books set status = 'paused' where id = '${secBookAvail}'`);
+await as('authenticated', secOwner, `update public.v2_books set status = 'available' where id = '${secBookAvail}'`);
+await db.exec(`reset role; update public.v2_books set status = 'available', moderation_hold = false where id = '${secBookHold}'`);
+process.stdout.write('Spec 143 A1 (máquina de estados de v2_books): verificado com sucesso\n');
+
+// A2: webhook_secret em v2_push_settings e trigger de push preservando RN-05
+await db.exec(`reset role; update public.v2_push_settings set webhook_secret = 'segredo-teste-local'`);
+await denied('A2: usuário lê webhook_secret de v2_push_settings', () => as('authenticated', secOwner, `select webhook_secret from public.v2_push_settings`));
+await db.exec(`reset role; insert into public.v2_notifications (user_id, title, message, type) values ('${secOwner}', 'Aviso A2', 'Teste com webhook_secret', 'system')`);
+process.stdout.write('Spec 143 A2 (v2_push_settings.webhook_secret): verificado com sucesso\n');
+
+// A3: delete_user_account limpa v2_beta_testers e conta suspensa não remove fotos no Storage
+await db.exec(`reset role; insert into public.v2_beta_testers (email, name) values ('sec.beta@ipebook.app', 'Beta LGPD')`);
+await as('authenticated', secBetaUser, `select public.delete_user_account('${secBetaUser}')`);
+await db.exec('reset role');
+const remainingBeta = await db.query(`select email from public.v2_beta_testers where email = 'sec.beta@ipebook.app'`);
+if (remainingBeta.rows.length !== 0) throw new Error('A3: delete_user_account não removeu registro em v2_beta_testers');
+await db.exec(`reset role;
+  insert into public.v2_books (id, owner_id, title, author, modality, status, draft_step) values ('14310006-0000-4000-8000-000000000006', '${secSuspended}', 'Rascunho Suspenso', 'Autora', 'donation', 'draft', 1);
+  insert into public.v2_books (id, owner_id, title, author, modality) values ('14310007-0000-4000-8000-000000000007', '${secSuspended}', 'Publicado Suspenso', 'Autora', 'donation');
+  insert into storage.objects (id, bucket_id, name, owner) values ('14320001-0000-4000-8000-000000000001', 'book-photos', '${secSuspended}/capa.jpg', '${secSuspended}');
+  insert into public.v2_suspended_users (user_id, reason) values ('${secSuspended}', 'Teste Spec 143');`);
+await denied('A3: conta suspensa envia foto no storage', () => as('authenticated', secSuspended, `insert into storage.objects (bucket_id, name, owner) values ('book-photos', '${secSuspended}/nova.jpg', '${secSuspended}')`));
+const suspDeletePhoto = await as('authenticated', secSuspended, `delete from storage.objects where id = '14320001-0000-4000-8000-000000000001' returning id`);
+if (suspDeletePhoto.rows.length !== 0) throw new Error('A3: conta suspensa removeu foto no storage');
+process.stdout.write('Spec 143 A3 (LGPD beta_testers + storage suspenso): verificado com sucesso\n');
+
+// M4: bloqueio bilateral e validação de offered_book_id em v2_book_requests
+const secReaderBookAvail = '14310008-0000-4000-8000-000000000008';
+const secReaderBookPaused = '14310009-0000-4000-8000-000000000009';
+await as('authenticated', secReader, `insert into public.v2_books (id, owner_id, title, author, modality) values
+  ('${secReaderBookAvail}', '${secReader}', 'Troca Disponível', 'Autora', 'trade'),
+  ('${secReaderBookPaused}', '${secReader}', 'Troca Pausada', 'Autora', 'trade')`);
+await as('authenticated', secReader, `update public.v2_books set status = 'paused' where id = '${secReaderBookPaused}'`);
+await denied('M4: offered_book_id de outro usuário', () => as('authenticated', secReader, `insert into public.v2_book_requests (listing_id, requester_id, offered_book_id) values ('${secBookAvail}', '${secReader}', '${secBookHold}')`));
+await denied('M4: offered_book_id pausado', () => as('authenticated', secReader, `insert into public.v2_book_requests (listing_id, requester_id, offered_book_id) values ('${secBookAvail}', '${secReader}', '${secReaderBookPaused}')`));
+// Bloqueio dono -> leitor
+await as('authenticated', secOwner, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${secOwner}', '${secReader}')`);
+await denied('M4: leitor bloqueado pelo dono solicita livro', () => as('authenticated', secReader, `insert into public.v2_book_requests (listing_id, requester_id) values ('${secBookAvail}', '${secReader}')`));
+await as('authenticated', secOwner, `delete from public.v2_blocked_users where blocker_id = '${secOwner}' and blocked_id = '${secReader}'`);
+// Bloqueio leitor -> dono
+await as('authenticated', secReader, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${secReader}', '${secOwner}')`);
+await denied('M4: leitor que bloqueou o dono solicita livro', () => as('authenticated', secReader, `insert into public.v2_book_requests (listing_id, requester_id) values ('${secBookAvail}', '${secReader}')`));
+await as('authenticated', secReader, `delete from public.v2_blocked_users where blocker_id = '${secReader}' and blocked_id = '${secOwner}'`);
+// Fluxo legítimo com offered_book_id próprio e disponível
+await as('authenticated', secReader, `insert into public.v2_book_requests (listing_id, requester_id, offered_book_id) values ('${secBookAvail}', '${secReader}', '${secReaderBookAvail}')`);
+process.stdout.write('Spec 143 M4 (bloqueio bilateral e offered_book_id): verificado com sucesso\n');
+
+// M6: limite de alertas em INSERT e reativação (UPDATE OF active) + teto total de 50
+for (let i = 1; i <= 20; i += 1) {
+  await as('authenticated', secReader, `insert into public.v2_search_alerts (user_id, query, active) values ('${secReader}', 'Alerta ativo ${i}', true)`);
+}
+await limitado('M6: 21º alerta ativo em INSERT', () => as('authenticated', secReader, `insert into public.v2_search_alerts (user_id, query, active) values ('${secReader}', 'Alerta 21', true)`));
+// Pode criar alerta inativo e não pode reativá-lo para furar o teto de 20 ativos
+const inactiveAlert = await as('authenticated', secReader, `insert into public.v2_search_alerts (user_id, query, active) values ('${secReader}', 'Alerta pausado 21', false) returning id`);
+await limitado('M6: reativar alerta para ultrapassar 20 ativos', () => as('authenticated', secReader, `update public.v2_search_alerts set active = true where id = '${inactiveAlert.rows[0].id}'`));
+// Preencher até 50 alertas totais (já tem 21) e validar que o 51º é bloqueado
+for (let i = 22; i <= 50; i += 1) {
+  await as('authenticated', secReader, `insert into public.v2_search_alerts (user_id, query, active) values ('${secReader}', 'Alerta pausado ${i}', false)`);
+}
+await limitado('M6: 51º alerta total em INSERT', () => as('authenticated', secReader, `insert into public.v2_search_alerts (user_id, query, active) values ('${secReader}', 'Alerta 51', false)`));
+process.stdout.write('Spec 143 M6 (limite de alertas em INSERT e UPDATE OF active): verificado com sucesso\n');
+
+// M7: suspensão em UPDATE/DELETE de v2_books e validação HTTPS + máx. 5 em v2_books.photos
+const suspUpdateBook = await as('authenticated', secSuspended, `update public.v2_books set title = 'Alterado suspenso' where id = '14310007-0000-4000-8000-000000000007' returning id`);
+if (suspUpdateBook.rows.length !== 0) throw new Error('M7: conta suspensa editou anúncio em v2_books');
+const suspDeleteDraft = await as('authenticated', secSuspended, `delete from public.v2_books where id = '14310006-0000-4000-8000-000000000006' returning id`);
+if (suspDeleteDraft.rows.length !== 0) throw new Error('M7: conta suspensa excluiu rascunho em v2_books');
+await denied('M7: photos com link http://', () => as('authenticated', secOwner, `update public.v2_books set photos = array['https://ok.example/1.jpg', 'http://inseguro.example/2.jpg'] where id = '${secBookAvail}'`));
+await denied('M7: photos com mais de 5 itens', () => as('authenticated', secOwner, `update public.v2_books set photos = array['https://ok.example/1.jpg','https://ok.example/2.jpg','https://ok.example/3.jpg','https://ok.example/4.jpg','https://ok.example/5.jpg','https://ok.example/6.jpg'] where id = '${secBookAvail}'`));
+await as('authenticated', secOwner, `update public.v2_books set photos = array['https://ok.example/1.jpg','https://ok.example/2.jpg','https://ok.example/3.jpg','https://ok.example/4.jpg','https://ok.example/5.jpg'] where id = '${secBookAvail}'`);
+process.stdout.write('Spec 143 M7 (suspensão UPDATE/DELETE e photos HTTPS máx. 5): verificado com sucesso\n');
+
+const webPushEndpoint = 'https://web.push.apple.com/inscricao-de-teste';
+const webPushKey = 'x'.repeat(87);
+const webPushSecret = 'a'.repeat(22);
+const insertWebPush = (id, endpoint) => `insert into public.v2_web_push_subscriptions (endpoint, user_id, p256dh, auth_secret)
+  values ('${endpoint}', '${id}', '${webPushKey}', '${webPushSecret}')`;
+await as('authenticated', owner, insertWebPush(owner, webPushEndpoint));
+await denied('Web Push: inscrição em outra conta', () => as('authenticated', reader, insertWebPush(owner, 'https://web.push.apple.com/outra')));
+await denied('Web Push: destino fora da Apple', () => as('authenticated', owner, insertWebPush(owner, 'https://web.push.apple.com.exemplo.com/externo')));
+await denied('Web Push: leitura anônima', () => as('anon', null, 'select * from public.v2_web_push_subscriptions'));
+const webPushOther = await as('authenticated', reader, `delete from public.v2_web_push_subscriptions where endpoint = '${webPushEndpoint}' returning endpoint`);
+if (webPushOther.rows.length !== 0) throw new Error('Web Push: outra conta removeu inscrição alheia');
+const webPushOwn = await as('authenticated', owner, `delete from public.v2_web_push_subscriptions where endpoint = '${webPushEndpoint}' returning endpoint`);
+if (webPushOwn.rows.length !== 1) throw new Error('Web Push: dono não conseguiu remover sua inscrição');
+process.stdout.write('Web Push: inscrição própria, destinos e RLS verificados.\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

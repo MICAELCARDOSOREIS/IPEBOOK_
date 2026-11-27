@@ -1,0 +1,134 @@
+import { fireEvent, render } from "@testing-library/react-native";
+import * as Haptics from "expo-haptics";
+import { Platform, View } from "react-native";
+import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
+import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { OfflineState } from "@/view/components/OfflineState";
+import { createNotificationsStyles } from "@/view/notifications/notificationsStyles";
+import { colors, tokens } from "@/view/tokens";
+import { ProfileIdentityCard, ProfileMenuSection } from "@/view/profile/ProfileHubSections";
+import { Settings } from "@/view/profile/settings";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
+import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+
+jest.mock("@/viewmodel/useSettingsViewModel", () => ({ useSettingsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({
+  usePublicProfileViewModel: () => [{ profile: { userId: "ana", name: "Ana Paula", joinedAt: "2026-01-10T00:00:00.000Z" }, loading: false, error: null }, { reload: jest.fn() }],
+}));
+jest.mock("@/viewmodel/useNotificationPreferencesViewModel", () => ({
+  useNotificationPreferencesViewModel: jest.fn(),
+  NOTIFICATION_PREFERENCE_CATEGORIES: {
+    proposals: { label: "Propostas e mensagens", description: "Alguém tem interesse num livro seu ou responde a um pedido", types: ["request_received", "request_accepted"] },
+  },
+}));
+
+describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
+  const originalPlatform = Platform.OS;
+
+  beforeEach(() => {
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    jest.mocked(useSettingsViewModel).mockReturnValue([
+      { clearingCache: false, cacheCleared: false, cacheError: null, clearingHistory: false, historyCleared: false, historyError: null },
+      { clearBooksCache: jest.fn().mockResolvedValue(undefined), clearSearchHistory: jest.fn().mockResolvedValue(undefined) },
+    ]);
+    jest.mocked(useAuthViewModel).mockReturnValue([
+      { user: { id: "ana", email: "ana@exemplo.com" }, loading: false, error: null },
+      { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
+    ]);
+    jest.mocked(useNotificationPreferencesViewModel).mockReturnValue([
+      { enabled: { proposals: true, meetings: true, searchAlerts: true, system: true }, saving: false, error: null },
+      { setEnabled: jest.fn().mockResolvedValue(undefined) },
+    ]);
+  });
+
+  afterEach(() => {
+    Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+    jest.clearAllMocks();
+  });
+
+  it("aplica feedback háptico em Meu perfil no iOS ao acionar Editar perfil e item de menu", async () => {
+    const impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
+    const onEditProfile = jest.fn();
+    const onCreateListing = jest.fn();
+    const onMenu = jest.fn();
+
+    const view = await render(
+      <View>
+        <ProfileIdentityCard
+          name="Ana Paula"
+          instagramHandle={null}
+          totalPublications={2}
+          completedTrocas={1}
+          ratingText="5.0"
+          onEditProfile={onEditProfile}
+          onCreateListing={onCreateListing}
+          onMyListings={jest.fn()}
+          onMeetingHistory={jest.fn()}
+          onRatings={jest.fn()}
+        />
+        <ProfileMenuSection
+          title="Atividade"
+          items={[{ key: "listings", icon: "shelf", label: "Minhas publicações", onPress: onMenu, showChevron: true }]}
+        />
+      </View>,
+    );
+
+    expect(view.getAllByTestId("ios-native-glass", { includeHiddenElements: true }).length).toBeGreaterThanOrEqual(2);
+    await fireEvent.press(view.getByLabelText("Editar perfil"));
+    await fireEvent.press(view.getByLabelText("Publicar um livro"));
+    await fireEvent.press(view.getByLabelText("Minhas publicações"));
+    expect(onEditProfile).toHaveBeenCalledTimes(1);
+    expect(onCreateListing).toHaveBeenCalledTimes(1);
+    expect(onMenu).toHaveBeenCalledTimes(1);
+    expect(impactSpy).toHaveBeenCalledTimes(3);
+    impactSpy.mockRestore();
+  });
+
+  it("aplica feedback de seleção em Configurações ao expandir seção no iOS", async () => {
+    const selectionSpy = jest.spyOn(Haptics, "selectionAsync").mockResolvedValue();
+    const view = await render(<Settings onBack={jest.fn()} onNavigateToEditProfile={jest.fn()} />);
+
+    await fireEvent.press(view.getByLabelText("Preferências"));
+    expect(selectionSpy).toHaveBeenCalledTimes(1);
+    selectionSpy.mockRestore();
+  });
+
+  it("usa superfície Liquid Glass e haptic no retry de OfflineState e ErrorState no iOS", async () => {
+    const impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
+    const onRetryOffline = jest.fn();
+    const onRetryError = jest.fn();
+    const networkDataSource = new MemoryNetworkStatusDataSource(false);
+
+    const offline = await render(<OfflineState onRetry={onRetryOffline} networkDataSource={networkDataSource} />);
+    expect(offline.getByTestId("ios-card-glass", { includeHiddenElements: true })).toBeDefined();
+    await fireEvent.press(offline.getByRole("button", { name: "Tentar novamente" }));
+    expect(onRetryOffline).toHaveBeenCalledTimes(1);
+
+    const error = await render(<ErrorState message="Falha ao carregar." onRetry={onRetryError} />);
+    expect(error.getByTestId("ios-card-glass", { includeHiddenElements: true })).toBeDefined();
+    await fireEvent.press(error.getByRole("button", { name: "Tentar novamente" }));
+    expect(onRetryError).toHaveBeenCalledTimes(1);
+    expect(impactSpy).toHaveBeenCalledTimes(2);
+    impactSpy.mockRestore();
+  });
+
+  it("aplica cartão elevado iOS 26 em notificações/perfil sem alterar Android", () => {
+    const iosCard = iosNeutralCardStyle(colors);
+    expect(iosCard?.borderRadius).toBe(tokens.radius.xl);
+    expect(iosCard?.backgroundColor).toBe(colors.m3.surfaceContainerLowest);
+
+    const iosNotifications = createNotificationsStyles(colors);
+    expect(iosNotifications.card.borderRadius).toBe(tokens.radius.xl);
+    expect(iosNotifications.permissionIconCircle.backgroundColor).toBe(colors.m3.primaryContainer);
+    expect(iosNotifications.emptyHeadline.fontSize).toBe(25);
+
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    expect(iosNeutralCardStyle(colors)).toBeNull();
+    const androidNotifications = createNotificationsStyles(colors);
+    expect(androidNotifications.card.borderRadius).toBe(tokens.radius.card);
+    expect(androidNotifications.permissionIconCircle.backgroundColor).toBe(colors.m3.secondaryContainer);
+  });
+});

@@ -1,0 +1,113 @@
+appId: com.ipebook.app
+name: Onboarding, permissão de avisos e catálogo inicial (Android)
+tags:
+  - android
+  - smoke
+---
+- runFlow:
+    when:
+      true: ${E2E_CLEAR_STATE == 'true'}
+    commands:
+      - launchApp:
+          clearState: true
+      - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "DEVELOPMENT SERVERS"
+          commands:
+            - runFlow:
+                when:
+                  true: ${METRO_URL != null}
+                commands:
+                  - openLink: ${METRO_URL}
+                  - waitForAnimationToEnd
+            - runFlow:
+                when:
+                  visible: "DEVELOPMENT SERVERS"
+                commands:
+                  - tapOn: "http://"
+                  - inputText: "http://127.0.0.1:8081"
+                  - hideKeyboard
+                  - tapOn: "Connect"
+      - extendedWaitUntil:
+          visible: "(Continue|Toggle performance monitor|Uma boa história)"
+          timeout: 45000
+      - runFlow:
+          when:
+            visible: "Continue"
+          commands:
+            - tapOn: "Continue"
+            - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Toggle performance monitor"
+          commands:
+            - back
+            - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible: "Uma boa história"
+          timeout: 20000
+      - assertVisible: "Uma boa história"
+      - assertVisible: "Começar"
+      - assertVisible: "Já tenho conta"
+      - tapOn: "Já tenho conta"
+      - assertVisible: "Sua próxima leitura"
+      - assertVisible: "Continuar com Google"
+      - runFlow:
+          when:
+            true: ${E2E_EMAIL != null && E2E_SENHA != null}
+          commands:
+            - tapOn: "E-mail"
+            - inputText: ${E2E_EMAIL}
+            - hideKeyboard
+            - tapOn: "Senha"
+            - inputText: ${E2E_SENHA}
+            - hideKeyboard
+            - tapOn: "Entrar"
+            - runFlow:
+                when:
+                  visible: "Avisos no seu celular"
+                commands:
+                  - tapOn: "Permitir avisos"
+- launchApp:
+    stopApp: false
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Início"
+    commands:
+      - tapOn: "Início"
+      - assertVisible: "Encontre sua próxima história."
+      - assertVisible: "Perto de você"
+      - tapOn: "Selecionar local em Piripiri: .*"
+      - assertVisible: "Piripiri (Todos os locais)"
+      - back
+      - tapOn: "Explorar"
+      - assertVisible: "O que vamos ler hoje?"
+      - tapOn: "Buscar livros"
+      - inputText: "Dom"
+      - hideKeyboard
+      - runFlow:
+          when:
+            visible: "Limpar busca"
+          commands:
+            - tapOn: "Limpar busca"
+      - tapOn: "Filtrar por Venda"
+      - tapOn: "Filtrar por Troca"
+      - tapOn: "Filtrar por Doação"
+      - tapOn: "Filtrar por Todas"
+      - tapOn: "Abrir filtros"
+      - assertVisible: "Filtrar livros"
+      - back
+      - runFlow:
+          when:
+            visible: "Ordenar por .*"
+          commands:
+            - tapOn: "Ordenar por .*"
+            - assertVisible: "Ordenar por"
+            - back
+      - tapOn: "Ver meus livros favoritos"
+      - assertVisible: "Favoritos"
+      - back
+      - tapOn: "Início"
+      - assertVisible: "Encontre sua próxima história."

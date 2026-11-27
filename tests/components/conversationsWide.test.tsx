@@ -1,22 +1,19 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
-vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
-  useConversationsViewModel: vi.fn(),
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/viewmodel/useConversationsViewModel", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
+  useConversationsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
-// Entrega por QR (Spec 095): começa sem conclusão.
-let deliveryCompleted: Record<string, unknown> | null = null;
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
-  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: deliveryCompleted }),
-}));
-vi.mock("@/view/conversations/chat", () => ({
-  Chat: () => <>{/* Chat mock */}</>,
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/view/conversations/chat", () => ({
+  Chat: ({ onDeleteConversation }: { onDeleteConversation: () => void }) => {
+    const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");
+    return <Pressable accessibilityRole="button" onPress={onDeleteConversation}><Text>Apagar pelo chat</Text></Pressable>;
+  },
 }));
 
 import { Conversations } from "@/view/conversations/conversations";
@@ -32,9 +29,9 @@ const listing = (id: string, title: string): Book => ({
 });
 
 function setup(state: Partial<ConversationsState>) {
-  vi.mocked(useConversationsViewModel).mockReturnValue([
+  jest.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation: vi.fn().mockResolvedValue(true), cancelRequest: vi.fn().mockResolvedValue(true) },
+    { reload: jest.fn(), deleteConversation: jest.fn().mockResolvedValue(true), cancelRequest: jest.fn().mockResolvedValue(true) },
   ]);
 }
 
@@ -49,7 +46,7 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
   it("exibe cabeçalho editorial, card acolhedor e 3 cartões de destaque no estado vazio", async () => {
     setup({ items: [] });
-    const onExplore = vi.fn();
+    const onExplore = jest.fn();
     const screen = await renderView({ onExplore });
 
     // Cabeçalho editorial da tela
@@ -64,7 +61,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
 
     // 3 destaques de segurança e circulação na comunidade de Piripiri
     expect(screen.getByText("Negociação direta")).toBeDefined();
-    expect(screen.getByText("Pontos de encontro seguros")).toBeDefined();
+    expect(screen.getByText("Pontos de encontro recomendados")).toBeDefined();
     expect(screen.getByText("Avaliações mútuas")).toBeDefined();
 
     await act(async () => {
@@ -111,47 +108,73 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByText("Sobre a troca")).toBeDefined();
   });
 
-  it("oferece botão visível de apagar só nas conversas aceitas, sem dica de toque longo", async () => {
+  it("oferece a exclusão no chat selecionado e informa o efeito da confirmação", async () => {
     setup({
       items: [
         { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Oi", lastMessageAt: null, kind: "accepted" },
-        { requestId: "r2", listing: listing("b2", "O Cortiço"), otherName: "Carlos", otherPhotoUrl: null, preview: "Proposta", lastMessageAt: null, kind: "pendingReceived" },
       ],
     });
     const screen = await renderView();
-    expect(screen.getByLabelText("Apagar conversa com Ana Paula")).toBeDefined();
-    expect(screen.queryByLabelText("Apagar conversa com Carlos")).toBeNull();
-    expect(screen.queryByText(/mantenha o dedo/)).toBeNull();
+    expect(screen.queryByLabelText("Apagar conversa com Ana Paula")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Apagar pelo chat" })).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
+    expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Apagar pelo chat" })); });
+    expect(screen.getByText(/some só para você/)).toBeDefined();
   });
 
-  describe("Combinar encontro no painel lateral (Spec 095)", () => {
-    const accepted: ConversationItem = {
-      requestId: "r1",
-      listing: listing("b1", "Dom Casmurro"),
-      otherName: "Ana Paula",
+  it("mantém o cabeçalho e exibe um único cartão no painel direito durante o carregamento", async () => {
+    setup({ loading: true, items: [] });
+    const screen = await renderView();
+
+    expect(screen.getByRole("header").props.children).toBe("Conversas");
+    expect(
+      screen.getByText("Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri."),
+    ).toBeDefined();
+    expect(screen.getByLabelText("Carregando conversas")).toBeDefined();
+    expect(screen.getByTestId("conversation-about-loading", { includeHiddenElements: true }).children).toHaveLength(1);
+  });
+
+  it("no painel lateral de compra exibe autor, preço e permite abrir o anúncio ou denunciar", async () => {
+    const saleItem: ConversationItem = {
+      requestId: "r-sale",
+      listing: {
+        id: "b-sale",
+        title: "Capitães da Areia",
+        author: "Jorge Amado",
+        ownerId: "owner1",
+        modality: "sale",
+        price: 35,
+        status: "available",
+      },
+      otherName: "Maria",
       otherPhotoUrl: null,
-      preview: "Pode ser sábado na praça?",
+      preview: "Fechado!",
       lastMessageAt: "2026-10-26T06:00:00",
       kind: "accepted",
     };
 
-    it("oferece Combinar encontro e abre a negociação", async () => {
-      setup({ items: [accepted] });
-      const onOpenNegotiation = vi.fn();
-      const screen = await renderView({ onOpenNegotiation });
-      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-      await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro" })); });
-      expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
+    setup({ items: [saleItem] });
+    const onOpenListing = jest.fn();
+    const onReportListing = jest.fn();
+    const screen = await renderView({ onOpenListing, onReportListing });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Maria"));
     });
 
-    it("com a entrega concluída, não oferece mais Combinar encontro", async () => {
-      deliveryCompleted = { requestId: "r1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" };
-      setup({ items: [accepted] });
-      const screen = await renderView();
-      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-      deliveryCompleted = null;
-      expect(screen.getByTestId("conversation-about")).toBeDefined();
-      expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
+    expect(screen.getByText("Sobre a compra")).toBeDefined();
+    expect(screen.getByText("Jorge Amado")).toBeDefined();
+    expect(screen.getByText("R$ 35,00")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver anúncio de Capitães da Areia" }));
     });
+    expect(onOpenListing).toHaveBeenCalledWith("b-sale");
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Denunciar anúncio" }));
+    });
+    expect(onReportListing).toHaveBeenCalledWith("b-sale");
   });
 });

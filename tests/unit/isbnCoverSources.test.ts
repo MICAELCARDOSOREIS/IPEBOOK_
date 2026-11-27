@@ -1,11 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
 import type { BookMetadata } from "@/model/entities/bookMetadata";
 import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
 import { GoogleBooksBookMetadataService, largeGoogleCover } from "@/infra/services/googleBooksBookMetadataService";
 import { OpenLibraryBookMetadataService, toHttps } from "@/infra/services/openLibraryBookMetadataService";
 
 const ISBN = "9788535914849";
-const ok = (body: unknown) => vi.fn().mockResolvedValue({ ok: true, json: async () => body });
+const ok = (body: unknown) => jest.fn().mockResolvedValue({ ok: true, json: async () => body });
 
 describe("capas do ISBN (Spec 092)", () => {
   it("Open Library prefere a capa grande e força https", async () => {
@@ -51,19 +50,19 @@ describe("capas do ISBN (Spec 092)", () => {
   });
 
   it("Google Books trata ISBN inválido, resposta vazia, sem capa, sem autor e falha de rede", async () => {
-    const never = vi.fn();
+    const never = jest.fn();
     expect(await new GoogleBooksBookMetadataService(never as never).lookupByIsbn("abc")).toBeNull();
     expect(never).not.toHaveBeenCalled();
     expect(await new GoogleBooksBookMetadataService(ok({ totalItems: 0 }) as never).lookupByIsbn(ISBN)).toBeNull();
-    expect(await new GoogleBooksBookMetadataService(vi.fn().mockResolvedValue({ ok: false }) as never).lookupByIsbn(ISBN)).toBeNull();
-    expect(await new GoogleBooksBookMetadataService(vi.fn().mockRejectedValue(new Error("rede")) as never).lookupByIsbn(ISBN)).toBeNull();
+    expect(await new GoogleBooksBookMetadataService(jest.fn().mockResolvedValue({ ok: false }) as never).lookupByIsbn(ISBN)).toBeNull();
+    expect(await new GoogleBooksBookMetadataService(jest.fn().mockRejectedValue(new Error("rede")) as never).lookupByIsbn(ISBN)).toBeNull();
     const bare = await new GoogleBooksBookMetadataService(ok({ items: [{ volumeInfo: { title: "Sem capa" } }] }) as never).lookupByIsbn(ISBN);
     expect(bare).toMatchObject({ title: "Sem capa", author: "Autor desconhecido", coverUrl: undefined });
     expect(bare?.coverIsLarge).toBeUndefined();
   });
 
   const source = (value: BookMetadata | null | Error) => ({
-    lookupByIsbn: value instanceof Error ? vi.fn().mockRejectedValue(value) : vi.fn().mockResolvedValue(value),
+    lookupByIsbn: value instanceof Error ? jest.fn().mockRejectedValue(value) : jest.fn().mockResolvedValue(value),
   });
 
   it("composto junta autor real e a capa de maior resolução", async () => {

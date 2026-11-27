@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
@@ -9,27 +8,27 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
 const fakeUseCases: IBookUseCases = {
-  createListing: vi.fn(),
-  listAvailable: vi.fn(),
-  getById: vi.fn(),
-  listByOwner: vi.fn(),
-  updateListing: vi.fn(),
-  cancelListing: vi.fn(),
-  togglePauseListing: vi.fn(),
-  search: vi.fn(),
+  createListing: jest.fn(),
+  listAvailable: jest.fn(),
+  getById: jest.fn(),
+  listByOwner: jest.fn(),
+  updateListing: jest.fn(),
+  cancelListing: jest.fn(),
+  togglePauseListing: jest.fn(),
+  search: jest.fn(),
 } as unknown as IBookUseCases;
 
 const fakeRateLimiter = {
-  checkAndRecord: vi.fn().mockReturnValue({ allowed: true }),
-  checkLimit: vi.fn().mockReturnValue(true),
-  recordAttempt: vi.fn(),
-  reset: vi.fn(),
+  checkAndRecord: jest.fn().mockReturnValue({ allowed: true }),
+  checkLimit: jest.fn().mockReturnValue(true),
+  recordAttempt: jest.fn(),
+  reset: jest.fn(),
 } as any;
 
 const fakeLogger = {
-  error: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
 } as any;
 
 async function renderHook(metadataService: IBookMetadataService) {
@@ -52,13 +51,13 @@ afterEach(async () => {
   await act(async () => {
     mounted.splice(0).forEach((tree) => tree.unmount());
   });
-  vi.restoreAllMocks();
+  jest.restoreAllMocks();
 });
 
 describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
   it("informa erro caso tente buscar com ISBN vazio", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn(),
+      lookupByIsbn: jest.fn(),
     };
     const hook = await renderHook(fakeMetadataService);
 
@@ -77,7 +76,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
 
   it("informa erro caso o ISBN seja inválido", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn(),
+      lookupByIsbn: jest.fn(),
     };
     const hook = await renderHook(fakeMetadataService);
 
@@ -96,7 +95,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
 
   it("preenche título, autor e capa quando o livro é encontrado", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn().mockResolvedValue({
+      lookupByIsbn: jest.fn().mockResolvedValue({
         isbn: "9788535914849",
         title: "Dom Casmurro",
         author: "Machado de Assis",
@@ -123,7 +122,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
 
   it("guarda sinopse, editora, páginas e ano do ISBN e os envia ao cadastrar o anúncio (Spec 097)", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn().mockResolvedValue({
+      lookupByIsbn: jest.fn().mockResolvedValue({
         isbn: "9788535914849",
         title: "1984",
         author: "George Orwell",
@@ -143,7 +142,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
       publicationYear: 2009,
     });
 
-    const createListing = vi.fn().mockResolvedValue({ id: "novo" });
+    const createListing = jest.fn().mockResolvedValue({ id: "novo" });
     (fakeUseCases as unknown as { createListing: unknown }).createListing = createListing;
     act(() => { hook.current[1].setCondition("good"); hook.current[1].setPrice("20"); });
     await act(async () => { await hook.current[1].submit("dono"); });
@@ -160,7 +159,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
   });
 
   it("uma nova busca troca a edição; sem dados da edição, o anúncio vai sem sinopse", async () => {
-    const lookupByIsbn = vi
+    const lookupByIsbn = jest
       .fn()
       .mockResolvedValueOnce({ isbn: "9788535914849", title: "1984", author: "George Orwell", synopsis: "Primeira." })
       .mockResolvedValueOnce({ isbn: "9788535902778", title: "Outro", author: "Autor" });
@@ -175,7 +174,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
 
   it("orienta preenchimento manual quando o exemplar não é encontrado", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn().mockResolvedValue(null),
+      lookupByIsbn: jest.fn().mockResolvedValue(null),
     };
     const hook = await renderHook(fakeMetadataService);
 
@@ -195,7 +194,7 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
 
   it("handleBarcodeScanned normaliza código de barras e dispara busca automática (Spec 059)", async () => {
     const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn().mockResolvedValue({
+      lookupByIsbn: jest.fn().mockResolvedValue({
         isbn: "9788535914849",
         title: "Memórias Póstumas de Brás Cubas",
         author: "Machado de Assis",

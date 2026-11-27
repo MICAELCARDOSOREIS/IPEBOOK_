@@ -68,7 +68,7 @@ export class ShareUseCases implements IShareUseCases {
       `🌿 ${modalityText}`,
       ...(detailsText ? [`📖 ${detailsText}`] : []),
       neighborhoodText,
-      `🤝 Combine a retirada em um Ponto Seguro da cidade!`,
+      `🤝 Combine a retirada em um ponto recomendado da cidade!`,
       ``,
       `👉 Veja fotos e combine a entrega no IpêBook:`,
       url.trim(),

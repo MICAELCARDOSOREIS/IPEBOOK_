@@ -1,18 +1,17 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import { colors } from "@/view/tokens";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 
 import Welcome from "@/view/onboarding/welcome";
 
 describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () => {
   it("mostra a chamada, as seções e leva Entrar e Criar conta aos destinos", async () => {
-    const onStart = vi.fn();
-    const onSignIn = vi.fn();
-    const onHelp = vi.fn();
+    const onStart = jest.fn();
+    const onSignIn = jest.fn();
+    const onHelp = jest.fn();
     const screen = await render(<Welcome onStart={onStart} onSignIn={onSignIn} onHelp={onHelp} onTerms={() => {}} />);
     expect(screen.getByText("merece continuar.")).toBeDefined();
     expect(screen.getByText("Como funciona")).toBeDefined();
@@ -29,7 +28,7 @@ describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () 
   });
 
   it("aplica as cores canônicas da marca nos cartões de Venda, Troca e Doação (ADR 0104)", async () => {
-    const screen = await render(<Welcome onStart={vi.fn()} onSignIn={vi.fn()} />);
+    const screen = await render(<Welcome onStart={jest.fn()} onSignIn={jest.fn()} />);
     const vendaTitle = screen.getByText("Venda");
     const trocaTitle = screen.getByText("Troca");
     const doacaoTitle = screen.getByText("Doação");
@@ -42,8 +41,8 @@ describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () 
 
 describe("Boas-vindas no site como convite do beta (Spec 108)", () => {
   it("troca Entrar e Criar conta pelo teste do app e oculta Ver na Play Store na Home", async () => {
-    const onStart = vi.fn();
-    const onSignIn = vi.fn();
+    const onStart = jest.fn();
+    const onSignIn = jest.fn();
     const screen = await render(<Welcome betaInvite onStart={onStart} onSignIn={onSignIn} onTerms={() => {}} />);
     expect(screen.queryByLabelText("Entrar")).toBeNull();
     expect(screen.queryByLabelText("Criar conta")).toBeNull();

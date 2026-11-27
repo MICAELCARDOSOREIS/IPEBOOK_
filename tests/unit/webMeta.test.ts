@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it } from "vitest";
 import { Platform } from "react-native";
 import { updateWebSocialMeta } from "@/view/webMeta";
 import type { OpenGraphMetadata } from "@/model/formatters/openGraphFormatter";

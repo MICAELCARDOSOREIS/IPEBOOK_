@@ -1,0 +1,147 @@
+appId: com.ipebook.app
+name: Perfil, sub-telas de conta, Configurações, Ajuda, Termos, Sobre, Alertas e 404 (Android)
+tags:
+  - android
+  - perfil
+  - configuracoes
+---
+- launchApp:
+    stopApp: false
+- tapOn: "Início"
+- assertVisible:
+    id: "home-top-profile-button"
+- tapOn:
+    id: "home-top-profile-button"
+- assertVisible: "Meu perfil"
+# 1. Configurações -> Conta e dados + Sobre o IpêBook
+- tapOn: "Abrir configurações"
+- assertVisible: "Configurações"
+- tapOn: "Conta e dados"
+- waitForAnimationToEnd
+- tapOn: "Privacidade e dados"
+- assertVisible: "Você no controle."
+- back
+- assertVisible: "Conta e dados"
+- waitForAnimationToEnd
+- tapOn: "Pessoas bloqueadas"
+- assertNotVisible: "Conta e dados"
+- assertVisible: "Pessoas bloqueadas"
+- back
+- assertVisible: "Conta e dados"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Moderação"
+    commands:
+      - tapOn: "Moderação"
+      - assertVisible: "Denúncias abertas.*"
+      - back
+      - assertVisible: "Conta e dados"
+      - waitForAnimationToEnd
+- tapOn: "Conta e dados"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Sobre o IpêBook"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Sobre o IpêBook"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Conhecer o IpêBook"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Conhecer o IpêBook"
+- assertVisible: "Uma boa história"
+- back
+- assertVisible: "Configurações"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Ajuda e suporte"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Ajuda e suporte"
+- assertVisible: "Ajuda"
+- assertNotVisible: "Sobre o IpêBook"
+- back
+- assertVisible: "Configurações"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Termos e privacidade"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Termos e privacidade"
+- assertVisible: "Informação clara para você."
+- tapOn: "Privacidade (LGPD)"
+- back
+- assertVisible: "Configurações"
+- waitForAnimationToEnd
+- back
+- assertVisible: "Meu perfil"
+- waitForAnimationToEnd
+# 2. Sub-telas diretas do Perfil Hub
+- tapOn: "Avaliações recebidas"
+- assertNotVisible: "Minhas publicações"
+- assertVisible: "Avaliações recebidas"
+- back
+- assertVisible: "Meu perfil"
+- waitForAnimationToEnd
+- tapOn: "Histórico de encontros"
+- assertNotVisible: "Minhas publicações"
+- assertVisible: "Histórico de encontros"
+- back
+- assertVisible: "Meu perfil"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Favoritos e alertas"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Favoritos e alertas"
+- assertNotVisible: "Sair da conta"
+- assertVisible: "Favoritos"
+- back
+- assertVisible: "Favoritos e alertas"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Segurança e verificação"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Segurança e verificação"
+- assertVisible: "Alterar senha"
+- back
+- assertVisible: "Segurança e verificação"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Convidar amigos"
+    direction: DOWN
+    speed: 65
+    visibilityPercentage: 60
+    timeout: 12000
+- tapOn: "Convidar amigos"
+- assertVisible: "Livros ganham vida quando são lidos."
+- back
+- assertVisible: "Convidar amigos"
+- waitForAnimationToEnd
+- back
+# 3. Rotas auxiliares por deep link: Alertas, Beta e +not-found (404)
+- openLink: "ipebook:///alertas"
+- assertVisible: "Meus alertas"
+- back
+- openLink: "ipebook:///beta"
+- assertVisible: "Teste o IpêBook antes de todo mundo."
+- back
+- openLink: "ipebook:///rota-inexistente-e2e"
+- assertVisible: "Página não encontrada"
+- tapOn: "Ir para o início"
+- assertVisible: "Encontre sua próxima história."

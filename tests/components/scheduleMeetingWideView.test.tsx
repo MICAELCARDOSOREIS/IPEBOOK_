@@ -1,19 +1,19 @@
 
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ScheduleMeeting } from "@/view/requests/scheduleMeeting";
 import { useScheduleMeetingViewModel, type ScheduleMeetingActions, type ScheduleMeetingState } from "@/viewmodel/useScheduleMeetingViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({
+jest.mock("@/view/useIsWideWeb", () => ({
   useIsWideWeb: () => true,
+  useHydratedWindowWidth: () => 1280,
   WIDE_WEB_MIN_WIDTH: 960,
 }));
 
-vi.mock("@/viewmodel/useScheduleMeetingViewModel");
+jest.mock("@/viewmodel/useScheduleMeetingViewModel");
 
 afterEach(async () => {
   await act(async () => cleanup());
-  vi.clearAllMocks();
+  jest.clearAllMocks();
 });
 
 const dias = [
@@ -24,16 +24,16 @@ const dias = [
 
 function mockSchedule(
   state: Partial<ScheduleMeetingState>,
-  submit = vi.fn().mockResolvedValue(true),
+  submit = jest.fn().mockResolvedValue(true),
 ) {
   const actions: ScheduleMeetingActions = {
-    reload: vi.fn(),
-    selectPoint: vi.fn(),
-    selectDay: vi.fn(),
-    selectHour: vi.fn(),
+    reload: jest.fn(),
+    selectPoint: jest.fn(),
+    selectDay: jest.fn(),
+    selectHour: jest.fn(),
     submit,
   };
-  vi.mocked(useScheduleMeetingViewModel).mockReturnValue([
+  jest.mocked(useScheduleMeetingViewModel).mockReturnValue([
     {
       mode: "propose",
       loading: false,
@@ -54,13 +54,13 @@ function mockSchedule(
 }
 
 describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
-  it("renderiza layout em 2 colunas com lista de locais, grade de dias, horários e mapa/guia", async () => {
+  it("renderiza layout em 2 colunas com lista de locais, grade de dias, horários e guia de pontos", async () => {
     const actions = mockSchedule({
       pointName: "Praça da Bandeira (Centro)",
       dayIndex: 0,
       hour: 15,
     });
-    const onSent = vi.fn();
+    const onSent = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -73,9 +73,10 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     expect(screen.getByRole("header", { name: "Combinar encontro" })).toBeDefined();
     expect(screen.getByRole("header", { name: "Escolha onde e quando encontrar" })).toBeDefined();
 
-    // Coluna Direita: Mapa e Dicas
+    // Coluna Direita: Guia de pontos e Dicas
     expect(screen.getByText("Pontos de Encontro em Piripiri")).toBeDefined();
-    expect(screen.getByText("4 locais públicos oficiais")).toBeDefined();
+    expect(screen.getByText("4 locais públicos recomendados")).toBeDefined();
+    expect(screen.getByText("4 pontos recomendados em Piripiri")).toBeDefined();
     expect(screen.getByText("Dicas de Segurança Comunitária")).toBeDefined();
 
     // Detalhe do ponto selecionado na coluna direita e no card da lista
@@ -112,8 +113,8 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     await act(async () => {
       fireEvent.press(submitBtn);
     });
-    expect(actions.submit).toHaveBeenCalledOnce();
-    expect(onSent).toHaveBeenCalledOnce();
+    expect(actions.submit).toHaveBeenCalledTimes(1);
+    expect(onSent).toHaveBeenCalledTimes(1);
   });
 
   it("reagendamento no desktop: exibe manchete de reagendamento e botão de cancelar", async () => {
@@ -123,7 +124,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
       dayIndex: 1,
       hour: 10,
     });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -140,7 +141,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     await act(async () => {
       fireEvent.press(cancelBtn);
     });
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("exibe aviso específico quando o local fecha no dia escolhido (IFPI/Museu no fim de semana)", async () => {
@@ -177,8 +178,8 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
       );
     });
 
-    expect(screen.getByText("Escolha o local na lista ao lado ou no mapa")).toBeDefined();
-    expect(screen.getByText(/Pontos monitorados e centrais em Piripiri/)).toBeDefined();
+    expect(screen.getByText("Escolha o local na lista ao lado")).toBeDefined();
+    expect(screen.getByText("Locais públicos recomendados para trocar livros em Piripiri.")).toBeDefined();
   });
 
   it("renderiza ScrollView principal na página para permitir rolagem fluida e adaptação em qualquer altura de janela", async () => {

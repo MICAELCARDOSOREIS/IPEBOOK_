@@ -1,12 +1,14 @@
-import { useMemo } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRef } from "react";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { TextButton } from "@/view/components/TextButton";
 import { withPress } from "@/view/pressFeedback";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 export type ReservedListingSheetProps = {
   visible: boolean;
@@ -15,11 +17,22 @@ export type ReservedListingSheetProps = {
   category?: string | null;
   isFavorite?: boolean;
   favoriteLoading?: boolean;
+  favoriteDisabled?: boolean;
   onToggleFavorite?: () => void;
   onSearchCategory?: (category: string) => void;
   onViewOwnerProfile?: () => void;
   ownerName?: string | null;
 };
+
+const reservedSheetStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getReservedSheetStyles(colors: ColorPalette) {
+  let cached = reservedSheetStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    reservedSheetStylesCache.set(colors, cached);
+  }
+  return cached;
+}
 
 /**
  * Folha informativa M3 Expressive aberta ao tocar na pílula "Reservado" ou "Entregue" (Spec 110).
@@ -32,15 +45,28 @@ export function ReservedListingSheet({
   category,
   isFavorite = false,
   favoriteLoading = false,
+  favoriteDisabled,
   onToggleFavorite,
   onSearchCategory,
   onViewOwnerProfile,
   ownerName,
 }: ReservedListingSheetProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getReservedSheetStyles(colors);
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const pendingAction = useRef<(() => void) | null>(null);
+
+  const closeThen = (action: () => void) => {
+    if (isIos) {
+      pendingAction.current ??= action;
+      onClose();
+      return;
+    }
+    onClose();
+    action();
+  };
 
   const isReserved = status === "reserved";
   const title = isReserved ? "Exemplar Reservado" : "Exemplar Entregue";
@@ -48,133 +74,147 @@ export function ReservedListingSheet({
     ? "Este livro já está reservado para outro leitor de Piripiri em uma troca ou entrega agendada. Se o encontro não for concluído em até 7 dias, a reserva cai e o exemplar volta a ficar disponível."
     : "Este exemplar já foi entregue e a negociação foi concluída com sucesso entre os leitores da comunidade.";
 
-  return (
-    <Modal
-      statusBarTranslucent
-      navigationBarTranslucent
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
-    >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Fechar informações da reserva"
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-        />
+  const content = (
+    <>
+      {/* Cabeçalho informativo com ícone temático */}
+      <View style={styles.headerRow}>
+        <View style={styles.iconCircle}>
+          <AppIcon
+            name={isReserved ? "bookmark" : "checkCircle"}
+            size={28}
+            color={colors.m3.primary}
+          />
+        </View>
+        <View style={styles.headerTextCol}>
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
+        </View>
+      </View>
 
-        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
-          {wideWeb ? null : <View style={styles.handle} />}
-
-          {/* Cabeçalho informativo com ícone temático */}
-          <View style={styles.headerRow}>
-            <View style={styles.iconCircle}>
+      {/* Lista de Ações Úteis */}
+      <View style={styles.actionsList}>
+        {/* 1. Favoritar / Lista de Espera */}
+        {isReserved && onToggleFavorite ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              isFavorite
+                ? "Livro salvo nos favoritos. Toque para remover aviso."
+                : "Favoritar para ser avisado se a reserva for cancelada"
+            }
+            disabled={favoriteLoading || favoriteDisabled}
+            onPress={onToggleFavorite}
+            style={withPress(styles.actionCard)}
+          >
+            <View style={styles.actionIconBox}>
               <AppIcon
-                name={isReserved ? "bookmark" : "checkCircle"}
-                size={28}
-                color={colors.m3.primary}
+                name={isFavorite ? "heartFill" : "heart"}
+                size={22}
+                color={isFavorite ? colors.ipe.bloom : colors.m3.onSurfaceVariant}
               />
             </View>
-            <View style={styles.headerTextCol}>
-              <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-              <Text style={styles.message}>{message}</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>
+                {isFavorite ? "Salvo nos seus favoritos" : "Avisar se voltar a ficar disponível"}
+              </Text>
+              <Text style={styles.actionSubtitle}>
+                {isFavorite
+                  ? "Você receberá uma notificação se o livro voltar."
+                  : "Adicione aos favoritos para entrar na lista de espera."}
+              </Text>
             </View>
-          </View>
+          </Pressable>
+        ) : null}
 
-          {/* Lista de Ações Úteis */}
-          <View style={styles.actionsList}>
-            {/* 1. Favoritar / Lista de Espera */}
-            {isReserved && onToggleFavorite ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isFavorite
-                    ? "Livro salvo nos favoritos. Toque para remover aviso."
-                    : "Favoritar para ser avisado se a reserva for cancelada"
-                }
-                disabled={favoriteLoading}
-                onPress={onToggleFavorite}
-                style={withPress(styles.actionCard)}
-              >
-                <View style={styles.actionIconBox}>
-                  <AppIcon
-                    name={isFavorite ? "heartFill" : "heart"}
-                    size={22}
-                    color={isFavorite ? colors.ipe.bloom : colors.m3.onSurfaceVariant}
-                  />
-                </View>
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    {isFavorite ? "Salvo nos seus favoritos" : "Avisar se voltar a ficar disponível"}
-                  </Text>
-                  <Text style={styles.actionSubtitle}>
-                    {isFavorite
-                      ? "Você receberá uma notificação se o livro voltar."
-                      : "Adicione aos favoritos para entrar na lista de espera."}
-                  </Text>
-                </View>
-              </Pressable>
-            ) : null}
+        {/* 2. Buscar por outros livros da mesma categoria */}
+        {category && onSearchCategory ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Buscar outros livros da categoria ${category}`}
+            onPress={() => closeThen(() => onSearchCategory(category))}
+            style={withPress(styles.actionCard)}
+          >
+            <View style={styles.actionIconBox}>
+              <AppIcon name="search" size={22} color={colors.m3.primary} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Outros livros de {category}</Text>
+              <Text style={styles.actionSubtitle}>
+                Ver exemplares disponíveis em Piripiri
+              </Text>
+            </View>
+            <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        ) : null}
 
-            {/* 2. Buscar por outros livros da mesma categoria */}
-            {category && onSearchCategory ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Buscar outros livros da categoria ${category}`}
-                onPress={() => {
-                  onClose();
-                  onSearchCategory(category);
-                }}
-                style={withPress(styles.actionCard)}
-              >
-                <View style={styles.actionIconBox}>
-                  <AppIcon name="search" size={22} color={colors.m3.primary} />
-                </View>
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>Outros livros de {category}</Text>
-                  <Text style={styles.actionSubtitle}>
-                    Ver exemplares disponíveis em Piripiri
-                  </Text>
-                </View>
-                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-              </Pressable>
-            ) : null}
+        {/* 3. Ver outros livros do anunciante */}
+        {onViewOwnerProfile ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              ownerName
+                ? `Ver perfil e outros anúncios de ${ownerName}`
+                : "Ver perfil e outros anúncios deste leitor"
+            }
+            onPress={() => closeThen(onViewOwnerProfile)}
+            style={withPress(styles.actionCard)}
+          >
+            <View style={styles.actionIconBox}>
+              <AppIcon name="person" size={22} color={colors.m3.secondary} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>
+                {ownerName
+                  ? `Outros livros de ${ownerName.split(" ")[0]}`
+                  : "Outros livros deste leitor"}
+              </Text>
+              <Text style={styles.actionSubtitle}>
+                Aproveite o mesmo encontro para circular mais títulos
+              </Text>
+            </View>
+            <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        ) : null}
+      </View>
 
-            {/* 3. Ver outros livros do anunciante */}
-            {onViewOwnerProfile ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Ver perfil e outros anúncios de ${ownerName ?? "deste leitor"}`}
-                onPress={() => {
-                  onClose();
-                  onViewOwnerProfile();
-                }}
-                style={withPress(styles.actionCard)}
-              >
-                <View style={styles.actionIconBox}>
-                  <AppIcon name="person" size={22} color={colors.m3.secondary} />
-                </View>
-                <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>
-                    Outros livros de {ownerName ? ownerName.split(" ")[0] : "deste leitor"}
-                  </Text>
-                  <Text style={styles.actionSubtitle}>
-                    Aproveite o mesmo encontro para circular mais títulos
-                  </Text>
-                </View>
-                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-              </Pressable>
-            ) : null}
-          </View>
+      {/* Botão de Fechar */}
+      <View style={styles.footerRow}>
+        <TextButton label="Entendi" onPress={onClose} />
+      </View>
+    </>
+  );
 
-          {/* Botão de Fechar */}
-          <View style={styles.footerRow}>
-            <TextButton label="Entendi" onPress={onClose} />
-          </View>
+  if (isIos) {
+    return (
+      <BottomSheet
+        testID="reserved-listing-sheet"
+        visible={visible}
+        onClose={onClose}
+        onDismiss={() => {
+          const action = pendingAction.current;
+          pendingAction.current = null;
+          action?.();
+        }}
+      >
+        <ScrollView
+          {...standardVerticalScrollProps}
+          style={styles.sheetScroll}
+        >
+          {content}
+        </ScrollView>
+      </BottomSheet>
+    );
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal statusBarTranslucent navigationBarTranslucent visible transparent animationType="fade" onRequestClose={onClose} accessibilityViewIsModal aria-modal>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Fechar informações da reserva" style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
+          {wideWeb ? null : <View style={styles.handle} />}
+          {content}
         </View>
       </View>
     </Modal>
@@ -205,6 +245,7 @@ function createStyles(colors: ColorPalette) {
       maxWidth: 520,
       borderRadius: tokens.radius.xl,
     },
+    sheetScroll: { flexGrow: 0 },
     handle: {
       width: 32,
       height: 4,

@@ -1,21 +1,70 @@
-import { useMemo } from "react";
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { topBarInset } from "@/view/topBarInset";
+import { useCallback, useMemo } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useScrollEdgeHeader } from "@/view/components/ScrollEdgeScreen";
+import { triggerHaptic } from "@/view/haptics";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { topBarInset } from "@/view/topBarInset";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type TopAppBarProps = {
   title: string;
   onBack: () => void;
+  /** Ação opcional exibida à direita da barra superior (ex.: atalho de segurança). */
+  rightAction?: React.ReactNode;
   /** Barra M3 sobre conteúdo em tela cheia (mapa): cobre a barra de status e sobe um nível de elevação. */
   floating?: boolean;
   /** Largura da coluna de conteúdo da tela, para alinhar a barra a ela na web larga. */
   contentMaxWidth?: number;
+  /**
+   * `false` quando a barra vive dentro de um painel (formulário da web larga): o recuo lateral é
+   * medido a partir do painel, não da janela, para o título não sair da área visível.
+   */
+  alignToWindow?: boolean;
 };
+
+/**
+ * Botão circular de voltar da barra superior (44 dp no iOS com Liquid Glass, 40 dp no Android).
+ */
+export function TopAppBarBackButton({ onBack }: { onBack: () => void }) {
+  const handleBack = useCallback(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onBack();
+  }, [onBack]);
+  const guardedBack = useGuardedPress(handleBack);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlassBack = isIos && !reduceTransparency;
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
+    <View style={isIos ? styles.iosBackShadow : undefined}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        hitSlop={8}
+        onPress={guardedBack}
+        style={({ pressed }) => [
+          styles.backButton,
+          isIos && (iosGlassBack ? styles.iosBackGlass : styles.iosBackOpaque),
+          pressed && styles.backButtonPressed,
+        ]}
+      >
+        {iosGlassBack ? (
+          <IosGlassBackdrop testID="top-app-bar-back-glass" style={{ borderRadius: tokens.radius.full }} />
+        ) : null}
+        <View style={styles.backIconWrapper}>
+          <AppIcon name="back" size={isIos ? 20 : 24} color={colors.m3.onSurface} />
+        </View>
+      </Pressable>
+    </View>
+  );
+}
 
 /**
  * Barra superior do design system (barra-superior.md), pequena do Material 3 como no Figma
@@ -23,15 +72,25 @@ export type TopAppBarProps = {
  * Na web larga vira uma trilha discreta ("← Voltar | Título") de 48 px, sem faixa própria, para não
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
-export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: TopAppBarProps) {
-  const guardedBack = useGuardedPress(onBack);
+export function TopAppBar({ title, onBack, rightAction, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
+  const handleBack = useCallback(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onBack();
+  }, [onBack]);
+  const guardedBack = useGuardedPress(handleBack);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const usesSharedSurface = useScrollEdgeHeader();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { width } = useWindowDimensions();
+  const width = useHydratedWindowWidth();
   const wide = useIsWideWeb() && !floating;
   // Web larga: a barra acompanha a coluna de conteúdo centralizada (não vale para a barra sobre o mapa).
-  const alignToContent = Platform.OS === "web" && !floating ? { paddingHorizontal: topBarInset(width, contentMaxWidth) } : null;
+  const alignToContent = Platform.OS === "web" && !floating
+    ? alignToWindow
+      ? { paddingHorizontal: topBarInset(width, contentMaxWidth) }
+      : styles.crumbBarInline
+    : null;
   if (wide) {
     return (
       <View style={[styles.crumbBar, alignToContent]}>
@@ -49,24 +108,37 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: 
           <Text style={styles.crumbBackText}>Voltar</Text>
         </Pressable>
         <View accessible={false} aria-hidden={true} style={styles.crumbDivider} />
-        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.crumbTitle}>{title}</Text>
+        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={[styles.crumbTitle, { flex: 1 }]}>{title}</Text>
+        {rightAction ?? null}
       </View>
     );
   }
   return (
-    <View style={floating ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }] : [styles.bar, alignToContent]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Voltar"
-        hitSlop={8}
-        onPress={guardedBack}
-        style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+    <View
+      style={
+        floating
+          ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }]
+          : [
+              styles.bar,
+              isIos && styles.iosBar,
+              alignToContent,
+              usesSharedSurface && styles.transparentBar,
+            ]
+      }
+    >
+      <TopAppBarBackButton onBack={onBack} />
+      <Text
+        accessibilityRole="header"
+        accessibilityLabel={title}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+        maxFontSizeMultiplier={1.3}
+        style={[styles.title, isIos && !floating && styles.iosTitle]}
       >
-        <View style={styles.backIconWrapper}>
-          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-        </View>
-      </Pressable>
-      <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.title}>{title}</Text>
+        {title}
+      </Text>
+      {rightAction ? rightAction : isIos && !floating ? <View accessible={false} aria-hidden={true} style={styles.iosRightSpacer} /> : null}
     </View>
   );
 }
@@ -82,18 +154,24 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
       backgroundColor: colors.surface,
     },
+    iosBar: {
+      paddingHorizontal: tokens.spacing[16],
+      justifyContent: "space-between",
+    },
+    transparentBar: { backgroundColor: "transparent" },
     crumbBar: {
-      height: tokens.spacing[48],
+      minHeight: tokens.spacing[48],
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
       backgroundColor: colors.background,
     },
+    crumbBarInline: { paddingHorizontal: tokens.spacing[24] },
     crumbBack: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      height: 32,
+      minHeight: tokens.accessibility.touchTarget,
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
@@ -111,8 +189,10 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 2 },
     },
     backButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
+      width: Platform.OS === "web" ? tokens.accessibility.touchTarget : Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      height: Platform.OS === "web" ? tokens.accessibility.touchTarget : Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      minWidth: Platform.OS === "web" ? tokens.accessibility.touchTarget : Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      minHeight: Platform.OS === "web" ? tokens.accessibility.touchTarget : Platform.OS === "ios" ? 44 : tokens.spacing[40],
       borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
@@ -120,6 +200,28 @@ function createStyles(colors: ColorPalette) {
     },
     backIconWrapper: {
       marginLeft: -2,
+    },
+    iosBackShadow: {
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.14,
+      shadowRadius: 8,
+    },
+    iosBackGlass: {
+      overflow: "hidden",
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    iosBackOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosRightSpacer: {
+      width: 44,
+      height: 44,
     },
     backButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -131,6 +233,12 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       ...tokens.typography.titleBar,
       fontWeight: tokens.fontWeight.semiBold,
+    },
+    iosTitle: {
+      flex: 1,
+      textAlign: "center",
+      fontSize: 17,
+      lineHeight: 22,
     },
   });
 }

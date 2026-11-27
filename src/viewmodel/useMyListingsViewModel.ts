@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { notifyBooksCatalogMutated, registerBooksMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type MyListingsState = {
   books: readonly Book[];
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
   cancellingId: string | null;
@@ -21,23 +24,26 @@ export type MyListingsActions = {
 
 const sessionMyListingsCache = new Map<string, readonly Book[]>();
 
-export function getCachedMyListingById(bookId: string): Book | null {
-  if (process.env.NODE_ENV === "test") return null;
-  for (const list of sessionMyListingsCache.values()) {
-    const found = list.find((b) => b.id === bookId);
-    if (found) return found;
-  }
-  return null;
+registerBooksMemoryCache(() => {
+  sessionMyListingsCache.clear();
+});
+
+export function getCachedMyListingById(bookId: string, userId?: string | null): Book | null {
+  if (process.env.NODE_ENV === "test" || !userId) return null;
+  const list = sessionMyListingsCache.get(userId);
+  return list?.find((b) => b.id === bookId) ?? null;
 }
 
 export function useMyListingsViewModel(
   sessionUserId: string | null,
   books: IBookUseCases,
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void,
 ): [MyListingsState, MyListingsActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialCached = !isTest && sessionUserId ? (sessionMyListingsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<MyListingsState>({
     books: initialCached ?? [],
+    cachedAt: null,
     loading: initialCached === null,
     error: null,
     cancellingId: null,
@@ -47,6 +53,8 @@ export function useMyListingsViewModel(
   });
   const active = useRef(false);
   const request = useRef(0);
+  const booksRef = useRef<readonly Book[]>(state.books);
+  booksRef.current = state.books;
 
   const reload = useCallback(async () => {
     if (!active.current) return;
@@ -59,12 +67,14 @@ export function useMyListingsViewModel(
       pauseError: null,
     }));
     try {
-      const result = await books.listMyListings(sessionUserId);
-      if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, result);
+      const { data, cachedAt } = await (books.readMyListings?.(sessionUserId) ??
+        books.listMyListings(sessionUserId).then((result) => ({ data: result, cachedAt: null })));
+      if (!isTest && sessionUserId && cachedAt === null) sessionMyListingsCache.set(sessionUserId, data);
       if (active.current && current === request.current) {
         setState((previous) => ({
           ...previous,
-          books: result,
+          books: data,
+          cachedAt,
           loading: false,
           error: null,
         }));
@@ -85,55 +95,110 @@ export function useMyListingsViewModel(
 
   const cancelListing = useCallback(
     async (bookId: string): Promise<boolean> => {
-      setState((previous) => ({ ...previous, cancellingId: bookId, cancelError: null }));
+      const previousBooks = booksRef.current;
+      const optimisticBooks = previousBooks.filter((b) => b.id !== bookId);
+      if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, optimisticBooks);
+      setState((previous) => ({
+        ...previous,
+        books: optimisticBooks,
+        cancellingId: bookId,
+        cancelError: null,
+      }));
       try {
         await books.cancelListing(bookId, sessionUserId);
-        setState((previous) => ({
-          ...previous,
-          cancellingId: null,
-          books: previous.books.filter((b) => b.id !== bookId),
-        }));
+        if (active.current) {
+          setState((previous) => {
+            const nextBooks = previous.books.filter((b) => b.id !== bookId);
+            if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, nextBooks);
+            return {
+              ...previous,
+              cancellingId: null,
+              books: nextBooks,
+            };
+          });
+        }
+        notifyBooksCatalogMutated();
         return true;
       } catch (error) {
-        setState((previous) => ({
-          ...previous,
-          cancellingId: null,
-          cancelError:
-            error instanceof DomainError
-              ? error.message
-              : "Não foi possível remover o anúncio. Tente novamente.",
-        }));
+        if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, previousBooks);
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            books: previousBooks,
+            cancellingId: null,
+            cancelError:
+              error instanceof DomainError
+                ? error.message
+                : "Não foi possível remover o anúncio. Tente novamente.",
+          }));
+        }
         return false;
       }
     },
-    [books, sessionUserId],
+    [books, sessionUserId, isTest],
   );
 
   const togglePauseListing = useCallback(
     async (bookId: string): Promise<boolean> => {
-      setState((previous) => ({ ...previous, pausingId: bookId, pauseError: null }));
+      const previousBooks = booksRef.current;
+      const target = previousBooks.find((b) => b.id === bookId);
+      const canOptimisticallyFlip =
+        target !== undefined && (target.status === "available" || target.status === "paused");
+      const optimisticBooks = canOptimisticallyFlip
+        ? previousBooks.map((b) =>
+            b.id === bookId
+              ? { ...b, status: (b.status === "paused" ? "available" : "paused") as Book["status"] }
+              : b,
+          )
+        : previousBooks;
+      if (canOptimisticallyFlip && !isTest && sessionUserId) {
+        sessionMyListingsCache.set(sessionUserId, optimisticBooks);
+      }
+      setState((previous) => ({
+        ...previous,
+        books: optimisticBooks,
+        pausingId: bookId,
+        pauseError: null,
+      }));
       try {
         const updated = await books.togglePauseListing(bookId, sessionUserId);
-        setState((previous) => ({
-          ...previous,
-          pausingId: null,
-          books: previous.books.map((b) => (b.id === bookId ? updated : b)),
-        }));
+        if (active.current) {
+          setState((previous) => {
+            const nextBooks = previous.books.map((b) => (b.id === bookId ? updated : b));
+            if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, nextBooks);
+            return {
+              ...previous,
+              pausingId: null,
+              books: nextBooks,
+            };
+          });
+        }
+        notifyBooksCatalogMutated();
         return true;
       } catch (error) {
-        setState((previous) => ({
-          ...previous,
-          pausingId: null,
-          pauseError:
-            error instanceof DomainError
-              ? error.message
-              : "Não foi possível alterar o status do anúncio. Tente novamente.",
-        }));
+        if (canOptimisticallyFlip && !isTest && sessionUserId) {
+          sessionMyListingsCache.set(sessionUserId, previousBooks);
+        }
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            books: previousBooks,
+            pausingId: null,
+            pauseError:
+              error instanceof DomainError
+                ? error.message
+                : "Não foi possível alterar o status do anúncio. Tente novamente.",
+          }));
+        }
         return false;
       }
     },
-    [books, sessionUserId],
+    [books, sessionUserId, isTest],
   );
+
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
 
   useEffect(() => {
     active.current = true;
@@ -143,6 +208,15 @@ export function useMyListingsViewModel(
       request.current += 1;
     };
   }, [reload]);
+
+  useEffect(() => {
+    if (!sessionUserId || !subscribe) return;
+    return subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, subscribe, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   return [state, { reload, cancelListing, togglePauseListing }];
 }

@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } from "@/model/entities/moderation";
 import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
@@ -58,9 +59,8 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Moderação" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <FlatList
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Moderação" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeFlatList
         key={wide ? "grid-mod-2" : "list-mod-1"}
         numColumns={wide ? 2 : 1}
         columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -176,7 +176,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
         onCancel={() => setPending(null)}
       />
       <Snackbar visible={state.actionMessage !== null} message={state.actionMessage ?? ""} onDismiss={actions.clearActionMessage} />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -202,8 +202,9 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       padding: tokens.spacing[16],
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[8],
+      ...iosNeutralCardStyle(colors),
     },
     header: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     kind: { ...tokens.typography.labelMedium, color: colors.secondaryText, flex: 1 },
@@ -213,12 +214,12 @@ function createStyles(colors: ColorPalette) {
     detail: { ...tokens.typography.bodyMedium, color: colors.text, fontStyle: "italic" },
     actions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginTop: tokens.spacing[4] },
     secondary: {
-      minHeight: 40,
+      minHeight: Platform.OS === "ios" ? 44 : 40,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     secondaryText: { ...tokens.typography.labelLarge, color: colors.action },
     dangerText: { ...tokens.typography.labelLarge, color: colors.error },

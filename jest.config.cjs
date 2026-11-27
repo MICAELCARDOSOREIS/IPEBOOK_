@@ -1,0 +1,57 @@
+/** @type {import('jest').Config} */
+module.exports = {
+  testEnvironment: "node",
+  testTimeout: 15000,
+  maxWorkers: 6,
+  setupFiles: ["<rootDir>/tests/setupNodeReactNative.cjs"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setupTests.ts"],
+  testMatch: ["<rootDir>/tests/**/*.test.ts", "<rootDir>/tests/**/*.test.tsx"],
+  transform: {
+    "^.+\\.(js|jsx|ts|tsx|mjs|mts)$": [
+      "babel-jest",
+      {
+        presets: ["babel-preset-expo"],
+        plugins: ["./tests/babelJestEsmCompat.cjs"],
+      },
+    ],
+  },
+  transformIgnorePatterns: [
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@testing-library/react-native))",
+  ],
+  moduleNameMapper: {
+    "\\.(png|jpe?g|gif|webp|svg|ttf|otf|woff2?)$": "<rootDir>/tests/mocks/fileMock.cjs",
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^react-native$": "<rootDir>/tests/mocks/react-native.ts",
+    "^react-native-safe-area-context$": "<rootDir>/tests/mocks/react-native-safe-area-context.ts",
+    "^react-native-screens/experimental$": "<rootDir>/tests/mocks/react-native-safe-area-context.ts",
+    "^@expo/vector-icons$": "<rootDir>/tests/mocks/expo-vector-icons.cjs",
+    "^expo-symbols$": "<rootDir>/tests/mocks/expo-symbols.cjs",
+    "^@react-native-community/netinfo$": "<rootDir>/tests/mocks/netinfo.ts",
+    "^expo-linking$": "<rootDir>/tests/mocks/expo-linking.ts",
+    "^expo-apple-authentication$": "<rootDir>/tests/mocks/expo-apple-authentication.tsx",
+    "^expo-camera$": "<rootDir>/tests/mocks/expo-camera.ts",
+    "^expo-constants$": "<rootDir>/tests/mocks/expo-constants.ts",
+    "^expo-image-picker$": "<rootDir>/tests/mocks/expo-image-picker.ts",
+    "^expo-image-manipulator$": "<rootDir>/tests/mocks/expo-image-manipulator.ts",
+    "^expo-notifications$": "<rootDir>/tests/mocks/expo-notifications.ts",
+    "^react-native-view-shot$": "<rootDir>/tests/mocks/react-native-view-shot.ts",
+    "^expo-store-review$": "<rootDir>/tests/mocks/expo-store-review.ts",
+    "^expo-haptics$": "<rootDir>/tests/mocks/expo-haptics.ts",
+    "^expo-blur$": "<rootDir>/tests/mocks/expo-blur.ts",
+    "^expo-glass-effect$": "<rootDir>/tests/mocks/expo-glass-effect.tsx",
+    "^@react-native-google-signin/google-signin$": "<rootDir>/tests/mocks/google-signin.ts",
+    "^@sentry/react-native$": "<rootDir>/tests/mocks/sentry-react-native.ts",
+    "^react-native-pager-view$": "<rootDir>/tests/mocks/react-native-pager-view.tsx",
+  },
+  coverageProvider: "v8",
+  coverageReporters: ["text", "json", "html"],
+  collectCoverageFrom: ["src/**/*.ts", "src/**/*.tsx", "!**/*.d.ts"],
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+  },
+};

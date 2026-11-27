@@ -1,6 +1,5 @@
 
 import { render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 

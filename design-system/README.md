@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.29.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.32.1 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver
@@ -17,8 +17,7 @@ de design transmite confiança de vizinhança: sóbrio, direto, sem ruído visua
 ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fotos reais.
 
 - **App:** IpêBook
-- **Plataforma e stack:** Android e Web com Expo/React Native (React Native Web); iOS
-  planejado para quando voltar ao escopo (ver seção 3 e [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md))
+- **Plataforma e stack** — Android com Material 3, Web com Expo/React Native Web, incluindo o PWA no Safari ([Spec 136](../specs/136-pwa-iphone-apple-hig/spec.md)), e adaptações nativas de iPhone no código para navegação, busca e folhas inferiores ([Spec 137](../specs/137-ios-nativo-apple-hig/spec.md), [ADR 0115](../docs/adr/0115-base-liquid-glass-apple-hig.md) e [ADR 0116](../docs/adr/0116-padronizacao-apple-hig-descoberta-busca-ios.md)).
 - **Sistema base:** Material 3 (Google) — único, conforme exigido pela atividade
 
 ## 2. Por que este sistema base (as cinco forças)
@@ -45,7 +44,7 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Configurações / Perfil | Item de lista, Interruptor, Avatar, Barra superior |
 | Propostas / Concluídos (spec 004) | Abas, Linha de livro, Badge |
 
-Lista completa dos 28 componentes documentados em [04-componentes/](04-componentes/). Alguns
+Lista completa dos 29 componentes documentados em [04-componentes/](04-componentes/). Alguns
 documentam padrões compostos ou decisões de composição que não correspondem a um arquivo
 genérico em `src/view/components/`; essa classificação está descrita na seção 4.1.
 
@@ -56,21 +55,23 @@ genérico em `src/view/components/`; essa classificação está descrita na seç
 | [01-principios.md](01-principios.md) | Valores que guiam as decisões |
 | [02-tokens.md](02-tokens.md) | Tokens primitivos, semânticos e de componente |
 | [03-fundamentos.md](03-fundamentos.md) | Regras de cor, tipografia, espaço, ícones, elevação e movimento |
-| [04-componentes/](04-componentes/) | Um arquivo por componente ou padrão — os 28 componentes documentados, cada um com anatomia, estados, acessibilidade e código React Native |
+| [04-componentes/](04-componentes/) | Um arquivo por componente ou padrão — anatomia, estados, acessibilidade e referência de código React Native |
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro e explorar/filtrar catálogo |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
-| [telas-android-figma.md](telas-android-figma.md) | Inventário das 137 telas Android do Figma (nome, node-id, link em modo Dev) — consulta offline, sem precisar abrir o Figma |
-| [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário atual de 88 quadros iPhone/iOS 26 e levantamento histórico de 144 telas — consulta/planejamento |
+| [Referências atuais do Figma](referencias-figma/README.md) | Pranchas, telas representativas e componentes de Android e iPhone com links de origem |
+| [telas-android-figma.md](telas-android-figma.md) | Inventário dos 52 quadros atuais do Android, com links para o modo Dev |
+| [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário do canvas atual de iPhone/iOS 26, incluindo telas, protótipo, estados e pranchas |
 | [telas-web-figma.md](telas-web-figma.md) | Inventário das 126 telas Web do Figma (Desktop/Tablet/Celular) |
-| [iphone-liquid-glass.md](iphone-liquid-glass.md) | Especificação visual iOS 26, botões, filtros, navegação e links dos componentes; sem implementação iOS |
+| [iphone-liquid-glass.md](iphone-liquid-glass.md) | Especificação visual iOS 26, botões, filtros, navegação e links dos componentes |
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
 | [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 
 ## Validação automática
 
 Execute `npm run check:design-system` na raiz do projeto para conferir os tokens obrigatórios,
-contrastes documentados, inventário de componentes, aliases do protótipo e referências históricas
-dos exports do Figma. Essa verificação também faz parte de `npm run validate`.
+a fonte de interface, os contrastes documentados, o inventário de componentes, os aliases do
+protótipo e a declaração da barreira de acessibilidade dos modais. Essa verificação faz parte de
+`npm run validate`.
 
 Esta pasta concentra as decisões de design e os exemplos de uso. Para implementar no app, ela
 depende do contrato TypeScript em [`src/view/tokens.ts`](../src/view/tokens.ts), dos componentes
@@ -78,12 +79,12 @@ em [`src/view/components/`](../src/view/components/) e das regras MVVM do projet
 
 ### 4.1 Classificação dos componentes
 
-Os 28 arquivos de `04-componentes/` documentam componentes-base, padrões compostos e decisões
+Os 29 arquivos de `04-componentes/` documentam componentes-base, padrões compostos e decisões
 de composição. Nem todo documento precisa corresponder a um componente genérico:
 
 - **Componentes-base implementados:** `Button`, `TextField`, `SearchField`, `Chip`, `Tag`,
   `BookCover`, `Avatar`, `Checkbox`, `Dialog`, `Snackbar`, `StepProgress`, `TopAppBar`,
-  `NavigationBar`, `Logotipo`, `AddPhotoCard`, `IconBadge`, `IpeRibbon` e os estados do
+  `NavigationBar`, `BottomSheet`, `Logotipo`, `AddPhotoCard`, `IconBadge`, `IpeRibbon` e os estados do
   sistema. Suas implementações ficam em [`src/view/components/`](../src/view/components/).
 - **Padrões compostos implementados dentro das telas:** abas, bolhas de mensagem, estados
   vazios, opções de seleção e FAB. Eles permanecem inline quando a composição depende do
@@ -110,16 +111,13 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
 2. **Papel de cor `doacao-container` — Novo.** M3 só define `primary`/`secondary`/`tertiary`
    (contêiner); o app precisa de uma quarta cor fixa e exclusiva para a modalidade Doação, que
    não concorre com `tertiary-container` (usado em Troca).
-3. **Serifa de marca (Source Serif 4 Bold) sobre a escala tipográfica M3 — Adaptado.** M3
+3. **Serifa de marca (Source Serif 4 Bold) sobre a escala de interface — Adaptado.** M3
    recomenda uma única família tipográfica; o app usa a serifa só no logotipo, nos títulos de
-   tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, mantendo
-   Roboto para o resto da escala M3.
-4. **Tema claro e escuro — Adaptado.** Na ausência de preferência salva, o app inicia no tema
-   Claro; a pessoa pode escolher manualmente Sistema, Claro ou Escuro, com a escolha persistida
-   no dispositivo. A opção Sistema acompanha o tema do aparelho quando escolhida. A infraestrutura
-   está implementada em `ThemeProvider`/`useTheme`; telas e componentes ainda não migrados para
-   `useTheme` continuam usando a paleta clara como comportamento compatível (ver
-   [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md)).
+   tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, usando
+   **Plus Jakarta Sans** para a escala de interface ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)).
+4. **Tema claro editorial — Adaptado.** O app usa a paleta clara em todas as plataformas.
+   `ThemeProvider` fornece as cores por `useTheme()`. Os valores escuros do JSON registram o
+   histórico da paleta. [ADR 0114](../docs/adr/0114-remocao-do-tema-escuro.md).
 
 ## 6. Glossário
 
@@ -168,7 +166,6 @@ Ao gerar ou alterar interface neste projeto:
    estados (padrão, pressionado, foco, desabilitado).
 4. Respeite `06-acessibilidade.md`: contraste mínimo de 4,5:1 para texto, alvo de toque mínimo
    de 48 dp, foco sempre visível.
-5. Respeite o tema resolvido por `useTheme()` em componentes que suportam alternância. Não
-   introduza novas leituras diretas da paleta clara quando o componente já participa do tema.
+5. Use `useTheme()` para consumir a paleta clara editorial nos componentes da interface.
    Se faltar um token, componente ou regra, registre a lacuna; não invente valores.
 6. Ao final, liste os tokens e componentes que você usou.

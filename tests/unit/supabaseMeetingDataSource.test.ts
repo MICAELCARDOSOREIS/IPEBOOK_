@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseMeetingDataSource } from "@/infra/datasources/supabaseMeetingDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import { DataSourceError } from "@/model/errors";
@@ -14,14 +13,14 @@ const row = {
 
 /** Cadeia do PostgREST: cada método devolve a própria cadeia; os terminais resolvem `result`. */
 function fakeClient(result: { data: unknown; error: unknown }) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> & { then?: any } = {};
+  const chain: Record<string, ReturnType<typeof jest.fn>> & { then?: any } = {};
   for (const method of ["select", "eq", "order", "limit", "insert", "update"]) {
-    chain[method] = vi.fn(() => chain);
+    chain[method] = jest.fn(() => chain);
   }
-  chain.maybeSingle = vi.fn().mockResolvedValue(result);
-  chain.single = vi.fn().mockResolvedValue(result);
+  chain.maybeSingle = jest.fn().mockResolvedValue(result);
+  chain.single = jest.fn().mockResolvedValue(result);
   chain.then = (onFulfilled: any, onRejected: any) => Promise.resolve(result).then(onFulfilled, onRejected);
-  const client = { from: vi.fn(() => chain) } as unknown as SupabaseAppClient;
+  const client = { from: jest.fn(() => chain) } as unknown as SupabaseAppClient;
   return { client, chain };
 }
 

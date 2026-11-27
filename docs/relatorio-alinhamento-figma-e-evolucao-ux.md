@@ -272,12 +272,12 @@ O projeto Ipebook evoluiu significativamente durante a fase de validação com l
   - Pull-to-refresh para atualização rápida do status do encontro.
 - **Como atualizar no Figma:** Adicionar o stepper/linha do tempo visual de progresso.
 
-#### 6.3. Combinar Encontro Seguro em Piripiri (`scheduleMeeting.tsx` / `MeetingMap.tsx`)
+#### 6.3. Combinar Encontro Seguro em Piripiri (`scheduleMeeting.tsx`)
 - **Frames no Figma:** `06.04 · Combinar encontro`, `06.13 · Reagendar`
-- **O que mudou no código:** 
-  - Mapa interativo dos 4 pontos públicos oficiais de Piripiri (Praça da Bandeira, IFPI, Estação Ferroviária e Parque Curumim) com pinos numerados idênticos à lista textual.
+- **O que mudou no código:**
+  - O mapa do Mapbox saiu (ADR 0111). O local é escolhido na lista dos 4 pontos públicos oficiais de Piripiri, numerada, com dia e horário ao lado.
   - Carrossel horizontal com seleção de dias da semana e horários recomendados por ponto.
-- **Como atualizar no Figma:** Alinhar o mapa e a lista de 4 pontos públicos com os horários recomendados.
+- **Como atualizar no Figma:** Retirar o mapa e manter a lista dos 4 pontos públicos com os horários recomendados.
 
 #### 6.4. Chat de Negociação (`chat.tsx` / `ChatProposalCards.tsx`)
 - **Frames no Figma:** `06.06 · Chat de negociação`

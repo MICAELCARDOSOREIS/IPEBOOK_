@@ -1,5 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog, type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
@@ -22,11 +24,26 @@ export type ProfileSafetySheetProps = {
   onClose: () => void;
 };
 
+const profileSafetyStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getProfileSafetyStyles(colors: ColorPalette) {
+  let cached = profileSafetyStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    profileSafetyStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Folha "Denunciar ou bloquear" do perfil público (Spec 091): bloquear a pessoa (com confirmação) ou
  * denunciar um dos anúncios dela, que é onde a denúncia existe no app.
  */
-export function ProfileSafetySheet({
+export function ProfileSafetySheet(props: ProfileSafetySheetProps) {
+  if (!props.visible) return null;
+  return <ProfileSafetySheetContent {...props} />;
+}
+
+function ProfileSafetySheetContent({
   visible,
   personName,
   listings,
@@ -40,8 +57,10 @@ export function ProfileSafetySheet({
   onClose,
 }: ProfileSafetySheetProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+  const styles = getProfileSafetyStyles(colors);
   const wideWeb = useIsWideWeb();
+  const iosBottomPadding = Platform.OS === "ios" && !wideWeb ? Math.max(tokens.spacing[24], insets.bottom + tokens.spacing[12]) : undefined;
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [choosingListing, setChoosingListing] = useState(false);
   const reportUserRef = useRef<FocusableElement | null>(null);
@@ -71,7 +90,7 @@ export function ProfileSafetySheet({
       <Modal accessibilityViewIsModal={visible && !confirmingBlock} visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
         <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
           <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={withPress(styles.backdrop)} />
-          <View style={[styles.sheet, wideWeb && styles.sheetWide]}>
+          <ModalGlassSurface sheet radius={tokens.radius.xxl} style={[styles.sheet, wideWeb && styles.sheetWide, iosBottomPadding !== undefined && { paddingBottom: iosBottomPadding }]}>
             {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
             <Text accessibilityRole="header" style={styles.title}>
               {choosingListing ? "Qual anúncio denunciar?" : "Denunciar ou bloquear"}
@@ -150,7 +169,7 @@ export function ProfileSafetySheet({
             <Pressable ref={cancelRef as never} accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={withPress(styles.cancel)}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </Pressable>
-          </View>
+          </ModalGlassSurface>
         </View>
       </Modal>
 

@@ -1,17 +1,17 @@
 import React from "react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { Text } from "react-native";
 
-const storageMap = new Map<string, string>();
-vi.mock("@react-native-async-storage/async-storage", () => ({
+const mockStorageMap = new Map<string, string>();
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => storageMap.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      storageMap.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStorageMap.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStorageMap.set(key, value);
     }),
-    clear: vi.fn(async () => {
-      storageMap.clear();
+    clear: jest.fn(async () => {
+      mockStorageMap.clear();
     }),
   },
 }));
@@ -32,15 +32,14 @@ import { useNavigationBadgesViewModel } from "@/viewmodel/useNavigationBadgesVie
 import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
-import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
 import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
 import { ShareUseCases } from "@/usecase/shareUseCases";
 import { DomainError, ValidationError } from "@/model/errors";
 
 describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => {
   beforeEach(async () => {
-    vi.clearAllMocks();
-    storageMap.clear();
+    jest.clearAllMocks();
+    mockStorageMap.clear();
   });
 
   describe("InstagramIcon", () => {
@@ -105,7 +104,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
 
   describe("NotFound", () => {
     it("renderiza sem botão de explorar quando onExplore não for informado", async () => {
-      const onHome = vi.fn();
+      const onHome = jest.fn();
       const tela = await render(<NotFound onGoHome={onHome} />);
       expect(tela.getByText("Página não encontrada")).toBeTruthy();
       expect(tela.queryByText("Explorar livros")).toBeNull();
@@ -115,8 +114,8 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
 
     it("renderiza com botão de explorar quando onExplore for fornecido", async () => {
-      const onHome = vi.fn();
-      const onExplore = vi.fn();
+      const onHome = jest.fn();
+      const onExplore = jest.fn();
       const tela = await render(<NotFound onGoHome={onHome} onExplore={onExplore} />);
       expect(tela.getByText("Explorar livros")).toBeTruthy();
 
@@ -139,7 +138,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
 
   describe("Checkbox", () => {
     it("renderiza desmarcado, com descrição e alterna ao pressionar", async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const tela = await render(
         <Checkbox
           label="Aceito os termos"
@@ -156,7 +155,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
 
     it("renderiza com erro e estado desabilitado", async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const tela = await render(
         <Checkbox
           label="Aceito termos"
@@ -173,7 +172,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
 
   describe("Chip", () => {
     it("renderiza compacto não-selecionado e responde ao toque", async () => {
-      const onPress = vi.fn();
+      const onPress = jest.fn();
       const tela = await render(<Chip label="Ficção" selected={false} onPress={onPress} />);
       expect(tela.getByText("Ficção")).toBeTruthy();
 
@@ -182,7 +181,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
 
     it("renderiza selecionado com tamanho regular e tom customizado", async () => {
-      const onPress = vi.fn();
+      const onPress = jest.fn();
       const tela = await render(
         <Chip
           label="Troca"
@@ -197,7 +196,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
 
     it("renderiza desabilitado com tom e não-selecionado", async () => {
-      const onPress = vi.fn();
+      const onPress = jest.fn();
       const tela = await render(
         <Chip
           label="Doação"
@@ -213,7 +212,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
 
   describe("ErrorState", () => {
     it("renderiza mensagem e botão padrão de tentar novamente", async () => {
-      const onRetry = vi.fn();
+      const onRetry = jest.fn();
       const tela = await render(<ErrorState message="Falha na conexão" onRetry={onRetry} />);
       expect(tela.getByText("Falha na conexão")).toBeTruthy();
       expect(tela.getByText("Tentar novamente")).toBeTruthy();
@@ -223,7 +222,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
 
     it("renderiza com rótulo customizado de retry", async () => {
-      const onRetry = vi.fn();
+      const onRetry = jest.fn();
       const tela = await render(
         <ErrorState message="Erro customizado" retryLabel="Recarregar tela" onRetry={onRetry} testID="custom-err" />,
       );
@@ -235,9 +234,9 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
   describe("usePwaViewModel", () => {
     it("assume autoRegister = true por padrão quando a opção for omitida e testa unregister com falha", async () => {
       const mockService = {
-        isSupported: vi.fn().mockReturnValue(true),
-        register: vi.fn().mockResolvedValue(true),
-        unregister: vi.fn().mockResolvedValue(false),
+        isSupported: jest.fn().mockReturnValue(true),
+        register: jest.fn().mockResolvedValue(true),
+        unregister: jest.fn().mockResolvedValue(false),
       };
 
       let hookRes!: ReturnType<typeof usePwaViewModel>;
@@ -363,7 +362,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
   describe("useNavigationBadgesViewModel", () => {
     it("retorna zeros quando sessionUserId for nulo", async () => {
       const mockDeps = {
-        listReceivedRequests: vi.fn().mockResolvedValue([]),
+        listReceivedRequests: jest.fn().mockResolvedValue([]),
       };
 
       let badges!: ReturnType<typeof useNavigationBadgesViewModel>;
@@ -383,11 +382,11 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     it("calcula propostas pendentes e escuta alterações em tempo real", async () => {
       let listener!: () => void;
       const mockDeps = {
-        listReceivedRequests: vi.fn().mockResolvedValue([
+        listReceivedRequests: jest.fn().mockResolvedValue([
           { request: { status: "pending" } },
           { request: { status: "accepted" } },
         ] as never),
-        subscribe: vi.fn().mockImplementation((_uid, onChange) => {
+        subscribe: jest.fn().mockImplementation((_uid, onChange) => {
           listener = onChange;
           return () => {};
         }),
@@ -423,10 +422,10 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
   describe("useNotificationPreferencesViewModel", () => {
     it("liga e desliga categorias de notificação tratando erros de persistência", async () => {
       const mockUseCases = {
-        getPreferences: vi.fn().mockResolvedValue({
+        getPreferences: jest.fn().mockResolvedValue({
           mutedTypes: ["request_received"],
         }),
-        updatePreferences: vi.fn().mockRejectedValue(new Error("falha")), // simula falha
+        updatePreferences: jest.fn().mockRejectedValue(new Error("falha")), // simula falha
       };
 
       let hookRes!: ReturnType<typeof useNotificationPreferencesViewModel>;
@@ -451,10 +450,10 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
   describe("useInviteFriendsViewModel", () => {
     it("compartilha convite com sucesso e trata cancelamento e erros", async () => {
       const mockShareUseCases = {
-        buildInviteMessage: vi.fn().mockReturnValue("Convite para o app"),
-        buildWhatsAppInviteUrl: vi.fn().mockReturnValue("https://wa.me/?text=convite"),
+        buildInviteMessage: jest.fn().mockReturnValue("Convite para o app"),
+        buildWhatsAppInviteUrl: jest.fn().mockReturnValue("https://wa.me/?text=convite"),
       };
-      const mockShareImageFile = vi.fn().mockResolvedValue(true);
+      const mockShareImageFile = jest.fn().mockResolvedValue(true);
 
       let hookRes!: ReturnType<typeof useInviteFriendsViewModel>;
       function Probe() {
@@ -499,8 +498,8 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     it("carrega rascunhos, descarta com sucesso e trata erros de descarte", async () => {
       const mockBook = { id: "draft_1", title: "Livro Rascunho" };
       const mockBookUseCases = {
-        listDrafts: vi.fn().mockResolvedValue([mockBook]),
-        discardDraft: vi.fn().mockResolvedValue(undefined),
+        listDrafts: jest.fn().mockResolvedValue([mockBook]),
+        discardDraft: jest.fn().mockResolvedValue(undefined),
       };
 
       let hookRes!: ReturnType<typeof useDraftsViewModel>;
@@ -539,39 +538,10 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
   });
 
-  describe("useThemeViewModel", () => {
-    it("carrega preferência salva e alterna tema", async () => {
-      const mockThemeUseCases = {
-        getPreference: vi.fn().mockResolvedValue("system"),
-        setPreference: vi.fn().mockResolvedValue(undefined),
-      };
-
-      let hookRes!: ReturnType<typeof useThemeViewModel>;
-      function Probe() {
-        hookRes = useThemeViewModel(mockThemeUseCases as never);
-        return null;
-      }
-
-      await React.act(async () => {
-        await render(<Probe />);
-      });
-
-      expect(hookRes[0].loading).toBe(false);
-      expect(hookRes[0].preference).toBe("system");
-
-      await React.act(async () => {
-        await hookRes[1].setPreference("dark");
-      });
-      expect(mockThemeUseCases.setPreference).toHaveBeenCalledWith("dark");
-      expect(hookRes[0].preference).toBe("dark");
-      expect(hookRes[0].resolvedScheme).toBe("dark");
-    });
-  });
-
   describe("MemoryBlockedUserDataSource (branches de bloqueio e perfis)", () => {
     it("cobre listagem de bloqueios com e sem DataSource de perfil, dados incompletos e remoção", async () => {
       const mockProfileDs = {
-        findById: vi.fn().mockImplementation(async (id: string) => {
+        findById: jest.fn().mockImplementation(async (id: string) => {
           if (id === "u_com_tudo") return { name: "Alice", photoUrl: "https://pic.jpg" };
           if (id === "u_sem_foto") return { name: "Bob", photoUrl: undefined };
           return null;
@@ -698,7 +668,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
   });
 
-  describe("Cobertura adicional de branches (searchFilters e MeetingMap)", () => {
+  describe("Cobertura adicional de branches (searchFilters)", () => {
     it("cobre branches de formatação e filtros de busca", async () => {
       const {
         filterBooks,
@@ -750,7 +720,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
       expect(sortBooks(books, "recent", "all")).toHaveLength(3);
 
       // describeResults
-      expect(describeResults(0, { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toBe("0 livros");
+      expect(describeResults(0, { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toBe("0 livros disponíveis");
       expect(describeResults(1, { modality: "sale", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("1 livro à venda");
       expect(describeResults(2, { modality: "trade", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("2 livros para troca");
       expect(describeResults(3, { modality: "donation", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("3 livros para doação");

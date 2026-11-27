@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -10,16 +10,27 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { initialWindowMetrics, SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { withPress } from "@/view/pressFeedback";
 import { tokens } from "@/view/tokens";
 
-import { withPress } from "@/view/pressFeedback";
 /** Uma página da galeria: se a foto não carregar, avisa em vez de deixar a tela preta. */
-function GalleryPhoto({ uri, position, width, height }: { uri: string; position: number; width: number; height: number }) {
+const GalleryPhoto = memo(function GalleryPhoto({
+  uri,
+  position,
+  width,
+  height,
+}: {
+  uri: string;
+  position: number;
+  width: number;
+  height: number;
+}) {
   const [failed, setFailed] = useState(false);
   return (
     <View style={[styles.photoPage, { width, height }]}>
@@ -32,13 +43,15 @@ function GalleryPhoto({ uri, position, width, height }: { uri: string; position:
           source={{ uri }}
           accessibilityLabel={`Foto ${position} do anúncio`}
           resizeMode="contain"
+          resizeMethod="resize"
+          fadeDuration={0}
           onError={() => setFailed(true)}
           style={{ width, height }}
         />
       )}
     </View>
   );
-}
+});
 
 export type PhotoGalleryProps = {
   photos: readonly string[];
@@ -57,6 +70,9 @@ function clampIndex(index: number, length: number): number {
  * (Spec 018, Spec 038 / Issue #143).
  */
 export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: PhotoGalleryProps) {
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = Platform.OS === "ios" && !opaqueIos;
+  const controlSurface = Platform.OS === "ios" ? [styles.iosControl, opaqueIos && styles.opaqueControl] : null;
   const [index, setIndex] = useState(clampIndex(initialIndex, photos.length));
   const listRef = useRef<FlatList<string> | null>(null);
   const closeRef = useRef<FocusableElement | null>(null);
@@ -70,10 +86,22 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
   const [area, setArea] = useState<{ width: number; height: number } | null>(null);
   const pageWidth = area?.width ?? window.width;
   const pageHeight = area?.height ?? window.height * 0.7;
-  const handleAreaLayout = (event: LayoutChangeEvent) => {
+  const handleAreaLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
-    if (width > 0 && height > 0) setArea({ width, height });
-  };
+    if (width <= 0 || height <= 0) return;
+    setArea((prev) =>
+      prev && Math.abs(prev.width - width) < 1 && Math.abs(prev.height - height) < 1
+        ? prev
+        : { width, height },
+    );
+  }, []);
+
+  const renderPhoto = useCallback(
+    ({ item, index: itemIndex }: { item: string; index: number }) => (
+      <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
+    ),
+    [pageWidth, pageHeight],
+  );
 
   const goTo = (nextIndex: number) => {
     const clamped = clampIndex(nextIndex, photos.length);
@@ -107,58 +135,72 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWeb, visible, index, onClose]);
 
+  if (!visible) return null;
+
   return (
-    <Modal accessibilityViewIsModal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
-      <SafeAreaView style={styles.page}>
-        <View style={styles.header}>
-          <Pressable ref={closeRef as never} accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>
-            <Text style={styles.closeText}>Fechar</Text>
-          </Pressable>
-          <Text style={styles.counter}>{`Foto ${index + 1} de ${photos.length}`}</Text>
-        </View>
-        <View style={styles.photoArea} onLayout={handleAreaLayout}>
-          <FlatList
-            ref={listRef}
-            testID="photo-gallery-list"
-            data={photos as string[]}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyExtractor={(uri, itemIndex) => `${uri}-${itemIndex}`}
-            initialScrollIndex={clampIndex(initialIndex, photos.length)}
-            getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}
-            onMomentumScrollEnd={handleMomentumScrollEnd}
-            renderItem={({ item, index: itemIndex }) => (
-              <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
-            )}
-          />
-        </View>
-        <View style={styles.navRow}>
-          <Pressable
-            ref={prevRef as never}
-            accessibilityRole="button"
-            accessibilityLabel="Foto anterior"
-            accessibilityState={{ disabled: index <= 0 }}
-            disabled={index <= 0}
-            onPress={() => goTo(index - 1)}
-            style={withPress([styles.navButton, index <= 0 ? styles.navButtonDisabled : null])}
-          >
-            <Text style={styles.navText}>‹ Anterior</Text>
-          </Pressable>
-          <Pressable
-            ref={nextRef as never}
-            accessibilityRole="button"
-            accessibilityLabel="Próxima foto"
-            accessibilityState={{ disabled: index >= photos.length - 1 }}
-            disabled={index >= photos.length - 1}
-            onPress={() => goTo(index + 1)}
-            style={withPress([styles.navButton, index >= photos.length - 1 ? styles.navButtonDisabled : null])}
-          >
-            <Text style={styles.navText}>Próxima ›</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+    <Modal accessibilityViewIsModal visible={visible} hardwareAccelerated animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <SafeAreaView style={styles.page}>
+          <View style={styles.header}>
+            <Pressable ref={closeRef as never} accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress([styles.closeButton, controlSurface])}>
+              {iosGlass ? <IosGlassBackdrop colorScheme="dark" isInteractive style={styles.iosGlassPillShape} /> : null}
+              <Text style={styles.closeText}>Fechar</Text>
+            </Pressable>
+            <View style={[styles.counterPill, iosGlass ? styles.iosControl : opaqueIos && styles.opaqueControl]}>
+              {iosGlass ? <IosGlassBackdrop colorScheme="dark" style={styles.iosGlassPillShape} /> : null}
+              <Text style={styles.counter}>{`Foto ${index + 1} de ${photos.length}`}</Text>
+            </View>
+          </View>
+          <View style={styles.photoArea} onLayout={handleAreaLayout}>
+            <FlatList
+              ref={listRef}
+              testID="photo-gallery-list"
+              data={photos as string[]}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              initialNumToRender={3}
+              maxToRenderPerBatch={2}
+              windowSize={3}
+              removeClippedSubviews={Platform.OS === "android"}
+              keyExtractor={(uri, itemIndex) => `${uri}-${itemIndex}`}
+              initialScrollIndex={clampIndex(initialIndex, photos.length)}
+              getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+              renderItem={renderPhoto}
+            />
+          </View>
+          {photos.length > 1 ? (
+            <View style={styles.navRow}>
+              <Pressable
+                ref={prevRef as never}
+                accessibilityRole="button"
+                accessibilityLabel="Foto anterior"
+                accessibilityState={{ disabled: index <= 0 }}
+                disabled={index <= 0}
+                onPress={() => goTo(index - 1)}
+                style={withPress([styles.navButton, controlSurface, index <= 0 ? styles.navButtonDisabled : null])}
+              >
+                {iosGlass && index > 0 ? <IosGlassBackdrop colorScheme="dark" isInteractive style={styles.iosGlassPillShape} /> : null}
+                <Text style={styles.navText}>‹ Anterior</Text>
+              </Pressable>
+              <Pressable
+                ref={nextRef as never}
+                accessibilityRole="button"
+                accessibilityLabel="Próxima foto"
+                accessibilityState={{ disabled: index >= photos.length - 1 }}
+                disabled={index >= photos.length - 1}
+                onPress={() => goTo(index + 1)}
+                style={withPress([styles.navButton, controlSurface, index >= photos.length - 1 ? styles.navButtonDisabled : null])}
+              >
+                {iosGlass && index < photos.length - 1 ? <IosGlassBackdrop colorScheme="dark" isInteractive style={styles.iosGlassPillShape} /> : null}
+                <Text style={styles.navText}>Próxima ›</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -174,8 +216,12 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[16],
   },
   closeButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
+  iosControl: { borderRadius: tokens.radius.full, paddingHorizontal: tokens.spacing[14], overflow: "hidden", borderCurve: "continuous" },
+  iosGlassPillShape: { ...StyleSheet.absoluteFill, borderRadius: tokens.radius.full, overflow: "hidden" },
+  opaqueControl: { backgroundColor: "#242424" },
   closeText: { ...tokens.typography.bodyMedium, color: "#FFFFFF", fontWeight: tokens.fontWeight.bold },
-  counter: { ...tokens.typography.bodyMedium, color: "#FFFFFF" },
+  counterPill: { minHeight: 36, justifyContent: "center" },
+  counter: { ...tokens.typography.bodyMedium, color: "#FFFFFF", fontWeight: tokens.fontWeight.medium },
   photoArea: { flex: 1 },
   photoPage: { alignItems: "center", justifyContent: "center" },
   failedText: { ...tokens.typography.bodyMedium, color: "#FFFFFF", textAlign: "center", padding: tokens.spacing[24] },

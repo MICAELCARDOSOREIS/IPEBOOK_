@@ -1,17 +1,20 @@
-import { useMemo, useRef, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useRef, useState } from "react";
+import { type FlatList, type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality } from "@/model/entities/book";
+import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { IpeMark } from "@/view/components/IpeMark";
-import { withPress } from "@/view/pressFeedback";
 import { formatPrice } from "@/view/formatPrice";
-import { formatBookLocation } from "@/model/entities/location";
+import { triggerHaptic } from "@/view/haptics";
+import { isMainTabsSwipeActive } from "@/view/mainTabsState";
+import { withPress } from "@/view/pressFeedback";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
+import { getTouchOrigin, isDragPressRelease, type TouchOrigin, useGuardedPress } from "@/view/useGuardedPress";
+import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 
 export const MODALITY_PLURAL = {
   sale: "livros à venda",
@@ -25,6 +28,26 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
     trade: { ...colors.badge.trade, label: "Troca" },
     donation: { ...colors.badge.donation, label: "Doação" },
   };
+}
+
+const carouselStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getCarouselStyles(colors: ColorPalette) {
+  let cached = carouselStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    carouselStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+const modalityTagCache = new WeakMap<ColorPalette, ReturnType<typeof createModalityTag>>();
+function getModalityTag(colors: ColorPalette) {
+  let cached = modalityTagCache.get(colors);
+  if (!cached) {
+    cached = createModalityTag(colors);
+    modalityTagCache.set(colors, cached);
+  }
+  return cached;
 }
 
 const CAROUSEL_ITEM_WIDTH = 168;
@@ -50,7 +73,7 @@ export type CatalogCarouselProps = {
 /**
  * Seção destacada da Home (Figma `02.01 · Início`, `02.02 · Explorar por seção`).
  */
-export function CatalogCarousel({
+function CatalogCarouselComponent({
   title,
   displayTitle,
   badgeText,
@@ -64,10 +87,20 @@ export function CatalogCarousel({
   const listRef = useRef<FlatList<Book> | null>(null);
   const lastIndex = Math.max(0, books.length - 1);
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
-  const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
+  const styles = getCarouselStyles(colors);
+  const modalityTag = getModalityTag(colors);
+  const windowWidth = useHydratedWindowWidth();
+  const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
+  const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
   const guardedNavigateToBookDetail = useGuardedPress((id: string) => onNavigateToBookDetail?.(id));
+  const cardPressOriginRef = useRef<TouchOrigin | null>(null);
+
+  const handleCardPressIn = (event?: GestureResponderEvent) => {
+    cardPressOriginRef.current = getTouchOrigin(event);
+  };
 
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
@@ -82,16 +115,28 @@ export function CatalogCarousel({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={() => guardedNavigateToBookDetail(item.id)}
+        onPressIn={handleCardPressIn}
+        onPress={(event) => {
+          const origin = cardPressOriginRef.current;
+          cardPressOriginRef.current = null;
+          if (isMainTabsSwipeActive() || isDragPressRelease(origin, event)) {
+            return;
+          }
+          if (isIos) triggerHaptic("light");
+          guardedNavigateToBookDetail(item.id);
+        }}
         style={({ pressed }) => [
           styles.carouselCard,
+          isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
           wide && styles.carouselCardWide,
           pressed && styles.carouselCardPressed,
         ]}
       >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
         <View
           style={[
             styles.carouselCardCoverArea,
+            isIos && styles.iosCoverArea,
             wide && styles.carouselCardCoverAreaWide,
             { backgroundColor: tag.background },
           ]}
@@ -102,12 +147,11 @@ export function CatalogCarousel({
               title={item.title}
               photoUrl={item.photoUrl}
               variant="card"
-              width={wide ? 96 : undefined}
-              showRibbon={item.modality === "donation" || item.modality === "trade"}
+              width={wide ? 112 : undefined}
             />
           </View>
         </View>
-        <View style={styles.carouselCardMeta}>
+        <View style={[styles.carouselCardMeta, wide && styles.carouselCardMetaWide]}>
           <View style={styles.carouselCardTopGroup}>
             <View style={styles.carouselCardModalityRow}>
               <View style={styles.carouselCardPillsGroup}>
@@ -144,10 +188,10 @@ export function CatalogCarousel({
               <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
             </View>
           </View>
-          <View style={styles.carouselCardFooterRow}>
+          <View style={[styles.carouselCardFooterRow, compactWeb && styles.carouselCardFooterCompact]}>
             <View style={styles.carouselCardLocationRow}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+              <Text numberOfLines={compactWeb ? undefined : 1} style={styles.carouselCardNeighborhood}>
                 {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
@@ -192,8 +236,8 @@ export function CatalogCarousel({
         <View style={styles.carouselTitleGroup}>
           <Text
             accessibilityRole="header"
-            accessibilityLabel={title}
-            numberOfLines={1}
+            accessibilityLabel={Platform.OS === "web" ? (displayTitle ?? title) : title}
+            numberOfLines={compactWeb ? undefined : 1}
             style={styles.carouselTitle}
           >
             {displayTitle ?? title}
@@ -204,34 +248,39 @@ export function CatalogCarousel({
             </View>
           ) : null}
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Item anterior de ${title}`}
-          accessibilityState={{ disabled: index <= 0 }}
-          disabled={index <= 0}
-          onPress={() => goTo(index - 1)}
-          style={withPress([styles.carouselNavButton, styles.carouselNavButtonLeft])}
-        >
-          <Text style={styles.carouselNavText}>‹</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Próximo item de ${title}`}
-          accessibilityState={{ disabled: index >= lastIndex }}
-          disabled={index >= lastIndex}
-          onPress={() => goTo(index + 1)}
-          style={withPress([styles.carouselNavButton, styles.carouselNavButtonRight])}
-        >
-          <Text style={styles.carouselNavText}>›</Text>
-        </Pressable>
+        {wideWeb ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Item anterior de ${title}`}
+            accessibilityState={{ disabled: index <= 0 }}
+            disabled={index <= 0}
+            onPress={() => goTo(index - 1)}
+            style={withPress([styles.carouselNavButton, styles.carouselNavButtonLeft])}
+          >
+            <Text style={styles.carouselNavText}>‹</Text>
+          </Pressable>
+        )}
+        {wideWeb ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Próximo item de ${title}`}
+            accessibilityState={{ disabled: index >= lastIndex }}
+            disabled={index >= lastIndex}
+            onPress={() => goTo(index + 1)}
+            style={withPress([styles.carouselNavButton, styles.carouselNavButtonRight])}
+          >
+            <Text style={styles.carouselNavText}>›</Text>
+          </Pressable>
+        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={viewMoreLabel}
           onPress={onViewMore}
-          style={withPress(styles.viewMoreButton)}
+          style={withPress([styles.viewMoreButton, isIos && (iosGlass ? styles.iosViewMoreGlass : styles.iosViewMoreOpaque)])}
         >
-          <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
-          <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
+          {iosGlass ? <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} /> : null}
+          <Text style={[styles.viewMoreText, isIos && styles.iosViewMoreText]}>{viewMoreButtonText}</Text>
+          <AppIcon name="chevronRight" size={16} color={isIos ? colors.m3.onSurface : colors.m3.primary} />
         </Pressable>
       </View>
       {wideWeb ? (
@@ -258,12 +307,17 @@ export function CatalogCarousel({
           })}
         </View>
       )}
+      {wideWeb ? null : (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Explorar catálogo completo de ${title}`}
         onPress={onViewMore}
-        style={withPress(styles.viewMoreBottomButton)}
+        style={withPress([
+          styles.viewMoreBottomButton,
+          isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
+        ])}
       >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
         <View style={styles.viewMoreBottomIconBox}>
           <AppIcon name="search" size={22} color={colors.nature.foliageDeep} />
         </View>
@@ -279,9 +333,13 @@ export function CatalogCarousel({
           <AppIcon name="chevronRight" size={22} color={colors.nature.foliageDeep} />
         </View>
       </Pressable>
+      )}
     </View>
   );
 }
+
+export const CatalogCarousel = memo(CatalogCarouselComponent);
+CatalogCarousel.displayName = "CatalogCarousel";
 
 export type HomeShortcutsSectionProps = {
   wideWeb: boolean;
@@ -299,8 +357,11 @@ export function HomeShortcutsSection({
   onNavigateToSearch,
   onNavigateToHelp,
 }: HomeShortcutsSectionProps) {
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
+  const styles = getCarouselStyles(colors);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
   if (wideWeb) {
@@ -310,39 +371,45 @@ export function HomeShortcutsSection({
           accessibilityRole="button"
           accessibilityLabel={`Doações da semana: ${donationSummary}`}
           onPress={() => onNavigateToSearch({ modality: "donation" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.donation.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="bookmark" size={24} color={colors.badge.donation.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.donation.background }]}>
+            <AppIcon name="bookmark" size={24} color={colors.badge.donation.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.donation.text }]}>Doações da semana</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.donation.text }]}>{donationSummary}</Text>
+            <Text style={styles.shortcutTitle}>Doações da semana</Text>
+            <Text style={styles.shortcutBody}>{donationSummary}</Text>
           </View>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Troque o que já leu"
           onPress={() => onNavigateToSearch({ modality: "trade" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.trade.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="swap" size={24} color={colors.badge.trade.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.trade.background }]}>
+            <AppIcon name="swap" size={24} color={colors.badge.trade.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.trade.text }]}>Troque o que já leu</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.trade.text }]}>
+            <Text style={styles.shortcutTitle}>Troque o que já leu</Text>
+            <Text style={styles.shortcutBody}>
               Proponha uma troca direto pelo chat, sem intermediários.
             </Text>
           </View>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
+          accessibilityLabel="Encontro recomendado: Locais públicos sugeridos e avaliação depois de cada troca"
           disabled={!onNavigateToHelp}
           onPress={() => onNavigateToHelp?.()}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.sale.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.sale.background }]}>
+            <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.sale.text }]}>Encontro seguro</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.sale.text }]}>
+            <Text style={styles.shortcutTitle}>Encontro recomendado</Text>
+            <Text style={styles.shortcutBody}>
               Locais públicos sugeridos e avaliação depois de cada troca.
             </Text>
           </View>
@@ -360,11 +427,18 @@ export function HomeShortcutsSection({
       onPress={() => onNavigateToSearch({ modality: "donation" })}
       style={({ pressed }) => [
         styles.donationBanner,
-        resolvedScheme === "dark" && styles.donationBannerDark,
+        iosGlass && styles.iosGlassBanner,
         isBannerHovered && styles.donationBannerHovered,
         pressed && styles.donationBannerPressed,
       ]}
     >
+      {iosGlass ? (
+        <IosGlassBackdrop
+          tintColor={colors.ipe.bloom}
+          isInteractive
+          style={styles.iosGlassCardShape}
+        />
+      ) : null}
       <View style={styles.donationBannerIconBox}>
         <AppIcon name="bookmark" size={22} color={colors.ipe.onContainer} />
       </View>
@@ -404,7 +478,7 @@ export function HomeEmptyCatalogSection({
   onResetModality,
 }: HomeEmptyCatalogSectionProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getCarouselStyles(colors);
 
   const isFilteredByModalityOnly =
     hasAnyBooks && !isSpecificNeighborhood && selectedModality !== "all";
@@ -488,7 +562,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
       minHeight: tokens.spacing[64],
       gap: tokens.spacing[12],
-      marginBottom: tokens.spacing[24],
+      marginBottom: tokens.spacing[12],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.ipe.bloom,
       borderWidth: 1,
@@ -502,7 +576,6 @@ function createStyles(colors: ColorPalette) {
         ? ({ cursor: "pointer", userSelect: "none", } as never)
         : {}),
     },
-    donationBannerDark: { backgroundColor: colors.ipe.container, borderColor: colors.ipe.bloom, },
     donationBannerHovered: { transform: [{ scale: 1.01 }], elevation: 4, shadowOpacity: 0.18, shadowRadius: 12, },
     donationBannerPressed: { transform: [{ scale: 0.985 }], opacity: 0.92, },
     donationBannerIconBox: {
@@ -523,32 +596,95 @@ function createStyles(colors: ColorPalette) {
     donationBannerSubtitle: { fontFamily: tokens.fontFamily.regular, fontSize: 13, lineHeight: 18, color: colors.ipe.onContainer, opacity: 0.88, },
     donationBannerChevronBox: { width: tokens.spacing[28], height: tokens.spacing[28], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
     donationBannerChevronBoxHovered: { transform: [{ translateX: 2 }], },
-    carouselSection: { marginBottom: tokens.spacing[24] },
-    carouselHeader: { position: "relative", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12], },
-    carouselTitleGroup: { flex: 1, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], marginRight: tokens.spacing[8], },
-    carouselTitle: { flexShrink: 1, ...tokens.typography.titleBar, color: colors.m3.onSurface, },
+    carouselSection: { marginBottom: tokens.spacing[12] },
+    carouselHeader: { position: "relative", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[16], gap: Platform.OS === "ios" ? tokens.spacing[6] : 0 },
+    carouselTitleGroup: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: Platform.OS === "ios" ? tokens.spacing[6] : tokens.spacing[8], marginRight: Platform.OS === "ios" ? 0 : tokens.spacing[8], },
+    carouselTitle: {
+      flexShrink: 1,
+      ...tokens.typography.brandTitle,
+      ...(Platform.OS === "ios" ? { fontSize: 19, lineHeight: 25 } : null),
+      color: colors.brandBrown,
+    },
     carouselBadge: {
-      paddingHorizontal: tokens.spacing[8],
+      flexShrink: 0,
+      paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[6] : tokens.spacing[8],
       paddingVertical: 2,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       alignSelf: "center",
     },
     carouselBadgeText: { ...tokens.typography.labelSmall, fontSize: 12, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurfaceVariant, },
-    viewMoreButton: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 2, minHeight: tokens.accessibility.touchTarget, justifyContent: "center", },
+    viewMoreButton: {
+      flexShrink: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      minHeight: 38,
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      justifyContent: "center",
+    },
     viewMoreText: { ...tokens.typography.labelLarge, color: colors.m3.primary, },
+    iosViewMoreGlass: {
+      minHeight: 44,
+      paddingHorizontal: tokens.spacing[12],
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+    },
+    iosViewMoreOpaque: {
+      minHeight: 44,
+      paddingHorizontal: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosViewMoreText: {
+      color: colors.m3.onSurface,
+    },
     carouselRow: { position: "relative", marginHorizontal: -tokens.spacing[16], },
     shortcuts: { flexDirection: "row", gap: tokens.spacing[24] },
-    shortcut: { flex: 1, flexDirection: "row", gap: tokens.spacing[16], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
+    shortcut: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[20],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    shortcutIconBadge: {
+      width: 48,
+      height: 48,
+      borderRadius: tokens.radius.medium,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
     shortcutText: { flex: 1, gap: tokens.spacing[4] },
-    shortcutTitle: { ...tokens.typography.titleBlock },
-    shortcutBody: { ...tokens.typography.bodyMedium },
+    shortcutTitle: { ...tokens.typography.brandCardTitle, color: colors.brandBrown },
+    shortcutBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch", width: "100%" },
     carouselGridCell: { flexGrow: 1, flexBasis: 220, minWidth: 180, maxWidth: 320, flexDirection: "column" },
-    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[12] },
-    carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
+    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[16], borderRadius: tokens.radius.card },
+    carouselCardWide: {
+      flex: 1,
+      width: "100%",
+      padding: tokens.spacing[14],
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.surface,
+    },
     carouselList: { flexGrow: 0 },
     carouselListContent: { paddingHorizontal: tokens.spacing[16], gap: CAROUSEL_ITEM_GAP, alignItems: "stretch", },
     carouselNavButton: {
@@ -556,7 +692,7 @@ function createStyles(colors: ColorPalette) {
       top: 0,
       zIndex: 2,
       width: tokens.accessibility.touchTarget,
-      height: tokens.spacing[32],
+      height: tokens.accessibility.touchTarget,
       alignItems: "center",
       justifyContent: "center",
       opacity: 0,
@@ -571,12 +707,41 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.large,
       overflow: "hidden",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       elevation: 2,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 6,
+    },
+    iosOpaqueCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassBanner: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosGlassCardShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xl,
+      overflow: "hidden",
+    },
+    iosCoverArea: {
+      borderTopLeftRadius: tokens.radius.xl,
+      borderTopRightRadius: tokens.radius.xl,
     },
     carouselCardPressed: { borderRadius: tokens.shapeMorph.cardPressed, transform: [{ scale: 0.96 }], },
     carouselCardCoverArea: {
@@ -596,9 +761,14 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[12],
       paddingBottom: tokens.spacing[10],
       gap: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: "transparent",
       borderBottomLeftRadius: tokens.radius.large,
       borderBottomRightRadius: tokens.radius.large,
+    },
+    carouselCardMetaWide: {
+      paddingHorizontal: tokens.spacing[2],
+      paddingTop: tokens.spacing[2],
+      paddingBottom: tokens.spacing[2],
     },
     carouselCardTopGroup: { gap: tokens.spacing[8], },
     carouselCardTitleBlock: { gap: 3, },
@@ -621,15 +791,16 @@ function createStyles(colors: ColorPalette) {
       marginTop: "auto",
       paddingTop: tokens.spacing[8],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
     },
+    carouselCardFooterCompact: { flexDirection: "column", alignItems: "flex-start" },
     carouselCardLocationRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], flexShrink: 1, },
     carouselCardNeighborhood: { ...tokens.typography.labelSmall, fontSize: 12, lineHeight: 16, fontFamily: fontFamily.medium, color: colors.m3.onSurfaceVariant, flexShrink: 1, },
     booksGridContainer: { flexDirection: "column", gap: tokens.spacing[14], },
     booksGridRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "stretch", },
-    booksGridContainerWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "stretch", gap: tokens.spacing[16], },
+    booksGridContainerWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "stretch", gap: tokens.spacing[24], },
     booksGridCell: { width: "48.2%", flexDirection: "column", alignSelf: "stretch", },
-    booksGridCellWide: { flexGrow: 1, flexBasis: 240, minWidth: 200, maxWidth: 440, flexDirection: "column", },
+    booksGridCellWide: { flex: 1, flexBasis: 240, minWidth: 200, flexDirection: "column", },
     viewMoreBottomButton: {
       width: "100%",
       flexDirection: "row",
@@ -639,7 +810,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
       gap: tokens.spacing[12],
       marginTop: tokens.spacing[16],
-      marginBottom: tokens.spacing[12],
+      marginBottom: 0,
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderWidth: 1,

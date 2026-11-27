@@ -1,7 +1,5 @@
 
-import { View } from "react-native";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import Home from "@/view/home";
 import {
@@ -12,21 +10,24 @@ import {
 // Mock explícito da ViewModel para isolamento determinístico da View
 // Motivo: Simular cenários de rede instável, erro e carregamento contínuo
 // sem dependência do ciclo de vida assíncrono real de efeitos ou timers.
-vi.mock("@/viewmodel/useHomeViewModel", () => {
+jest.mock("@/viewmodel/useHomeViewModel", () => {
   return {
-    useHomeViewModel: vi.fn(),
+    useHomeViewModel: jest.fn(),
   };
 });
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
-vi.mock("@/view/components/IpePetalsCelebration", () => ({
-  IpePetalsCelebration: (props: any) =>
-    props.active ? <View testID={props.testID ?? "ipe-petals-celebration"} /> : null,
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
+jest.mock("@/view/components/IpePetalsCelebration", () => ({
+  IpePetalsCelebration: (props: any) => {
+    const React = require("react");
+    const { View } = require("react-native");
+    return props.active ? React.createElement(View, { testID: props.testID ?? "ipe-petals-celebration" }) : null;
+  },
 }));
 
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+const mockedUseHomeViewModel = jest.mocked(useHomeViewModel);
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Confiabilidade)", () => {
   it("renderiza indicador de carregamento e acessibilidade quando loading é true", async () => {
@@ -35,7 +36,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       loading: true,
       error: null,
     };
-    const mockActions: HomeActions = { reload: vi.fn() };
+    const mockActions: HomeActions = { reload: jest.fn() };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -54,7 +55,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       loading: false,
       error: "Falha de conexão com o catálogo remoto.",
     };
-    const reloadMock = vi.fn().mockResolvedValue(undefined);
+    const reloadMock = jest.fn().mockResolvedValue(undefined);
     const mockActions: HomeActions = { reload: reloadMock };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
@@ -78,15 +79,41 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     const mockState: HomeState = { books: [], loading: false, error: "Falha de conexão." };
-    mockedUseHomeViewModel.mockReturnValue([mockState, { reload: vi.fn() }]);
+    mockedUseHomeViewModel.mockReturnValue([mockState, { reload: jest.fn() }]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<Home />); });
 
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+  });
+
+  it("mantém o livro, mostra a cópia e recarrega uma vez ao reconectar", async () => {
+    const network = jest.mocked(useNetworkStatus);
+    network.mockReturnValue({ isOnline: false });
+    const reload = jest.fn();
+    mockedUseHomeViewModel.mockReturnValue([{
+      books: [{ id: "1", title: "Vidas Secas", author: "Graciliano Ramos", ownerId: "u1", modality: "trade", status: "available" }],
+      cachedAt: Date.UTC(2026, 10, 23, 12, 0),
+      loading: false,
+      error: null,
+    }, { reload }]);
+
+    try {
+      const screen = await render(<Home />);
+      expect(screen.getAllByText("Vidas Secas").length).toBeGreaterThan(0);
+      expect(screen.getByText(/Catálogo salvo em \d{2}\/\d{2} às .*Conecte-se para carregar mais/)).toBeDefined();
+      expect(reload).not.toHaveBeenCalled();
+
+      network.mockReturnValue({ isOnline: true });
+      await screen.rerender(<Home />);
+      await screen.rerender(<Home />);
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
+      network.mockReturnValue({ isOnline: true });
+    }
   });
 
   it("renderiza catálogo de livros populado com títulos e autores", async () => {
@@ -98,7 +125,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       loading: false,
       error: null,
     };
-    const mockActions: HomeActions = { reload: vi.fn() };
+    const mockActions: HomeActions = { reload: jest.fn() };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -123,7 +150,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       loading: false,
       error: null,
     };
-    const mockActions: HomeActions = { reload: vi.fn() };
+    const mockActions: HomeActions = { reload: jest.fn() };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -143,12 +170,12 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     ];
 
     function setupBooks() {
-      mockedUseHomeViewModel.mockReturnValue([{ books, loading: false, error: null }, { reload: vi.fn() }]);
+      mockedUseHomeViewModel.mockReturnValue([{ books, loading: false, error: null }, { reload: jest.fn() }]);
     }
 
     it("mostra 'Recém-adicionados' com os livros do catálogo e aciona 'Ver mais' sem filtro", async () => {
       setupBooks();
-      const onNavigateToSearch = vi.fn();
+      const onNavigateToSearch = jest.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
@@ -162,16 +189,14 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
 
     it("resume no destaque 'Doações da semana' só as doações disponíveis e abre a Pesquisa filtrada", async () => {
       setupBooks();
-      const onNavigateToSearch = vi.fn();
+      const onNavigateToSearch = jest.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
       });
 
       const donationCount = books.filter((b) => b.modality === "donation" && b.status === "available").length;
-      // O contador exibido adiciona +2 ao valor real para incentivar a descoberta
-      const displayCount = donationCount > 0 ? donationCount + 2 : 0;
-      const summary = `${displayCount} ${displayCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      const summary = `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
       expect(screen.getByText(summary)).toBeDefined();
 
       fireEvent.press(screen.getByLabelText(`Doações da semana: ${summary}`));
@@ -181,7 +206,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     it("não inventa quantidade de doações quando não há nenhuma disponível", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: [books[0]], loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
@@ -211,7 +236,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
 
   it("recarrega o catálogo quando focusKey muda (ex.: ao voltar de cadastrar um anúncio)", async () => {
     const mockState: HomeState = { books: [], loading: false, error: null };
-    const reloadMock = vi.fn().mockResolvedValue(undefined);
+    const reloadMock = jest.fn().mockResolvedValue(undefined);
     const mockActions: HomeActions = { reload: reloadMock };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
@@ -254,9 +279,9 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     it("filtra os livros do ponto de encontro ativo e atualiza título do carrossel", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
-      const onNavigateToSearch = vi.fn();
+      const onNavigateToSearch = jest.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(
@@ -275,9 +300,9 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     it("exibe estado de ausência acolhedor quando não há livros no ponto de encontro selecionado", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
-      const onNavigateToSearch = vi.fn();
+      const onNavigateToSearch = jest.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(
@@ -297,7 +322,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     it("exibe o selo de local no card do livro quando definido (Spec 070 / ADR 0053)", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
@@ -312,12 +337,12 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
   describe("Micro-interação da florada de Ipê (Controle de disparo)", () => {
     it("não ativa florada ao carregar ou recarregar a Home, apenas ao tocar no Ipê", async () => {
       resetAppLaunchCelebrationForTesting();
-      const onPetalTrigger = vi.fn();
+      const onPetalTrigger = jest.fn();
       const unsubscribe = subscribeIpePetals(onPetalTrigger);
 
       mockedUseHomeViewModel.mockReturnValue([
         { books: [], loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
 
       // 1. Primeira entrada do aplicativo: não deve soltar pétalas

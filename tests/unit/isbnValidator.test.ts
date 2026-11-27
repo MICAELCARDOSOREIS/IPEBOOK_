@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { isValidIsbn, isValidIsbn10, isValidIsbn13, normalizeIsbn } from "@/model/isbn";
 
 describe("isbnValidator (Spec 058)", () => {

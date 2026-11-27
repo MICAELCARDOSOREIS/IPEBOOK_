@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeSectionList } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -7,6 +8,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -17,19 +19,23 @@ import {
   makeNetworkStatus,
   makeNotificationsPromptViewModel,
   makeNotificationsViewModel,
+  makeWebPushViewModel,
 } from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
+import { notificationTimeLabel } from "@/viewmodel/notificationGrouping";
+import { meetingNotificationDisplay, notificationDateSections, notificationRows } from "@/viewmodel/meetingNotifications";
+import { formatMeetingWhen } from "@/view/meetingFormat";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
-import { WEB_GUTTER } from "@/view/webLayout";
-import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { createNotificationsStyles, withWebInteractive } from "./notificationsStyles";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
+  sessionLoading?: boolean;
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToAction?: (actionUrl: string) => void;
@@ -41,16 +47,16 @@ const TYPE_CONFIG: Record<
   { icon: AppIconName; tone: IconBadgeTone; label: string; actionHint: string }
 > = {
   request_received: { icon: "mail", tone: "action", label: "Proposta", actionHint: "Ver pedido recebido" },
-  request_accepted: { icon: "swap", tone: "trade", label: "Aceita", actionHint: "Combinar entrega" },
-  request_rejected: { icon: "mail", tone: "neutral", label: "Atualização", actionHint: "Ver detalhes" },
-  request_cancelled: { icon: "mail", tone: "neutral", label: "Cancelada", actionHint: "Ver pedidos" },
+  request_accepted: { icon: "checkCircle", tone: "trade", label: "Aceita", actionHint: "Combinar entrega" },
+  request_rejected: { icon: "close", tone: "neutral", label: "Atualização", actionHint: "Ver detalhes" },
+  request_cancelled: { icon: "archive", tone: "neutral", label: "Cancelada", actionHint: "Ver pedidos" },
   favorite_update: { icon: "heart", tone: "donation", label: "Favorito", actionHint: "Ver exemplar" },
   new_message: { icon: "chat", tone: "action", label: "Mensagem", actionHint: "Abrir conversa" },
   rating_received: { icon: "star", tone: "donation", label: "Avaliação", actionHint: "Ver perfil" },
-  safety_tip: { icon: "info", tone: "neutral", label: "Segurança", actionHint: "Ler orientações" },
+  safety_tip: { icon: "lock", tone: "neutral", label: "Segurança", actionHint: "Ler orientações" },
   system: { icon: "info", tone: "neutral", label: "Aviso", actionHint: "Saber mais" },
-  search_alert_match: { icon: "shelf", tone: "donation", label: "Alerta", actionHint: "Explorar busca" },
-  meeting_update: { icon: "calendar", tone: "action", label: "Encontro", actionHint: "Ver ponto de troca" },
+  search_alert_match: { icon: "search", tone: "donation", label: "Alerta", actionHint: "Explorar busca" },
+  meeting_update: { icon: "calendar", tone: "action", label: "Encontro", actionHint: "Ver negociação" },
 };
 
 /**
@@ -59,6 +65,8 @@ const TYPE_CONFIG: Record<
  */
 export default function Notifications({
   sessionUserId,
+  sessionLoading = false,
+  focusKey,
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
@@ -68,16 +76,50 @@ export default function Notifications({
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
-  const [state, actions] = makeNotificationsViewModel(sessionUserId);
+  const [state, actions] = makeNotificationsViewModel(sessionUserId, true);
+  useOnRefocus(focusKey, () => {
+    void actions.refresh();
+  });
   const [prompt, promptActions] = makeNotificationsPromptViewModel();
+  const webPush = makeWebPushViewModel(sessionUserId);
   const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createNotificationsStyles(colors), [colors]);
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
-  const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<"read" | "all" | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [expandedHistory, setExpandedHistory] = useState<ReadonlySet<string>>(() => new Set());
+  const sections = useMemo(
+    () => notificationDateSections(notificationRows(state.notifications, state.filter), expandedHistory),
+    [state.notifications, state.filter, expandedHistory],
+  );
+
+  const toggleHistory = (requestId: string) => {
+    setExpandedHistory((previous) => {
+      const next = new Set(previous);
+      if (next.has(requestId)) next.delete(requestId);
+      else next.add(requestId);
+      return next;
+    });
+  };
+
+  const deleteBatch = async () => {
+    if (!confirmDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await (confirmDelete === "read" ? actions.clearRead() : actions.clearAll());
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
+      setManageOpen(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -88,37 +130,77 @@ export default function Notifications({
     }
   };
 
-  const showListChrome = state.loading || Boolean(state.error) || state.notifications.length > 0;
+  const showListChrome = !state.loading && !state.error && state.notifications.length > 0;
   const hasReadNotifications = state.notifications.some((n) => n.read);
+
+  const renderHeader = (showRefreshAction: boolean) => {
+    if (!wide) {
+      return <TopAppBar title="Notificações" onBack={guardedBack} />;
+    }
+
+    return (
+      <View style={styles.wideHeader}>
+        <View style={styles.wideHeaderLeft}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            hitSlop={8}
+            onPress={guardedBack}
+            style={withWebInteractive(
+              styles.wideBackButton,
+              styles.wideBackButtonHover,
+              colors.m3.focusRing,
+            )}
+          >
+            <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+          </Pressable>
+          <View style={styles.wideHeaderTextGroup}>
+            <Text accessibilityRole="header" style={styles.wideTitle}>
+              Notificações
+            </Text>
+            <Text style={styles.wideSubtitle}>
+              Avisos de propostas, mensagens e atualizações em Piripiri
+            </Text>
+          </View>
+        </View>
+
+        {showRefreshAction ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Atualizar notificações"
+            accessibilityState={{ busy: refreshing, disabled: refreshing }}
+            disabled={refreshing}
+            onPress={() => void handleRefresh()}
+            style={withWebInteractive(
+              [styles.refreshButton, refreshing && styles.refreshButtonDisabled],
+              styles.refreshButtonHover,
+              colors.m3.focusRing,
+            )}
+          >
+            <Text style={styles.refreshButtonText}>
+              {refreshing ? "Atualizando..." : "Atualizar"}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  };
+
+  if (sessionLoading) {
+    return (
+      <SafeAreaView style={styles.page}>
+        {renderHeader(false)}
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando notificações" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        {wide ? (
-          <View style={styles.wideHeader}>
-            <View style={styles.wideHeaderLeft}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Voltar"
-                hitSlop={8}
-                onPress={guardedBack}
-                style={withPress(styles.wideBackButton)}
-              >
-                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
-              </Pressable>
-              <View>
-                <Text accessibilityRole="header" style={styles.wideTitle}>
-                  Notificações
-                </Text>
-                <Text style={styles.wideSubtitle}>
-                  Avisos de propostas, mensagens e atualizações em Piripiri
-                </Text>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <TopAppBar title="Notificações" onBack={guardedBack} />
-        )}
+        {renderHeader(false)}
         <View style={[styles.centered, wide && styles.centeredWide]}>
           <View style={[styles.emptyCard, wide && styles.emptyCardWide]}>
             <View style={styles.emptyIconCircle}>
@@ -142,49 +224,37 @@ export default function Notifications({
     );
   }
 
-  return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
-        <View style={styles.wideHeader}>
-          <View style={styles.wideHeaderLeft}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={8}
-              onPress={guardedBack}
-              style={withPress(styles.wideBackButton)}
-            >
-              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
-            </Pressable>
-            <View>
-              <Text accessibilityRole="header" style={styles.wideTitle}>
-                Notificações
+  const hasScrollableNotifications = !state.loading && !state.error && sections.length > 0;
+  const scrollControls = isIos && hasScrollableNotifications;
+  const controls = (
+    <>
+        {Platform.OS === "web" ? (
+          <View style={styles.permissionBannerAction}>
+            {webPush.status === "active" || webPush.status === "inactive" ? (
+              <OutlinedButton
+                label={webPush.status === "active" ? "Desativar avisos neste iPhone" : "Ativar avisos neste iPhone"}
+                loading={webPush.busy}
+                onPress={() => void webPush.toggle()}
+              />
+            ) : (
+              <Text style={styles.permissionBannerDescription}>
+                {webPush.status === "requires-install"
+                  ? "Para receber avisos neste iPhone, adicione o IpêBook à Tela de Início e abra a central pelo ícone."
+                  : "Na versão web, acompanhe propostas e lembretes nesta central."}
               </Text>
-              <Text style={styles.wideSubtitle}>
-                Avisos de propostas, mensagens e atualizações em Piripiri
-              </Text>
-            </View>
+            )}
+            {webPush.error ? <Text accessibilityRole="alert" style={styles.permissionBannerDescription}>{webPush.error}</Text> : null}
           </View>
-        </View>
-      ) : (
-        <TopAppBar
-          title="Notificações"
-          onBack={guardedBack}
-        />
-      )}
-      <View style={[styles.content, wide && styles.contentWide]}>
-        {state.systemPermissionGranted === false && !prompt.granted ? (
+        ) : state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
-            accessible={true}
-            accessibilityRole="alert"
             testID="permission-alert"
           >
             <View style={styles.permissionIconCircle}>
               <AppIcon name="info" size={20} color={colors.highlight} />
             </View>
             <View style={styles.permissionTextContainer}>
-              <Text style={styles.permissionBannerTitle}>Notificações desativadas</Text>
+              <Text accessibilityRole="alert" style={styles.permissionBannerTitle}>Notificações desativadas</Text>
               <Text style={styles.permissionBannerDescription}>
                 Ative as notificações do IpêBook nas configurações do aparelho para não perder propostas nem lembretes de encontros presenciais.
               </Text>
@@ -200,108 +270,131 @@ export default function Notifications({
         ) : null}
 
         {showListChrome ? (
-          <View style={[styles.filterBar, wide && styles.filterBarWide]}>
-            <View accessibilityRole="tablist" style={[styles.filterTabs, wide && styles.filterTabsWide]}>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityLabel={`Todas (${state.notifications.length})`}
-                accessibilityState={{ selected: state.filter === "all" }}
-                onPress={() => actions.setFilter("all")}
-                style={withPress([
-                  styles.filterChip,
-                  wide && styles.filterChipWide,
-                  state.filter === "all" && styles.filterChipActive,
-                ])}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    state.filter === "all" && styles.filterChipTextActive,
-                  ]}
+          <View>
+            <View style={styles.filterBar}>
+              <View style={styles.filterTabs}>
+                {(["all", "unread"] as const).map((filter) => {
+                  const selected = state.filter === filter;
+                  const label = filter === "all" ? "Todas" : `Não lidas (${state.unreadCount})`;
+                  const accessibleLabel = filter === "all" ? `Todas (${state.notifications.length})` : label;
+                  return (
+                    <Pressable
+                      key={filter}
+                      accessibilityRole="button"
+                      accessibilityLabel={accessibleLabel}
+                      accessibilityState={{ selected }}
+                      aria-pressed={selected}
+                      onPress={() => actions.setFilter(filter)}
+                      style={withWebInteractive(
+                        [
+                          styles.filterChip,
+                          selected && styles.filterChipActive,
+                          isIos && !selected && (iosGlass
+                            ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                            : { backgroundColor: colors.m3.surfaceContainer }),
+                        ],
+                        selected ? styles.filterChipActiveHover : styles.filterChipHover,
+                        colors.m3.focusRing,
+                      )}
+                    >
+                      {isIos && iosGlass && !selected ? (
+                        <IosGlassBackdrop style={{ borderRadius: 999 }} />
+                      ) : null}
+                      <Text style={[styles.filterChipText, selected && styles.filterChipTextActive]}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={[styles.actionButtonsRow, !wide && styles.actionButtonsRowNarrow]}>
+                {state.unreadCount > 0 ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Marcar todas como lidas"
+                    onPress={() => void actions.markAllAsRead()}
+                    style={withWebInteractive(
+                      [styles.actionBtn, styles.actionBtnPrimary], styles.actionBtnPrimaryHover, colors.m3.focusRing,
+                    )}
+                  >
+                    <AppIcon name="check" size={16} color={colors.action} />
+                    <Text style={styles.actionBtnText}>Marcar todas como lidas</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: manageOpen }}
+                  onPress={() => setManageOpen((open) => !open)}
+                  style={withWebInteractive(
+                    [
+                      styles.actionBtn,
+                      isIos && (iosGlass
+                        ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+                        : { backgroundColor: colors.m3.surfaceContainer }),
+                    ],
+                    styles.actionBtnHover,
+                    colors.m3.focusRing,
+                  )}
                 >
-                  Todas ({state.notifications.length})
-                </Text>
-              </Pressable>
-
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityLabel={`Não lidas (${state.unreadCount})`}
-                accessibilityState={{ selected: state.filter === "unread" }}
-                onPress={() => actions.setFilter("unread")}
-                style={withPress([
-                  styles.filterChip,
-                  wide && styles.filterChipWide,
-                  state.filter === "unread" && styles.filterChipActive,
-                ])}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    state.filter === "unread" && styles.filterChipTextActive,
-                  ]}
-                >
-                  Não lidas ({state.unreadCount})
-                </Text>
-              </Pressable>
+                  {isIos && iosGlass ? <IosGlassBackdrop style={{ borderRadius: 999 }} /> : null}
+                  <AppIcon name="more" size={18} color={colors.secondaryText} />
+                  <Text style={styles.actionBtnSecondaryText}>Gerenciar notificações</Text>
+                </Pressable>
+              </View>
             </View>
-
-            <View style={[styles.actionButtonsRow, wide && styles.actionButtonsRowWide]}>
-              {state.unreadCount > 0 ? (
+            {manageOpen ? (
+              <View style={styles.managementActions}>
+                {hasReadNotifications ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setConfirmDelete("read")}
+                    style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
+                  >
+                    <Text style={styles.actionBtnDangerText}>Excluir notificações lidas</Text>
+                  </Pressable>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Marcar todas como lidas"
-                  onPress={() => {
-                    void actions.markAllAsRead();
-                    setFeedbackMessage("Todas as notificações foram marcadas como lidas.");
-                  }}
-                  style={withPress(styles.actionBtn)}
+                  onPress={() => setConfirmDelete("all")}
+                  style={withWebInteractive(styles.actionBtn, styles.actionBtnDangerHover, colors.m3.focusRing)}
                 >
-                  <AppIcon name="check" size={16} color={colors.action} />
-                  <Text style={styles.actionBtnText}>Marcar todas como lidas</Text>
+                  <Text style={styles.actionBtnDangerText}>Excluir todas as notificações</Text>
                 </Pressable>
-              ) : null}
-
-              {hasReadNotifications ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Limpar notificações lidas"
-                  onPress={() => {
-                    void actions.clearRead();
-                    setFeedbackMessage("Notificações lidas foram removidas.");
-                  }}
-                  style={withPress(styles.actionBtn)}
-                >
-                  <AppIcon name="check" size={14} color={colors.secondaryText} />
-                  <Text style={styles.actionBtnSecondaryText}>Limpar lidas</Text>
-                </Pressable>
-              ) : null}
-
-              {state.notifications.length > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Limpar todas as notificações"
-                  onPress={() => setConfirmClearAllVisible(true)}
-                  style={withPress(styles.actionBtn)}
-                >
-                  <AppIcon name="delete" size={14} color={colors.error} />
-                  <Text style={styles.actionBtnDangerText}>Limpar tudo</Text>
-                </Pressable>
-              ) : null}
-            </View>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
-        <View style={wide ? styles.main : styles.flexOne}>
+    </>
+  );
+
+  return (
+    <ScrollEdgeScreen style={styles.page} header={renderHeader(true)} scrolling={hasScrollableNotifications}>
+      <View style={[styles.content, wide && styles.contentWide]}>
+        {scrollControls ? null : controls}
+
+        <View
+          testID="notifications-main"
+          style={wide ? (showListChrome ? styles.main : styles.mainSolo) : styles.flexOne}
+        >
           {state.loading ? (
-            <LoadingState label="Carregando notificações" variant="conversations" />
+            <LoadingState
+              label="Carregando notificações"
+              variant="conversations"
+              style={wide && !showListChrome ? styles.loadingSolo : undefined}
+            />
           ) : state.error ? (
             isOnline ? (
               <ErrorState message={state.error} onRetry={() => void actions.reload()} />
             ) : (
               <OfflineState onRetry={() => void actions.reload()} />
             )
-          ) : state.filteredNotifications.length === 0 ? (
-            <View style={[styles.emptyState, wide && styles.emptyStateWide]}>
+          ) : sections.length === 0 ? (
+            <View
+              style={[
+                styles.emptyState,
+                wide && styles.emptyStateWide,
+                wide && !showListChrome && styles.emptyStateSolo,
+              ]}
+            >
               <View style={[styles.emptyCard, wide && styles.emptyCardWide]}>
                 <View style={styles.emptyIconCircle}>
                   <AppIcon name="bell" size={36} color={colors.action} />
@@ -332,14 +425,12 @@ export default function Notifications({
               </View>
             </View>
           ) : (
-            <SectionList
+            <ScrollEdgeSectionList
               testID="notifications-list"
               style={styles.flexOne}
-              sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
-                ...section,
-                data: [...section.data],
-              }))}
-              keyExtractor={(item) => item.id}
+              sections={sections}
+              ListHeaderComponent={scrollControls ? controls : undefined}
+              keyExtractor={({ item }) => item.id}
               contentContainerStyle={[
                 styles.listContent,
                 { paddingBottom: scrollBottomPadding.withoutBottomBar },
@@ -356,89 +447,172 @@ export default function Notifications({
                   <View style={styles.sectionHeaderLine} />
                 </View>
               )}
-              renderItem={({ item }) => {
+              renderItem={({ item: { item, requestId, history, historical } }) => {
                 const config = TYPE_CONFIG[item.type] ?? {
                   icon: "info",
                   tone: "neutral" as const,
                   label: "Aviso",
                   actionHint: "Ver detalhes",
                 };
-                const time = notificationTimeLabel(item.createdAt);
-                const destination = resolveNotificationRoute(item);
+                const meeting = requestId ? state.meetingsByRequest?.get(requestId) : undefined;
+                const current = historical ? undefined : meetingNotificationDisplay(meeting, sessionUserId);
+                const title = current?.title ?? item.title;
+                const message = current && meeting
+                  ? `${formatMeetingWhen(meeting.scheduledAt)} · ${meeting.pointName}`
+                  : historical ? item.message.replace(/\. Confirme na negociação\.$/, ".") : item.message;
+                const actionHint = historical ? "Ver negociação atual" : (current?.action ?? config.actionHint);
+                const time = historical ? new Date(item.createdAt).toLocaleDateString("pt-BR") : notificationTimeLabel(item.createdAt);
+                const destination = requestId ? `/conversa/${requestId}` : resolveNotificationRoute(item);
+                const historyOpen = Boolean(requestId && expandedHistory.has(requestId));
+                const historyUnread = history?.filter((notice) => !notice.read).length ?? 0;
 
                 return (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${item.title}. ${item.message}`}
-                    onPress={() => {
-                      if (!item.read) {
-                        void actions.markAsRead(item.id);
-                      }
-                      if (destination) {
-                        guardedAction(destination);
-                      }
-                    }}
-                    style={({ pressed }) => [
-                      styles.card,
-                      !item.read && styles.cardUnread,
-                      pressed && styles.cardPressed,
-                    ]}
-                  >
-                    <View style={styles.cardHeader}>
-                      <IconBadge icon={config.icon} tone={config.tone} />
-                      <View style={styles.cardTitleContainer}>
-                        <View style={styles.titleRow}>
-                          <Text
-                            style={[
-                              styles.cardTitle,
-                              !item.read && styles.cardTitleUnread,
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {item.title}
-                          </Text>
-                          {!item.read ? <View style={styles.unreadDot} /> : null}
-                        </View>
-                        <View style={styles.metaRow}>
-                          <View style={styles.typeBadge}>
-                            <Text style={styles.typeBadgeText}>{config.label}</Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* Botão de exclusão da notificação individual */}
+                  <View style={historical ? styles.historicalRow : undefined}>
+                    <View style={[styles.card, !item.read && styles.cardUnread]}>
+                      {!item.read ? <View style={styles.unreadStripe} /> : null}
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Excluir notificação"
-                        testID={`delete-notif-${item.id}`}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        onPress={(e) => {
-                          e?.stopPropagation?.();
-                          void actions.deleteNotification(item.id);
-                          setFeedbackMessage("Notificação excluída.");
+                        accessibilityLabel={`${title}. ${message}`}
+                        accessibilityHint={actionHint}
+                        onPress={() => {
+                          if (!item.read) {
+                            void actions.markAsRead(item.id);
+                          }
+                          if (destination) {
+                            guardedAction(destination);
+                          }
                         }}
-                        style={styles.deleteIconButton}
+                        style={withWebInteractive(
+                          [styles.cardBody, wide && styles.cardBodyWide],
+                          styles.cardBodyHover,
+                          colors.m3.focusRing,
+                        )}
                       >
-                        <AppIcon
-                          name="delete"
-                          size={18}
-                          color={colors.secondaryText}
-                        />
+                        <View style={[styles.cardHeader, wide && styles.cardHeaderWide]}>
+                          <IconBadge icon={config.icon} tone={config.tone} />
+                          <View style={styles.cardTitleContainer}>
+                            <View style={styles.titleRow}>
+                              <Text
+                                style={[
+                                  styles.cardTitle,
+                                  !item.read && styles.cardTitleUnread,
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {title}
+                              </Text>
+                              {!item.read ? (
+                                <View style={styles.novaBadge}>
+                                  <View style={styles.unreadDot} />
+                                  <Text style={styles.novaBadgeText}>Nova</Text>
+                                </View>
+                              ) : null}
+                              {wide ? (
+                                <>
+                                  <View style={styles.typeBadge}>
+                                    <Text style={styles.typeBadgeText}>{historical ? "Histórico" : config.label}</Text>
+                                  </View>
+                                  {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
+                                </>
+                              ) : null}
+                            </View>
+                            {!wide ? (
+                              <View style={styles.metaRow}>
+                                <View style={styles.typeBadge}>
+                                  <Text style={styles.typeBadgeText}>{historical ? "Histórico" : config.label}</Text>
+                                </View>
+                                {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
+                              </View>
+                            ) : null}
+                            <Text style={styles.cardMessage}>{message}</Text>
+                            {!wide ? (
+                              <View style={[styles.cardFooter, !item.read && styles.cardFooterUnread]}>
+                                <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                                  {actionHint}
+                                </Text>
+                                <AppIcon
+                                  name="chevronRight"
+                                  size={14}
+                                  color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                                />
+                              </View>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        {/* Rodapé do card: ação contextual rápida */}
+                        {wide ? (
+                          <View
+                            style={[
+                              styles.cardFooter,
+                              styles.cardFooterWide,
+                              !item.read && styles.cardFooterUnread,
+                            ]}
+                          >
+                            <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                              {actionHint}
+                            </Text>
+                            <AppIcon
+                              name="chevronRight"
+                              size={14}
+                              color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                            />
+                          </View>
+                        ) : null}
                       </Pressable>
-                    </View>
 
-                    {/* Mensagem e horário curto na mesma linha (Spec 043 RN-12 / Figma 07.04) */}
-                    <Text style={styles.cardMessage}>
-                      {item.message}
-                      {time ? <Text>{` ·\u00A0${time}`}</Text> : null}
-                    </Text>
+                      <View style={styles.cardActions}>
+                        {!item.read ? (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Marcar como lida"
+                            testID={`mark-read-notif-${item.id}`}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            onPress={() => void actions.markAsRead(item.id)}
+                            style={withWebInteractive(
+                              styles.cardIconButton,
+                              styles.cardIconButtonPrimaryHover,
+                              colors.m3.focusRing,
+                            )}
+                          >
+                            <AppIcon name="check" size={16} color={colors.action} />
+                          </Pressable>
+                        ) : null}
 
-                    {/* Rodapé do card: ação contextual rápida */}
-                    <View style={styles.cardFooter}>
-                      <Text style={styles.actionHintText}>{config.actionHint}</Text>
-                      <AppIcon name="chevronRight" size={14} color={colors.action} />
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Excluir notificação"
+                          testID={`delete-notif-${item.id}`}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          onPress={() => void actions.deleteNotification(item.id)}
+                          style={withWebInteractive(
+                            styles.cardIconButton,
+                            styles.cardIconButtonDangerHover,
+                            colors.m3.focusRing,
+                          )}
+                        >
+                          <AppIcon
+                            name="delete"
+                            size={16}
+                            color={colors.secondaryText}
+                          />
+                        </Pressable>
+                      </View>
                     </View>
-                  </Pressable>
+                    {requestId && history && history.length > 0 ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: historyOpen }}
+                        onPress={() => toggleHistory(requestId)}
+                        style={withWebInteractive(styles.historyToggle, styles.actionBtnHover, colors.m3.focusRing)}
+                      >
+                        <AppIcon name={historyOpen ? "chevronUp" : "chevronDown"} size={16} color={colors.action} />
+                        <Text style={styles.actionBtnText}>
+                          {`${historyOpen ? "Ocultar histórico" : "Ver histórico"} (${history.length})${historyUnread ? ` · ${historyUnread} ${historyUnread === 1 ? "não lida" : "não lidas"}` : ""}`}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
                 );
               }}
             />
@@ -447,427 +621,33 @@ export default function Notifications({
       </View>
 
       <Snackbar
-        visible={state.actionError !== null || feedbackMessage !== null}
-        message={state.actionError ?? feedbackMessage ?? ""}
-        onDismiss={() => {
-          if (state.actionError) actions.clearActionError();
-          if (feedbackMessage) setFeedbackMessage(null);
-        }}
+        visible={state.actionError !== null}
+        message={state.actionError ?? ""}
+        onDismiss={actions.clearActionError}
       />
 
       <Dialog
-        visible={confirmClearAllVisible}
-        title="Limpar todas as notificações?"
-        message="Todas as notificações da sua conta serão removidas permanentemente."
-        confirmLabel="Limpar tudo"
+        visible={confirmDelete !== null}
+        title={confirmDelete === "read" ? "Excluir notificações lidas?" : "Excluir todas as notificações?"}
+        message={confirmDelete === "read"
+          ? "As notificações lidas serão removidas permanentemente."
+          : "Todas as notificações da sua conta serão removidas permanentemente."}
+        confirmLabel="Excluir"
         cancelLabel="Cancelar"
         destructive
-        onConfirm={() => {
-          setConfirmClearAllVisible(false);
-          void actions.clearAll();
-          setFeedbackMessage("Todas as notificações foram limpas.");
-        }}
-        onCancel={() => setConfirmClearAllVisible(false)}
+        loading={deleting}
+        onConfirm={() => void deleteBatch()}
+        onCancel={() => setConfirmDelete(null)}
       />
 
       {/* Reabrir o aviso explicativo: a pessoa pediu no botão da banner, então o prompt nativo vem depois. */}
-      <PermissionPromptDialog
+      {Platform.OS !== "web" ? <PermissionPromptDialog
         permission="notifications"
         status={prompt.status}
         onAllow={() => void promptActions.approve()}
         onLater={() => void promptActions.decline()}
         onDismiss={promptActions.dismiss}
-      />
-    </SafeAreaView>
+      /> : null}
+    </ScrollEdgeScreen>
   );
-}
-
-const WIDE_CONTENT_MAX_WIDTH = 1200;
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
-    sectionHeaderContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[8],
-    },
-    sectionHeader: {
-      ...tokens.typography.labelMedium,
-      color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.bold,
-      letterSpacing: 0.5,
-    },
-    sectionHeaderLine: {
-      flex: 1,
-      height: 1,
-      backgroundColor: colors.m3.outlineVariant,
-      opacity: 0.6,
-    },
-    content: {
-      flex: 1,
-      minHeight: 0,
-      width: "100%",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-    },
-    permissionBanner: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderLeftWidth: 4,
-      borderLeftColor: colors.highlight,
-      borderRadius: tokens.radius.cardSmall,
-      padding: tokens.spacing[14],
-      marginBottom: tokens.spacing[12],
-      gap: tokens.spacing[10],
-    },
-    permissionIconCircle: {
-      width: 32,
-      height: 32,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    permissionTextContainer: {
-      flex: 1,
-    },
-    permissionBannerTitle: {
-      ...tokens.typography.labelLarge,
-      color: colors.text,
-      fontWeight: tokens.fontWeight.bold,
-      marginBottom: 2,
-    },
-    permissionBannerDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      lineHeight: 18,
-    },
-    // Controle para reabrir o aviso explicativo depois de uma recusa (Spec 127).
-    permissionBannerAction: { marginTop: tokens.spacing[10], maxWidth: 320 },
-    flexOne: { flex: 1, minHeight: 0 },
-    contentWide: {
-      flex: 1,
-      minHeight: 0,
-      width: "100%",
-      maxWidth: WIDE_CONTENT_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[16],
-      flexDirection: "row",
-      flexWrap: "wrap",
-      alignItems: "flex-start",
-      columnGap: tokens.spacing[48],
-      rowGap: tokens.spacing[16],
-    },
-    // Aviso de permissão ocupa a linha inteira; filtros e lista ficam lado a lado abaixo dele.
-    permissionBannerWide: { width: "100%", marginBottom: 0 },
-    main: { flex: 1, minWidth: 0, maxWidth: 880, alignSelf: "stretch", minHeight: 0 },
-    filterBarWide: {
-      width: 260,
-      flexDirection: "column",
-      alignItems: "stretch",
-      justifyContent: "flex-start",
-      flexWrap: "nowrap",
-      gap: tokens.spacing[16],
-      marginBottom: 0,
-    },
-    filterTabsWide: { flexDirection: "column", gap: tokens.spacing[6] },
-    filterChipWide: { minHeight: 44, paddingHorizontal: tokens.spacing[16], borderWidth: 0, backgroundColor: "transparent" },
-    filterBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: tokens.spacing[16],
-      flexWrap: "wrap",
-      rowGap: tokens.spacing[10],
-    },
-    filterTabs: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-    },
-    filterChip: {
-      minHeight: tokens.spacing[32],
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    filterChipActive: {
-      backgroundColor: colors.nature.foliage,
-      borderColor: colors.nature.foliage,
-      borderRadius: tokens.radius.full,
-      borderWidth: 0,
-    },
-    filterChipText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-    filterChipTextActive: {
-      color: colors.nature.onFoliage,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    actionButtonsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      flexWrap: "wrap",
-    },
-    actionButtonsRowWide: {
-      flexDirection: "column",
-      alignItems: "stretch",
-      gap: tokens.spacing[8],
-    },
-    actionBtn: {
-      minHeight: tokens.spacing[32],
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    actionBtnText: {
-      ...tokens.typography.labelMedium,
-      color: colors.action,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    actionBtnSecondaryText: {
-      ...tokens.typography.labelMedium,
-      color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    actionBtnDangerText: {
-      ...tokens.typography.labelMedium,
-      color: colors.error,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    wideHeader: {
-      width: "100%",
-      maxWidth: WIDE_CONTENT_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[24],
-      paddingBottom: tokens.spacing[12],
-    },
-    wideHeaderLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-    },
-    wideBackButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    wideTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    wideSubtitle: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[2],
-    },
-    centered: {
-      flex: 1,
-      width: "100%",
-      maxWidth: 560,
-      alignSelf: "center",
-      justifyContent: "center",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[24],
-      gap: tokens.spacing[12],
-    },
-    centeredWide: {
-      paddingVertical: tokens.spacing[40],
-    },
-    emptyState: {
-      flex: 1,
-      width: "100%",
-      maxWidth: 560,
-      alignSelf: "center",
-      justifyContent: "center",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[48],
-      gap: tokens.spacing[12],
-    },
-    emptyStateWide: {
-      maxWidth: 680,
-      width: "100%",
-      alignSelf: "center",
-      paddingVertical: tokens.spacing[24],
-    },
-    emptyCard: {
-      width: "100%",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    emptyCardWide: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      paddingHorizontal: tokens.spacing[40],
-      paddingVertical: tokens.spacing[48],
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    emptyIconCircle: {
-      width: 72,
-      height: 72,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.ipe.container,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[8],
-    },
-    emptyHeadline: {
-      ...tokens.typography.titleLarge,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
-      color: colors.text,
-      textAlign: "center",
-    },
-    emptyTitle: {
-      ...tokens.typography.titleMedium,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
-      color: colors.text,
-      textAlign: "center",
-    },
-    emptyDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      textAlign: "center",
-      lineHeight: 20,
-    },
-    textCentered: {
-      textAlign: "center",
-    },
-    buttonWrapper: {
-      marginTop: tokens.spacing[12],
-      width: "100%",
-      maxWidth: 320,
-    },
-    listContent: {
-      paddingBottom: tokens.spacing[32],
-      gap: tokens.spacing[12],
-    },
-    card: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[16],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      gap: tokens.spacing[10],
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
-    },
-    cardPressed: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.985 }],
-    },
-    cardUnread: {
-      borderColor: colors.action,
-      borderLeftWidth: 4,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    cardHeader: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[10],
-    },
-    cardTitleContainer: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    titleRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-    },
-    cardTitle: {
-      ...tokens.typography.titleMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.text,
-      flex: 1,
-    },
-    cardTitleUnread: {
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.actionDeep,
-    },
-    metaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-    },
-    typeBadge: {
-      paddingHorizontal: tokens.spacing[6],
-      paddingVertical: 2,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-    },
-    typeBadgeText: {
-      ...tokens.typography.labelSmall,
-      fontSize: 11,
-      color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    timeText: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-      fontSize: 12,
-    },
-    unreadDot: {
-      width: 9,
-      height: 9,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.action,
-    },
-    deleteIconButton: {
-      width: 32,
-      height: 32,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    cardMessage: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      lineHeight: 20,
-    },
-    cardFooter: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[4],
-      paddingTop: tokens.spacing[10],
-      marginTop: tokens.spacing[2],
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
-    },
-    actionHintText: {
-      ...tokens.typography.labelMedium,
-      color: colors.action,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-  });
 }

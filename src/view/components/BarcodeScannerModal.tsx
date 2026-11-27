@@ -2,20 +2,25 @@ import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   ActivityIndicator,
+  AppState,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { spacing, radius, typography, accessibility } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 
 import { withPress } from "@/view/pressFeedback";
 export type BarcodeScannerModalProps = {
@@ -28,13 +33,23 @@ export type BarcodeScannerModalProps = {
  * Modal com leitor de código de barras físico via expo-camera (Spec 059 / ADR 0042).
  * Focado na leitura de códigos de barras de livros (EAN-13, EAN-8, UPC-A, UPC-E).
  */
-export function BarcodeScannerModal({
+export function BarcodeScannerModal(props: BarcodeScannerModalProps) {
+  if (!props.visible) return null;
+  return <BarcodeScannerModalContent {...props} />;
+}
+
+function BarcodeScannerModalContent({
   visible,
   onClose,
   onScan,
 }: BarcodeScannerModalProps) {
   const { colors } = useTheme();
-  const [permission, requestPermission] = useCameraPermissions();
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = Platform.OS === "ios" && !opaqueIos;
+  const insets = useSafeAreaInsets();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const canAskAgain = permission?.canAskAgain;
+  const cameraGranted = permission?.granted;
   const [hasScanned, setHasScanned] = useState(false);
   const scanLockRef = useRef(false);
   const closeRef = useRef<FocusableElement | null>(null);
@@ -45,11 +60,19 @@ export function BarcodeScannerModal({
     if (visible) {
       setHasScanned(false);
       scanLockRef.current = false;
-      if (!permission?.granted) {
+      if (!cameraGranted && (Platform.OS !== "ios" || canAskAgain === true)) {
         requestPermission().catch(() => {});
       }
     }
-  }, [visible, permission?.granted, requestPermission]);
+  }, [visible, cameraGranted, canAskAgain, requestPermission]);
+
+  useEffect(() => {
+    if (!visible || Platform.OS !== "ios") return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void getPermission().catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [visible, getPermission]);
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
     if (scanLockRef.current || hasScanned) return;
@@ -74,7 +97,16 @@ export function BarcodeScannerModal({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+          },
+        ]}
+      >
         {/* Barra Superior */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
@@ -84,8 +116,9 @@ export function BarcodeScannerModal({
             accessibilityLabel="Fechar leitor de código de barras"
             onPress={onClose}
             hitSlop={12}
-            style={withPress(styles.closeButton)}
+            style={withPress([styles.closeButton, opaqueIos && { backgroundColor: colors.m3.surfaceContainerHigh }])}
           >
+            {iosGlass ? <IosGlassBackdrop style={{ borderRadius: radius.full }} /> : null}
             <AppIcon name="close" size={24} color={colors.text} />
           </Pressable>
         </View>
@@ -99,7 +132,7 @@ export function BarcodeScannerModal({
             </Text>
           </View>
         ) : !permission.granted ? (
-          <View style={styles.permissionContainer}>
+          <ScrollView style={styles.container} contentContainerStyle={styles.permissionContainer}>
             <View style={[styles.iconCircle, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
               <AppIcon name="camera" size={40} color={colors.action} />
             </View>
@@ -110,11 +143,11 @@ export function BarcodeScannerModal({
               Para ler o código de barras no verso do livro e preencher os dados automaticamente, precisamos de acesso à câmera do seu dispositivo.
             </Text>
             <View style={styles.permissionActions}>
-              <FilledButton
+              {Platform.OS === "ios" && !permission.canAskAgain ? <OpenAppSettingsButton /> : <FilledButton
                 label="Permitir Câmera"
                 onPress={() => requestPermission()}
                 accessibilityLabel="Solicitar permissão de câmera"
-              />
+              />}
               <View style={styles.buttonSpacer} />
               <OutlinedButton
                 label="Digitar ISBN Manualmente"
@@ -122,7 +155,7 @@ export function BarcodeScannerModal({
                 accessibilityLabel="Fechar e digitar ISBN manualmente"
               />
             </View>
-          </View>
+          </ScrollView>
         ) : (
           <View style={styles.cameraContainer}>
             <CameraView
@@ -156,7 +189,7 @@ export function BarcodeScannerModal({
             </View>
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -177,6 +210,7 @@ const styles = StyleSheet.create({
     ...typography.titleMedium,
   },
   closeButton: {
+    borderRadius: radius.full,
     minWidth: accessibility.touchTarget,
     minHeight: accessibility.touchTarget,
     alignItems: "center",
@@ -194,10 +228,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   permissionContainer: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing[24],
+    paddingVertical: spacing[16],
   },
   iconCircle: {
     width: 80,
@@ -238,10 +273,12 @@ const styles = StyleSheet.create({
   overlayCenterRow: {
     flexDirection: "row",
     height: 180,
+    maxHeight: "50%",
   },
   reticle: {
-    width: 280,
-    height: 180,
+    width: "90%",
+    maxWidth: 280,
+    height: "100%",
     borderWidth: 1,
     borderRadius: radius.medium,
     position: "relative",

@@ -1,22 +1,22 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthError, ValidationError } from "@/model/errors";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
-const store = new Map<string, string>();
+const mockStore = new Map<string, string>();
 
-vi.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStore.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStore.set(key, value);
     }),
-    removeItem: vi.fn(async (key: string) => {
-      store.delete(key);
+    removeItem: jest.fn(async (key: string) => {
+      mockStore.delete(key);
     }),
   },
 }));
@@ -31,17 +31,17 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
 const fakeRateLimiter = {
-  checkAndRecord: vi.fn(() => ({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 })),
-  reset: vi.fn(),
-  getTimeUntilResetMs: vi.fn(() => 0),
+  checkAndRecord: jest.fn(() => ({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 })),
+  reset: jest.fn(),
+  getTimeUntilResetMs: jest.fn(() => 0),
 } as unknown as IRateLimiter;
-const fakeLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } as unknown as ILogger;
-const fakeMetadataService = { lookupByIsbn: vi.fn(async () => null) } as unknown as IBookMetadataService;
+const fakeLogger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as ILogger;
+const fakeMetadataService = { lookupByIsbn: jest.fn(async () => null) } as unknown as IBookMetadataService;
 
 function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
   return {
     listBooks: async () => [],
-    createListing: vi.fn(async (input) => ({
+    createListing: jest.fn(async (input) => ({
       id: "new-1",
       title: input.title,
       author: input.author,
@@ -54,19 +54,19 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
       throw new Error("not implemented");
     },
     listMyListings: async () => [],
-    cancelListing: vi.fn(async () => {}),
-    updateListing: vi.fn(async () => {
+    cancelListing: jest.fn(async () => {}),
+    updateListing: jest.fn(async () => {
       throw new Error("not implemented");
     }),
-    togglePauseListing: vi.fn(async () => {
+    togglePauseListing: jest.fn(async () => {
       throw new Error("not implemented");
     }),
-    listDrafts: vi.fn(async () => []),
-    saveDraft: vi.fn(async () => {
+    listDrafts: jest.fn(async () => []),
+    saveDraft: jest.fn(async () => {
       throw new Error("not implemented");
     }),
-    discardDraft: vi.fn(async () => {}),
-    publishDraft: vi.fn(async () => {
+    discardDraft: jest.fn(async () => {}),
+    publishDraft: jest.fn(async () => {
       throw new Error("not implemented");
     }),
     ...overrides,
@@ -95,7 +95,7 @@ afterEach(async () => {
 
 describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", () => {
   beforeEach(() => {
-    store.clear();
+    mockStore.clear();
   });
   it("inicia com estado padrão do formulário", async () => {
     const hook = await renderHook(stubUseCases());
@@ -208,7 +208,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
 
   it("exibe erro de sessão quando sessionUserId é nulo", async () => {
     const mock = stubUseCases({
-      createListing: vi.fn(async () => { throw new AuthError("Sessão obrigatória para cadastrar anúncio."); }),
+      createListing: jest.fn(async () => { throw new AuthError("Sessão obrigatória para cadastrar anúncio."); }),
     });
     const hook = await renderHook(mock);
 
@@ -228,7 +228,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
 
   it("exibe erro de validação quando payload é inválido", async () => {
     const mock = stubUseCases({
-      createListing: vi.fn(async () => { throw new ValidationError("Título do livro é obrigatório."); }),
+      createListing: jest.fn(async () => { throw new ValidationError("Título do livro é obrigatório."); }),
     });
     const hook = await renderHook(mock);
 
@@ -242,7 +242,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
 
   it("sanitiza exceções técnicas inesperadas", async () => {
     const mock = stubUseCases({
-      createListing: vi.fn(async () => { throw new Error("Internal server error"); }),
+      createListing: jest.fn(async () => { throw new Error("Internal server error"); }),
     });
     const hook = await renderHook(mock);
 
@@ -316,6 +316,55 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     expect(hook.current[0].photos).toHaveLength(2);
   });
 
+  it("salva foto do verso no slot 1 sem jogar para lombada e compacta slots vazios ao publicar", async () => {
+    const useCases = stubUseCases();
+    const hook = await renderHook(useCases);
+    const backUrl = "https://exemplo.com/foto-verso-1.jpg";
+    const spineUrl = "https://exemplo.com/foto-lombada-1.jpg";
+
+    await act(async () => {
+      hook.current[1].setTitle("Alchemised");
+      hook.current[1].setAuthor("SenLinYu");
+      hook.current[1].setModality("donation");
+      hook.current[1].setPhotoAt(1, backUrl);
+    });
+
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+
+    await act(async () => {
+      await hook.current[1].submit("user-1");
+    });
+    expect(useCases.createListing).toHaveBeenCalledWith(
+      expect.objectContaining({ photos: [backUrl] }),
+      "user-1",
+    );
+
+    // Adicionar lombada depois não sobrescreve o verso; remover lombada mantém o verso no slot 1.
+    await act(async () => {
+      hook.current[1].setPhotoAt(1, backUrl);
+      hook.current[1].setPhotoAt(0, spineUrl);
+    });
+    expect(hook.current[0].photos).toEqual([spineUrl, backUrl]);
+
+    await act(async () => {
+      hook.current[1].setPhotoAt(0, "");
+    });
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+
+    await act(async () => {
+      hook.current[1].resumeDraft({
+        id: "draft-1",
+        title: "Alchemised",
+        author: "SenLinYu",
+        ownerId: "user-1",
+        modality: "donation",
+        status: "draft",
+        photos: [backUrl],
+      });
+    });
+    expect(hook.current[0].photos).toEqual(["", backUrl]);
+  });
+
   it("recusa preço não numérico antes de chamar createListing", async () => {
     const mock = stubUseCases();
     const hook = await renderHook(mock);
@@ -380,7 +429,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
         await hook.current[1].saveDraft();
       });
 
-      const raw = store.get(CREATE_LISTING_DRAFT_KEY);
+      const raw = mockStore.get(CREATE_LISTING_DRAFT_KEY);
       expect(raw).toBeDefined();
       const draft = JSON.parse(raw!) as CreateListingDraft;
       expect(draft.isbn).toBe("9788535914849");
@@ -410,7 +459,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
         photoUrl: "https://exemplo.com/iracema.jpg",
         photos: ["https://exemplo.com/p1.jpg", "https://exemplo.com/p2.jpg"],
       };
-      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify(savedDraft));
+      mockStore.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify(savedDraft));
 
       const hook = await renderHook(stubUseCases());
       let loaded = false;
@@ -447,7 +496,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     });
 
     it("retorna false e não quebra quando o JSON do rascunho estiver corrompido", async () => {
-      store.set(CREATE_LISTING_DRAFT_KEY, "invalido{json");
+      mockStore.set(CREATE_LISTING_DRAFT_KEY, "invalido{json");
       const hook = await renderHook(stubUseCases());
       let loaded = false;
 
@@ -460,18 +509,18 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     });
 
     it("limpa rascunho do AsyncStorage via clearDraft", async () => {
-      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Antigo" }));
+      mockStore.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Antigo" }));
       const hook = await renderHook(stubUseCases());
 
       await act(async () => {
         await hook.current[1].clearDraft();
       });
 
-      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+      expect(mockStore.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
     });
 
     it("limpa rascunho do AsyncStorage ao submeter com sucesso", async () => {
-      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Publicado" }));
+      mockStore.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Publicado" }));
       const mock = stubUseCases();
       const hook = await renderHook(mock);
 
@@ -485,18 +534,18 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
         expect(res).not.toBeNull();
       });
 
-      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+      expect(mockStore.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
     });
 
     it("limpa rascunho do AsyncStorage ao resetar o formulário", async () => {
-      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Rascunho a Descartar" }));
+      mockStore.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Rascunho a Descartar" }));
       const hook = await renderHook(stubUseCases());
 
       await act(async () => {
         hook.current[1].reset();
       });
 
-      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+      expect(mockStore.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
       expect(hook.current[0].title).toBe("");
     });
 
@@ -539,7 +588,7 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
         status: "available" as const,
       };
       const useCases = stubUseCases({
-        getBookById: vi.fn()
+        getBookById: jest.fn()
           .mockResolvedValueOnce(draftBook as never)
           .mockResolvedValueOnce(nonDraftBook as never)
           .mockRejectedValueOnce(new Error("Erro ao buscar rascunho")),
@@ -581,8 +630,8 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
         status: "available" as const,
       };
       const useCases = stubUseCases({
-        getBookById: vi.fn().mockResolvedValue(draftBook as never),
-        publishDraft: vi.fn().mockResolvedValue(publishedBook as never),
+        getBookById: jest.fn().mockResolvedValue(draftBook as never),
+        publishDraft: jest.fn().mockResolvedValue(publishedBook as never),
       });
 
       const hook = await renderHook(useCases);

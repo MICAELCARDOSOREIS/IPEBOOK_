@@ -1,22 +1,21 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import ReportUser from "@/view/listings/reportUser";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useReportUserViewModel", () => ({ useReportUserViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useReportUserViewModel", () => ({ useReportUserViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReportUserViewModel, type ReportUserState } from "@/viewmodel/useReportUserViewModel";
 
-const actions = { setReason: vi.fn(), setDetails: vi.fn(), submit: vi.fn().mockResolvedValue(true) };
+const actions = { setReason: jest.fn(), setDetails: jest.fn(), submit: jest.fn().mockResolvedValue(true) };
 
 function setup(signedIn: boolean, state: Partial<ReportUserState> = {}) {
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user: signedIn ? { id: "me", email: "me@x.com" } : null, loading: false, error: null },
     {} as ReturnType<typeof useAuthViewModel>[1],
   ]);
-  vi.mocked(useReportUserViewModel).mockReturnValue([
+  jest.mocked(useReportUserViewModel).mockReturnValue([
     { reason: null, details: "", loading: false, error: null, success: false, ...state },
     actions,
   ]);
@@ -55,7 +54,7 @@ describe("ReportUser — denunciar pessoa (Spec 091)", () => {
 
     // sem sessão, com e sem botão de entrar
     setup(false);
-    const onNavigateToLogin = vi.fn();
+    const onNavigateToLogin = jest.fn();
     screen = await renderView({ onNavigateToLogin });
     expect(screen.getByText("Identificação necessária")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("Entrar na minha conta")); });
@@ -67,7 +66,7 @@ describe("ReportUser — denunciar pessoa (Spec 091)", () => {
 
     // confirmação
     setup(true, { success: true });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     screen = await renderView({ onBack });
     expect(screen.getByText("Denúncia enviada")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("Voltar ao perfil")); });

@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchHistoryDataSource";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
@@ -368,7 +367,7 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     ];
     const hook = await renderHook({ listBooks: async () => list });
 
-    expect(hook.current[0].resultsSummary).toBe("2 livros");
+    expect(hook.current[0].resultsSummary).toBe("2 livros disponíveis");
     await act(async () => {
       hook.current[1].setModality("sale");
       hook.current[1].setCategory("Literatura");

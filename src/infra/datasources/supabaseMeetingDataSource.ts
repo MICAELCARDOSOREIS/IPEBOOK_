@@ -2,6 +2,7 @@ import type { IMeetingDataSource, MeetingUpdate } from "@/model/datasources/iMee
 import type { Meeting, MeetingStatus } from "@/model/entities/meeting";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { subscribePostgresChanges } from "@/infra/supabaseRealtime";
 
 type MeetingRow = {
   id: string;
@@ -78,5 +79,24 @@ export class SupabaseMeetingDataSource implements IMeetingDataSource {
     if (error) throw new DataSourceError("Não foi possível atualizar o encontro.");
     if (!data) throw new DataSourceError("O encontro mudou enquanto você respondia. Atualize a negociação.");
     return mapMeeting(data as MeetingRow);
+  }
+
+  subscribeToRequest(requestId: string, onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: `meetings:${requestId}`,
+      event: "*",
+      table: "v2_meetings",
+      filter: `request_id=eq.${requestId}`,
+      onPayload: () => onChange(),
+    });
+  }
+
+  subscribeToAll(onChange: () => void): () => void {
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: "meetings:all",
+      event: "*",
+      table: "v2_meetings",
+      onPayload: () => onChange(),
+    });
   }
 }

@@ -1,21 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseUserPreferencesDataSource } from "@/infra/datasources/supabaseUserPreferencesDataSource";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 function fakeClient(...tableImpls: unknown[]): SupabaseAppClient {
   const queue = [...tableImpls];
-  return { from: vi.fn().mockImplementation(() => queue.shift()) } as unknown as SupabaseAppClient;
+  return { from: jest.fn().mockImplementation(() => queue.shift()) } as unknown as SupabaseAppClient;
 }
 
 describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   it("findById retorna as preferências mapeadas", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: { user_id: "ana", phone: "86999998888", neighborhood: "Centro" },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -23,9 +22,9 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById retorna null quando não encontrado", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -33,9 +32,9 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById lança DataSourceError em erro de banco", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: "falhou" } });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: { message: "falhou" } });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -43,13 +42,13 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsert salva e retorna as preferências atualizadas", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: { user_id: "ana", phone: "86999998888", neighborhood: "Centro" },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -62,7 +61,7 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsert lança DataSourceError quando o banco retorna erro", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: { message: "falhou" } });
+    const upsert = jest.fn().mockResolvedValue({ error: { message: "falhou" } });
     const client = fakeClient({ upsert });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -70,7 +69,7 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById retorna pushToken quando presente na coluna push_token", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: "86999998888",
@@ -79,8 +78,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -93,7 +92,7 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById retorna pushToken como null quando explicitamente nulo no banco", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: null,
@@ -102,8 +101,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -116,7 +115,7 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById traz mutedTypes quando a coluna muted_types vem do banco (Spec 099)", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: "86999998888",
@@ -126,8 +125,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -141,8 +140,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsert grava muted_types quando informado (Spec 099)", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: null,
@@ -152,8 +151,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -164,10 +163,10 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("lança erro quando o upsert não consegue reler a linha salva", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -177,7 +176,7 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("findById trata muted_types nulo como lista vazia (Spec 099)", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: null,
@@ -187,8 +186,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -202,8 +201,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsert salva push_token quando informado", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: "86999998888",
@@ -212,8 +211,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -241,8 +240,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsert permite atualizar push_token para null (desregistro)", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: "86999998888",
@@ -251,8 +250,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);
@@ -271,8 +270,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
   });
 
   it("upsertPreferences delega para upsert", async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({
       data: {
         user_id: "ana",
         phone: "86999998888",
@@ -281,8 +280,8 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
       },
       error: null,
     });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ upsert }, { select });
 
     const ds = new SupabaseUserPreferencesDataSource(client);

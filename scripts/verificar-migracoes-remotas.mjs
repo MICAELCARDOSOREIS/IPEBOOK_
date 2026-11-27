@@ -211,6 +211,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Entregas concluídas por QR code (Spec 095)',
     colunas: ['request_id', 'completed_by', 'completed_at'],
   },
+  v2_web_push_subscriptions: {
+    nome: 'v2_web_push_subscriptions',
+    descricao: 'Inscrições privadas de avisos do IpêBook instalado (Spec 136)',
+    colunas: ['user_id', 'endpoint', 'p256dh', 'auth_secret'],
+  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
@@ -736,6 +741,27 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_notifications?.existe),
     detalhe: 'Política RLS e permissão de exclusão em v2_notifications',
   },
+  '202611250001_endurecimento_seguranca_rls_lgpd.sql': {
+    titulo: 'Endurecimento de segurança, RLS e LGPD',
+    validar: (ctx) =>
+      Boolean(
+        ctx.tabelas.v2_books?.existe &&
+          ctx.tabelas.v2_book_requests?.existe &&
+          ctx.tabelas.v2_search_alerts?.existe &&
+          ctx.tabelas.v2_blocked_users?.existe,
+      ),
+    detalhe: 'Máquina de estados v2_books, webhook_secret, delete_user_account/v2_beta_testers, bloqueio bilateral e limites de alertas (Spec 143 / ADR 0119)',
+  },
+  '202611260001_tempo_real_encontros_entregas.sql': {
+    titulo: 'Tempo real para encontros e entregas',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_meetings?.existe && ctx.tabelas.v2_deliveries?.existe),
+    detalhe: 'v2_meetings e v2_deliveries na publicação supabase_realtime com REPLICA IDENTITY FULL',
+  },
+  '20261126212846_web_push_iphone.sql': {
+    titulo: 'Inscrições Web Push do iPhone',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_web_push_subscriptions?.existe),
+    detalhe: 'v2_web_push_subscriptions com acesso privado por conta (Spec 136)',
+  },
 };
 
 /**
@@ -1006,10 +1032,11 @@ export function gerarRelatorioJson(resultado) {
 
 // Execução como script de linha de comando
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const args = process.argv.slice(2);
+  (async () => {
+    const args = process.argv.slice(2);
 
-  if (args.includes('--help') || args.includes('-h')) {
-    process.stdout.write(`
+    if (args.includes('--help') || args.includes('-h')) {
+      process.stdout.write(`
 Uso: npm run health:supabase:remote [opções]
 
 Opções:
@@ -1017,27 +1044,28 @@ Opções:
   --allow-pending   Retorna código de saída 0 mesmo se houver migrações pendentes
   --help, -h        Exibe esta mensagem de ajuda
 \n`);
-    process.exit(0);
-  }
+      process.exit(0);
+    }
 
-  const emiteJson = args.includes('--json');
-  const allowPending = args.includes('--allow-pending');
+    const emiteJson = args.includes('--json');
+    const allowPending = args.includes('--allow-pending');
 
-  const resultado = await executarDiagnosticoRemoto();
+    const resultado = await executarDiagnosticoRemoto();
 
-  if (emiteJson) {
-    process.stdout.write(gerarRelatorioJson(resultado) + '\n');
-  } else {
-    process.stdout.write(formatarRelatorioTerminal(resultado) + '\n');
-  }
+    if (emiteJson) {
+      process.stdout.write(gerarRelatorioJson(resultado) + '\n');
+    } else {
+      process.stdout.write(formatarRelatorioTerminal(resultado) + '\n');
+    }
 
-  if (resultado.ok) {
-    process.exit(0);
-  }
+    if (resultado.ok) {
+      process.exit(0);
+    }
 
-  if (allowPending && resultado.conectividade?.ok) {
-    process.exit(0);
-  }
+    if (allowPending && resultado.conectividade?.ok) {
+      process.exit(0);
+    }
 
-  process.exit(1);
+    process.exit(1);
+  })();
 }

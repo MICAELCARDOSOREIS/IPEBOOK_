@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { GoogleLogo } from "@/view/components/GoogleLogo";
@@ -9,7 +9,6 @@ import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
-import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "@/view/onboarding/ilustracao-classicos.png";
 import passo1Img from "@/view/beta/passo-1.png";
 import passo2Img from "@/view/beta/passo-2.png";
@@ -19,7 +18,7 @@ import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playS
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, colors as lightColors, tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { makeAuthViewModel, makeBetaSignupViewModel } from "@/di/container";
@@ -111,6 +110,8 @@ export function BetaInviteScreen({
   const { colors } = useTheme();
   const highlights = useMemo(() => getHighlights(), []);
   const wide = useIsWideWeb();
+  // O formulário pede 440 px e o vão entre as colunas é de 64 px; abaixo disso elas empilham.
+  const stackColumns = useHydratedWindowWidth() < 1100;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -234,7 +235,7 @@ export function BetaInviteScreen({
 
       {showHelp ? (
         <View style={styles.helpGuide} accessibilityLiveRegion="polite">
-          <Text accessibilityRole="header" style={styles.helpGuideHeader}>
+          <Text accessibilityRole="header" aria-level={2} style={styles.helpGuideHeader}>
             Como liberar e baixar o IpêBook (passo a passo)
           </Text>
           <View style={wide ? styles.helpStepsGrid : styles.helpStepsCol}>
@@ -395,41 +396,43 @@ export function BetaInviteScreen({
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.page}>
-      <View style={[styles.topBar, wide && styles.topBarWide]}>
-        <View style={styles.topBarInner}>
+  const header = (
+    <View style={[styles.topBar, wide && styles.topBarWide, Platform.OS === "ios" && { backgroundColor: "transparent", borderBottomWidth: 0 }]}>
+      <View style={styles.topBarInner}>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Ir para a página inicial do IpêBook"
+          onPress={guardedNavigateHome}
+          style={withPress(styles.logoPressable)}
+        >
+          <Logotipo />
+        </Pressable>
+        <View style={styles.topBarActions}>
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel="Ir para a página inicial do IpêBook"
+            accessibilityLabel="Voltar para a página inicial"
             onPress={guardedNavigateHome}
-            style={withPress(styles.logoPressable)}
+            style={withPress(styles.homeLink)}
           >
-            <Logotipo />
+            <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.homeLinkText}>Início</Text>
           </Pressable>
-          <View style={styles.topBarActions}>
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel="Voltar para a página inicial"
-              onPress={guardedNavigateHome}
-              style={withPress(styles.homeLink)}
-            >
-              <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
-              <Text style={styles.homeLinkText}>Início</Text>
-            </Pressable>
-            <ThemeToggleButton />
-          </View>
         </View>
       </View>
-      <ScrollView
+    </View>
+  );
+
+  return (
+    <ScrollEdgeScreen style={styles.page} header={header}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[styles.scroll, wide && styles.scrollWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
       >
         {wide ? (
-          <View style={styles.wideRow}>
+          <View style={[styles.wideRow, stackColumns && styles.wideRowStacked]}>
             <View style={styles.wideIntro}>{intro}</View>
-            <View style={styles.wideForm}>{formCard}</View>
+            <View style={[styles.wideForm, stackColumns && styles.wideFormStacked]}>{formCard}</View>
           </View>
         ) : (
           <View style={styles.narrow}>
@@ -437,8 +440,8 @@ export function BetaInviteScreen({
             {formCard}
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -466,6 +469,8 @@ function createStyles(colors: ColorPalette) {
     },
     logoPressable: {
       alignSelf: "center",
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       cursor: "pointer" as never,
     },
     topBarActions: {
@@ -477,8 +482,9 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
+      minHeight: tokens.accessibility.touchTarget,
       paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerHigh,
       cursor: "pointer" as never,
@@ -508,8 +514,10 @@ function createStyles(colors: ColorPalette) {
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
     },
+    wideRowStacked: { flexDirection: "column", gap: tokens.spacing[32] },
     wideIntro: { flex: 1.3, maxWidth: 920 },
     wideForm: { flex: 1, maxWidth: 560, minWidth: 440 },
+    wideFormStacked: { width: "100%", maxWidth: 560, minWidth: 0, alignSelf: "center" },
     intro: { gap: tokens.spacing[24] },
     pill: {
       flexDirection: "row",
@@ -696,7 +704,10 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     switchAccount: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
       alignSelf: "center",
     },
     switchAccountText: {

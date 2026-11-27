@@ -19,12 +19,13 @@ export class ListingPhotoUseCases implements IListingPhotoUseCases {
     if (!contentType) throw new ValidationError("Use uma foto em JPEG, PNG ou WebP.");
 
     // A pasta `anuncio` fica dentro da pasta da pessoa, que as políticas do bucket já isolam (ADR 0065);
-    // o nome é único para não sobrescrever uma foto anterior do mesmo anúncio.
+    // o nome é único para não sobrescrever uma foto anterior do mesmo anúncio e marca lombada/verso.
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const sideSegment = file.side === "spine" ? "lombada-" : file.side === "back" ? "verso-" : "";
     return this.photos.uploadPhoto({
       userId: owner,
       bookId: "anuncio",
-      fileName: `foto-${unique}.${EXTENSIONS[contentType]}`,
+      fileName: `foto-${sideSegment}${unique}.${EXTENSIONS[contentType]}`,
       fileBytes: file.bytes,
       contentType,
     });

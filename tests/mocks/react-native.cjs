@@ -76,16 +76,17 @@ FlatList.displayName = "FlatList";
 
 const SectionList = React.forwardRef((props, ref) => {
   const sections = props.sections || [];
+  const passthrough = pickPassthroughProps(props);
+  const header = renderListSlot(props.ListHeaderComponent);
+  const footer = renderListSlot(props.ListFooterComponent);
   const hasItems = sections.some((section) => (section.data || []).length > 0);
   if (!hasItems && props.ListEmptyComponent) {
-    const empty = typeof props.ListEmptyComponent === "function"
-      ? React.createElement(props.ListEmptyComponent)
-      : props.ListEmptyComponent;
-    return React.createElement(View, { ref }, empty);
+    return React.createElement(View, { ref, ...passthrough }, header, renderListSlot(props.ListEmptyComponent), footer);
   }
   return React.createElement(
     View,
-    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
+    { ref, ...passthrough, onRefresh: props.onRefresh, refreshing: props.refreshing },
+    header,
     sections.map((section, sectionIndex) =>
       React.createElement(
         React.Fragment,
@@ -96,7 +97,8 @@ const SectionList = React.forwardRef((props, ref) => {
           return React.createElement(React.Fragment, { key }, props.renderItem({ item, index, section }));
         })
       )
-    )
+    ),
+    footer,
   );
 });
 SectionList.displayName = "SectionList";
@@ -150,6 +152,7 @@ const StyleSheet = {
 const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   isReduceMotionEnabled: () => Promise.resolve(false),
+  isReduceTransparencyEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: () => {},
 };
@@ -175,6 +178,10 @@ function __emitKeyboardEvent(type, height, screenY = 0) {
   for (const handler of keyboardListeners.get(type) || []) handler(event);
 }
 const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
+const Dimensions = {
+  get: (_dimension) => ({ width: 360, height: 800, scale: 1, fontScale: 1 }),
+  addEventListener: (_type, _handler) => ({ remove: () => {} }),
+};
 
 let mockColorScheme = "light";
 const useColorScheme = () => mockColorScheme;
@@ -258,6 +265,7 @@ module.exports = {
   ScrollView,
   Modal,
   KeyboardAvoidingView,
+  InputAccessoryView: View,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -269,6 +277,7 @@ module.exports = {
   Keyboard,
   __emitKeyboardEvent,
   useWindowDimensions,
+  Dimensions,
   Animated,
   PanResponder,
   AppState,

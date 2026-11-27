@@ -1,12 +1,11 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import ReportListing from "@/view/listings/reportListing";
 
 describe("tela de denúncia de anúncio (ReportListing)", () => {
   it("exibe aviso de identificação necessária se o usuário não estiver logado", async () => {
-    const onLogin = vi.fn();
+    const onLogin = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -87,7 +86,7 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
   });
 
   it("aciona callback onBack na barra superior", async () => {
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -108,7 +107,7 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
   });
 
   it("anuncia e foca o erro de validação ao enviar sem motivo selecionado (Spec 042 / Issue #147)", async () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {

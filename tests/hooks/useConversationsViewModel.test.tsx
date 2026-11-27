@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
@@ -60,10 +59,10 @@ function deps(
   photos: Record<string, string> = {},
 ): ConversationsDeps {
   return {
-    listSentRequests: vi.fn().mockResolvedValue(sent),
-    listReceivedRequests: vi.fn().mockResolvedValue(received),
-    getMessages: vi.fn(async (requestId: string) => messages[requestId] ?? []),
-    getProfile: vi.fn(async (userId: string) => ({ name: names[userId] ?? null, photoUrl: photos[userId] ?? null })),
+    listSentRequests: jest.fn().mockResolvedValue(sent),
+    listReceivedRequests: jest.fn().mockResolvedValue(received),
+    getMessages: jest.fn(async (requestId: string) => messages[requestId] ?? []),
+    getProfile: jest.fn(async (userId: string) => ({ name: names[userId] ?? null, photoUrl: photos[userId] ?? null })),
   };
 }
 
@@ -158,9 +157,52 @@ describe("useConversationsViewModel (Spec 076)", () => {
 
   it("mostra erro amigável quando a lista falha", async () => {
     const failing = deps([], [], {}, {});
-    failing.listSentRequests = vi.fn().mockRejectedValue(new Error("rede"));
+    failing.listSentRequests = jest.fn().mockRejectedValue(new Error("rede"));
     const hook = await renderHook("me", failing);
     expect(hook.current[0].error).toBe("Não foi possível carregar suas conversas. Tente novamente.");
+  });
+
+  it("encerra o carregamento quando uma consulta não responde e recupera a lista ao tentar novamente", async () => {
+    jest.useFakeTimers();
+    try {
+      const base = deps([], [], {}, {});
+      let resolveFirstRequest!: (items: RequestWithListing[]) => void;
+      const firstRequest = new Promise<RequestWithListing[]>((resolve) => {
+        resolveFirstRequest = resolve;
+      });
+      const received: RequestWithListing[] = [{
+        request: { id: "r1", listingId: "b1", requesterId: "ana", status: "pending" },
+        listing: book("b1", "Dom Casmurro", "me"),
+        requesterName: "Ana",
+      }];
+      base.listReceivedRequests = jest.fn()
+        .mockReturnValueOnce(firstRequest)
+        .mockResolvedValueOnce(received);
+      const hook = await renderHook("me", base);
+      expect(hook.current[0]).toMatchObject({ loading: true, error: null });
+
+      await act(async () => {
+        jest.advanceTimersByTime(15_000);
+      });
+      expect(hook.current[0]).toMatchObject({
+        loading: false,
+        error: "Não foi possível carregar suas conversas. Tente novamente.",
+      });
+
+      await act(async () => {
+        await hook.current[1].reload();
+      });
+      await act(async () => {
+        resolveFirstRequest([]);
+      });
+      expect(hook.current[0]).toMatchObject({
+        items: [{ requestId: "r1" }],
+        loading: false,
+        error: null,
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("formata o horário relativo como no Figma 06.01", () => {
@@ -174,15 +216,15 @@ describe("useConversationsViewModel (Spec 076)", () => {
 
   it("recarrega a lista quando chega mudança em tempo real e cancela ao desmontar (Spec 086)", async () => {
     let push: (() => void) | undefined;
-    const unsubscribe = vi.fn();
+    const unsubscribe = jest.fn();
     const base = deps([], [], {}, {});
-    const listReceivedRequests = vi
+    const listReceivedRequests = jest
       .fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { request: { id: "r9", listingId: "b9", requesterId: "ana", status: "pending" }, listing: book("b9", "Iracema", "me"), requesterName: "Ana" },
       ]);
-    const subscribe = vi.fn((_userId: string, onChange: () => void) => {
+    const subscribe = jest.fn((_userId: string, onChange: () => void) => {
       push = onChange;
       return unsubscribe;
     });
@@ -205,10 +247,10 @@ describe("useConversationsViewModel (Spec 076)", () => {
     const messages = { s2: [msg("s2", "lucas", "Levo o livro", "2026-10-26T12:00:00Z")] };
     const base = deps(sent, [], messages, { lucas: "Lucas" });
     const hiddenAt: Record<string, string> = {};
-    const hideConversation = vi.fn(async (requestId: string) => {
+    const hideConversation = jest.fn(async (requestId: string) => {
       hiddenAt[requestId] = "2026-10-26T13:00:00Z";
     });
-    const hook = await renderHook("me", { ...base, hideConversation, listHiddenConversations: vi.fn(async () => hiddenAt) });
+    const hook = await renderHook("me", { ...base, hideConversation, listHiddenConversations: jest.fn(async () => hiddenAt) });
     expect(hook.current[0].items).toHaveLength(1);
 
     let ok = false;
@@ -228,7 +270,7 @@ describe("useConversationsViewModel (Spec 076)", () => {
   });
 
   it("devolve falso quando apagar falha (Spec 090)", async () => {
-    const failing = { ...deps([], [], {}, {}), hideConversation: vi.fn().mockRejectedValue(new Error("rede")) };
+    const failing = { ...deps([], [], {}, {}), hideConversation: jest.fn().mockRejectedValue(new Error("rede")) };
     const hook = await renderHook("me", failing);
     let ok = true;
     await act(async () => {
@@ -241,10 +283,10 @@ describe("useConversationsViewModel (Spec 076)", () => {
     const pending = { request: { id: "p1", listingId: "b2", requesterId: "me", status: "pending" as const }, listing: book("b2", "Vidas Secas", "lucas") };
     let sent: RequestWithListing[] = [pending];
     const base = deps([], [], {}, { lucas: "Lucas" });
-    const cancelRequest = vi.fn(async () => {
+    const cancelRequest = jest.fn(async () => {
       sent = [{ ...pending, request: { ...pending.request, status: "cancelled" as const } }];
     });
-    const hook = await renderHook("me", { ...base, listSentRequests: vi.fn(async () => sent), cancelRequest });
+    const hook = await renderHook("me", { ...base, listSentRequests: jest.fn(async () => sent), cancelRequest });
     expect(hook.current[0].items.map((i) => i.kind)).toEqual(["pendingSent"]);
 
     let ok = false;
@@ -257,7 +299,7 @@ describe("useConversationsViewModel (Spec 076)", () => {
   });
 
   it("devolve falso quando cancelar falha (Spec 101)", async () => {
-    const failing = { ...deps([], [], {}, {}), cancelRequest: vi.fn().mockRejectedValue(new Error("rede")) };
+    const failing = { ...deps([], [], {}, {}), cancelRequest: jest.fn().mockRejectedValue(new Error("rede")) };
     const hook = await renderHook("me", failing);
     let ok = true;
     await act(async () => {

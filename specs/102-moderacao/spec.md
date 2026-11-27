@@ -23,6 +23,8 @@ Dar destino às denúncias de anúncios (Spec 011) e de pessoas (Spec 091): uma 
 ## Como cadastrar um moderador
 No SQL do Supabase: `insert into public.v2_moderators (user_id) values ('<id da conta>');`
 
+Em 2026-11-12 o cadastro foi executado no projeto remoto para as quatro contas da equipe listadas em [docs/equipe.md](../../docs/equipe.md), por inserção direta em `v2_moderators` no SQL Editor. A tabela é restrita a `anon`/`authenticated`, então a presença das linhas não é verificável pela suíte local nem pela chave pública; a confirmação do acesso de cada conta à tela `/moderacao` é feita no aparelho ou navegador.
+
 ## Critérios de aceite e verificação
 | # | Critério | Verificação |
 |---|---|---|

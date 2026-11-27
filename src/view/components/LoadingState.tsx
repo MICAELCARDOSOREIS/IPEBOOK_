@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AccessibilityInfo, Animated, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import {
   LoadingSkeletonContent,
@@ -46,12 +46,12 @@ export function LoadingState({
             Animated.timing(pulseAnim, {
               toValue: 0.92,
               duration: 680,
-              useNativeDriver: true,
+              useNativeDriver: Platform.OS !== "web",
             }),
             Animated.timing(pulseAnim, {
               toValue: 0.45,
               duration: 680,
-              useNativeDriver: true,
+              useNativeDriver: Platform.OS !== "web",
             }),
           ]),
         );

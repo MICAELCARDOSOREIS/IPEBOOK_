@@ -10,6 +10,10 @@ import {
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 
+function isPlaceholderProfileName(name: string): boolean {
+  return /^Usuário #[0-9A-F]{4}$/i.test(name.trim());
+}
+
 export class AuthUseCases implements IAuthUseCases {
   constructor(
     private readonly dataSource: IAuthDataSource,
@@ -34,8 +38,21 @@ export class AuthUseCases implements IAuthUseCases {
    */
   private async ensurePublicProfile(userId: string, name: string): Promise<void> {
     if (!this.profiles) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
     try {
-      await this.profiles.ensure(userId, name);
+      const existing = await this.profiles.findById(userId);
+      if (!existing) {
+        await this.profiles.ensure(userId, trimmed);
+        return;
+      }
+      if (isPlaceholderProfileName(existing.name) && !isPlaceholderProfileName(trimmed)) {
+        await this.profiles.update(userId, {
+          name: trimmed,
+          photoUrl: existing.photoUrl,
+          socialHandle: existing.socialHandle,
+        });
+      }
     } catch {
       // Perfil público é complementar ao cadastro; ver Spec 030 e validacao.md.
     }
@@ -46,7 +63,11 @@ export class AuthUseCases implements IAuthUseCases {
     if (!result.isValid) {
       throw new ValidationError(result.errors[0]);
     }
-    return this.dataSource.signIn(email.trim(), password);
+    const user = await this.dataSource.signIn(email.trim(), password);
+    if (user.id && user.name) {
+      await this.ensurePublicProfile(user.id, user.name);
+    }
+    return user;
   }
 
   async signInWithGoogle(): Promise<User> {
@@ -57,6 +78,15 @@ export class AuthUseCases implements IAuthUseCases {
     if (user.id && user.id !== "pending") {
       await this.ensurePublicProfile(user.id, user.name || "Leitor IpêBook");
     }
+    return user;
+  }
+
+  async signInWithApple(): Promise<User | null> {
+    if (!this.dataSource.signInWithApple) {
+      throw new AuthError("Login com a Apple indisponível.");
+    }
+    const user = await this.dataSource.signInWithApple();
+    if (user?.name) await this.ensurePublicProfile(user.id, user.name);
     return user;
   }
 
@@ -71,8 +101,13 @@ export class AuthUseCases implements IAuthUseCases {
     return user;
   }
 
-  signOut(): Promise<void> {
-    return this.dataSource.signOut();
+  async signOut(): Promise<void> {
+    await this.dataSource.signOut();
+    try {
+      await this.localCache?.clearBooksCache();
+    } catch {
+      // A sessão já foi encerrada no provedor; falha no storage local não pode travar o logout.
+    }
   }
 
   getSession(): Promise<User | null> {

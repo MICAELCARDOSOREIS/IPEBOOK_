@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -62,6 +64,16 @@ export function useModalFocusTrap(
   }, [visible, disabled, isWeb]);
 
   useEffect(() => {
+    if (!isWeb) return;
+    return () => {
+      if (triggerRef.current) {
+        focusSafely(triggerRef.current);
+        triggerRef.current = null;
+      }
+    };
+  }, [isWeb]);
+
+  useEffect(() => {
     if (!isWeb || !visible) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -97,11 +109,26 @@ export type DialogProps = {
   onCancel: () => void;
 };
 
+const dialogStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getDialogStyles(colors: ColorPalette) {
+  let cached = dialogStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    dialogStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Diálogo do design system (design-system/04-componentes/dialogo.md).
  * Usado para confirmação de ações irreversíveis ou destrutivas (ex: exclusão de anúncio).
  */
-export function Dialog({
+export function Dialog(props: DialogProps) {
+  if (!props.visible) return null;
+  return <DialogContent {...props} />;
+}
+
+function DialogContent({
   visible,
   title,
   message,
@@ -117,9 +144,26 @@ export function Dialog({
   const confirmRef = useRef<FocusableElement | null>(null);
   const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const guardedCancel = useGuardedPress(onCancel);
-  const guardedConfirm = useGuardedPress(onConfirm);
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
+  const styles = getDialogStyles(colors);
+  const guardedCancel = useGuardedPress(
+    onCancel
+      ? () => {
+          if (isIos) triggerHaptic("light");
+          onCancel();
+        }
+      : undefined,
+  );
+  const guardedConfirm = useGuardedPress(
+    onConfirm
+      ? () => {
+          if (isIos) triggerHaptic(destructive ? "warning" : "light");
+          onConfirm();
+        }
+      : undefined,
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -136,7 +180,7 @@ export function Dialog({
           toValue: 1,
           tension: tokens.spring.spatialSlow.tension,
           friction: tokens.spring.spatialSlow.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {
@@ -171,10 +215,17 @@ export function Dialog({
         ) : null}
         <Animated.View
           accessibilityRole="alert"
-          style={[styles.card, { transform: [{ scale: cardScale }] }]}
+          style={[
+            styles.card,
+            isIos && (iosGlass ? styles.iosCardGlass : styles.iosCardOpaque),
+            { transform: [{ scale: cardScale }] },
+          ]}
         >
-          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          {iosGlass ? (
+            <IosGlassBackdrop testID="dialog-ios-glass" style={{ borderRadius: tokens.radius.xxl }} />
+          ) : null}
+          <Text accessibilityRole="header" maxFontSizeMultiplier={1.4} style={styles.title}>{title}</Text>
+          <Text maxFontSizeMultiplier={1.4} style={styles.message}>{message}</Text>
           <View style={styles.actions}>
             {showCancel ? (
               <Pressable
@@ -186,7 +237,7 @@ export function Dialog({
                 onPress={guardedCancel}
                 style={withPress(styles.cancelButton)}
               >
-                <Text style={styles.cancelText}>{cancelLabel}</Text>
+                <Text maxFontSizeMultiplier={1.4} style={styles.cancelText}>{cancelLabel}</Text>
               </Pressable>
             ) : null}
             <Pressable
@@ -198,14 +249,21 @@ export function Dialog({
               onPress={guardedConfirm}
               style={withPress([
                 styles.confirmButton,
-                destructive ? styles.confirmDestructive : styles.confirmDefault,
+                destructive
+                  ? (isIos ? styles.iosConfirmDestructive : styles.confirmDestructive)
+                  : styles.confirmDefault,
                 loading && styles.confirmDisabled,
               ])}
             >
               {loading ? (
-                <ActivityIndicator accessibilityLabel="Confirmando ação..." color={colors.surface} />
+                <ActivityIndicator
+                  accessibilityLabel="Confirmando ação..."
+                  color={destructive && isIos ? colors.error : colors.surface}
+                />
               ) : (
-                <Text style={styles.confirmText}>{confirmLabel}</Text>
+                <Text maxFontSizeMultiplier={1.4} style={[styles.confirmText, destructive && isIos && styles.iosConfirmDestructiveText]}>
+                  {confirmLabel}
+                </Text>
               )}
             </Pressable>
           </View>
@@ -238,6 +296,19 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 8,
       elevation: 3,
     },
+    iosCardGlass: {
+      overflow: "hidden",
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    iosCardOpaque: {
+      borderCurve: "continuous",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
     title: {
       color: colors.text,
       ...tokens.typography.titleMedium,
@@ -248,9 +319,11 @@ function createStyles(colors: ColorPalette) {
     },
     actions: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "flex-end",
       alignItems: "center",
       gap: tokens.spacing[8],
+      rowGap: tokens.spacing[8],
       marginTop: tokens.spacing[8],
     },
     cancelButton: {
@@ -279,6 +352,14 @@ function createStyles(colors: ColorPalette) {
     },
     confirmDestructive: {
       backgroundColor: colors.error,
+    },
+    iosConfirmDestructive: {
+      backgroundColor: tokens.ios.destructiveFill,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosConfirmDestructiveText: {
+      color: colors.error,
     },
     confirmDisabled: {
       opacity: 0.6,

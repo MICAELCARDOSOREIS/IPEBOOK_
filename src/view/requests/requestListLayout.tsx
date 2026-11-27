@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -8,8 +8,10 @@ import { makeNetworkStatus } from "@/di/container";
 import { BookCover } from "@/view/components/BookCover";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { IconBadge } from "@/view/components/IconBadge";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -92,20 +94,112 @@ export function RequestListLayout({
   const isHistory = (status: RequestStatus) => status === "rejected" || status === "cancelled";
   const historyCount = items.filter((item) => isHistory(item.request.status)).length;
 
-  const filteredItems = items.filter((item) => {
-    if (statusFilter === "pending") return item.request.status === "pending";
-    if (statusFilter === "accepted") return item.request.status === "accepted" && !isCompleted(item);
-    if (statusFilter === "completed") return isCompleted(item);
-    if (statusFilter === "history") return isHistory(item.request.status);
-    return true;
-  });
+  const statusPriority = (item: RequestWithListing) => {
+    if (item.request.status === "pending") return 0;
+    if (item.request.status === "accepted" && !isCompleted(item)) return 1;
+    if (isCompleted(item)) return 2;
+    return 3;
+  };
+
+  const filteredItems = items
+    .filter((item) => {
+      if (statusFilter === "pending") return item.request.status === "pending";
+      if (statusFilter === "accepted") return item.request.status === "accepted" && !isCompleted(item);
+      if (statusFilter === "completed") return isCompleted(item);
+      if (statusFilter === "history") return isHistory(item.request.status);
+      return true;
+    })
+    .sort((a, b) => statusPriority(a) - statusPriority(b));
 
   const fallbackBack = useCallback(() => {}, []);
   const guardedBack = useGuardedPress(onBack ?? fallbackBack);
 
+  const scrollHero = Platform.OS === "ios" && !loading && !error;
+  const hero = (
+    <View style={styles.heroBox}>
+      <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
+      {showHeroDescription ? (
+        <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
+      ) : null}
+      {showPendingSummary && pendingCount > 0 && statusFilter !== "pending" ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Ver ${pendingCount} ${pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}`}
+          accessibilityHint="Mostra apenas os pedidos que aguardam sua resposta."
+          onPress={() => setSelectedFilter("pending")}
+          style={withPress(styles.pendingSummary)}
+        >
+          <IconBadge icon="mail" tone="action" />
+          <View style={styles.pendingSummaryContent}>
+            <Text style={styles.pendingSummaryTitle}>
+              {pendingCount} {pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}
+            </Text>
+            <Text style={styles.pendingSummaryBody}>
+              Toque para ver os pedidos pendentes.
+            </Text>
+          </View>
+          <AppIcon name="chevronRight" size={20} color={colors.action} />
+        </Pressable>
+      ) : null}
+      {items.length > 0 ? (
+        <ScrollView
+          horizontal
+          {...standardHorizontalScrollProps}
+          contentContainerStyle={styles.filterRow}
+          style={styles.filterScrollView}
+        >
+          {(
+            [
+              { key: "all", label: `Todos (${items.length})`, a11y: "Filtrar pedidos por Todos" },
+              { key: "pending", label: `Pendentes (${pendingCount})`, a11y: "Filtrar pedidos por Pendentes" },
+              { key: "accepted", label: `Aceitos (${acceptedCount})`, a11y: "Filtrar pedidos por Aceitos" },
+              { key: "completed", label: `Finalizados (${completedCount})`, a11y: "Filtrar pedidos por Finalizados" },
+              { key: "history", label: `Histórico (${historyCount})`, a11y: "Filtrar pedidos por Histórico" },
+            ] as const
+          ).map((chip) => {
+            const selected = statusFilter === chip.key;
+            if (Platform.OS === "ios") {
+              return (
+                <Chip
+                  key={chip.key}
+                  size="compact"
+                  label={chip.label}
+                  accessibilityLabel={chip.a11y}
+                  selected={selected}
+                  onPress={() => setSelectedFilter(chip.key)}
+                />
+              );
+            }
+            return (
+              <Pressable
+                key={chip.key}
+                accessibilityRole="button"
+                accessibilityLabel={chip.a11y}
+                accessibilityState={{ selected }}
+                onPress={() => setSelectedFilter(chip.key)}
+                style={withPress([
+                  styles.filterChip,
+                  selected && styles.filterChipSelected,
+                ])}
+              >
+                {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
+                <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
+                  {chip.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? null : <TopAppBar title={title} onBack={guardedBack} />}
+    <ScrollEdgeScreen
+      style={styles.page}
+      header={wide ? null : <TopAppBar title={title} onBack={guardedBack} />}
+      scrolling={!loading && !error}
+    >
       <View style={[styles.content, wide && styles.contentWide]}>
         {wide ? (
           <Breadcrumb
@@ -116,70 +210,7 @@ export function RequestListLayout({
             style={styles.breadcrumb}
           />
         ) : null}
-        <View style={styles.heroBox}>
-          <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
-          {showHeroDescription ? (
-            <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
-          ) : null}
-          {showPendingSummary && pendingCount > 0 && statusFilter !== "pending" ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Ver ${pendingCount} ${pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}`}
-              accessibilityHint="Mostra apenas os pedidos que aguardam sua resposta."
-              onPress={() => setSelectedFilter("pending")}
-              style={withPress(styles.pendingSummary)}
-            >
-              <IconBadge icon="mail" tone="action" />
-              <View style={styles.pendingSummaryContent}>
-                <Text style={styles.pendingSummaryTitle}>
-                  {pendingCount} {pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}
-                </Text>
-                <Text style={styles.pendingSummaryBody}>
-                  Toque para ver os pedidos pendentes.
-                </Text>
-              </View>
-              <AppIcon name="chevronRight" size={20} color={colors.action} />
-            </Pressable>
-          ) : null}
-          {items.length > 0 ? (
-            <ScrollView
-              horizontal
-              {...standardHorizontalScrollProps}
-              contentContainerStyle={styles.filterRow}
-              style={styles.filterScrollView}
-            >
-              {(
-                [
-                  { key: "all", label: `Todos (${items.length})`, a11y: "Filtrar pedidos por Todos" },
-                  { key: "pending", label: `Pendentes (${pendingCount})`, a11y: "Filtrar pedidos por Pendentes" },
-                  { key: "accepted", label: `Aceitos (${acceptedCount})`, a11y: "Filtrar pedidos por Aceitos" },
-                  { key: "completed", label: `Finalizados (${completedCount})`, a11y: "Filtrar pedidos por Finalizados" },
-                  { key: "history", label: `Histórico (${historyCount})`, a11y: "Filtrar pedidos por Histórico" },
-                ] as const
-              ).map((chip) => {
-                const selected = statusFilter === chip.key;
-                return (
-                  <Pressable
-                    key={chip.key}
-                    accessibilityRole="button"
-                    accessibilityLabel={chip.a11y}
-                    accessibilityState={{ selected }}
-                    onPress={() => setSelectedFilter(chip.key)}
-                    style={withPress([
-                      styles.filterChip,
-                      selected && styles.filterChipSelected,
-                    ])}
-                  >
-                    {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
-                    <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
-                      {chip.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          ) : null}
-        </View>
+        {scrollHero ? null : hero}
         {loading ? (
           <LoadingState label="Carregando pedidos" />
         ) : error ? (
@@ -189,13 +220,14 @@ export function RequestListLayout({
             <OfflineState onRetry={onRetry} />
           )
         ) : (
-          <FlatList
+          <ScrollEdgeFlatList
             {...standardVerticalScrollProps}
             style={styles.flexOne}
             key={wide ? `colunas-${listColumns}` : "uma-coluna"}
             numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
+              ListHeaderComponent={scrollHero ? hero : undefined}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={[styles.listContent, { paddingBottom: scrollBottomPadding.withBottomBar }]}
               keyboardShouldPersistTaps="handled"
@@ -249,18 +281,16 @@ export function RequestListLayout({
                       variant={wide ? "card" : "list"}
                     />
                     <View style={styles.bookInfo}>
-                      <View style={styles.row}>
-                        <Text style={styles.itemTitle}>{item.listing.title}</Text>
-                        <Text style={[styles.badge, completed ? styles.completed : styles[item.request.status]]}>
-                          {completed ? "Finalizado" : statusLabel[item.request.status]}
-                        </Text>
-                      </View>
-                      <Text style={styles.body}>{item.listing.author}</Text>
+                      <Text numberOfLines={2} style={styles.itemTitle}>{item.listing.title}</Text>
+                      <Text style={styles.body} numberOfLines={1}>{item.listing.author}</Text>
                       <View style={styles.tagRow}>
                         <Tag variant={item.listing.modality} />
                         {item.listing.modality === "sale" && item.listing.price !== undefined ? (
                           <Text style={styles.price}>{formatPrice(item.listing.price)}</Text>
                         ) : null}
+                        <Text style={[styles.badge, completed ? styles.completed : styles[item.request.status]]}>
+                          {completed ? "Finalizado" : statusLabel[item.request.status]}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -280,7 +310,7 @@ export function RequestListLayout({
           />
         </View>
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -355,7 +385,7 @@ export function createRequestStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     proposalMessageHeading: {
       flexDirection: "row",
@@ -505,7 +535,7 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.shapeMorph.chipUnselected,
     backgroundColor: colors.m3.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
   },
   filterChipSelected: {
     backgroundColor: colors.nature.foliage,
@@ -550,7 +580,7 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
     borderRadius: tokens.radius.medium,
       borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     backgroundColor: colors.m3.surfaceContainerHigh,
     },
   pendingSummaryContent: { flex: 1, gap: tokens.spacing[2] },
@@ -581,7 +611,7 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[40],
     maxWidth: 640,
     width: "100%",
@@ -606,13 +636,15 @@ function createStyles(colors: ColorPalette) {
   },
   bookInfo: {
     flex: 1,
+    minWidth: 0,
     gap: tokens.spacing[4],
   },
   row: {
     flexDirection: "row",
-    alignItems: "center",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: tokens.spacing[12],
+    gap: tokens.spacing[8],
   },
   tagRow: {
     flexDirection: "row",
@@ -634,16 +666,19 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.card,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
+    ...iosNeutralCardStyle(colors),
     padding: tokens.spacing[16],
     gap: tokens.spacing[12],
   },
   itemTitle: {
     flex: 1,
+    minWidth: 140,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: colors.text,
   },
   badge: {
+    flexShrink: 0,
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[4],

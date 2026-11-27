@@ -1,38 +1,40 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, FlatList, Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { Book } from "@/model/entities/book";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { ScrollEdgeFlatList } from "@/view/components/ScrollEdgeScreen";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
 import type { SearchModalityFilter, SearchFilters, SearchSortOption } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
 import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, WIDE_WEB_MIN_WIDTH } from "@/view/useIsWideWeb";
 import { SortSheet } from "@/view/search/SortSheet";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { categoryTone } from "@/view/categoryTone";
-import { formatPrice } from "@/view/formatPrice";
-import { BookCover } from "@/view/components/BookCover";
-import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
-import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { Dialog } from "@/view/components/Dialog";
 import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
-import { Tag } from "@/view/components/Tag";
+import { getSearchStyles } from "@/view/search/searchStyles";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters";
-import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useOnRefocus } from "@/view/useRefocusKey";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
+import { triggerHaptic } from "@/view/haptics";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type SearchProps = {
   currentNeighborhood?: string;
@@ -43,9 +45,15 @@ export type SearchProps = {
   initialModality?: SearchModalityFilter;
   /** Pré-aplica uma categoria ao abrir, vindo de atalhos e recomendações. */
   initialCategory?: string;
+  /** Pré-aplica o termo digitado no campo de busca do cabeçalho web. */
+  initialTerm?: string;
+  focusKey?: number;
+  /** Incrementado ao tocar na aba Explorar já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
+const extractBookKey = (book: Book) => book.id;
 /** Converte o parâmetro de rota `modalidade` (string) no filtro válido, ou `undefined`. */
 export function parseInitialModality(value: string | string[] | undefined): SearchModalityFilter | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -81,6 +89,9 @@ export default function Search({
   onNavigateToFavorites,
   initialModality,
   initialCategory,
+  initialTerm,
+  focusKey,
+  scrollToTopTick = 0,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
   const [selectedNeighborhoodOverride, setSelectedNeighborhoodOverride] = useState<string | null>(null);
@@ -95,17 +106,31 @@ export default function Search({
         : neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
   const [auth] = makeAuthViewModel();
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
+  const styles = getSearchStyles(colors);
   const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const wideWeb = useIsWideWeb();
+  const windowWidth = useHydratedWindowWidth();
+  const wideWeb = Platform.OS === "web" && windowWidth >= WIDE_WEB_MIN_WIDTH;
+  const compactWeb = Platform.OS === "web" && windowWidth > 0 && windowWidth <= 390;
   const gridColumns = useWebGridColumns();
   const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialFilters = useRef(false);
   const flatListRef = useRef<FlatList>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      flatListRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [snackbarAction, setSnackbarAction] = useState<{ label: string; onPress: () => void } | null>(null);
@@ -114,13 +139,62 @@ export default function Search({
   const insets = useSafeAreaInsets();
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
   const navBarDockHeight = 62;
-  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const floatingBottom = wideWeb ? tokens.spacing[32] : isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => {
     void actions.registerSearch(state.term);
     onNavigateToBookDetail?.(bookId);
   });
   const guardedNavigateToFavorites = useGuardedPress(onNavigateToFavorites);
+  const navigateToBookDetailRef = useRef(guardedNavigateToBookDetail);
+  navigateToBookDetailRef.current = guardedNavigateToBookDetail;
+  const navigateToFavoritesRef = useRef(guardedNavigateToFavorites);
+  navigateToFavoritesRef.current = guardedNavigateToFavorites;
+  const hasFavoritesRoute = Boolean(onNavigateToFavorites);
+
+  const handleOpenBookDetail = useCallback((bookId: string) => {
+    navigateToBookDetailRef.current(bookId);
+  }, []);
+
+  const handleFavoriteToggle = useCallback(
+    (selected: boolean, bookTitle?: string) => {
+      const label = bookTitle ?? "Livro";
+      setSnackbarMessage(
+        selected
+          ? `"${label}" foi adicionado aos Favoritos!`
+          : `"${label}" foi removido dos Favoritos.`,
+      );
+      setSnackbarAction(
+        hasFavoritesRoute
+          ? { label: "Ver favoritos", onPress: () => navigateToFavoritesRef.current() }
+          : null,
+      );
+    },
+    [hasFavoritesRoute],
+  );
+
+  const handleListScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = e.nativeEvent.contentOffset.y > 300;
+    setShowScrollTop((prev) => (prev === next ? prev : next));
+  }, []);
+
+  const sessionUserId = auth.user?.id ?? null;
+  const renderBookItem = useCallback(
+    ({ item }: { item: Book }) => (
+      <SearchBookCard
+        item={item}
+        wideWeb={wideWeb}
+        compactWeb={compactWeb}
+        gridColumns={gridColumns}
+        userId={sessionUserId}
+        onPress={handleOpenBookDetail}
+        onFavoriteToggle={handleFavoriteToggle}
+      />
+    ),
+    [wideWeb, compactWeb, gridColumns, sessionUserId, handleOpenBookDetail, handleFavoriteToggle],
+  );
 
   const undoClear = () => {
     const snapshot = clearedSnapshotRef.current;
@@ -180,8 +254,12 @@ export default function Search({
     if (initialCategory && initialCategory !== "all") {
       actions.setCategory(initialCategory);
     }
+    if (initialTerm) {
+      actions.setTerm(initialTerm);
+      void actions.registerSearch(initialTerm);
+    }
     appliedInitialFilters.current = true;
-  }, [initialModality, initialCategory, actions]);
+  }, [initialModality, initialCategory, initialTerm, actions]);
 
   useEffect(() => {
     if (typeof actions.setNeighborhood === "function") {
@@ -243,19 +321,28 @@ export default function Search({
 
   // A categoria já aparece selecionada na fileira de chips do catálogo; repeti-la nos chips
   // removíveis duplicaria o mesmo estado em dois lugares da tela.
-  const visibleActiveFilters = state.activeFilters.filter((filter) => filter.key !== "category");
+  const visibleActiveFilters = state.activeFilters.filter(
+    (filter) => filter.key !== "category" && (wideWeb || filter.key !== "modality"),
+  );
 
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
-    <View style={styles.filters}>
+    <View style={[styles.filters, wideWeb && styles.filtersWide]}>
+      <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
       {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
-          onPress={handleSelectNeighborhood}
-          style={withPress(styles.neighborhoodPill)}
+          onPress={() => {
+            if (isIos) triggerHaptic("light");
+            handleSelectNeighborhood();
+          }}
+          style={withPress([styles.neighborhoodPill, isIos && (iosGlass ? styles.iosGlassPill : styles.iosOpaquePill)])}
         >
+          {iosGlass ? (
+            <IosGlassBackdrop style={styles.iosGlassShape} />
+          ) : null}
           <AppIcon name="place" size={20} color={colors.m3.primary} />
           <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
@@ -277,9 +364,19 @@ export default function Search({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Ver meus livros favoritos"
-              onPress={guardedNavigateToFavorites}
-              style={withPress([styles.favoritesTopButton, wideWeb && styles.favoritesTopButtonWide])}
+              onPress={() => {
+                if (isIos) triggerHaptic("light");
+                guardedNavigateToFavorites();
+              }}
+              style={withPress([
+                styles.favoritesTopButton,
+                wideWeb && styles.favoritesTopButtonWide,
+                isIos && (iosGlass ? styles.iosGlassPill : styles.iosOpaquePill),
+              ])}
             >
+              {iosGlass ? (
+                <IosGlassBackdrop style={styles.iosGlassShape} />
+              ) : null}
               <AppIcon name="heartFill" size={wideWeb ? 18 : 20} color={colors.ipe.bloom} />
               {wideWeb ? <Text style={styles.favoritesButtonText}>Favoritos</Text> : null}
             </Pressable>
@@ -293,11 +390,15 @@ export default function Search({
               state.activeFilterCount > 0 ? `Abrir filtros, ${state.activeFilterCount} ativos` : "Abrir filtros"
             }
             onPress={() => {
+              if (isIos) triggerHaptic("light");
               actions.openFilterDraft();
               setShowFilterSheet(true);
             }}
-            style={withPress(styles.tuneButton)}
+            style={withPress([styles.tuneButton, isIos && (iosGlass ? styles.iosGlassPill : styles.iosOpaquePill)])}
           >
+            {iosGlass ? (
+              <IosGlassBackdrop style={styles.iosGlassShape} />
+            ) : null}
             <AppIcon name="tune" size={20} color={colors.m3.onSurfaceVariant} />
             {state.activeFilterCount > 0 ? (
               <View style={styles.tuneBadge}>
@@ -321,39 +422,42 @@ export default function Search({
 
       {/* 3. Campo de Busca Integrado M3 (Figma nó 99:1733) */}
       <SearchField
+        placeholder={compactWeb ? "Título, autor ou categoria" : undefined}
         value={state.term}
         onChangeText={actions.setTerm}
         onSubmitEditing={() => void actions.registerSearch(state.term)}
+        onCancel={() => {
+          actions.setTerm("");
+          Keyboard.dismiss();
+        }}
       />
 
-      {/* 4. Modalidades do catálogo em chips rápidos (Todas, Venda, Troca, Doação) */}
-      <ScrollView
-        horizontal
-        {...standardHorizontalScrollProps}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickModalitiesScroll}
-        style={styles.quickModalitiesScrollView}
-      >
-        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-          const isSelected = state.modality === mod;
-          const label = mod === "all" ? "Todas" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-          const tone =
-            mod === "all"
-              ? { background: colors.nature.foliage, text: colors.nature.onFoliage }
-              : colors.badge[mod];
-          return (
-            <Chip
-              key={mod}
-              size="compact"
-              label={label}
-              accessibilityLabel={`Filtrar por ${label}`}
-              selected={isSelected}
-              tone={tone}
-              onPress={() => actions.setModality(mod)}
-            />
-          );
-        })}
-      </ScrollView>
+      {/* 4. Modalidades em chips rápidos. Na web larga o painel "Filtros" já tem o grupo Modalidade. */}
+      {wideWeb ? null : (
+        <View style={styles.quickModalitiesRow}>
+          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+            const isSelected = state.modality === mod;
+            const label = mod === "all" ? "Todas" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+            const tone =
+              mod === "all"
+                ? Platform.OS === "ios"
+                  ? { background: colors.m3.primaryContainer, text: colors.action }
+                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+                : colors.badge[mod];
+            return (
+              <Chip
+                key={mod}
+                size="compact"
+                label={label}
+                accessibilityLabel={`Filtrar por ${label}`}
+                selected={isSelected}
+                tone={tone}
+                onPress={() => actions.setModality(mod)}
+              />
+            );
+          })}
+        </View>
+      )}
 
       {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
       {visibleActiveFilters.length > 0 ? (
@@ -383,9 +487,15 @@ export default function Search({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
-            onPress={() => setShowSortSheet(true)}
-            style={withPress(styles.sortButton)}
+            onPress={() => {
+              if (isIos) triggerHaptic("light");
+              setShowSortSheet(true);
+            }}
+            style={withPress([styles.sortButton, isIos && (iosGlass ? styles.iosGlassPill : styles.iosOpaquePill)])}
           >
+            {iosGlass ? (
+              <IosGlassBackdrop style={styles.iosGlassShape} />
+            ) : null}
             <Text style={styles.sortText}>{SORT_LABELS[state.sortBy]}</Text>
             <AppIcon name="chevronDown" size={14} color={colors.m3.onSurfaceVariant} />
           </Pressable>
@@ -410,16 +520,18 @@ export default function Search({
         </View>
       ) : null}
 
-      <Dialog
-        visible={confirmingClear}
-        title="Limpar histórico de buscas?"
-        message="As buscas recentes salvas neste dispositivo serão removidas."
-        confirmLabel="Limpar histórico"
-        cancelLabel="Cancelar"
-        destructive
-        onCancel={() => setConfirmingClear(false)}
-        onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
-      />
+      {confirmingClear ? (
+        <Dialog
+          visible={confirmingClear}
+          title="Limpar histórico de buscas?"
+          message="As buscas recentes salvas neste dispositivo serão removidas."
+          confirmLabel="Limpar histórico"
+          cancelLabel="Cancelar"
+          destructive
+          onCancel={() => setConfirmingClear(false)}
+          onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
+        />
+      ) : null}
     </View>
   );
 
@@ -434,7 +546,7 @@ export default function Search({
     isOnline ? (
       <ErrorState message={state.error} onRetry={() => void actions.reload()} />
     ) : (
-      <OfflineState onRetry={() => void actions.reload()} />
+      <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
     )
   ) : (
     <View style={[styles.empty, wideWeb && styles.emptyWide]}>
@@ -489,6 +601,7 @@ export default function Search({
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       scroll={false}
+      hasScrollableList
       paddingHorizontal={0}
       paddingTop={0}
       paddingBottom={0}
@@ -517,44 +630,50 @@ export default function Search({
             />
           </View>
 
-          <FilterSheet
-            visible={showFilterSheet}
-            draftFilters={state.draftFilters}
-            sortBy={state.sortBy}
-            availableCategories={state.availableCategories}
-            resultCount={state.draftResultCount}
-            onChange={actions.updateDraftFilters}
-            onSortChange={actions.setSortBy}
-            onApply={() => {
-              actions.applyDraftFilters();
-              setShowFilterSheet(false);
-            }}
-            onReset={() => {
-              clearedSnapshotRef.current = {
-                term: state.term,
-                filters: state.filters,
-                sortBy: state.sortBy,
-                neighborhood: state.neighborhood,
-              };
-              actions.resetFilters();
-              setShowFilterSheet(false);
-              setSnackbarMessage("Filtros limpos");
-              setSnackbarAction({ label: "Desfazer", onPress: undoClear });
-            }}
-            onClose={() => setShowFilterSheet(false)}
-          />
-          <SortSheet
-            visible={showSortSheet}
-            selected={state.sortBy}
-            onSelect={actions.setSortBy}
-            onClose={() => setShowSortSheet(false)}
-          />
-          <NeighborhoodSelectorModal
-            visible={neighborhoodHook.isSelectorOpen}
-            currentNeighborhood={effectiveNeighborhood}
-            onSelect={handleSelectNeighborhoodOption}
-            onClose={neighborhoodHook.closeSelector}
-          />
+          {showFilterSheet ? (
+            <FilterSheet
+              visible={showFilterSheet}
+              draftFilters={state.draftFilters}
+              sortBy={state.sortBy}
+              availableCategories={state.availableCategories}
+              resultCount={state.draftResultCount}
+              onChange={actions.updateDraftFilters}
+              onSortChange={actions.setSortBy}
+              onApply={() => {
+                actions.applyDraftFilters();
+                setShowFilterSheet(false);
+              }}
+              onReset={() => {
+                clearedSnapshotRef.current = {
+                  term: state.term,
+                  filters: state.filters,
+                  sortBy: state.sortBy,
+                  neighborhood: state.neighborhood,
+                };
+                actions.resetFilters();
+                setShowFilterSheet(false);
+                setSnackbarMessage("Filtros limpos");
+                setSnackbarAction({ label: "Desfazer", onPress: undoClear });
+              }}
+              onClose={() => setShowFilterSheet(false)}
+            />
+          ) : null}
+          {showSortSheet ? (
+            <SortSheet
+              visible={showSortSheet}
+              selected={state.sortBy}
+              onSelect={actions.setSortBy}
+              onClose={() => setShowSortSheet(false)}
+            />
+          ) : null}
+          {neighborhoodHook.isSelectorOpen ? (
+            <NeighborhoodSelectorModal
+              visible={neighborhoodHook.isSelectorOpen}
+              currentNeighborhood={effectiveNeighborhood}
+              onSelect={handleSelectNeighborhoodOption}
+              onClose={neighborhoodHook.closeSelector}
+            />
+          ) : null}
         </>
       }
     >
@@ -564,8 +683,6 @@ export default function Search({
           filters={state.filters}
           categories={state.availableCategories}
           hasActiveFilters={state.hasActiveFilters}
-          sortBy={state.sortBy}
-          onSortChange={actions.setSortBy}
           onModality={actions.setModality}
           onCondition={actions.setCondition}
           onCategory={actions.setCategory}
@@ -573,7 +690,7 @@ export default function Search({
           onClear={actions.resetFilters}
         />
       ) : null}
-      <FlatList
+      <ScrollEdgeFlatList
         ref={flatListRef}
         testID="search-flatlist"
         {...standardVerticalScrollProps}
@@ -581,185 +698,25 @@ export default function Search({
         numColumns={wideWeb ? gridColumns : 1}
         columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
-        keyExtractor={(book) => book.id}
+        keyExtractor={extractBookKey}
+        initialNumToRender={wideWeb ? 8 : 5}
+        maxToRenderPerBatch={wideWeb ? 8 : 5}
+        windowSize={wideWeb ? 9 : 7}
+        updateCellsBatchingPeriod={40}
+        removeClippedSubviews={Platform.OS === "android"}
         style={styles.flexOne}
-        contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, { paddingBottom: scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24] }]}
-        onScroll={(e) => {
-          const offsetY = e.nativeEvent.contentOffset.y;
-          setShowScrollTop(offsetY > 300);
-        }}
-        scrollEventThrottle={16}
+        contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, {
+          paddingBottom: isIos ? scrollBottomPadding.nativeTabWithFab : scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24],
+        }]}
+        onScroll={handleListScroll}
+        scrollEventThrottle={32}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        renderItem={({ item }) => (
-          <SearchBookCard
-            item={item}
-            wideWeb={wideWeb}
-            gridColumns={gridColumns}
-            userId={auth.user?.id ?? null}
-            onPress={() => guardedNavigateToBookDetail(item.id)}
-            onFavoriteToggle={(selected) => {
-              setSnackbarMessage(
-                selected
-                  ? `"${item.title}" foi adicionado aos Favoritos!`
-                  : `"${item.title}" foi removido dos Favoritos.`
-              );
-              setSnackbarAction(
-                onNavigateToFavorites ? { label: "Ver favoritos", onPress: guardedNavigateToFavorites } : null,
-              );
-            }}
-          />
-        )}
+        renderItem={renderBookItem}
       />
       </View>
     </ScreenContainer>
   );
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    flexOne: { flex: 1 },
-    // Web larga: filtros fixos à esquerda e resultados em grade de ponta a ponta.
-    wideRow: {
-      flex: 1,
-      flexDirection: "row",
-      gap: tokens.spacing[32],
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[24],
-    },
-    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
-    gridRow: { gap: tokens.spacing[24] },
-    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },
-    // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
-    cardInfoWide: { justifyContent: "flex-start" },
-    cardMetaRowWide: { flexWrap: "wrap", rowGap: tokens.spacing[4] },
-    cardActionsWide: { position: "absolute", top: tokens.spacing[8], right: tokens.spacing[8], width: tokens.accessibility.touchTarget },
-    cardWide: { alignItems: "stretch", paddingLeft: tokens.spacing[12], paddingRight: tokens.spacing[12], marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
-    content: { flexGrow: 1, width: "100%", paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24], },
-    filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
-    topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: tokens.spacing[40], },
-    neighborhoodPill: {
-      flexShrink: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      paddingLeft: tokens.spacing[12],
-      paddingRight: tokens.spacing[8],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-    },
-    neighborhoodText: { flexShrink: 1, ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
-    favoritesTopButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
-    favoritesTopButtonWide: { width: "auto", flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[14], },
-    favoritesButtonText: { ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    tuneButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
-    // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
-    tuneBadge: {
-      position: "absolute",
-      top: -2,
-      right: -2,
-      minWidth: tokens.spacing[18],
-      height: tokens.spacing[18],
-      paddingHorizontal: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    tuneBadgeText: { ...tokens.typography.captionSmall, fontFamily: fontFamily.semiBold, color: colors.m3.onPrimary, },
-    heroSection: { gap: tokens.spacing[6], marginTop: tokens.spacing[4], marginBottom: tokens.spacing[4], },
-    heading: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, letterSpacing: tokens.letterSpacing.brandTighter, },
-    subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, },
-    quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4], },
-    quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], paddingLeft: tokens.spacing[16], paddingRight: tokens.spacing[28], paddingVertical: tokens.spacing[2], },
-    clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8], },
-    clearFiltersText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold, },
-    // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
-    activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    activeFilterChip: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      height: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.shapeMorph.chipSelected,
-      backgroundColor: colors.nature.foliage,
-    },
-    activeFilterText: { ...tokens.typography.labelLarge, color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
-    summaryRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12], paddingVertical: tokens.spacing[6], paddingHorizontal: tokens.spacing[4], },
-    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.medium, },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      height: 32,
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    sortText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface, fontWeight: tokens.fontWeight.semiBold, },
-    body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText, textAlign: "center", },
-    empty: { alignItems: "center", paddingTop: tokens.spacing[32], paddingHorizontal: tokens.spacing[24], gap: tokens.spacing[12], },
-    emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
-    emptyIcon: { width: tokens.spacing[64], height: tokens.spacing[64], borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
-    alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
-    alertCardText: { flex: 1, gap: tokens.spacing[2] },
-    alertCardTitle: { ...tokens.typography.titleBlock, color: colors.m3.onTertiaryContainer },
-    alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
-    alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
-    alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: { ...tokens.typography.brandCardTitle, color: colors.action, textAlign: "center", },
-    emptyActions: { flexDirection: "column", alignItems: "center", gap: tokens.spacing[12], marginTop: tokens.spacing[8], },
-    emptyPrimaryButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.primary,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[12],
-    },
-    emptyPrimaryButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
-    emptySecondaryButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[20],
-      paddingVertical: tokens.spacing[10],
-    },
-    emptySecondaryButtonText: { ...tokens.typography.labelLarge, color: colors.text, fontWeight: tokens.fontWeight.medium, },
-    emptyActionButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.m3.primary,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[12],
-    },
-    emptyActionText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
-    alertLink: { color: colors.action, fontWeight: tokens.fontWeight.semiBold, padding: tokens.spacing[12] },
-    historySection: { gap: tokens.spacing[8] },
-    historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    historyTitle: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.secondaryText },
-    historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16], },
-    historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
-
-    categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
-    snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20, },
-  });
 }
 
 function SearchScrollTopButton({
@@ -773,8 +730,11 @@ function SearchScrollTopButton({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
 
-  useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: true, }).start(); }, [scaleAnim]);
+  useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: Platform.OS !== "web", }).start(); }, [scaleAnim]);
 
   const isWeb = Platform.OS === "web";
   const webFabBg =
@@ -789,21 +749,44 @@ function SearchScrollTopButton({
         accessibilityLabel="Voltar ao topo da lista"
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
-        onPress={onPress}
+        onPress={() => {
+          if (isIos) triggerHaptic("light");
+          onPress();
+        }}
         style={({ pressed }) => [
           stylesScrollTop.scrollTopFab,
-          { backgroundColor: isWeb ? webFabBg : colors.nature.sprout, borderColor: colors.m3.outlineVariant, shadowColor: colors.m3.shadow, },
+          {
+            backgroundColor: isIos
+              ? iosGlass
+                ? "transparent"
+                : colors.m3.surfaceContainer
+              : isWeb
+                ? webFabBg
+                : colors.nature.sprout,
+            borderColor: iosGlass ? "transparent" : colors.m3.outlineVariant,
+            shadowColor: isIos ? "#302e24" : colors.m3.shadow,
+            shadowOpacity: iosGlass ? 0.14 : 0.2,
+            overflow: "hidden",
+          },
           isHovered && stylesScrollTop.scrollTopFabHovered,
           pressed && stylesScrollTop.scrollTopFabPressed,
         ]}
       >
-        <AppIcon name="chevronUp" size={24} color={colors.nature.foliage} />
+        {iosGlass ? (
+          <IosGlassBackdrop style={stylesScrollTop.iosGlassShape} />
+        ) : null}
+        <AppIcon name="chevronUp" size={24} color={isIos ? colors.m3.onSurface : colors.nature.foliage} />
       </Pressable>
     </Animated.View>
   );
 }
 
 const stylesScrollTop = StyleSheet.create({
+  iosGlassShape: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: tokens.radius.full,
+    overflow: "hidden",
+  },
   scrollTopFab: {
     width: tokens.spacing[48],
     height: tokens.spacing[48],

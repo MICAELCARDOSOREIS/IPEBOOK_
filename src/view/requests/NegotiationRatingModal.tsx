@@ -1,8 +1,10 @@
-import { useMemo } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -21,11 +23,26 @@ export type NegotiationRatingModalProps = {
 
 const SCORES = [1, 2, 3, 4, 5] as const;
 
+const ratingModalStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getRatingModalStyles(colors: ColorPalette) {
+  let cached = ratingModalStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    ratingModalStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /**
  * Modal para avaliar a negociação presencial (Spec 063 / ADR 0046).
  * Telas Figma 06.21 (Avaliar negociação) e 06.22 (Avaliação enviada).
  */
-export function NegotiationRatingModal({
+export function NegotiationRatingModal(props: NegotiationRatingModalProps) {
+  if (!props.visible) return null;
+  return <NegotiationRatingModalContent {...props} />;
+}
+
+function NegotiationRatingModalContent({
   visible,
   counterpartName,
   selectedScore,
@@ -37,19 +54,20 @@ export function NegotiationRatingModal({
   isSuccess,
 }: NegotiationRatingModalProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getRatingModalStyles(colors);
 
   return (
     <Modal
       statusBarTranslucent
       navigationBarTranslucent
       visible={visible}
+      accessibilityViewIsModal={visible}
       animationType="fade"
       transparent
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={styles.card} accessible={true} accessibilityViewIsModal={true}>
+        <ModalGlassSurface radius={Platform.OS === "ios" ? tokens.radius.xl : tokens.radius.large} style={styles.card} accessibilityViewIsModal>
           {isSuccess ? (
             <View style={styles.successContent}>
               <View style={styles.successIconBox}>
@@ -106,7 +124,10 @@ export function NegotiationRatingModal({
                       accessibilityRole="radio"
                       accessibilityLabel={`${score} ${score === 1 ? "estrela" : "estrelas"}`}
                       accessibilityState={{ checked: score === selectedScore }}
-                      onPress={() => onSelectScore(score)}
+                      onPress={() => {
+                        if (Platform.OS === "ios") triggerHaptic("selection");
+                        onSelectScore(score);
+                      }}
                       disabled={isSubmitting}
                       style={withPress(styles.starButton)}
                     >
@@ -156,7 +177,7 @@ export function NegotiationRatingModal({
               </View>
             </View>
           )}
-        </View>
+        </ModalGlassSurface>
       </View>
     </Modal>
   );
@@ -179,6 +200,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[24],
       borderWidth: 1,
       borderColor: colors.border,
+      ...iosNeutralCardStyle(colors),
       gap: tokens.spacing[16],
     },
     formContent: {

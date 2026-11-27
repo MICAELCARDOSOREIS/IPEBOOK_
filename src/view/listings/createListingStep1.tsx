@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
 import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
@@ -11,7 +11,9 @@ import { Chip } from "@/view/components/Chip";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { TextField } from "@/view/components/TextField";
+import { TextButton } from "@/view/components/TextButton";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 import { withPress } from "@/view/pressFeedback";
@@ -22,44 +24,26 @@ const MODALITIES: { value: BookModality; label: string; icon: AppIconName; desc:
 ];
 
 function getModalityTheme(modality: BookModality, colors: ColorPalette) {
-  switch (modality) {
-    case "sale":
-      return {
-        accent: colors.action,
-        bgSelected: colors.badge.sale.background,
-        textSelected: colors.badge.sale.text,
-        iconBgSelected: colors.soft,
-        iconBgUnselected: colors.soft,
-        iconColorSelected: colors.action,
-        iconColorUnselected: colors.action,
-        radioBorder: colors.action,
-        radioInner: colors.action,
-      };
-    case "trade":
-      return {
-        accent: colors.gold,
-        bgSelected: colors.badge.trade.background,
-        textSelected: colors.badge.trade.text,
-        iconBgSelected: colors.ipe.container,
-        iconBgUnselected: colors.ipe.container,
-        iconColorSelected: colors.gold,
-        iconColorUnselected: colors.gold,
-        radioBorder: colors.gold,
-        radioInner: colors.gold,
-      };
-    case "donation":
-      return {
-        accent: colors.badge.donation.text,
-        bgSelected: colors.badge.donation.background,
-        textSelected: colors.badge.donation.text,
-        iconBgSelected: colors.ipe.container,
-        iconBgUnselected: colors.ipe.container,
-        iconColorSelected: colors.badge.donation.text,
-        iconColorUnselected: colors.badge.donation.text,
-        radioBorder: colors.badge.donation.text,
-        radioInner: colors.badge.donation.text,
-      };
-  }
+  const badge = colors.badge[modality];
+  const isLightBadge = modality === "donation";
+  const accent = isLightBadge ? colors.ipe.bloomDeep : badge.background;
+  return {
+    accent,
+    bgSelected: colors.surface,
+    bgUnselected: colors.surface,
+    borderUnselected: colors.book.paperEdge,
+    textSelected: colors.brandBrown,
+    textUnselected: colors.text,
+    descSelected: colors.m3.onSurfaceVariant,
+    descUnselected: colors.m3.onSurfaceVariant,
+    iconBgSelected: badge.background,
+    iconBgUnselected: badge.background,
+    iconColorSelected: badge.text,
+    iconColorUnselected: badge.text,
+    radioBorderSelected: accent,
+    radioBgSelected: accent,
+    radioCheckColor: colors.surface,
+  };
 }
 
 export type CreateListingStep1Props = {
@@ -89,11 +73,11 @@ export type CreateListingStep1Props = {
 };
 
 export function CreateListingStep1({
-  isbn: _isbn,
+  isbn,
   lookingUpIsbn,
   isbnFeedback,
-  onSetIsbn: _onSetIsbn,
-  onLookupIsbn: _onLookupIsbn,
+  onSetIsbn,
+  onLookupIsbn,
   onScanBarcode,
   modality,
   title,
@@ -126,8 +110,8 @@ export function CreateListingStep1({
 
   return (
     <>
-      <View style={wideWeb ? styles.webIsbnCard : styles.isbnCard}>
-        {wideWeb ? (
+      {wideWeb ? (
+        <View style={styles.webIsbnCard}>
           <View style={styles.webIsbnHeader}>
             <View style={styles.webIsbnTextsRow}>
               <IconBadge icon="camera" tone="action" />
@@ -148,7 +132,62 @@ export function CreateListingStep1({
               <Text style={styles.webScanButtonText}>Usar câmera</Text>
             </Pressable>
           </View>
-        ) : (
+
+          <BarcodeScannerModal
+            visible={scannerVisible}
+            onClose={() => setScannerVisible(false)}
+            onScan={(scannedCode) => {
+              onScanBarcode?.(scannedCode);
+            }}
+          />
+
+          {Platform.OS === "web" && onSetIsbn && onLookupIsbn ? (
+            <>
+              <TextField
+                label="ISBN (opcional)"
+                labelBackgroundColor={colors.m3.surfaceContainerLow}
+                value={isbn ?? ""}
+                onChangeText={onSetIsbn}
+                editable={!loading && !lookingUpIsbn}
+                keyboardType="number-pad"
+                helperText="Digite o ISBN ou cole o código se ele terminar em X."
+                returnKeyType="done"
+                onSubmitEditing={onLookupIsbn}
+              />
+              <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
+            </>
+          ) : null}
+
+          {isbnFeedback ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              style={[
+                styles.isbnFeedback,
+                isbnFeedback.type === "success"
+                  ? styles.isbnFeedbackSuccess
+                  : isbnFeedback.type === "error"
+                    ? styles.isbnFeedbackError
+                    : styles.isbnFeedbackInfo,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.isbnFeedbackText,
+                  isbnFeedback.type === "success"
+                    ? styles.isbnFeedbackTextSuccess
+                    : isbnFeedback.type === "error"
+                      ? styles.isbnFeedbackTextError
+                      : styles.isbnFeedbackTextInfo,
+                ]}
+              >
+                {isbnFeedback.message}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <IosCardSurface variant="neutral" style={styles.isbnCard}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Abrir leitor de código de barras pela câmera"
@@ -164,44 +203,59 @@ export function CreateListingStep1({
             </View>
             <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
           </Pressable>
-        )}
 
-        <BarcodeScannerModal
-          visible={scannerVisible}
-          onClose={() => setScannerVisible(false)}
-          onScan={(scannedCode) => {
-            onScanBarcode?.(scannedCode);
-          }}
-        />
+          <BarcodeScannerModal
+            visible={scannerVisible}
+            onClose={() => setScannerVisible(false)}
+            onScan={(scannedCode) => {
+              onScanBarcode?.(scannedCode);
+            }}
+          />
+          {Platform.OS === "web" && onSetIsbn && onLookupIsbn ? (
+            <>
+              <TextField
+                label="ISBN (opcional)"
+                value={isbn ?? ""}
+                onChangeText={onSetIsbn}
+                editable={!loading && !lookingUpIsbn}
+                keyboardType="number-pad"
+                helperText="Digite o ISBN ou cole o código se ele terminar em X."
+                returnKeyType="done"
+                onSubmitEditing={onLookupIsbn}
+              />
+              <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
+            </>
+          ) : null}
 
-        {isbnFeedback ? (
-          <View
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={[
-              styles.isbnFeedback,
-              isbnFeedback.type === "success"
-                ? styles.isbnFeedbackSuccess
-                : isbnFeedback.type === "error"
-                  ? styles.isbnFeedbackError
-                  : styles.isbnFeedbackInfo,
-            ]}
-          >
-            <Text
+          {isbnFeedback ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
               style={[
-                styles.isbnFeedbackText,
+                styles.isbnFeedback,
                 isbnFeedback.type === "success"
-                  ? styles.isbnFeedbackTextSuccess
+                  ? styles.isbnFeedbackSuccess
                   : isbnFeedback.type === "error"
-                    ? styles.isbnFeedbackTextError
-                    : styles.isbnFeedbackTextInfo,
+                    ? styles.isbnFeedbackError
+                    : styles.isbnFeedbackInfo,
               ]}
             >
-              {isbnFeedback.message}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+              <Text
+                style={[
+                  styles.isbnFeedbackText,
+                  isbnFeedback.type === "success"
+                    ? styles.isbnFeedbackTextSuccess
+                    : isbnFeedback.type === "error"
+                      ? styles.isbnFeedbackTextError
+                      : styles.isbnFeedbackTextInfo,
+                ]}
+              >
+                {isbnFeedback.message}
+              </Text>
+            </View>
+          ) : null}
+        </IosCardSurface>
+      )}
 
       <View style={wideWeb ? styles.webDividerContainer : styles.dividerContainer}>
         <View style={styles.dividerLine} />
@@ -227,8 +281,9 @@ export function CreateListingStep1({
                   style={withPress([
                     styles.webModalityCard,
                     {
-                      borderColor: isSelected ? theme.accent : colors.m3.outlineVariant,
-                      backgroundColor: isSelected ? theme.bgSelected : colors.m3.surfaceContainerLow,
+                      borderColor: isSelected ? theme.accent : theme.borderUnselected,
+                      borderWidth: isSelected ? 2 : 1.5,
+                      backgroundColor: isSelected ? theme.bgSelected : theme.bgUnselected,
                     },
                   ])}
                 >
@@ -250,18 +305,29 @@ export function CreateListingStep1({
                     <View
                       style={[
                         styles.webModalityRadio,
-                        { borderColor: isSelected ? theme.radioBorder : colors.m3.outlineVariant },
+                        isSelected
+                          ? {
+                              borderColor: theme.radioBorderSelected,
+                              backgroundColor: theme.radioBgSelected,
+                            }
+                          : {
+                              borderColor: colors.m3.outline,
+                              backgroundColor: colors.m3.surfaceContainerLowest,
+                            },
                       ]}
                     >
                       {isSelected ? (
-                        <View style={[styles.webModalityRadioInner, { backgroundColor: theme.radioInner }]} />
+                        <AppIcon name="check" size={12} color={theme.radioCheckColor} />
                       ) : null}
                     </View>
                   </View>
                   <Text
                     style={[
                       styles.webModalityTitle,
-                      isSelected && { color: theme.textSelected, fontWeight: tokens.fontWeight.bold },
+                      {
+                        color: isSelected ? theme.textSelected : theme.textUnselected,
+                        fontWeight: isSelected ? tokens.fontWeight.bold : tokens.fontWeight.semiBold,
+                      },
                     ]}
                   >
                     {item.label}
@@ -269,7 +335,9 @@ export function CreateListingStep1({
                   <Text
                     style={[
                       styles.webModalityDesc,
-                      isSelected && { color: theme.textSelected, opacity: 0.85 },
+                      {
+                        color: isSelected ? theme.descSelected : theme.descUnselected,
+                      },
                     ]}
                   >
                     {item.desc}
@@ -301,57 +369,80 @@ export function CreateListingStep1({
           containerY.current = event.nativeEvent.layout.y;
         }}
       >
-        <View
-          onLayout={(event) => {
-            titleY.current = event.nativeEvent.layout.y;
-          }}
-        >
-          <TextField
-            label="Título"
-            value={title}
-            onChangeText={onSetTitle}
-            editable={!loading}
-            placeholder="Ex: Dom Casmurro"
-            error={fieldErrors.title}
-            returnKeyType="next"
-            onSubmitEditing={() => authorInputRef.current?.focus()}
-            onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
-          />
-        </View>
-
-        {wideWeb && modality === "sale" ? (
+        {wideWeb ? (
           <View style={styles.webFieldsRow}>
+            <View style={styles.webTitleCol}>
+              <TextField
+                label="Título"
+                labelBackgroundColor={colors.m3.surfaceContainerLow}
+                value={title}
+                onChangeText={onSetTitle}
+                editable={!loading}
+                placeholder="Ex: Dom Casmurro"
+                error={fieldErrors.title}
+                returnKeyType="next"
+                onSubmitEditing={() => authorInputRef.current?.focus?.()}
+                onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
+              />
+            </View>
             <View style={styles.webAuthorCol}>
               <TextField
                 inputRef={authorInputRef}
                 label="Autor"
+                labelBackgroundColor={colors.m3.surfaceContainerLow}
                 value={author}
                 onChangeText={onSetAuthor}
                 editable={!loading}
                 placeholder="Ex: Machado de Assis"
                 error={fieldErrors.author}
-                returnKeyType="next"
-                onSubmitEditing={() => priceInputRef.current?.focus()}
+                returnKeyType={modality === "sale" ? "next" : "done"}
+                onSubmitEditing={() => {
+                  if (modality === "sale") {
+                    priceInputRef.current?.focus?.();
+                  }
+                }}
                 onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
               />
             </View>
-            <View style={styles.webPriceCol}>
-              <TextField
-                inputRef={priceInputRef}
-                label="Preço (R$)"
-                value={price}
-                onChangeText={onSetPrice}
-                editable={!loading}
-                keyboardType="decimal-pad"
-                placeholder="Ex: 25,00"
-                error={fieldErrors.price}
-                returnKeyType="done"
-                onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
-              />
-            </View>
+            {modality === "sale" ? (
+              <View style={styles.webPriceCol}>
+                <TextField
+                  inputRef={priceInputRef}
+                  label="Preço (R$)"
+                  labelBackgroundColor={colors.m3.surfaceContainerLow}
+                  value={price}
+                  onChangeText={onSetPrice}
+                  editable={!loading}
+                  keyboardType="decimal-pad"
+                  iosKeyboardDone
+                  placeholder="Ex: 25,00"
+                  error={fieldErrors.price}
+                  returnKeyType="done"
+                  onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
+                />
+              </View>
+            ) : null}
           </View>
         ) : (
           <>
+            <View
+              onLayout={(event) => {
+                titleY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <TextField
+                label="Título"
+                value={title}
+                onChangeText={onSetTitle}
+                editable={!loading}
+                placeholder="Ex: Dom Casmurro"
+                error={fieldErrors.title}
+                returnKeyType="next"
+                onSubmitEditing={() => authorInputRef.current?.focus?.()}
+                onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
+              />
+            </View>
+
             <View
               onLayout={(event) => {
                 authorY.current = event.nativeEvent.layout.y;
@@ -368,7 +459,7 @@ export function CreateListingStep1({
                 returnKeyType={modality === "sale" ? "next" : "done"}
                 onSubmitEditing={() => {
                   if (modality === "sale") {
-                    priceInputRef.current?.focus();
+                    priceInputRef.current?.focus?.();
                   }
                 }}
                 onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
@@ -388,6 +479,7 @@ export function CreateListingStep1({
                   onChangeText={onSetPrice}
                   editable={!loading}
                   keyboardType="decimal-pad"
+                  iosKeyboardDone
                   placeholder="Ex: 25,00"
                   error={fieldErrors.price}
                   returnKeyType="done"
@@ -399,26 +491,28 @@ export function CreateListingStep1({
         )}
       </View>
 
-      <View style={wideWeb ? styles.webPhotoCard : styles.photoCard}>
-        <AddPhotoCard
-          photoUrl={photoUrl}
-          onPress={onGoToPhotos}
-          onRemovePhoto={() => onSetPhotoUrl("")}
-        />
-        <View style={styles.photoTexts}>
-          <Text style={styles.sectionLabel}>Foto de capa</Text>
-          <Text style={styles.hint}>
-            {wideWeb
-              ? "Foto nítida e bem iluminada do seu livro. Você poderá adicionar mais fotos na próxima etapa."
-              : "Foto leve, com boa luz. Você pode ajustar na próxima etapa."}
-          </Text>
-        </View>
-      </View>
+      {!wideWeb ? (
+        <>
+          <IosCardSurface variant="neutral" style={styles.photoCard}>
+            <AddPhotoCard
+              photoUrl={photoUrl}
+              onPress={onGoToPhotos}
+              onRemovePhoto={() => onSetPhotoUrl("")}
+            />
+            <View style={styles.photoTexts}>
+              <Text style={styles.sectionLabel}>Foto de capa</Text>
+              <Text style={styles.hint}>
+                Foto leve, com boa luz. Você pode ajustar na próxima etapa.
+              </Text>
+            </View>
+          </IosCardSurface>
 
-      <View style={styles.nextStepsNote}>
-        <AppIcon name="info" size={16} color={colors.secondaryText} />
-        <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
-      </View>
+          <IosCardSurface variant="glass" style={styles.nextStepsNote}>
+            <AppIcon name="info" size={16} color={colors.secondaryText} />
+            <Text style={styles.hint}>Conservação e local de retirada vêm nas próximas etapas.</Text>
+          </IosCardSurface>
+        </>
+      ) : null}
 
       {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
@@ -440,9 +534,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     isbnHeader: {
       flexDirection: "row",
@@ -525,7 +619,7 @@ function createStyles(colors: ColorPalette) {
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: colors.m3.outlineVariant,
+      backgroundColor: colors.book.paperEdge,
     },
     dividerText: {
       ...tokens.typography.labelMedium,
@@ -572,9 +666,9 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
     },
     webModalityIconBadge: {
-      width: 32,
-      height: 32,
-      borderRadius: tokens.radius.full,
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.cardSmall,
       backgroundColor: colors.m3.surfaceContainerHigh,
       alignItems: "center",
       justifyContent: "center",
@@ -583,10 +677,10 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.soft,
     },
     webModalityRadio: {
-      width: 18,
-      height: 18,
+      width: 22,
+      height: 22,
       borderRadius: tokens.radius.full,
-      borderWidth: 2,
+      borderWidth: 1.5,
       borderColor: colors.m3.outlineVariant,
       alignItems: "center",
       justifyContent: "center",
@@ -631,7 +725,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
+      paddingHorizontal: Platform.OS === "ios" ? tokens.spacing[12] : 0,
+      paddingVertical: Platform.OS === "ios" ? tokens.spacing[10] : tokens.spacing[2],
     },
     webPhotoCard: {
       flexDirection: "row",
@@ -649,8 +744,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
       alignItems: "flex-start",
     },
-    webAuthorCol: { flex: 1.6 },
-    webPriceCol: { flex: 1 },
+    webTitleCol: { flex: 1.4 },
+    webAuthorCol: { flex: 1.2 },
+    webPriceCol: { flex: 0.8, minWidth: 160 },
     sectionLabel: {
       ...tokens.typography.titleMedium,
       color: colors.text,

@@ -1,5 +1,4 @@
 import { createRequire } from "node:module";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import { ExpoPushNotificationService } from "@/infra/services/expoPushNotificationService";
@@ -75,7 +74,7 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
 
       expect(id).toBeDefined();
       const scheduled = service.getScheduledNotifications()[0];
-      expect(scheduled.options.title).toBe("Lembrete de Encontro no Ponto Seguro");
+      expect(scheduled.options.title).toBe("Lembrete de encontro");
       expect(scheduled.options.body).toContain("O Cortiço");
       expect(scheduled.options.body).toContain("Praça da Bandeira");
       expect(scheduled.options.data?.meetingId).toBe("meeting-123");
@@ -155,7 +154,7 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
     let service: ExpoPushNotificationService;
 
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
       service = new ExpoPushNotificationService();
     });
 
@@ -188,6 +187,32 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       mockState.lastResponse = null;
       expect(aberturas).toEqual(["/negociacao/r2"]);
+    });
+
+    it("no iOS abre a conversa uma vez e encaminha avisos sem rota para a central", async () => {
+      const previousPlatform = Platform.OS;
+      Platform.OS = "ios";
+      const aberturas: Array<string | null> = [];
+      const response = (id: string, type: string, url: string | null) => ({
+        notification: {
+          date: 1,
+          request: { identifier: id, content: { data: { notificationId: id, type, url } } },
+        },
+      });
+      const mensagem = response("n1", "new_message", "/negociacao/r1");
+      mockState.lastResponse = mensagem;
+      const cancelar = service.subscribeToOpened(({ url }) => aberturas.push(url));
+      try {
+        mockState.listener?.(mensagem);
+        await Promise.resolve();
+        mockState.listener?.(response("n2", "meeting_update", "/negociacao/r2"));
+        mockState.listener?.(response("n3", "system", null));
+        expect(aberturas).toEqual(["/conversa/r1", "/negociacao/r2", "/notificacoes"]);
+      } finally {
+        cancelar();
+        mockState.lastResponse = null;
+        Platform.OS = previousPlatform;
+      }
     });
 
     it("agenda notificação local e cancela", async () => {
@@ -259,23 +284,18 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
       }
     });
 
-    it("no web com Notification, reflete a permissão concedida e negada (Spec 060)", async () => {
+    it("não pede permissão no navegador sem suporte a inscrição no serviço", async () => {
       const osAnterior = Platform.OS;
       const winAnterior = (globalThis as { window?: unknown }).window;
       const notifAnterior = (globalThis as { Notification?: unknown }).Notification;
       Platform.OS = "web";
       try {
-        const api = { permission: "granted", requestPermission: async () => "granted" };
+        const api = { permission: "granted", requestPermission: jest.fn(async () => "granted") };
         (globalThis as { Notification?: unknown }).Notification = api;
         (globalThis as { window?: unknown }).window = { Notification: api };
-        expect(await service.getPermissions()).toBe(true);
-        expect(await service.requestPermissions()).toBe(true);
-
-        const negado = { permission: "denied", requestPermission: async () => "denied" };
-        (globalThis as { Notification?: unknown }).Notification = negado;
-        (globalThis as { window?: unknown }).window = { Notification: negado };
         expect(await service.getPermissions()).toBe(false);
         expect(await service.requestPermissions()).toBe(false);
+        expect(api.requestPermission).not.toHaveBeenCalled();
       } finally {
         Platform.OS = osAnterior;
         (globalThis as { window?: unknown }).window = winAnterior;

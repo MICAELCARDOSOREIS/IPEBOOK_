@@ -1,10 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseModerationDataSource } from "@/infra/datasources/supabaseModerationDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import { DataSourceError } from "@/model/errors";
 
 function clientWith(result: { data: unknown; error: unknown }) {
-  const rpc = vi.fn().mockResolvedValue(result);
+  const rpc = jest.fn().mockResolvedValue(result);
   return { client: { rpc } as unknown as SupabaseAppClient, rpc };
 }
 

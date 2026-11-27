@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
+import { type ComponentRef, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import type { BookModality } from "@/model/entities/book";
 import {
   makeAuthViewModel,
   makeDraftsViewModel,
@@ -11,28 +12,35 @@ import {
   makeReceivedRequestsViewModel,
   makeShareListingViewModel,
 } from "@/di/container";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import type { BookModality } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { BottomSheet } from "@/view/components/BottomSheet";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { ShelfRow } from "@/view/listings/shelfRow";
+import { Snackbar } from "@/view/components/Snackbar";
 import { MyListingsEmpty } from "@/view/listings/myListingsEmpty";
-import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import {
   type ListingsFilter,
   MyListingsListingsTab,
 } from "@/view/listings/myListingsListingsTab";
-import { Chip } from "@/view/components/Chip";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
-import { ShelfEmptyState, MODALITY_LABEL, REQUEST_VERB, initials } from "@/view/listings/ShelfEmptyState";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
+import { initials, MODALITY_LABEL, REQUEST_VERB, ShelfEmptyState } from "@/view/listings/ShelfEmptyState";
+import { ShelfRow } from "@/view/listings/shelfRow";
+import { createMyListingsStyles } from "@/view/listings/myListingsStyles";
 import { withPress } from "@/view/pressFeedback";
+import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useOnRefocus } from "@/view/useRefocusKey";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { tokens } from "@/view/tokens";
+import { triggerHaptic } from "@/view/haptics";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+
 export { ShelfRow } from "@/view/listings/shelfRow";
 
 export type MyListingsProps = {
@@ -47,6 +55,9 @@ export type MyListingsProps = {
   onNavigateToReceivedRequests?: () => void;
   /** Abre a negociação aceita (`06.05`). */
   onNavigateToNegotiationDetail?: (requestId: string) => void;
+  focusKey?: number;
+  /** Incrementado ao tocar na aba Estante já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 
 type ShelfTab = "listings" | "proposals" | "concluded";
@@ -64,16 +75,33 @@ export function MyListings({
   onNavigateToHelp,
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
+  focusKey,
+  scrollToTopTick = 0,
 }: MyListingsProps) {
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
+  const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
-  const [received] = makeReceivedRequestsViewModel(sessionUserId);
+  const [received, receivedActions] = makeReceivedRequestsViewModel(sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+    void receivedActions.reload();
+  });
   const [draftsState] = makeDraftsViewModel(sessionUserId);
-  const [, shareActions] = makeShareListingViewModel();
+  const [share, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
 
   const handleShareBook = (book: (typeof state.books)[number]) => {
@@ -90,6 +118,11 @@ export function MyListings({
       photoUrl: book.photoUrl,
     });
   };
+
+  // O compartilhamento é uma ação pontual: o aviso diz o que aconteceu e sai sozinho.
+  const shareFeedback =
+    share.error ?? (share.linkCopied ? "Link do anúncio copiado para a área de transferência!" : null);
+  const dismissShareFeedback = share.error ? shareActions.dismissError : shareActions.dismissLinkCopied;
 
   const guardedCreateListing = useGuardedPress(onNavigateToCreateListing);
   const guardedDrafts = useGuardedPress(onNavigateToDrafts);
@@ -120,10 +153,10 @@ export function MyListings({
   const pendingProposals = proposals.filter((item) => item.request.status === "pending");
   const attention = pendingProposals[0];
   const countBy = (modality: BookModality) => activeBooks.filter((b) => b.modality === modality).length;
-  const stats: { key: BookModality; count: number; label: string }[] = [
-    { key: "sale", count: countBy("sale"), label: "à venda" },
-    { key: "trade", count: countBy("trade"), label: "em troca" },
-    { key: "donation", count: countBy("donation"), label: "para doar" },
+  const stats: { key: BookModality; count: number; label: string; icon: AppIconName }[] = [
+    { key: "sale", count: countBy("sale"), label: "à venda", icon: "category" },
+    { key: "trade", count: countBy("trade"), label: "em troca", icon: "swap" },
+    { key: "donation", count: countBy("donation"), label: "para doar", icon: "heart" },
   ];
   const tabs: {
     key: ShelfTab;
@@ -147,17 +180,75 @@ export function MyListings({
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
   // Posiciona o FAB harmoniosamente logo acima da barra de navegação flutuante seguindo os tokens
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 62; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
-  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const navBarDockHeight = 80; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
+  const fabBottom = isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
-  type ShelfFilterKey = "all" | "active" | "paused" | "reserved" | "proposals" | "concluded";
+  const availableCount = activeBooks.filter((b) => b.status === "available").length;
+  const pausedCount = activeBooks.filter((b) => b.status === "paused").length;
+  const reservedCount = activeBooks.filter((b) => b.status === "reserved").length;
+  const concludedCount = concludedProposals.length + deliveredBooks.length;
+  const distinctListingStatuses =
+    (availableCount > 0 ? 1 : 0) + (pausedCount > 0 ? 1 : 0) + (reservedCount > 0 ? 1 : 0);
+  const showStatusSubfilters =
+    activeTab === "listings" && (distinctListingStatuses > 1 || statusFilter !== "all");
 
-  const shelfChips: {
-    key: ShelfFilterKey;
+  const STATUS_DROPDOWN_LABELS: Record<"all" | "active" | "paused" | "reserved", string> = {
+    all: "Todos",
+    active: "Ativos",
+    paused: "Pausados",
+    reserved: "Reservados",
+  };
+
+  const primaryTabs: {
+    key: ShelfTab;
     label: string;
     a11y: string;
-    tone?: { background: string; text: string };
+    tone: { background: string; text: string };
+    visible: boolean;
+    onPress: () => void;
+  }[] = [
+    {
+      key: "listings",
+      label: "Anúncios",
+      a11y: "Anúncios",
+      tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
+      visible: true,
+      onPress: () => setActiveTab("listings"),
+    },
+    {
+      key: "proposals",
+      label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
+      a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
+      tone: colors.badge.trade,
+      visible: true,
+      onPress: () => {
+        setModalityFilter("all");
+        setActiveTab("proposals");
+      },
+    },
+    {
+      key: "concluded",
+      label: concludedCount > 0 ? `Concluídos (${concludedCount})` : "Concluídos",
+      a11y: "Concluídos",
+      tone: colors.badge.completed,
+      visible: true,
+      onPress: () => {
+        setModalityFilter("all");
+        setActiveTab("concluded");
+      },
+    },
+  ];
+
+  // Subfiltros de status só aparecem dentro da aba Anúncios quando há mais de um status.
+  const statusChips: {
+    key: "all" | "active" | "paused" | "reserved";
+    label: string;
+    a11y: string;
+    tone: { background: string; text: string };
     selected: boolean;
+    visible: boolean;
     onPress: () => void;
   }[] = [
     {
@@ -165,133 +256,114 @@ export function MyListings({
       label: `Todos (${activeBooks.length})`,
       a11y: "Filtrar por Todos",
       tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
-      selected: activeTab === "listings" && statusFilter === "all",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("all");
-      },
+      selected: statusFilter === "all",
+      visible: true,
+      onPress: () => setStatusFilter("all"),
     },
     {
       key: "active",
-      label: `Ativos (${activeBooks.filter((b) => b.status === "available").length})`,
+      label: `Ativos (${availableCount})`,
       a11y: "Filtrar por Ativos",
       tone: colors.badge.available,
-      selected: activeTab === "listings" && statusFilter === "active",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("active");
-      },
+      selected: statusFilter === "active",
+      visible: availableCount > 0 || statusFilter === "active",
+      onPress: () => setStatusFilter("active"),
     },
     {
       key: "paused",
-      label: `Pausados (${activeBooks.filter((b) => b.status === "paused").length})`,
+      label: `Pausados (${pausedCount})`,
       a11y: "Filtrar por Pausados",
       tone: colors.badge.paused,
-      selected: activeTab === "listings" && statusFilter === "paused",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("paused");
-      },
+      selected: statusFilter === "paused",
+      visible: pausedCount > 0 || statusFilter === "paused",
+      onPress: () => setStatusFilter("paused"),
     },
     {
       key: "reserved",
-      label: `Reservados (${activeBooks.filter((b) => b.status === "reserved").length})`,
+      label: `Reservados (${reservedCount})`,
       a11y: "Filtrar por Reservados",
       tone: colors.badge.reserved,
-      selected: activeTab === "listings" && statusFilter === "reserved",
-      onPress: () => {
-        setActiveTab("listings");
-        setStatusFilter("reserved");
-      },
-    },
-    {
-      key: "proposals",
-      label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
-      a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
-      tone: colors.badge.trade,
-      selected: activeTab === "proposals",
-      onPress: () => {
-        setActiveTab("proposals");
-      },
-    },
-    {
-      key: "concluded",
-      label: "Concluídos",
-      a11y: "Concluídos",
-      tone: colors.badge.completed,
-      selected: activeTab === "concluded",
-      onPress: () => {
-        setActiveTab("concluded");
-      },
+      selected: statusFilter === "reserved",
+      visible: reservedCount > 0 || statusFilter === "reserved",
+      onPress: () => setStatusFilter("reserved"),
     },
   ];
 
-  return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {/* Cabeçalho do Figma `05.04`–`05.08`: título em serifa, subtítulo e "+" para anunciar. */}
-      <View style={[styles.header, wideWeb && styles.headerWide]}>
-        {onBack ? (
+  const header = (
+    <View testID="my-listings-header" style={[styles.header, wideWeb && styles.headerWide]}>
+      {onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          hitSlop={12}
+          onPress={onBack}
+          style={withPress(styles.iconButton)}
+        >
+          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        </Pressable>
+      ) : null}
+      <View style={styles.headerText}>
+        <Text accessibilityRole="header" style={styles.heroTitle}>
+          Estante
+        </Text>
+        <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
+      </View>
+      <View style={styles.headerActions}>
+        {/* Botão Rascunhos no topo ao lado do título da Estante */}
+        {onNavigateToDrafts ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Voltar"
+            accessibilityLabel={
+              draftsState.drafts.length > 0
+                ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
+                : "Ver rascunhos"
+            }
             hitSlop={12}
-            onPress={onBack}
-            style={withPress(styles.iconButton)}
+            onPress={guardedDrafts}
+            style={({ pressed }) => [
+              styles.draftsLink,
+              isIos && (iosGlass ? styles.iosDraftsGlass : styles.iosDraftsOpaque),
+              pressed && styles.draftsLinkPressed,
+            ]}
           >
-            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+            {isIos && iosGlass ? <IosGlassBackdrop style={styles.iosDraftsGlassShape} /> : null}
+            <AppIcon name="document" size={18} color={isIos ? colors.m3.primary : colors.m3.onSecondaryContainer} />
+            <Text style={[styles.draftsLinkText, isIos && { color: colors.m3.onSurface }]}>
+              {draftsState.drafts.length > 0
+                ? `Rascunhos (${draftsState.drafts.length})`
+                : "Rascunhos"}
+            </Text>
           </Pressable>
         ) : null}
-        <View style={styles.headerText}>
-          <Text accessibilityRole="header" style={styles.heroTitle}>
-            Estante
-          </Text>
-          <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
-        </View>
-        <View style={styles.headerActions}>
-          {/* Botão Rascunhos no topo ao lado do título da Estante */}
-          {onNavigateToDrafts ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                draftsState.drafts.length > 0
-                  ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
-                  : "Ver rascunhos"
-              }
-              hitSlop={12}
-              onPress={guardedDrafts}
-              style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
-            >
-              <AppIcon name="document" size={18} color={colors.m3.onSecondaryContainer} />
-              <Text style={styles.draftsLinkText}>
-                {draftsState.drafts.length > 0
-                  ? `Rascunhos (${draftsState.drafts.length})`
-                  : "Rascunhos"}
-              </Text>
-            </Pressable>
-          ) : null}
-          {wideWeb && onNavigateToCreateListing ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Anunciar livro no topo da estante"
-              hitSlop={12}
-              onPress={guardedCreateListing}
-              style={withPress(styles.announceButtonHeader)}
-            >
-              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
-              <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        {wideWeb && onNavigateToCreateListing ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Anunciar livro no topo da estante"
+            hitSlop={12}
+            onPress={guardedCreateListing}
+            style={withPress(styles.announceButtonHeader)}
+          >
+            <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+            <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
+          </Pressable>
+        ) : null}
       </View>
+    </View>
+  );
+  const hasScrollableShelf = !state.loading && !state.error && state.books.length > 0;
+  const scrollCachedNotice = isIos && hasScrollableShelf;
 
+  return (
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={header} scrolling={hasScrollableShelf}>
       <View style={[styles.content, wideWeb && styles.contentWide]}>
+        {scrollCachedNotice ? null : <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" />}
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (
           isOnline ? (
             <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           ) : (
-            <OfflineState onRetry={() => void actions.reload()} />
+            <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
           )
         ) : state.books.length === 0 ? (
           <MyListingsEmpty
@@ -299,46 +371,28 @@ export function MyListings({
             onNavigateToHelp={guardedHelp}
           />
         ) : (
-          <ScrollView
+          <ScrollEdgeScrollView
+            ref={scrollRef}
             {...standardVerticalScrollProps}
             contentContainerStyle={[
               styles.scroll,
               {
-                paddingBottom:
+                paddingBottom: isIos
+                  ? (onNavigateToCreateListing ? scrollBottomPadding.nativeTabWithFab : tokens.spacing[24])
+                  :
                   hasBooks && onNavigateToCreateListing && !wideWeb
-                    ? scrollBottomPadding.withBottomBarAndFab
-                    : scrollBottomPadding.withBottomBar,
+                    ? scrollBottomPadding.withBottomBarAndFab + insets.bottom
+                    : scrollBottomPadding.withBottomBar + insets.bottom,
               },
             ]}
           >
-            {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
-            {wideWeb && onNavigateToCreateListing ? (
-              <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
-                <View style={styles.webExchangeBannerIconBox}>
-                  <AppIcon name="swap" size={28} color={colors.m3.onTertiaryContainer} />
-                </View>
-                <View style={styles.webExchangeBannerTextBox}>
-                  <Text style={styles.webExchangeBannerTitle}>Quer fazer seus livros circularem?</Text>
-                  <Text style={styles.webExchangeBannerSubtitle}>
-                    Tem livros parados na estante? Anuncie para troca, venda acessível ou doação para leitores de Piripiri.
-                  </Text>
-                </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Anunciar novo livro na estante"
-                  onPress={guardedCreateListing}
-                  style={withPress(styles.webExchangeBannerButton)}
-                >
-                  <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
-                </Pressable>
-              </View>
-            ) : null}
-
+            {scrollCachedNotice ? <CachedBookNotice cachedAt={state.cachedAt} variant="shelf" /> : null}
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
-            <View style={styles.statsRow}>
+            <View testID="my-listings-stats-row" style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
-                const isSelected = modalityFilter === stat.key;
-                const isDimmed = modalityFilter !== "all" && !isSelected;
+                const isSelected = activeTab === "listings" && modalityFilter === stat.key;
+                const isDimmed = activeTab === "listings" && modalityFilter !== "all" && !isSelected;
+                const badgeTone = colors.badge[stat.key];
                 return (
                   <Pressable
                     key={stat.key}
@@ -346,76 +400,204 @@ export function MyListings({
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={`${stat.count} ${stat.label}`}
                     onPress={() => {
+                      if (isIos) triggerHaptic("selection");
                       setActiveTab("listings");
                       setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key));
                     }}
                     style={({ pressed }) => [
-                      styles.statCard,
-                      wideWeb && styles.statCardWide,
-                      { backgroundColor: colors.badge[stat.key].background },
-                      isSelected && {
-                        borderWidth: 2,
-                        borderColor: colors.badge[stat.key].text,
-                        ...styles.statCardSelected,
-                      },
+                      wideWeb ? styles.statCardWide : styles.statCardMobile,
+                      !wideWeb && { backgroundColor: badgeTone.background },
+                      isSelected &&
+                        (wideWeb
+                          ? {
+                              borderWidth: 2,
+                              borderColor:
+                                badgeTone.background === "#F5B718"
+                                  ? colors.ipe.bloomDeep
+                                  : badgeTone.background,
+                              backgroundColor: colors.surface,
+                              ...styles.statCardSelected,
+                            }
+                          : {
+                              borderWidth: 2,
+                              borderColor: badgeTone.text,
+                              ...styles.statCardSelected,
+                            }),
                       isDimmed && styles.statCardDimmed,
                       pressed && styles.statCardPressed,
                     ]}
                   >
-                    <View style={styles.statContentRow}>
-                      <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
-                      {isSelected ? (
-                        <View style={[styles.statCheckBadge, { backgroundColor: colors.badge[stat.key].text }]}>
-                          <AppIcon name="check" size={12} color={colors.badge[stat.key].background} />
+                    {wideWeb ? (
+                      <>
+                        <View
+                          style={[
+                            styles.statIconBadge,
+                            { backgroundColor: badgeTone.background },
+                          ]}
+                        >
+                          <AppIcon name={stat.icon} size={22} color={badgeTone.text} />
                         </View>
-                      ) : null}
-                    </View>
-                    <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
+                        <View style={styles.statTextGroup}>
+                          <Text style={styles.statCount}>{stat.count}</Text>
+                          <Text style={styles.statLabel}>{stat.label}</Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.statFilterPillWide,
+                            {
+                              backgroundColor: isSelected ? badgeTone.background : colors.surface,
+                              borderColor: isSelected ? badgeTone.background : colors.book.paperEdge,
+                            },
+                          ]}
+                        >
+                          {isSelected ? (
+                            <AppIcon name="check" size={14} color={badgeTone.text} />
+                          ) : null}
+                          <Text
+                            style={[
+                              styles.statFilterPillTextWide,
+                              { color: isSelected ? badgeTone.text : colors.m3.onSurfaceVariant },
+                            ]}
+                          >
+                            {isSelected ? "Filtrado" : "Filtrar"}
+                          </Text>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
+                          {stat.count}
+                        </Text>
+                        <Text
+                          style={[styles.statLabelMobile, { color: badgeTone.text }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.8}
+                        >
+                          {stat.label}
+                        </Text>
+                      </>
+                    )}
                   </Pressable>
                 );
               })}
             </View>
 
-            {/* Fileira horizontal única de abas e status da estante */}
-            {wideWeb ? (
-              <View
-                testID="my-listings-tablist"
-                style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
-              >
-                {shelfChips.map((chip) => (
-                  <Chip
-                    key={chip.key}
-                    size="compact"
-                    label={chip.label}
-                    accessibilityLabel={chip.a11y}
-                    tone={chip.tone}
-                    selected={chip.selected}
-                    onPress={chip.onPress}
-                  />
+            {/* Chips de seção em 1 linha limpa (igual Todos/Venda/Troca), sem faixa cinza atrás */}
+            <View
+              accessibilityRole="tablist"
+              testID="my-listings-tablist"
+              style={isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid}
+            >
+              {primaryTabs
+                .filter((tab) => tab.visible)
+                .map((tab) => (
+                  <View key={tab.key} style={{ flexShrink: 1 }}>
+                    <Chip
+                      size="compact"
+                      label={tab.label}
+                      accessibilityLabel={tab.a11y}
+                      tone={activeTab === tab.key ? tab.tone : undefined}
+                      selected={activeTab === tab.key}
+                      onPress={tab.onPress}
+                    />
+                  </View>
                 ))}
+            </View>
+
+            {activeTab === "listings" ? (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>
+                  {`${displayedBooks.length} ${displayedBooks.length === 1 ? "anúncio" : "anúncios"}`}
+                </Text>
+                {showStatusSubfilters ? (
+                  <Pressable
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      statusFilter === "all"
+                        ? "Filtrar anúncios por situação"
+                        : `Filtro ativo: ${STATUS_DROPDOWN_LABELS[statusFilter]}`
+                    }
+                    hitSlop={8}
+                    onPress={() => {
+                      if (isIOS) triggerHaptic("light");
+                      setFilterMenuOpen(true);
+                    }}
+                    style={[
+                      styles.statusDropdownButton,
+                      isIOS && statusFilter === "all" && (iosGlass ? styles.iosDropdownGlass : styles.iosDropdownOpaque),
+                      statusFilter !== "all" && styles.statusDropdownButtonActive,
+                    ]}
+                  >
+                    {isIOS && iosGlass && statusFilter === "all" ? (
+                      <IosGlassBackdrop style={styles.iosDropdownGlassShape} />
+                    ) : null}
+                    <Text
+                      style={[
+                        styles.statusDropdownText,
+                        statusFilter !== "all" && styles.statusDropdownTextActive,
+                      ]}
+                    >
+                      {STATUS_DROPDOWN_LABELS[statusFilter]}
+                    </Text>
+                    <AppIcon
+                      name="chevronDown"
+                      size={14}
+                      color={statusFilter !== "all" ? colors.action : colors.m3.onSurfaceVariant}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
-            ) : (
-              <ScrollView
-                testID="my-listings-tablist"
-                horizontal
-                {...standardHorizontalScrollProps}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterScroll}
-                style={[styles.filterScrollView, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+            ) : null}
+
+            <BottomSheet
+              visible={filterMenuOpen}
+              onClose={() => setFilterMenuOpen(false)}
+              title="Filtrar anúncios"
+              testID="my-listings-filter-sheet"
+            >
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Filtrar anúncios"
+                style={styles.filterSheetList}
               >
-                {shelfChips.map((chip) => (
-                  <Chip
-                    key={chip.key}
-                    size="compact"
-                    label={chip.label}
-                    accessibilityLabel={chip.a11y}
-                    tone={chip.tone}
-                    selected={chip.selected}
-                    onPress={chip.onPress}
-                  />
-                ))}
-              </ScrollView>
-            )}
+                {statusChips
+                  .filter((chip) => chip.visible)
+                  .map((chip) => (
+                    <Pressable
+                      key={chip.key}
+                      accessible={true}
+                      accessibilityRole="radio"
+                      accessibilityLabel={chip.a11y}
+                      accessibilityState={{ checked: chip.selected }}
+                      onPress={() => {
+                        chip.onPress();
+                        setFilterMenuOpen(false);
+                      }}
+                      style={({ pressed }) => [
+                        styles.filterSheetRow,
+                        chip.selected && styles.filterSheetRowSelected,
+                        pressed && styles.filterSheetRowPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.filterSheetLabel,
+                          chip.selected && styles.filterSheetLabelSelected,
+                        ]}
+                      >
+                        {chip.label}
+                      </Text>
+                      <AppIcon
+                        name={chip.selected ? "radioOn" : "radioOff"}
+                        size={22}
+                        color={chip.selected ? colors.m3.primary : colors.m3.outline}
+                      />
+                    </Pressable>
+                  ))}
+              </View>
+            </BottomSheet>
 
             {/* Gatilho de acessibilidade mantido para compatibilidade com rotinas de teste */}
             <Pressable
@@ -489,14 +671,26 @@ export function MyListings({
               />
             ) : (
               <View style={styles.listCard}>
-                <Text style={styles.sectionTitle}>Concluídos</Text>
+                <Text style={[styles.sectionTitle, styles.concludedSectionTitle]}>Concluídos</Text>
                 {wideWeb ? (
                   <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Histórico</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                    <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+                    <View style={styles.tableHeaderMain}>
+                      <View style={{ flex: 3, minWidth: 220 }}>
+                        <Text style={styles.tableHeaderText}>Livro</Text>
+                      </View>
+                      <View style={{ flex: 1.5, minWidth: 120 }}>
+                        <Text style={styles.tableHeaderText}>Modalidade</Text>
+                      </View>
+                      <View style={{ flex: 1.5, minWidth: 120 }}>
+                        <Text style={styles.tableHeaderText}>Histórico</Text>
+                      </View>
+                      <View style={{ flex: 1.2, minWidth: 100 }}>
+                        <Text style={styles.tableHeaderText}>Situação</Text>
+                      </View>
+                    </View>
+                    <View style={{ width: 148, alignItems: "flex-end" }}>
+                      <Text style={styles.tableHeaderText}>Ação</Text>
+                    </View>
                   </View>
                 ) : null}
                 {concludedProposals.map((item) => (
@@ -539,7 +733,31 @@ export function MyListings({
                 ))}
               </View>
             )}
-          </ScrollView>
+
+            {/* Banner convidativo à circulação posicionado após a tabela para manter os livros em primeiro plano */}
+            {wideWeb && onNavigateToCreateListing ? (
+              <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
+                <View style={styles.webExchangeBannerIconBox}>
+                  <AppIcon name="swap" size={24} color={colors.ipe.onContainer} />
+                </View>
+                <View style={styles.webExchangeBannerTextBox}>
+                  <Text style={styles.webExchangeBannerTitle}>Quer fazer seus livros circularem?</Text>
+                  <Text style={styles.webExchangeBannerSubtitle}>
+                    Tem livros parados na estante? Anuncie para troca, venda acessível ou doação para leitores de Piripiri.
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Anunciar novo livro na estante"
+                  onPress={guardedCreateListing}
+                  style={withPress(styles.webExchangeBannerButton)}
+                >
+                  <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+                  <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </ScrollEdgeScrollView>
         )}
       </View>
       {/* FAB do Material 3 (56 dp, primary container) no canto inferior direito, acima da barra de navegação. */}
@@ -547,18 +765,34 @@ export function MyListings({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Anunciar livro"
-          onPress={guardedCreateListing}
-          android_ripple={{ color: colors.m3.onPrimaryContainer, borderless: false }}
-          style={({ pressed }) => [styles.fab, { bottom: fabBottom }, pressed && styles.fabPressed]}
+          onPress={() => {
+            if (isIos) triggerHaptic("light");
+            guardedCreateListing();
+          }}
+          android_ripple={Platform.OS === "android" ? { color: colors.m3.onPrimaryContainer, borderless: false } : undefined}
+          style={({ pressed }) => [
+            styles.fab,
+            isIos && (iosGlass ? styles.iosFabGlass : styles.iosFabOpaque),
+            { bottom: fabBottom },
+            pressed && styles.fabPressed,
+          ]}
         >
-          <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
+          {iosGlass ? (
+            <IosGlassBackdrop style={styles.iosGlassShape} />
+          ) : null}
+          <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
         </Pressable>
       ) : null}
-    </SafeAreaView>
+      {shareFeedback ? (
+        <Snackbar visible message={shareFeedback} onDismiss={dismissShareFeedback} />
+      ) : null}
+    </ScrollEdgeScreen>
   );
 }
 
 export type MyListingsScreenProps = {
+  focusKey?: number;
+  scrollToTopTick?: number;
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
@@ -571,6 +805,8 @@ export type MyListingsScreenProps = {
 };
 
 export default function MyListingsScreen({
+  focusKey,
+  scrollToTopTick,
   onBack,
   onRequireSignIn,
   onNavigateToCreateListing,
@@ -581,7 +817,7 @@ export default function MyListingsScreen({
   onNavigateToNegotiationDetail,
 }: MyListingsScreenProps = {}) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
   const [authState] = makeAuthViewModel();
 
@@ -621,229 +857,8 @@ export default function MyListingsScreen({
       onNavigateToManageListing={onNavigateToManageListing}
       onNavigateToReceivedRequests={onNavigateToReceivedRequests}
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+      focusKey={focusKey}
+      scrollToTopTick={scrollToTopTick}
     />
   );
-}
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
-      gap: tokens.spacing[8],
-    },
-    iconButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      minWidth: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    headerText: { flex: 1 },
-    heroTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    fab: {
-      position: "absolute",
-      right: tokens.spacing[16],
-      width: tokens.spacing[56],
-      height: tokens.spacing[56],
-      borderRadius: tokens.radius.card,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.primaryContainer,
-      elevation: 6,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 3 },
-      zIndex: 90,
-    },
-    fabPressed: {
-      opacity: 0.92,
-      borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.94 }],
-    },
-    segmentPressed: {
-      transform: [{ scale: 0.97 }],
-    },
-    // Botão tonal com ícone (M3): pílula compacta e elegante ao lado do título da Estante.
-    draftsLink: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      minHeight: 36,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
-    draftsLinkText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    headerActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      marginLeft: "auto",
-    },
-    announceButtonHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      height: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[18],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      elevation: 2,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    announceButtonHeaderText: {
-      ...tokens.typography.labelLarge,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    content: {
-      flex: 1,
-      width: "100%",
-      paddingHorizontal: tokens.spacing[16],
-    },
-    // Web larga (Figma `05.01`): coluna centralizada em WEB_MAX_WIDTH com respiro editorial.
-    headerWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[32],
-      paddingBottom: tokens.spacing[16],
-    },
-    contentWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-    },
-    segmentRowWide: {
-      alignSelf: "flex-start",
-      minWidth: 380,
-      maxWidth: 520,
-      marginBottom: tokens.spacing[4],
-    },
-    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    webExchangeBanner: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], backgroundColor: colors.m3.tertiaryContainer, borderRadius: tokens.radius.card, padding: tokens.spacing[20], marginBottom: tokens.spacing[8] },
-    webExchangeBannerIconBox: { width: tokens.spacing[48], height: tokens.spacing[48], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerLowest, justifyContent: "center", alignItems: "center" },
-    webExchangeBannerTextBox: { flex: 1, gap: tokens.spacing[4] },
-    webExchangeBannerTitle: { ...tokens.typography.brandCardTitle, color: colors.m3.onTertiaryContainer },
-    webExchangeBannerSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onTertiaryContainer },
-    webExchangeBannerButton: { minHeight: tokens.accessibility.touchTarget, paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary, justifyContent: "center", alignItems: "center" },
-    webExchangeBannerButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold },
-    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
-    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
-    statCardWide: { flex: 0, minWidth: 160, paddingHorizontal: tokens.spacing[16] },
-    statCard: {
-      flex: 1,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[2],
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-    },
-    statCardSelected: { elevation: 3, shadowOpacity: 0.16, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
-    statCardDimmed: { opacity: 0.45 },
-    statCardPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-    statContentRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    statCheckBadge: { width: 18, height: 18, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
-    statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
-    statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
-    summaryRowWide: {
-      paddingVertical: tokens.spacing[8],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      gap: tokens.spacing[4],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingLeft: tokens.spacing[8],
-    },
-    sortText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
-    segmentRowAndroid: { flexDirection: "row", gap: tokens.spacing[8] },
-    filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
-    filterScroll: { gap: tokens.spacing[8], paddingVertical: tokens.spacing[4] },
-    filterScrollView: { marginHorizontal: -tokens.spacing[16], paddingHorizontal: tokens.spacing[16] },
-    hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
-    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
-    segmentTrackIOS: {
-      flexDirection: "row",
-      padding: tokens.spacing[2],
-      borderRadius: tokens.radius.segmentOuter,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-    },
-    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    attentionCard: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    attentionAvatar: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
-    attentionText: { flex: 1, gap: tokens.spacing[2] },
-    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    attentionSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    attentionActions: { alignSelf: "flex-end", minWidth: 160 },
-    listCard: {
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-  });
 }

@@ -4,6 +4,7 @@ import type { IFileDownloadService } from "@/model/services/iFileDownloadService
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
+import { clearAllSessionMemoryCaches } from "@/viewmodel/sessionCacheRegistry";
 
 export type ExportSummary = {
   listingsCount: number;
@@ -134,6 +135,7 @@ export function useDeleteAccountViewModel(
 
       try {
         await auth.deleteAccount(sessionUserId);
+        clearAllSessionMemoryCaches();
         await history.clearHistory(sessionUserId);
         setState((prev) => ({
           ...prev,

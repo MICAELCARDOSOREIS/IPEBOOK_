@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import type { Book } from "@/model/entities/book";
 

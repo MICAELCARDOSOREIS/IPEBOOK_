@@ -1,25 +1,24 @@
 
 import { render } from "@testing-library/react-native";
 import { Text } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 import type { WelcomeGateStatus } from "@/viewmodel/useWelcomeGateViewModel";
 
-vi.mock("@/viewmodel/useWelcomeGateViewModel", () => ({
-  useWelcomeGateViewModel: vi.fn(),
+jest.mock("@/viewmodel/useWelcomeGateViewModel", () => ({
+  useWelcomeGateViewModel: jest.fn(),
 }));
 
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
-const mockedGate = vi.mocked(useWelcomeGateViewModel);
+const mockedGate = jest.mocked(useWelcomeGateViewModel);
 
 function mockStatus(status: WelcomeGateStatus) {
-  mockedGate.mockReturnValue([status, vi.fn().mockResolvedValue(undefined)]);
+  mockedGate.mockReturnValue([status, jest.fn().mockResolvedValue(undefined)]);
 }
 
 describe("InitialRouteGate (AD-18, issue #98)", () => {
   it("não mostra a rota inicial enquanto a decisão está pendente", async () => {
     mockStatus("checking");
-    const onShowWelcome = vi.fn();
+    const onShowWelcome = jest.fn();
 
     const screen = await render(
       <InitialRouteGate pathname="/" onShowWelcome={onShowWelcome}>
@@ -33,7 +32,7 @@ describe("InitialRouteGate (AD-18, issue #98)", () => {
 
   it("leva às boas-vindas quando o app abre em / sem a marca de primeiro acesso", async () => {
     mockStatus("show");
-    const onShowWelcome = vi.fn();
+    const onShowWelcome = jest.fn();
 
     await render(
       <InitialRouteGate pathname="/" onShowWelcome={onShowWelcome}>
@@ -46,7 +45,7 @@ describe("InitialRouteGate (AD-18, issue #98)", () => {
 
   it("não redireciona quando o app abre em outra rota, mesmo sem a marca", async () => {
     mockStatus("show");
-    const onShowWelcome = vi.fn();
+    const onShowWelcome = jest.fn();
 
     const screen = await render(
       <InitialRouteGate pathname="/pesquisa" onShowWelcome={onShowWelcome}>
@@ -60,7 +59,7 @@ describe("InitialRouteGate (AD-18, issue #98)", () => {
 
   it("mostra a rota normalmente quando a marca já existe", async () => {
     mockStatus("skip");
-    const onShowWelcome = vi.fn();
+    const onShowWelcome = jest.fn();
 
     const screen = await render(
       <InitialRouteGate pathname="/" onShowWelcome={onShowWelcome}>

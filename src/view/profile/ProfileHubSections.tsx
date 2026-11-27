@@ -1,11 +1,12 @@
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import ipeFrame from "@/view/assets/moldura-ipe-perfil.png";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 
 export type ProfileMenuItem = {
   key: string;
@@ -52,11 +53,20 @@ export function ProfileIdentityCard({
   onMeetingHistory,
   onRatings,
 }: ProfileIdentityCardProps) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
+    <View
+      style={[
+        styles.heroBlock,
+        isIos && styles.iosNeutralSurface,
+        wideWeb && styles.heroBlockWide,
+      ]}
+    >
       <View style={styles.identityRow}>
         <View style={styles.identityText}>
           <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -68,6 +78,7 @@ export function ProfileIdentityCard({
                 accessibilityRole="link"
                 accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
               >
                 <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
@@ -77,9 +88,10 @@ export function ProfileIdentityCard({
                 accessibilityRole="button"
                 accessibilityLabel="Adicionar Instagram ao perfil"
                 hitSlop={8}
+                style={{ minHeight: Platform.OS === "ios" ? 44 : undefined, justifyContent: "center" }}
                 onPress={onEditProfile}
               >
-                <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
+                <Text style={styles.identityHandleMuted}>Adicionar Instagram</Text>
               </Pressable>
             )}
             <View style={styles.locationRow}>
@@ -91,26 +103,28 @@ export function ProfileIdentityCard({
           </View>
         </View>
         <View style={styles.avatarFrame}>
-          <Avatar name={name} photoUrl={photoUrl ?? undefined} size={92} />
-          <Image
-            source={ipeFrame}
-            accessibilityElementsHidden
-            pointerEvents="none"
-            resizeMode="contain"
-            style={styles.avatarIpeFrame}
-          />
+          <Avatar name={name} photoUrl={photoUrl ?? undefined} size={104} />
         </View>
       </View>
 
-      <View style={styles.statsContainer}>
+      <View
+        style={[
+          styles.statsContainer,
+          isIos && styles.iosStatsSurface,
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
           onPress={onMyListings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{totalPublications}</Text>
-          <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {totalPublications}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {totalPublications === 1 ? "publicação" : "publicações"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -121,8 +135,12 @@ export function ProfileIdentityCard({
           onPress={onMeetingHistory}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>{completedTrocas}</Text>
-          <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
+            {completedTrocas}
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            {completedTrocas === 1 ? "troca" : "trocas"}
+          </Text>
         </Pressable>
 
         <View style={styles.statDivider} />
@@ -133,10 +151,12 @@ export function ProfileIdentityCard({
           onPress={onRatings}
           style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
         >
-          <Text style={styles.statNumber}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72} style={styles.statNumber}>
             {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
           </Text>
-          <Text style={styles.statLabel}>nota média</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.statLabel}>
+            nota média
+          </Text>
         </Pressable>
       </View>
 
@@ -144,98 +164,51 @@ export function ProfileIdentityCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Editar perfil"
-          onPress={onEditProfile}
+          onPress={() => {
+            if (isIos) triggerHaptic("light");
+            onEditProfile();
+          }}
           style={({ pressed }) => [
             styles.editProfileButton,
-            resolvedScheme === "dark" && styles.editProfileButtonDark,
+            isIos && (iosGlass ? styles.iosGlassButton : styles.iosOpaqueButton),
             pressed && styles.editProfileButtonPressed,
           ]}
         >
+          {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
           <AppIcon name="edit" size={18} color={colors.m3.primary} />
-          <Text style={styles.editProfileButtonText}>Editar perfil</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.editProfileButtonText}>
+            Editar perfil
+          </Text>
         </Pressable>
 
-        {onCreateListing ? (
+        {onCreateListing && !wideWeb ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Publicar um livro"
-            onPress={onCreateListing}
-            style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
+            onPress={() => {
+              if (isIos) triggerHaptic("light");
+              onCreateListing();
+            }}
+            style={({ pressed }) => [
+              styles.publishButton,
+              isIos && styles.iosPublishButton,
+              iosGlass && styles.iosGlassPublishButton,
+              pressed && styles.publishButtonPressed,
+            ]}
           >
+            {iosGlass ? (
+              <IosGlassBackdrop
+                tintColor={colors.m3.primary}
+                isInteractive
+                style={{ borderRadius: tokens.radius.full }}
+              />
+            ) : null}
             <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-            <Text style={styles.publishButtonText}>Publicar um livro</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.publishButtonText}>
+              Publicar um livro
+            </Text>
           </Pressable>
         ) : null}
-      </View>
-    </View>
-  );
-}
-
-export type ProfileCommunityBadgesProps = {
-  neighborhood?: string | null;
-  completedTrocas: number;
-  totalPublications: number;
-  wideWeb?: boolean;
-};
-
-/**
- * Selos Comunitários de Piripiri (Spec 122).
- */
-export function ProfileCommunityBadges({
-  neighborhood,
-  completedTrocas,
-  totalPublications,
-  wideWeb = false,
-}: ProfileCommunityBadgesProps) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={[styles.badgesSection, wideWeb && styles.badgesSectionWide]} testID="profile-badges-section">
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionBloom} />
-        <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
-      </View>
-      <View style={styles.badgesRow}>
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Leitor de Piripiri: ${neighborhood || "Comunidade"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
-            <AppIcon name="place" size={20} color={colors.nature.foliage} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>{neighborhood || "Comunidade"}</Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
-            <AppIcon name="checkCircle" size={20} color={colors.action} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
-          </Text>
-        </View>
-
-        <View
-          style={styles.badgeItem}
-          accessibilityRole="text"
-          accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
-        >
-          <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
-            <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
-          </View>
-          <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
-          <Text style={styles.badgeDesc} numberOfLines={2}>
-            {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -260,56 +233,74 @@ export function ProfileMenuSection({
   onSignOut,
 }: ProfileMenuSectionProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={[styles.section, wideWeb && styles.sectionWide]}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionBloom} />
-        <Text style={styles.sectionHeader}>{title}</Text>
-      </View>
-      <View style={styles.cardGroup}>
-        {items.map((item, index) => (
-          <View key={item.key}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-              accessibilityHint={item.description}
-              onPress={item.onPress}
-              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-            >
-              <View style={styles.menuIconContainer}>
-                <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
-              </View>
-              <View style={styles.menuRowText}>
-                <Text style={styles.menuRowTitle}>{item.label}</Text>
-                {item.description ? (
-                  <Text style={styles.menuRowDescription}>{item.description}</Text>
-                ) : null}
-              </View>
-              {item.badgeCount && item.badgeCount > 0 ? (
-                <View style={styles.menuBadge}>
-                  <Text style={styles.menuBadgeText}>
-                    {item.badgeCount > 9 ? "9+" : item.badgeCount}
-                  </Text>
+      <View
+        style={[
+          styles.cardGroup,
+          isIos && styles.iosNeutralSurface,
+          wideWeb && styles.cardGroupWide,
+        ]}
+      >
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionBloom} />
+          <Text style={styles.sectionHeader}>{title}</Text>
+        </View>
+        <View style={styles.menuItemsList}>
+          {items.map((item, index) => (
+            <View key={item.key}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                accessibilityHint={item.description}
+                onPress={() => {
+                  if (isIos) triggerHaptic("light");
+                  item.onPress();
+                }}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  isIos && styles.iosMenuRow,
+                  pressed && styles.menuRowPressed,
+                ]}
+              >
+                <View style={[styles.menuIconContainer, isIos && styles.iosMenuIconContainer]}>
+                  <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
                 </View>
-              ) : null}
-              {item.showChevron ? (
-                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-              ) : null}
-            </Pressable>
-            {index < items.length - 1 ? <View style={styles.menuDivider} /> : null}
-          </View>
-        ))}
+                <View style={styles.menuRowText}>
+                  <Text style={styles.menuRowTitle}>{item.label}</Text>
+                  {item.description ? (
+                    <Text style={styles.menuRowDescription}>{item.description}</Text>
+                  ) : null}
+                </View>
+                {item.badgeCount && item.badgeCount > 0 ? (
+                  <View style={styles.menuBadge}>
+                    <Text style={styles.menuBadgeText}>
+                      {item.badgeCount > 9 ? "9+" : item.badgeCount}
+                    </Text>
+                  </View>
+                ) : null}
+                {item.showChevron ? (
+                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                ) : null}
+              </Pressable>
+              {index < items.length - 1 ? <View style={styles.menuDivider} /> : null}
+            </View>
+          ))}
+        </View>
 
         {onSignOut ? (
-          <>
+          <View style={styles.signOutContainer}>
             <View style={styles.menuDivider} />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Sair da conta"
               onPress={onSignOut}
-              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+              style={({ pressed }) => [styles.menuRow, isIos && styles.iosMenuRow, pressed && styles.menuRowPressed]}
             >
               <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
                 <AppIcon name="logout" size={20} color={colors.error} />
@@ -318,7 +309,7 @@ export function ProfileMenuSection({
                 <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
               </View>
             </Pressable>
-          </>
+          </View>
         ) : null}
       </View>
     </View>
@@ -326,46 +317,121 @@ export function ProfileMenuSection({
 }
 
 function createStyles(colors: ColorPalette) {
+  const isIos = Platform.OS === "ios";
   return StyleSheet.create({
     heroBlock: {
       width: "100%",
       position: "relative",
       overflow: "hidden",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[16],
+      padding: tokens.spacing[20],
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
       elevation: 2,
     },
-    heroBlockWide: { width: "100%" },
-    badgesSectionWide: { width: "100%", marginTop: 0 },
-    sectionWide: { flex: 1, minWidth: 260 },
+    heroBlockWide: {
+      width: "100%",
+      flex: 1,
+      padding: tokens.spacing[24],
+      justifyContent: "space-between",
+    },
+    iosNeutralSurface: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.09,
+      shadowRadius: 12,
+    },
+    iosStatsSurface: {
+      borderRadius: tokens.radius.large,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosGlassButton: {
+      minHeight: 49,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosPublishButton: {
+      minHeight: 49,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.17,
+      shadowRadius: 7,
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xxl,
+      overflow: "hidden",
+    },
+    iosOpaqueButton: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassStats: {
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+      borderColor: tokens.ios.separator,
+      overflow: "hidden",
+    },
+    iosGlassPublishButton: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      overflow: "hidden",
+    },
+    iosMenuRow: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    iosGlassMenuRow: {
+      backgroundColor: "transparent",
+    },
+    iosGlassMenuRowPressed: {
+      backgroundColor: "rgba(0, 0, 0, 0.05)",
+    },
+    iosMenuIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.primaryContainer,
+    },
+    sectionWide: { flex: 1, minWidth: 300 },
     identityRow: {
       minHeight: 100,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[16],
     },
-    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
     identityMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
-      columnGap: tokens.spacing[12],
-      rowGap: tokens.spacing[4],
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: tokens.spacing[6],
     },
     profileName: {
       color: colors.brandBrown,
       fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
+      fontSize: 28,
+      lineHeight: 34,
       fontWeight: tokens.fontWeight.bold,
     },
     identityHandle: {
@@ -379,54 +445,48 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
       color: colors.m3.primary,
     },
+    identityHandleMuted: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.medium,
+    },
     locationRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: tokens.spacing[2],
     },
     locationText: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
     avatarFrame: {
-      width: 116,
-      height: 116,
-      position: "relative",
-      padding: tokens.spacing[3],
+      width: 112,
+      height: 112,
+      padding: tokens.spacing[2],
       borderRadius: tokens.radius.full,
+      borderWidth: 3,
+      borderColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.container,
       alignItems: "center",
       justifyContent: "center",
-    },
-    avatarIpeFrame: {
-      position: "absolute",
-      top: -10,
-      left: -10,
-      width: 136,
-      height: 136,
     },
     editProfileButton: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[8],
-      flex: 1,
-      minHeight: tokens.accessibility.touchTarget,
+      width: "100%",
+      minHeight: 50,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[20],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainerHigh,
       transform: [{ scale: 0.98 }],
-    },
-    editProfileButtonDark: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
@@ -434,62 +494,20 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     primaryActions: {
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "stretch",
-      gap: tokens.spacing[8],
-    },
-    badgesSection: {
-      width: "100%",
-      marginTop: tokens.spacing[8],
-    },
-    badgesRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[8],
-    },
-    badgeItem: {
-      flex: 1,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingVertical: tokens.spacing[14],
-      paddingHorizontal: tokens.spacing[6],
-      minHeight: 110,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      elevation: 1,
-      shadowColor: colors.ipe.trunk,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-    },
-    badgeIconBox: {
-      width: 42,
-      height: 42,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[4],
-    },
-    badgeTitle: {
-      ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    badgeDesc: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      textAlign: "center",
+      gap: tokens.spacing[10],
     },
     statsContainer: {
       flexDirection: "row",
       alignItems: "center",
       minHeight: 84,
-      marginTop: 0,
-      paddingVertical: tokens.spacing[4],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
     },
     statBox: {
       flex: 1,
@@ -498,7 +516,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[2],
-      paddingHorizontal: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[2],
       borderRadius: tokens.radius.small,
     },
     statBoxPressed: {
@@ -508,7 +526,7 @@ function createStyles(colors: ColorPalette) {
       width: 1,
       height: tokens.spacing[32],
       backgroundColor: colors.ipe.bloom,
-      opacity: 0.65,
+      opacity: isIos ? 1 : 0.65,
     },
     statNumber: {
       fontFamily: fontFamily.brand,
@@ -525,8 +543,8 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     publishButton: {
-      flex: 1,
-      minHeight: 48,
+      width: "100%",
+      minHeight: 50,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -551,9 +569,11 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[20],
+      paddingTop: tokens.spacing[18],
+      paddingBottom: tokens.spacing[12],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.book.paperEdge,
     },
     sectionBloom: {
       width: 4,
@@ -570,7 +590,7 @@ function createStyles(colors: ColorPalette) {
     },
     cardGroup: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
+      borderRadius: tokens.radius.xl,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
       overflow: "hidden",
@@ -580,18 +600,27 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.05,
       shadowRadius: 6,
     },
+    cardGroupWide: {
+      flex: 1,
+    },
+    menuItemsList: {
+      flexGrow: 0,
+    },
+    signOutContainer: {
+      marginTop: "auto",
+    },
     menuDivider: {
       height: 1,
       backgroundColor: colors.m3.outlineVariant,
-      opacity: 0.35,
-      marginLeft: 72,
+      opacity: isIos ? 0.7 : 0.35,
+      marginLeft: isIos ? 68 : 76,
     },
     menuRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
+      paddingHorizontal: tokens.spacing[20],
       minHeight: tokens.accessibility.touchTarget,
     },
     menuRowPressed: {

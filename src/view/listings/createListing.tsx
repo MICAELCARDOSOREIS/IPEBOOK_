@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Keyboard, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
+import { makeCreateListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Dialog } from "@/view/components/Dialog";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { StepProgress } from "@/view/components/StepProgress";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
@@ -22,6 +26,7 @@ import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import {
   type ListingBasicsErrors,
   validateListingBasics,
@@ -65,17 +70,24 @@ export default function CreateListing({
   const guardedGoHome = useGuardedPress(onGoHome);
   const guardedCreated = useGuardedPress(onCreated);
   const [state, actions] = makeCreateListingViewModel();
+  const { isOnline } = makeNetworkStatus();
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
+  const [confirmSaveForLater, setConfirmSaveForLater] = useState(false);
+  const [localDraftSavedNotice, setLocalDraftSavedNotice] = useState(false);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
   const [basicsTouched, setBasicsTouched] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const focusScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(false);
 
   const hasDraftContent = Boolean(
@@ -178,6 +190,7 @@ export default function CreateListing({
   };
 
   const handleSubmit = async () => {
+    if (!isOnline) return;
     const result = await actions.submit(sessionUserId);
     if (result) {
       setPublished(result);
@@ -185,7 +198,17 @@ export default function CreateListing({
     }
   };
 
+  useEffect(() => {
+    if (isOnline) setLocalDraftSavedNotice(false);
+  }, [isOnline]);
+
   const handleSaveForLater = async () => {
+    if (!isOnline) {
+      await actions.saveDraft();
+      setLocalDraftSavedNotice(true);
+      return;
+    }
+    setLocalDraftSavedNotice(false);
     const saved = await actions.saveForLater(sessionUserId, step);
     if (saved) {
       guardedCancel();
@@ -198,6 +221,38 @@ export default function CreateListing({
     // `scrollToEnd` pode não existir no ambiente de teste do ScrollView.
     scrollRef.current?.scrollToEnd?.({ animated: true });
   }, [published, state.error]);
+
+  const scrollFocusedFieldIntoView = useCallback(() => {
+    if (wideWeb || Platform.OS === "web") return;
+    if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+    focusScrollTimerRef.current = setTimeout(() => {
+      const focused = (TextInput as unknown as { State?: { currentlyFocusedInput?: () => unknown } }).State?.currentlyFocusedInput?.();
+      const scrollNode = scrollRef.current as
+        | (React.ComponentRef<typeof ScrollView> & {
+            scrollResponderScrollNativeHandleToKeyboard?: (
+              nodeHandle: unknown,
+              additionalOffset?: number,
+              preventNegativeScrollOffset?: boolean,
+            ) => void;
+          })
+        | null;
+      if (focused && scrollNode?.scrollResponderScrollNativeHandleToKeyboard) {
+        scrollNode.scrollResponderScrollNativeHandleToKeyboard(focused, 96, true);
+      }
+    }, 80);
+  }, [wideWeb]);
+
+  useEffect(() => {
+    if (wideWeb || Platform.OS === "web") return undefined;
+    const subs = [
+      Keyboard.addListener("keyboardDidShow", scrollFocusedFieldIntoView),
+      ...(Platform.OS === "ios" ? [Keyboard.addListener("keyboardWillShow", scrollFocusedFieldIntoView)] : []),
+    ];
+    return () => {
+      if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+      for (const sub of subs) sub.remove();
+    };
+  }, [wideWeb, scrollFocusedFieldIntoView]);
 
   if (published) {
     return (
@@ -218,7 +273,12 @@ export default function CreateListing({
   };
 
   const handleFocusField = (_fieldName: string, yOffset: number) => {
-    if (wideWeb) return;
+    // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
+    if (wideWeb || Platform.OS === "web") return;
+    if (Platform.OS === "ios") {
+      scrollFocusedFieldIntoView();
+      return;
+    }
     // No mobile, rola para posicionar o campo com 20dp de respiro na área visível
     setTimeout(() => {
       scrollRef.current?.scrollTo({
@@ -229,15 +289,15 @@ export default function CreateListing({
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wideWeb ? 1040 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
-      <ScrollView
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title={STEP_TITLES[step]} onBack={handleBack} />}>
+      <ScrollEdgeScrollView
         ref={scrollRef}
+        style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingBottom: wideWeb
-              ? 160
+              ? 140
               : isKeyboardVisible
                 ? 320
                 : scrollBottomPadding.withoutBottomBar,
@@ -265,7 +325,7 @@ export default function CreateListing({
                     )}
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 1 && styles.webStepTitleActive]}>1. Livro</Text>
+                    <Text style={[styles.webStepTitle, step === 1 && styles.webStepTitleActive]}>Livro</Text>
                     <Text style={styles.webStepSubtitle}>Título e modalidade</Text>
                   </View>
                 </View>
@@ -287,7 +347,7 @@ export default function CreateListing({
                     )}
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 2 && styles.webStepTitleActive]}>2. Fotos</Text>
+                    <Text style={[styles.webStepTitle, step === 2 && styles.webStepTitleActive]}>Fotos</Text>
                     <Text style={styles.webStepSubtitle}>Capa, lombada e verso</Text>
                   </View>
                 </View>
@@ -305,13 +365,12 @@ export default function CreateListing({
                     <Text style={[styles.webStepBadgeText, step === 3 && styles.webStepBadgeTextActive]}>3</Text>
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 3 && styles.webStepTitleActive]}>3. Detalhes</Text>
+                    <Text style={[styles.webStepTitle, step === 3 && styles.webStepTitleActive]}>Detalhes</Text>
                     <Text style={styles.webStepSubtitle}>Conservação e detalhes</Text>
                   </View>
                 </View>
               </View>
 
-              {/* Barra de progresso contínuo e acessibilidade para leitores e testes */}
               <View style={styles.webProgressTrackArea}>
                 <View style={styles.webProgressTrack}>
                   <View testID="step-progress-fill" style={[styles.webProgressFill, { width: `${(step / TOTAL_STEPS) * 100}%` }]} />
@@ -334,6 +393,7 @@ export default function CreateListing({
                 accessibilityLabel="Limpar rascunho"
                 onPress={() => {
                   actions.reset();
+                  setLocalDraftSavedNotice(false);
                   setBasicsTouched(false);
                   setStep(1);
                 }}
@@ -377,14 +437,23 @@ export default function CreateListing({
                 error={state.error}
                 errorRef={errorRef}
                 onSetPhotoUrl={actions.setPhotoUrl}
-                onRemovePhoto={actions.removePhoto}
+                onRemovePhoto={(index) => actions.setPhotoAt(index, "")}
                 uploading={photoState.uploading}
                 photoError={photoState.error}
+                photoPermissionDenied={photoState.permissionDenied}
                 onChoosePhoto={(slot, source, slotIndex) => {
-                  void photoActions.choose(source).then((url) => {
+                  const side =
+                    slot === "cover"
+                      ? "cover"
+                      : slotIndex === 0
+                        ? "spine"
+                        : slotIndex === 1
+                          ? "back"
+                          : undefined;
+                  void photoActions.choose(source, side).then((url) => {
                     if (!url) return;
                     if (slot === "cover") actions.setPhotoUrl(url);
-                    else if (slotIndex !== undefined && slotIndex < state.photos.length) actions.setPhotoAt(slotIndex, url);
+                    else if (slotIndex !== undefined) actions.setPhotoAt(slotIndex, url);
                     else actions.addPhoto(url);
                   });
                 }}
@@ -416,30 +485,27 @@ export default function CreateListing({
         {wideWeb ? (
           <View style={styles.previewCard}>
             <View style={styles.previewCardHeader}>
-              <View style={styles.previewLiveBadge}>
-                <View style={styles.previewLiveDot} />
-                <Text style={styles.previewLiveText}>PRÉVIA EM TEMPO REAL</Text>
-              </View>
-              <Text style={styles.previewHint}>Como os leitores em Piripiri verão seu anúncio</Text>
+              <Text style={styles.previewLiveText}>Prévia</Text>
+              <Text style={styles.previewHint}>
+                {state.title.trim()
+                  ? "Como os leitores em Piripiri verão seu anúncio"
+                  : "Preencha o título para ver o anúncio como os leitores verão"}
+              </Text>
             </View>
             <View style={styles.previewBook}>
-              <BookCover id="previa" title={state.title.trim() || "Título do livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl || undefined} variant="detail" />
-              <Text style={styles.previewTitle}>{state.title.trim() || "Título do livro"}</Text>
-              <Text style={styles.previewAuthor}>{state.author.trim() || "Autor"}</Text>
-              <View style={styles.previewLocationRow}>
-                <AppIcon name="place" size={14} color={colors.secondaryText} />
-                <Text style={styles.previewLocationText}>
-                  {state.neighborhood.trim() ? `${state.neighborhood.trim()}, Piripiri` : "Piripiri (retirada local)"}
-                </Text>
-              </View>
+              <ModalityCoverArea modality={state.modality}>
+                <BookCover
+                  id="previa"
+                  title={state.title.trim() || "IpêBook"}
+                  author={state.author.trim() || undefined}
+                  photoUrl={state.photoUrl || undefined}
+                  variant="card"
+                />
+              </ModalityCoverArea>
+              {!state.photoUrl ? (
+                <Text style={styles.previewCoverEmptyText}>A capa entra na próxima etapa</Text>
+              ) : null}
               <View style={styles.previewMeta}>
-                <Text style={styles.previewPrice}>
-                  {state.modality === "sale"
-                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "R$ —")
-                    : state.modality === "trade"
-                      ? "Para trocar"
-                      : "Gratuito"}
-                </Text>
                 <Tag variant={state.modality} />
                 {state.isBox ? (
                   <Tag
@@ -450,6 +516,25 @@ export default function CreateListing({
                 {state.category.trim() ? (
                   <Tag variant="available" label={state.category.trim()} />
                 ) : null}
+                <Text style={styles.previewPrice}>
+                  {state.modality === "sale"
+                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "Preço a definir")
+                    : state.modality === "trade"
+                      ? "Para trocar"
+                      : "Gratuito"}
+                </Text>
+              </View>
+              <Text style={state.title.trim() ? styles.previewTitle : styles.previewPlaceholder}>
+                {state.title.trim() || "O título aparece aqui"}
+              </Text>
+              <Text style={state.author.trim() ? styles.previewAuthor : styles.previewPlaceholder}>
+                {state.author.trim() || "O autor aparece aqui"}
+              </Text>
+              <View style={styles.previewLocationRow}>
+                <AppIcon name="place" size={14} color={colors.secondaryText} />
+                <Text style={styles.previewLocationText}>
+                  {state.neighborhood.trim() ? `${state.neighborhood.trim()}, Piripiri` : "Piripiri (retirada local)"}
+                </Text>
               </View>
               {state.condition ? (
                 <View style={styles.previewConditionRow}>
@@ -465,21 +550,35 @@ export default function CreateListing({
                 <View style={styles.previewLockBadge}>
                   <AppIcon name="lock" size={12} color={colors.action} />
                 </View>
-                <Text style={styles.previewNoteTitle}>Privacidade e Segurança</Text>
+                <Text style={styles.previewNoteTitle}>Privacidade</Text>
               </View>
               <Text style={styles.previewNote}>
-                Privacidade garantida: Só o bairro aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
+                Privacidade garantida: Só o local de retirada aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
               </Text>
             </View>
           </View>
         ) : null}
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       {/* Barra de ação: oculta no mobile enquanto o teclado estiver aberto para não encobrir os inputs */}
       {!wideWeb && isKeyboardVisible ? null : (
-        <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[styles.actionBar, isIos && (iosGlass ? styles.iosActionBarGlass : styles.iosActionBarOpaque)]}
+          testID="create-listing-action-bar"
+        >
+          {isIos && iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
           <View style={styles.actionBarInner}>
+            {localDraftSavedNotice ? (
+              <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
+                Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar.
+              </Text>
+            ) : !isOnline && step === 3 ? (
+              <Text accessibilityLiveRegion="polite" style={styles.offlineNotice}>
+                Conecte-se à internet para publicar.
+              </Text>
+            ) : null}
             {wideWeb ? (
               <View style={styles.webActionRow}>
                 <View style={styles.webSecondaryActions}>
@@ -507,6 +606,7 @@ export default function CreateListing({
                     {step === 3 ? (
                       <FilledButton
                         label="Publicar anúncio"
+                        disabled={!isOnline}
                         loading={state.loading}
                         loadingLabel="Publicando"
                         onPress={() => void handleSubmit()}
@@ -526,6 +626,7 @@ export default function CreateListing({
                 {step === 3 ? (
                   <FilledButton
                     label="Publicar anúncio"
+                    disabled={!isOnline}
                     loading={state.loading}
                     loadingLabel="Publicando"
                     onPress={() => void handleSubmit()}
@@ -541,7 +642,10 @@ export default function CreateListing({
                     label="Salvar rascunho"
                     accessibilityLabel="Salvar rascunho para depois"
                     disabled={state.loading}
-                    onPress={() => void handleSaveForLater()}
+                    onPress={() => {
+                      if (Platform.OS === "ios") setConfirmSaveForLater(true);
+                      else void handleSaveForLater();
+                    }}
                   />
                 </View>
               </View>
@@ -549,31 +653,54 @@ export default function CreateListing({
           </View>
         </SafeAreaView>
       )}
-    </SafeAreaView>
+      {confirmSaveForLater ? (
+        <Dialog
+          visible
+          title="Salvar para depois?"
+          message={
+            isOnline
+              ? "Seu anúncio ficará em Rascunhos para você continuar quando quiser."
+              : "Sem internet agora: o rascunho ficará salvo neste aparelho para você continuar depois."
+          }
+          confirmLabel="Salvar rascunho"
+          cancelLabel="Continuar editando"
+          onConfirm={() => {
+            setConfirmSaveForLater(false);
+            void handleSaveForLater();
+          }}
+          onCancel={() => setConfirmSaveForLater(false)}
+        />
+      ) : null}
+    </ScrollEdgeScreen>
   );
 }
 
 function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { padding: tokens.spacing[16], paddingBottom: wideWeb ? 160 : tokens.spacing[24], },
+    scroll: { flex: 1, width: "100%" },
+    scrollContent: {
+      padding: wideWeb ? 0 : tokens.spacing[16],
+      paddingBottom: wideWeb ? 140 : tokens.spacing[24],
+    },
     wideLayout: {
       flexDirection: "row",
       alignItems: "flex-start",
       justifyContent: "space-between",
-      gap: tokens.spacing[40],
+      gap: tokens.spacing[32],
       width: "100%",
-      maxWidth: 1040,
+      maxWidth: WEB_MAX_WIDTH,
+      paddingHorizontal: WEB_GUTTER,
       alignSelf: "center",
-      paddingTop: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
     },
     webStepperCard: {
       width: "100%",
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[12],
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
@@ -603,12 +730,12 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     formCardMobile: { width: "100%", gap: tokens.spacing[16], },
     formCardWeb: {
       width: "100%",
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.xl,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[24],
-      gap: tokens.spacing[18],
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[14],
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.04,
@@ -616,7 +743,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       elevation: 1,
     },
     previewCard: {
-      width: 360,
+      width: 420,
       maxWidth: "38%",
       flexShrink: 0,
       gap: tokens.spacing[16],
@@ -624,7 +751,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       position: wideWeb ? ("sticky" as "relative") : "relative",
       top: tokens.spacing[24],
       shadowColor: colors.m3.shadow,
@@ -634,27 +761,30 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       elevation: 1,
     },
     previewCardHeader: { gap: tokens.spacing[6], },
-    previewLiveBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.soft,
-      paddingVertical: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-      alignSelf: "flex-start",
-    },
-    previewLiveDot: { width: 7, height: 7, borderRadius: tokens.radius.full, backgroundColor: colors.action, },
-    previewLiveText: { ...tokens.typography.labelSmall, color: colors.actionDeep, fontWeight: tokens.fontWeight.bold, fontSize: 10, letterSpacing: 0.8, },
+    previewLiveText: { ...tokens.typography.titleMedium, color: colors.text, fontWeight: tokens.fontWeight.bold, },
+    offlineNotice: { ...tokens.typography.footnote, color: colors.secondaryText, textAlign: "center" },
     previewHint: { ...tokens.typography.footnote, color: colors.secondaryText, },
     previewLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    previewCoverEmpty: {
+      height: 120,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.m3.outline,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+    },
+    previewCoverEmptyText: { ...tokens.typography.footnote, color: colors.secondaryText, textAlign: "center", },
+    previewPlaceholder: { ...tokens.typography.bodyMedium, color: colors.secondaryText, fontStyle: "italic", },
     previewBook: {
       gap: tokens.spacing[8],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
@@ -663,37 +793,62 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     previewTitle: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: colors.m3.onSurface, },
     previewAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewLocationRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], },
+    previewLocationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.book.paperEdge,
+      paddingTop: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+    },
     previewLocationText: { ...tokens.typography.footnote, color: colors.secondaryText, fontSize: 12, },
-    previewMeta: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8], paddingTop: tokens.spacing[2], },
-    previewPrice: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.m3.onSurface, },
+    previewMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: tokens.spacing[8], paddingTop: tokens.spacing[4], },
+    previewPrice: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.nature.foliageDeep, marginLeft: "auto", },
     previewConditionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], },
     previewConditionText: { ...tokens.typography.footnote, color: colors.secondaryText, fontSize: 11, },
-    previewNoteBox: { backgroundColor: colors.m3.surfaceContainerLowest, borderWidth: 1, borderColor: colors.m3.outlineVariant, borderRadius: tokens.radius.medium, padding: tokens.spacing[12], gap: tokens.spacing[6], },
+    previewNoteBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.book.paperEdge, borderRadius: tokens.radius.medium, padding: tokens.spacing[12], gap: tokens.spacing[6], },
     previewNoteHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], },
     previewLockBadge: { width: 20, height: 20, borderRadius: tokens.radius.full, backgroundColor: colors.soft, alignItems: "center", justifyContent: "center", },
     previewNoteTitle: { ...tokens.typography.labelSmall, color: colors.actionDeep, fontWeight: tokens.fontWeight.bold, fontSize: 11, },
     previewNote: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 16, fontSize: 11, },
-    content: { width: wideWeb ? 640 : "100%", maxWidth: wideWeb ? 640 : 560, alignSelf: "center", gap: tokens.spacing[16], },
+    content: {
+      flex: wideWeb ? 1 : undefined,
+      minWidth: wideWeb ? 0 : undefined,
+      width: wideWeb ? undefined : "100%",
+      maxWidth: wideWeb ? undefined : 560,
+      alignSelf: wideWeb ? "stretch" : "center",
+      gap: tokens.spacing[16],
+    },
     actionBar: {
       width: "100%",
       backgroundColor: colors.surface,
       borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.04,
       shadowRadius: 6,
       elevation: 4,
     },
+    iosActionBarGlass: {
+      backgroundColor: "transparent",
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: tokens.glass.stroke,
+      overflow: "hidden",
+    },
+    iosActionBarOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: tokens.ios.separator,
+    },
     actionBarInner: {
       width: "100%",
-      maxWidth: wideWeb ? 1040 : 560,
+      maxWidth: wideWeb ? WEB_MAX_WIDTH : 560,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      // A SafeAreaView da barra já soma a margem inferior do sistema.
-      paddingBottom: tokens.spacing[4],
+      paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
+      paddingTop: Platform.OS === "ios" ? tokens.spacing[10] : tokens.spacing[16],
+      paddingBottom: Platform.OS === "ios" ? tokens.spacing[2] : tokens.spacing[12],
     },
     webActionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", },
     webSecondaryActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },

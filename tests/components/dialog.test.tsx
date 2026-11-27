@@ -1,10 +1,13 @@
 
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react-native";
 import { Platform } from "react-native";
 import { Dialog, resolveDialogTabWrap, type FocusableElement } from "@/view/components/Dialog";
 import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
+import { ProposalSheet } from "@/view/listings/ProposalSheet";
+import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
+import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 
 describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   afterEach(() => {
@@ -47,7 +50,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   });
 
   it("chama onCancel ao pressionar o botão de cancelamento", async () => {
-    const onCancel = vi.fn();
+    const onCancel = jest.fn();
     const { getByLabelText } = await render(
       <Dialog
         visible={true}
@@ -64,7 +67,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   });
 
   it("chama onConfirm ao pressionar o botão de confirmação", async () => {
-    const onConfirm = vi.fn();
+    const onConfirm = jest.fn();
     const { getByLabelText } = await render(
       <Dialog
         visible={true}
@@ -81,8 +84,8 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   });
 
   it("desabilita interações e exibe loading quando loading é verdadeiro", async () => {
-    const onConfirm = vi.fn();
-    const onCancel = vi.fn();
+    const onConfirm = jest.fn();
+    const onCancel = jest.fn();
     const { getByLabelText } = await render(
       <Dialog
         visible={true}
@@ -100,8 +103,8 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   });
 
   describe("resolveDialogTabWrap (prisão de foco do Dialog, issue #105)", () => {
-    const cancel: FocusableElement = { focus: vi.fn() };
-    const confirm: FocusableElement = { focus: vi.fn() };
+    const cancel: FocusableElement = { focus: jest.fn() };
+    const confirm: FocusableElement = { focus: jest.fn() };
     const focusables = [cancel, confirm] as const;
 
     it("sem elementos focáveis, não decide nada", () => {
@@ -155,7 +158,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
     it("Esc cancela o diálogo, equivalente ao botão Cancelar", async () => {
       Platform.OS = "web";
       const fakeDocument = installFakeDocument();
-      const onCancel = vi.fn();
+      const onCancel = jest.fn();
       await render(
         <Dialog
           visible={true}
@@ -174,7 +177,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
     it("não reage a Esc quando o diálogo está fechado", async () => {
       Platform.OS = "web";
       const fakeDocument = installFakeDocument();
-      const onCancel = vi.fn();
+      const onCancel = jest.fn();
       await render(
         <Dialog
           visible={false}
@@ -193,7 +196,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
     it("não reage a Esc fora da Web (iOS/Android usam o botão voltar/VoiceOver/TalkBack)", async () => {
       Platform.OS = "ios";
       const fakeDocument = installFakeDocument();
-      const onCancel = vi.fn();
+      const onCancel = jest.fn();
       await render(
         <Dialog
           visible={true}
@@ -212,7 +215,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
     it("devolve o foco ao elemento que abriu o diálogo quando ele fecha", async () => {
       Platform.OS = "web";
       const fakeDocument = installFakeDocument();
-      const trigger = { focus: vi.fn() };
+      const trigger = { focus: jest.fn() };
       fakeDocument.activeElement = trigger;
 
       const { rerender } = await render(
@@ -262,10 +265,10 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
     it("PhotoSourceSheet e BarcodeScannerModal reaproveitam a gestão de foco (Esc fecha e foco retorna ao gatilho, Spec 125 T004)", async () => {
       Platform.OS = "web";
       const fakeDocument = installFakeDocument();
-      const trigger = { focus: vi.fn() };
+      const trigger = { focus: jest.fn() };
       fakeDocument.activeElement = trigger;
 
-      const onClosePhoto = vi.fn();
+      const onClosePhoto = jest.fn();
       const photoScreen = await render(
         <PhotoSourceSheet visible={true} onChoose={() => {}} onClose={onClosePhoto} />,
       );
@@ -279,7 +282,7 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
 
       trigger.focus.mockClear();
       fakeDocument.activeElement = trigger;
-      const onCloseScanner = vi.fn();
+      const onCloseScanner = jest.fn();
       const scannerScreen = await render(
         <BarcodeScannerModal visible={true} onClose={onCloseScanner} onScan={() => {}} />,
       );
@@ -290,6 +293,58 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
         <BarcodeScannerModal visible={false} onClose={onCloseScanner} onScan={() => {}} />,
       );
       expect(trigger.focus).toHaveBeenCalledTimes(1);
+    });
+
+    it("modais e folhas fechados (visible=false) não montam conteúdo na árvore", async () => {
+      const sampleBook = {
+        id: "b-1",
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        ownerId: "u-1",
+        modality: "donation" as const,
+        status: "available" as const,
+      };
+      const proposal = await render(
+        <ProposalSheet visible={false} onClose={() => {}} targetBook={sampleBook} onSubmit={async () => {}} />,
+      );
+      expect(proposal.toJSON()).toBeNull();
+
+      const reserved = await render(
+        <ReservedListingSheet visible={false} onClose={() => {}} status="reserved" />,
+      );
+      expect(reserved.toJSON()).toBeNull();
+
+      const safety = await render(
+        <ProfileSafetySheet
+          visible={false}
+          personName="Maria"
+          listings={null}
+          loadingListings={false}
+          blocking={false}
+          error={null}
+          onLoadListings={() => {}}
+          onReportListing={() => {}}
+          onReportUser={() => {}}
+          onConfirmBlock={() => {}}
+          onClose={() => {}}
+        />,
+      );
+      expect(safety.toJSON()).toBeNull();
+
+      const rating = await render(
+        <NegotiationRatingModal
+          visible={false}
+          counterpartName="Maria"
+          selectedScore={5}
+          onSelectScore={() => {}}
+          onSubmit={async () => true}
+          onClose={() => {}}
+          isSubmitting={false}
+          submitError={null}
+          isSuccess={false}
+        />,
+      );
+      expect(rating.toJSON()).toBeNull();
     });
   });
 });

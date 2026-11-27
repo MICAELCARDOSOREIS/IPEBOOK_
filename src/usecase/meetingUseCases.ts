@@ -56,6 +56,9 @@ export class MeetingUseCases implements IMeetingUseCases {
     if (meeting.proposedBy === userId) {
       throw new ValidationError("Quem enviou o convite não pode confirmá-lo.");
     }
+    if (Date.parse(meeting.scheduledAt) <= this.now().getTime()) {
+      throw new ValidationError("O horário do encontro expirou. Sugira outro horário.");
+    }
     return this.meetings.update(meeting.id, { status: "confirmed" }, "proposed", userId);
   }
 

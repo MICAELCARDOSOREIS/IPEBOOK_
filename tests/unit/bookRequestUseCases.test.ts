@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
@@ -159,9 +158,9 @@ describe("negociação simples (spec 004)", () => {
 
     it("usa o aceite atômico quando o adaptador o oferece", async () => {
       const req = await useCases.requestNegotiation("listing-1", "alice");
-      const accept = vi.fn().mockResolvedValue({ ...req, status: "accepted" });
+      const accept = jest.fn().mockResolvedValue({ ...req, status: "accepted" });
       Object.assign(requests, { acceptAtomically: accept });
-      const respond = vi.spyOn(requests, "respond");
+      const respond = jest.spyOn(requests, "respond");
       await expect(useCases.respondToRequest(req.id, "accept", "owner")).resolves.toMatchObject({ status: "accepted" });
       expect(accept).toHaveBeenCalledWith(req.id);
       expect(respond).not.toHaveBeenCalled();
@@ -218,6 +217,13 @@ describe("negociação simples (spec 004)", () => {
       expect(created.initialMessage).toBe(
         "Olá! Gostaria muito de ler esse livro, estudo perto da Praça da Bandeira.",
       );
+    });
+
+    it("sanitiza tags HTML, scripts e caracteres de controle em initialMessage (Spec 143 / M4)", async () => {
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "  <b>Olá!</b><script>alert(1)</script>\x07 Posso retirar hoje?  ",
+      });
+      expect(created.initialMessage).toBe("Olá! Posso retirar hoje?");
     });
 
     it("rejeita mensagem inicial com mais de 500 caracteres", async () => {
@@ -277,6 +283,33 @@ describe("negociação simples (spec 004)", () => {
       await expect(
         useCases.requestNegotiation("listing-1", "alice", { offeredBookId: unavailableBook.id }),
       ).rejects.toThrow(/não está disponível/);
+    });
+
+    it("deduplica consultas de anúncios e perfis em listReceivedRequests e listSentRequests", async () => {
+      const ownerBook2 = await books.create({
+        title: "Grande Sertão: Veredas",
+        author: "Guimarães Rosa",
+        ownerId: "owner",
+        modality: "donation",
+        status: "available",
+      });
+      const profiles = new MemoryProfileDataSource();
+      await profiles.ensure("alice", "Alice");
+      const withProfiles = new BookRequestUseCases(books, requests, profiles);
+
+      await withProfiles.requestNegotiation("listing-1", "alice");
+      await withProfiles.requestNegotiation(ownerBook2.id, "alice");
+
+      const findProfileSpy = jest.spyOn(profiles, "findById");
+      const received = await withProfiles.listReceivedRequests("owner");
+      expect(received).toHaveLength(2);
+      expect(received.map((r) => r.listing.id)).toEqual(["listing-1", ownerBook2.id]);
+      expect(findProfileSpy).toHaveBeenCalledTimes(1);
+
+      const findBookSpy = jest.spyOn(books, "findById");
+      const sent = await withProfiles.listSentRequests("alice");
+      expect(sent).toHaveLength(2);
+      expect(findBookSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

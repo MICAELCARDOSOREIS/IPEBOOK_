@@ -1,16 +1,17 @@
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Book } from "@/model/entities/book";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { formatPrice } from "@/view/formatPrice";
+import { memo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
 import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag, type TagProps } from "@/view/components/Tag";
-
+import { formatPrice } from "@/view/formatPrice";
 import { withPress } from "@/view/pressFeedback";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 export type ShelfRowProps = {
   book: Book;
   summary: string;
@@ -24,81 +25,129 @@ export type ShelfRowProps = {
   wide?: { statusVariant: TagProps["variant"]; statusLabel: string; offer: string; actionLabel?: string };
 };
 
+const shelfRowStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getShelfRowStyles(colors: ColorPalette) {
+  let cached = shelfRowStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    shelfRowStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 /** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
-export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
+function ShelfRowComponent({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = getShelfRowStyles(colors);
+  const [isHovered, setIsHovered] = useState(false);
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
 
   if (wide) {
     const actionText = wide.actionLabel ?? "Editar";
+    const redundantOffers = new Set([
+      book.modality.toLowerCase(),
+      "venda",
+      "troca",
+      "doação",
+      "doacao",
+    ]);
+    const showOfferText =
+      Boolean(wide.offer) && !redundantOffers.has(wide.offer.trim().toLowerCase());
+    const fallbackOfferText =
+      book.modality === "donation" ? "Gratuito" : book.modality === "trade" ? "Para troca" : "";
+    const metaDetails = [
+      book.category,
+      book.condition ? BOOK_CONDITION_LABELS[book.condition] : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
     return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        onPress={onPress}
-        style={withPress([styles.row, styles.tableRow])}
-      >
-        <View style={styles.cellBook}>
-          <ModalityCoverArea modality={book.modality}>
-            <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
-          </ModalityCoverArea>
-          <View style={styles.rowText}>
-            <View style={styles.titleRow}>
-              <Text style={styles.tableTitle} numberOfLines={1}>
-                {book.title}
-              </Text>
-              {book.isBox ? (
-                <Tag
-                  variant="box"
-                  label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
-                />
+      <View style={[styles.tableRow, isHovered && styles.tableRowHovered]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          onPress={onPress}
+          onHoverIn={() => setIsHovered(true)}
+          onHoverOut={() => setIsHovered(false)}
+          style={withPress(styles.tableMain)}
+        >
+          <View style={styles.cellBook}>
+            <ModalityCoverArea modality={book.modality}>
+              <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
+            </ModalityCoverArea>
+            <View style={styles.rowText}>
+              <View style={styles.titleRow}>
+                <Text style={styles.tableTitle} numberOfLines={1}>
+                  {book.title}
+                </Text>
+                {book.isBox ? (
+                  <Tag
+                    variant="box"
+                    label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
+                  />
+                ) : null}
+              </View>
+              {book.author ? (
+                <Text style={styles.tableAuthor} numberOfLines={1}>
+                  {book.author}
+                </Text>
+              ) : null}
+              {metaDetails ? (
+                <Text style={styles.tableMeta} numberOfLines={1}>
+                  {metaDetails}
+                </Text>
               ) : null}
             </View>
-            {book.author ? (
-              <Text style={styles.tableAuthor} numberOfLines={1}>
-                {book.author}
+          </View>
+          <View style={styles.cellModality}>
+            <Tag variant={book.modality} />
+            {showOfferText ? (
+              <Text style={styles.cellPrice} numberOfLines={1}>
+                {wide.offer}
+              </Text>
+            ) : fallbackOfferText ? (
+              <Text style={styles.cellOfferSubtle} numberOfLines={1}>
+                {fallbackOfferText}
               </Text>
             ) : null}
           </View>
-        </View>
-        <View style={styles.cellModality}>
-          <Tag variant={book.modality} />
-          {wide.offer && wide.offer !== book.modality ? (
-            <Text style={styles.cellPrice} numberOfLines={1}>
-              {wide.offer}
+          <View style={styles.cellNeighborhood}>
+            <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.cellNeighborhoodText} numberOfLines={1}>
+              {formatBookLocation(book.neighborhood)}
             </Text>
-          ) : null}
-        </View>
-        <View style={styles.cellNeighborhood}>
-          <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
-          <Text style={styles.cellNeighborhoodText} numberOfLines={1}>
-            {formatBookLocation(book.neighborhood)}
-          </Text>
-        </View>
-        <View style={styles.cellStatus}>
-          <Tag variant={wide.statusVariant} label={wide.statusLabel} />
-        </View>
+          </View>
+          <View style={styles.cellStatus}>
+            <Tag variant={wide.statusVariant} label={wide.statusLabel} />
+          </View>
+        </Pressable>
         <View style={styles.cellActionBox}>
           {onShareWhatsApp && book.status === "available" ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
               hitSlop={8}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                onShareWhatsApp();
-              }}
+              onPress={onShareWhatsApp}
               style={withPress(styles.whatsappButton)}
             >
               <AppIcon name="share" size={18} color={colors.nature.foliage} />
+              <Text style={styles.srOnlySummary}>Compartilhar</Text>
             </Pressable>
           ) : null}
-          <View style={styles.actionButton}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${actionText} ${book.title}`}
+            onPress={onPress}
+            style={withPress(styles.actionButton)}
+          >
             <Text style={styles.cellAction}>{actionText}</Text>
-            <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
-          </View>
+            <AppIcon name="chevronRight" size={16} color={colors.m3.onSecondaryContainer} />
+          </Pressable>
         </View>
-      </Pressable>
+      </View>
     );
   }
 
@@ -118,8 +167,10 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
           ? { background: colors.m3.secondaryContainer, text: colors.m3.onSecondaryContainer, label: "Concluído" }
           : { background: colors.badge.available.background, text: colors.badge.available.text, label: "Disponível" };
 
-  const hasNegotiationAction = book.status === "reserved" && Boolean(onNavigateToNegotiation);
-  const handleCardPress = hasNegotiationAction ? onNavigateToNegotiation! : onPress;
+  const handleCardPress =
+    book.status === "reserved" && onNavigateToNegotiation ? onNavigateToNegotiation : onPress;
+
+  const showMobileShare = Boolean(onShareWhatsApp && book.status === "available");
 
   return (
     <View style={styles.mobileCardContainer}>
@@ -143,9 +194,12 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
                 />
               ) : null}
             </View>
-            <Text style={styles.priceText} numberOfLines={1}>
-              {offerText}
-            </Text>
+            <View style={styles.priceChevronGroup}>
+              <Text style={styles.priceText} numberOfLines={1}>
+                {offerText}
+              </Text>
+              <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
+            </View>
           </View>
           <View style={styles.titleBlock}>
             <Text style={styles.rowTitle} numberOfLines={2}>
@@ -157,7 +211,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               </Text>
             ) : null}
           </View>
-          <View style={styles.footerRow}>
+          <View style={[styles.footerRow, showMobileShare && styles.footerRowWithShare]}>
             <View style={styles.locationRow}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
               <Text style={styles.locationText} numberOfLines={1}>
@@ -174,35 +228,69 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             {summary}
           </Text>
         </View>
-        <View style={styles.trailingActions}>
-          {onShareWhatsApp && book.status === "available" ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
-              hitSlop={8}
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                onShareWhatsApp();
-              }}
-              style={withPress(styles.whatsappButton)}
-            >
-              <AppIcon name="share" size={18} color={colors.nature.foliage} />
-            </Pressable>
-          ) : null}
-          <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
-        </View>
       </Pressable>
+      {showMobileShare ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
+          hitSlop={8}
+          onPress={onShareWhatsApp}
+          style={withPress([
+            styles.whatsappButton,
+            styles.whatsappButtonMobile,
+            isIos && (iosGlass
+              ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+              : { backgroundColor: colors.m3.surfaceContainer }),
+          ])}
+        >
+          {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
+          <AppIcon name="share" size={16} color={colors.nature.foliage} />
+        </Pressable>
+      ) : null}
+      {book.status === "reserved" && onNavigateToNegotiation ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir conversa sobre ${book.title}`}
+          onPress={onNavigateToNegotiation}
+          style={({ pressed }) => [styles.openChatButton, pressed && styles.rowPressed]}
+        >
+          <AppIcon name="chat" size={16} color={colors.nature.foliageDeep} />
+          <Text style={styles.openChatText}>Abrir conversa e combinar encontro</Text>
+          <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
 
+export const ShelfRow = memo(ShelfRowComponent);
+ShelfRow.displayName = "ShelfRow";
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    openChatButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.nature.sprout,
+    },
+    openChatText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.nature.foliageDeep,
+    },
     mobileCardContainer: {
+      position: "relative",
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       elevation: 2,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },
@@ -213,7 +301,7 @@ function createStyles(colors: ColorPalette) {
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[14],
+      gap: tokens.spacing[12],
       minHeight: tokens.accessibility.touchTarget,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
@@ -234,6 +322,11 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       flexWrap: "wrap",
       gap: tokens.spacing[6],
+    },
+    priceChevronGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
     },
     priceText: {
       ...tokens.typography.labelLarge,
@@ -262,9 +355,13 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       flexWrap: "nowrap",
       gap: tokens.spacing[6],
+      minHeight: 28,
       paddingTop: tokens.spacing[6],
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.m3.outlineVariant,
+    },
+    footerRowWithShare: {
+      paddingRight: 40,
     },
     locationRow: {
       flexDirection: "row",
@@ -307,18 +404,41 @@ function createStyles(colors: ColorPalette) {
     },
     titleRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     tableRow: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[14],
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
+    },
+    tableRowHovered: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    tableMain: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     cellBook: { flex: 3, minWidth: 220, flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
-    cellModality: { flex: 1.5, minWidth: 120, alignItems: "flex-start", gap: tokens.spacing[4] },
-    cellPrice: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
+    cellModality: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8] },
+    cellPrice: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
+      color: colors.nature.foliageDeep,
+    },
+    cellOfferSubtle: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
     cellNeighborhood: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     cellNeighborhoodText: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
     cellStatus: { flex: 1.2, minWidth: 100, alignItems: "flex-start" },
-    cellActionBox: { minWidth: 140, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: tokens.spacing[8] },
+    cellActionBox: { width: 148, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: tokens.spacing[8] },
     trailingActions: {
       flexDirection: "row",
       alignItems: "center",
@@ -329,21 +449,33 @@ function createStyles(colors: ColorPalette) {
       height: 36,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       alignItems: "center",
       justifyContent: "center",
+    },
+    whatsappButtonMobile: {
+      position: "absolute",
+      bottom: tokens.spacing[8],
+      right: tokens.spacing[12],
+      width: 30,
+      height: 30,
     },
     actionButton: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingVertical: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
+      height: 36,
+      paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     cellAction: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     tableTitle: { ...tokens.typography.brandCardTitle, color: colors.m3.onSurface },
     tableAuthor: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
+    tableMeta: { ...tokens.typography.captionSmall, color: colors.m3.onSurfaceVariant },
     rowSummary: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,

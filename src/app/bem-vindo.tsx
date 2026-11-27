@@ -7,6 +7,7 @@ export default function BemVindo() {
     <WelcomeRoute
       onFinish={(destination) => pushOnce(destination)}
       onHelp={() => pushOnce("/ajuda")}
+      onExplore={() => pushOnce("/pesquisa")}
       onJoinBeta={() => pushOnce("/beta" as Href)}
       onTerms={() => pushOnce("/termos")}
     />

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { makeAuthViewModel, makeNotificationsPromptViewModel, makePushRegistration } from "@/di/container";
 import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
 
@@ -15,6 +16,11 @@ export type PushRegistrationProps = {
  * nativo nunca aparece do nada; fora disso o componente não desenha nada.
  */
 export function PushRegistration({ pathname, onOpenRoute }: PushRegistrationProps) {
+  if (Platform.OS === "web") return null;
+  return <NativePushRegistration pathname={pathname} onOpenRoute={onOpenRoute} />;
+}
+
+function NativePushRegistration({ pathname, onOpenRoute }: PushRegistrationProps) {
   const [authState, authActions] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [prompt, promptActions] = makeNotificationsPromptViewModel();

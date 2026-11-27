@@ -8,10 +8,12 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { describeMeetingCountdown, formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
+import { buildDirectionsUrl } from "@/view/directionsUrl";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 
@@ -49,17 +51,17 @@ export function MeetingCard({
   useEffect(() => {
     if (!state.loading) onMeetingChange?.(state.meeting ?? null);
   }, [state.loading, state.meeting, onMeetingChange]);
-  const { reload } = actions;
+  const { reload, refresh } = actions;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
+  // A primeira carga já vem do ViewModel; recarrega silenciosamente quando a tela volta ao foco depois.
   const lastFocusKey = useRef(focusKey);
   useEffect(() => {
     if (focusKey === lastFocusKey.current) return;
     lastFocusKey.current = focusKey;
-    void reload();
-  }, [focusKey, reload]);
+    void (refresh ?? reload)();
+  }, [focusKey, refresh, reload]);
 
   if (state.loading) {
     return (
@@ -133,12 +135,13 @@ export function MeetingCard({
   const confirmed = meeting.status === "confirmed";
   const pastMeetings = (state.history ?? []).filter((m) => m.id !== meeting.id);
   const countdown = describeMeetingCountdown(meeting.scheduledAt);
+  const expired = !confirmed && countdown.past;
 
   async function openDirections() {
     setMapError(null);
     const query = point ? point.address : `${meeting!.pointName}, Piripiri`;
     try {
-      await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+      await Linking.openURL(buildDirectionsUrl(query));
     } catch {
       setMapError("Não foi possível abrir o mapa. Tente novamente.");
     }
@@ -173,20 +176,22 @@ export function MeetingCard({
       <View style={styles.headerRow}>
         <IconBadge icon={confirmed ? "check" : "calendar"} tone="action" />
         <Text accessibilityRole="header" style={styles.title}>
-          {confirmed ? "Encontro combinado" : mine ? "Aguardando confirmação" : "Convite para encontro"}
+          {confirmed ? "Encontro combinado" : expired ? "Horário expirado" : mine ? "Aguardando confirmação" : "Convite para encontro"}
         </Text>
       </View>
       <Text style={styles.body}>
         {confirmed
-          ? "Os dois confirmaram. Vocês recebem um aviso se algo mudar."
-          : mine
-            ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
-            : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
+          ? "Confirmado por ambos · aviso automático se algo mudar."
+          : expired
+            ? "Sugira um horário novo para combinar o encontro."
+            : mine
+              ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
+              : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
       </Text>
 
       {/* Linhas de `06.05`: quando, onde e o que fazer. */}
       <View style={styles.detailRow}>
-        <AppIcon name="calendar" size={24} color={colors.m3.onSurface} />
+        <AppIcon name="calendar" size={22} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
           <Text style={[styles.body, !countdown.past && styles.countdown]}>
@@ -195,21 +200,16 @@ export function MeetingCard({
         </View>
       </View>
       <View style={styles.detailRow}>
-        <AppIcon name="place" size={24} color={colors.m3.onSurface} />
+        <AppIcon name="place" size={22} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{meeting.pointName}</Text>
           {point ? <Text style={styles.body}>{point.address}</Text> : null}
         </View>
       </View>
-      <TextButton
-        label="Como chegar"
-        accessibilityLabel={`Como chegar a ${meeting.pointName}`}
-        onPress={() => void openDirections()}
-      />
       {mapError ? <Text accessibilityRole="alert" style={styles.error}>{mapError}</Text> : null}
 
       {actionError}
-      {!confirmed && !mine ? (
+      {!confirmed && !mine && !expired ? (
         <FilledButton
           label="Confirmar encontro"
           loading={state.busy}
@@ -217,11 +217,22 @@ export function MeetingCard({
           onPress={() => void actions.confirm()}
         />
       ) : null}
-      <OutlinedButton
-        label={confirmed || mine ? "Reagendar" : "Sugerir outro horário"}
-        disabled={state.busy}
-        onPress={() => onScheduleMeeting?.()}
-      />
+      <View style={styles.actionsRow}>
+        <View style={styles.actionHalf}>
+          <OutlinedButton
+            label="Como chegar"
+            accessibilityLabel={`Como chegar a ${meeting.pointName}`}
+            onPress={() => void openDirections()}
+          />
+        </View>
+        <View style={styles.actionHalf}>
+          <OutlinedButton
+            label={expired ? "Sugerir novo horário" : confirmed || mine ? "Reagendar" : "Sugerir horário"}
+            disabled={state.busy}
+            onPress={() => onScheduleMeeting?.()}
+          />
+        </View>
+      </View>
       <TextButton label="Cancelar encontro" tone="danger" disabled={state.busy} onPress={() => setConfirmingCancel(true)} />
 
       {pastMeetings.length > 0 ? (
@@ -272,6 +283,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...iosNeutralCardStyle(colors),
       gap: tokens.spacing[12],
     },
     headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
@@ -286,8 +298,10 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
     },
-    detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[16] },
-    detailText: { flex: 1, gap: tokens.spacing[4] },
+    detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
+    detailText: { flex: 1, gap: tokens.spacing[2] },
+    actionsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    actionHalf: { flex: 1 },
     countdown: { color: colors.action, fontFamily: fontFamily.medium },
     detailTitle: {
       ...tokens.typography.bodyLarge,

@@ -18,14 +18,14 @@ Este projeto integra as atividades avaliativas do curso de Tecnologia em Anális
 ## 👥 Integrantes da Equipe
 
 ### 1. Micael Cardoso Reis
-* **GitHub:** [@Ghostyxseven](https://github.com/Ghostyxseven)
+* **GitHub:** [@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS) / [@Ghostyxseven](https://github.com/Ghostyxseven)
 * **E-mails no Git:** `cardosomicael245@gmail.com` / `104681133+Ghostyxseven@users.noreply.github.com`
 * **Principais Atribuições:** Arquitetura MVVM em 7 camadas, governança e pipeline de CI, Design System Material 3 Expressive, validações arquiteturais automatizadas e funcionalidades hiperlocais (bairros de Piripiri, QR Code e busca textual).
 
 ### 2. Maria Clara Almeida Martins
 * **GitHub:** [@clarinhamartins](https://github.com/clarinhamartins)
 * **E-mail no Git:** `mariaclaraalmeidamartins06@gmail.com`
-* **Principais Atribuições:** Identidade Visual e IHC (Design System Ipê), migração completa do Tema Escuro (tokens dinâmicos em 28 telas), Auditoria e Acessibilidade Digital (WCAG 2.1 AA, TalkBack e foco em erros), Trilha de Autenticação e Onboarding, Descoberta e Catálogo (Home, seções em destaque, histórico de busca e alertas), Perfil como Hub de Navegação, Galeria interativa de fotos com swipe, Pontos de Encontro com rotas no mapa, Compartilhamento via WhatsApp e Estados Globais de Interface (Offline, Skeleton e Erros).
+* **Principais Atribuições:** Identidade Visual e IHC (Design System Ipê), migração completa do Tema Escuro (tokens dinâmicos em 28 telas), Auditoria e Acessibilidade Digital (WCAG 2.1 AA, TalkBack e foco em erros), Trilha de Autenticação e Onboarding, Descoberta e Catálogo (Home, seções em destaque, histórico de busca e alertas), Perfil como Hub de Navegação, Galeria interativa de fotos com swipe, Pontos de Encontro com rotas no mapa, Compartilhamento via WhatsApp, Estados Globais de Interface (Offline, Skeleton e Erros) e iOS Nativo Apple HIG / Liquid Glass (ADRs 0115 e 0116, Spec 137).
 
 ### 3. Antonio Carlos Gomes
 * **GitHub:** [@gomes738](https://github.com/gomes738)

@@ -4,7 +4,7 @@
 //    eram publicadas. Elas passam para `assets/vendor/` e as referências são reescritas.
 // 2. Sem `404.html`, o Pages responde 200 com o HTML do app para arquivos inexistentes, e o
 //    cabeçalho `immutable` de `/_expo/static/*` faz a borda guardar esse HTML no lugar do JS.
-import { copyFileSync, existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,26 @@ function listar(dir) {
 if (!existsSync(dist)) {
   console.error("dist/ não encontrado; rode `expo export --platform web` antes.");
   process.exit(1);
+}
+
+const appleTeamId = process.env.APPLE_TEAM_ID?.trim();
+if (appleTeamId) {
+  if (!/^[A-Z0-9]{10}$/.test(appleTeamId)) {
+    console.error("APPLE_TEAM_ID deve conter os 10 caracteres da equipe Apple Developer.");
+    process.exit(1);
+  }
+  const { expo } = JSON.parse(readFileSync(join(dist, "..", "app.json"), "utf8"));
+  const association = {
+    applinks: {
+      details: [{
+        appIDs: [`${appleTeamId}.${expo.ios.bundleIdentifier}`],
+        components: [{ "/": "/redefinir-senha", "?": { origem: "ios" } }],
+      }],
+    },
+  };
+  const pasta = join(dist, ".well-known");
+  mkdirSync(pasta, { recursive: true });
+  writeFileSync(join(pasta, "apple-app-site-association"), `${JSON.stringify(association)}\n`);
 }
 
 const pastaOrigem = join(dist, origem);
@@ -51,7 +71,7 @@ for (const arquivo of listar(dist)) {
       '<meta property="og:site_name" content="IpêBook Piripiri"/>',
       '<meta property="og:type" content="website"/>',
       '<meta property="og:title" content="IpêBook · Circulação Comunitária de Livros em Piripiri"/>',
-      '<meta property="og:description" content="Compre, troque ou receba livros sob a florada do Ipê em Piripiri, PI. Negociação direta e pontos de encontro seguros!"/>',
+      '<meta property="og:description" content="Compre, troque ou receba livros sob a florada do Ipê em Piripiri, PI. Negociação direta e pontos de encontro recomendados!"/>',
       '<meta property="og:image" content="https://ipebook.app/icone-512.png"/>',
       '<meta property="og:image:width" content="512"/>',
       '<meta property="og:image:height" content="512"/>',

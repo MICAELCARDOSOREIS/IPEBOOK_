@@ -33,6 +33,8 @@ export function useBlockedUsersViewModel(
 
   const active = useRef(false);
   const requestCount = useRef(0);
+  const blockedUsersRef = useRef<readonly BlockedUser[]>(state.blockedUsers);
+  blockedUsersRef.current = state.blockedUsers;
 
   const reload = useCallback(async () => {
     if (!sessionUserId) {
@@ -78,7 +80,13 @@ export function useBlockedUsersViewModel(
   const unblockUser = useCallback(
     async (targetUserId: string): Promise<boolean> => {
       if (!sessionUserId) return false;
-      setState((prev) => ({ ...prev, unblockingId: targetUserId, actionMessage: null }));
+      const previousBlockedUsers = blockedUsersRef.current;
+      setState((prev) => ({
+        ...prev,
+        blockedUsers: prev.blockedUsers.filter((u) => u.userId !== targetUserId),
+        unblockingId: targetUserId,
+        actionMessage: null,
+      }));
       try {
         await useCases.unblockUser(sessionUserId, targetUserId);
         if (active.current) {
@@ -93,7 +101,12 @@ export function useBlockedUsersViewModel(
       } catch (err) {
         if (active.current) {
           const message = err instanceof DomainError ? err.message : "Não foi possível desbloquear.";
-          setState((prev) => ({ ...prev, unblockingId: null, actionMessage: message }));
+          setState((prev) => ({
+            ...prev,
+            blockedUsers: previousBlockedUsers,
+            unblockingId: null,
+            actionMessage: message,
+          }));
         }
         return false;
       }

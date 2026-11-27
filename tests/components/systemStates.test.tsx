@@ -1,5 +1,4 @@
 
-import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { LoadingState } from "@/view/components/LoadingState";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -56,7 +55,7 @@ describe("LoadingState (design-system/04-componentes/estados-do-sistema.md, Issu
 
 describe("ErrorState (design-system/04-componentes/estados-do-sistema.md, Issue #76)", () => {
   it("mostra a mensagem como alert e aciona onRetry ao tocar em Tentar novamente", async () => {
-    const onRetry = vi.fn();
+    const onRetry = jest.fn();
     const { getByRole, getByText } = await render(
       <ErrorState message="Não foi possível carregar os livros." onRetry={onRetry} />,
     );
@@ -75,7 +74,7 @@ describe("ErrorState (design-system/04-componentes/estados-do-sistema.md, Issue 
 
 describe("OfflineState (design-system/04-componentes/estados-do-sistema.md, Issue #76)", () => {
   it("mostra a mensagem padrão de sem conexão e aciona onRetry", async () => {
-    const onRetry = vi.fn();
+    const onRetry = jest.fn();
     const { getByRole } = await render(<OfflineState onRetry={onRetry} />);
     expect(getByRole("alert").props.children).toBe("Você está sem conexão com a internet.");
     fireEvent.press(getByRole("button", { name: "Tentar novamente" }));

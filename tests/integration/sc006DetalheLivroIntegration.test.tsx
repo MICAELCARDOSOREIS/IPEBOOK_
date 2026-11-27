@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { authUseCases, bookUseCases } from "@/di/container";
 import BookDetail from "@/view/listings/bookDetail";
 

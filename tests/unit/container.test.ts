@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { act, render } from "@testing-library/react-native";
 import {
   negotiationMessageUseCases,
   messageDataSource,
   onboardingUseCases,
-  themePreferenceUseCases,
   localCacheUseCases,
   networkStatusDataSource,
   searchAlertUseCases,
@@ -35,12 +35,16 @@ import {
   profilePhotoUseCases,
   listingPhotoUseCases,
   moderationUseCases,
+  makeBetaSignupViewModel,
+  makeChatWithUser,
+  makeConversationsViewModel,
+  makeProfileSafetyViewModel,
+  makeStartErrorReporting,
 } from "@/di/container";
 
 describe("Container DI (Injeção de Dependências)", () => {
   it("exporta todos os useCases e serviços essenciais instanciados para o ambiente", () => {
     expect(onboardingUseCases).toBeDefined();
-    expect(themePreferenceUseCases).toBeDefined();
     expect(localCacheUseCases).toBeDefined();
     expect(networkStatusDataSource).toBeDefined();
     expect(searchAlertUseCases).toBeDefined();
@@ -139,6 +143,59 @@ describe("Container DI (Injeção de Dependências)", () => {
           content: "Olá",
         }),
       ).rejects.toThrow("Pedido não encontrado.");
+    });
+  });
+
+  describe("fábricas de ViewModel e delegações padrão do container", () => {
+    async function mountHook<T>(useHook: () => T) {
+      let current!: T;
+      function Probe() {
+        current = useHook();
+        return null;
+      }
+      let view!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        view = await render(createElement(Probe));
+      });
+      return {
+        get current() {
+          return current;
+        },
+        unmount: async () => {
+          await act(async () => {
+            view.unmount();
+          });
+        },
+      };
+    }
+
+    it("instancia makeBetaSignupViewModel, makeChatWithUser, makeConversationsViewModel e makeProfileSafetyViewModel", async () => {
+      expect(() => makeStartErrorReporting({ init: jest.fn(), captureException: jest.fn(), setUser: jest.fn() } as never)).not.toThrow();
+
+      const betaHook = await mountHook(() => makeBetaSignupViewModel());
+      expect(betaHook.current[0]).toBeDefined();
+      await betaHook.unmount();
+
+      const chatWithHook = await mountHook(() => makeChatWithUser("user-1", "user-2", jest.fn()));
+      await act(async () => {
+        await chatWithHook.current.start();
+      });
+      await chatWithHook.unmount();
+
+      const convHook = await mountHook(() => makeConversationsViewModel("user-1"));
+      await act(async () => {
+        await convHook.current[1].reload();
+        await convHook.current[1].deleteConversation("req-inexistente");
+        await convHook.current[1].cancelRequest("req-inexistente");
+      });
+      await convHook.unmount();
+
+      const safetyHook = await mountHook(() => makeProfileSafetyViewModel("user-1", "user-2"));
+      await act(async () => {
+        await safetyHook.current[1].loadListings();
+        await safetyHook.current[1].block();
+      });
+      await safetyHook.unmount();
     });
   });
 });

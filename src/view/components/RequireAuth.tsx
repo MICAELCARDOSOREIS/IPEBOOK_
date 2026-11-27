@@ -1,5 +1,6 @@
 import { useEffect, useMemo, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useIsFocused } from "expo-router";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel, makeNetworkStatus } from "@/di/container";
 import { IpeMark } from "@/view/components/IpeMark";
 import { OfflineState } from "@/view/components/OfflineState";
@@ -7,6 +8,9 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
+import { getInternalAuthReturnTo } from "@/view/auth/authReturnTo";
+import { replaceOnce } from "@/view/pushOnce";
+import { useHydrated } from "@/view/useHydrated";
 
 export type RequireAuthProps = {
   /** Chamada quando a pessoa não tem sessão ativa (ex.: replaceOnce("/entrar")). */
@@ -21,6 +25,8 @@ export type RequireAuthProps = {
  */
 export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
   const [authState, authActions] = makeAuthViewModel();
+  const hydrated = useHydrated();
+  const focused = useIsFocused();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -34,12 +40,21 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
 
   useEffect(() => {
     if (!authState.loading && !authState.user && isOnline) {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        if (!focused) return;
+        const { pathname, search, hash } = window.location;
+        const returnTo = getInternalAuthReturnTo(pathname + search + hash);
+        if (pathname !== "/" && returnTo) {
+          replaceOnce({ pathname: "/entrar", params: { returnTo } });
+          return;
+        }
+      }
       onRequireSignIn();
     }
-  }, [authState.loading, authState.user, isOnline, onRequireSignIn]);
+  }, [authState.loading, authState.user, focused, isOnline, onRequireSignIn]);
 
   // Se estiver sem conexão e sem usuário em cache, apresenta estado offline acolhedor
-  if (!isOnline && !authState.user && !authState.loading) {
+  if (hydrated && !isOnline && !authState.user && !authState.loading) {
     return (
       <ScreenContainer edges={["top", "bottom", "left", "right"]} maxWidth={480}>
         <View style={styles.centerContainer}>
@@ -63,8 +78,9 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
     );
   }
 
-  // Enquanto verifica a sessão: tela de abertura do Ipê acolhedora e elegante
-  if (authState.loading) {
+  // Enquanto verifica a sessão: tela de abertura do Ipê acolhedora e elegante.
+  // `!hydrated` mantém a primeira renderização do cliente igual ao HTML estático (Spec 136).
+  if (!hydrated || authState.loading) {
     return (
       <ScreenContainer edges={["top", "bottom", "left", "right"]} maxWidth={480}>
         <View style={styles.loadingContainer}>
@@ -149,6 +165,8 @@ function createStyles(colors: ColorPalette) {
     },
     secondaryButton: {
       marginTop: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingHorizontal: tokens.spacing[20],
       paddingVertical: tokens.spacing[10],
       borderRadius: tokens.radius.full,

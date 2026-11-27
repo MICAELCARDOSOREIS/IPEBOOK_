@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import { useNavigationBadgesViewModel, type NavigationBadgesDeps } from "@/viewmodel/useNavigationBadgesViewModel";
@@ -30,13 +29,13 @@ async function renderHook(sessionUserId: string | null, deps: NavigationBadgesDe
 describe("useNavigationBadgesViewModel (Spec 091)", () => {
   it("conta só propostas recebidas pendentes", async () => {
     const hook = await renderHook("me", {
-      listReceivedRequests: vi.fn().mockResolvedValue([entry("1", "pending"), entry("2", "accepted"), entry("3", "pending"), entry("4", "rejected")]),
+      listReceivedRequests: jest.fn().mockResolvedValue([entry("1", "pending"), entry("2", "accepted"), entry("3", "pending"), entry("4", "rejected")]),
     });
     expect(hook.current.conversations).toBe(2);
   });
 
   it("não mostra selo sem sessão e mantém zero se a consulta falhar", async () => {
-    const list = vi.fn().mockRejectedValue(new Error("rede"));
+    const list = jest.fn().mockRejectedValue(new Error("rede"));
     expect((await renderHook(null, { listReceivedRequests: list })).current.conversations).toBe(0);
     expect(list).not.toHaveBeenCalled();
     expect((await renderHook("me", { listReceivedRequests: list })).current.conversations).toBe(0);
@@ -44,8 +43,8 @@ describe("useNavigationBadgesViewModel (Spec 091)", () => {
 
   it("recarrega quando chega aviso em tempo real e cancela ao desmontar", async () => {
     let push: (() => void) | undefined;
-    const off = vi.fn();
-    const list = vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([entry("1", "pending")]);
+    const off = jest.fn();
+    const list = jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([entry("1", "pending")]);
     const hook = await renderHook("me", {
       listReceivedRequests: list,
       subscribe: (_id, onChange) => { push = onChange; return off; },
@@ -58,7 +57,7 @@ describe("useNavigationBadgesViewModel (Spec 091)", () => {
   });
 
   it("funciona quando deps.subscribe não é fornecido", async () => {
-    const list = vi.fn().mockResolvedValue([entry("1", "pending")]);
+    const list = jest.fn().mockResolvedValue([entry("1", "pending")]);
     const hook = await renderHook("me", {
       listReceivedRequests: list,
     });
@@ -67,7 +66,7 @@ describe("useNavigationBadgesViewModel (Spec 091)", () => {
   });
 
   it("retorna zero quando sessionUserId é nulo mesmo com deps injetadas", async () => {
-    const list = vi.fn().mockResolvedValue([entry("1", "pending")]);
+    const list = jest.fn().mockResolvedValue([entry("1", "pending")]);
     let result!: ReturnType<typeof useNavigationBadgesViewModel>;
     function NullSessionProbe() {
       result = useNavigationBadgesViewModel(null, "/", { listReceivedRequests: list });

@@ -5,6 +5,7 @@ import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
 import { PIRIPIRI_MEETING_POINTS, type MeetingPoint } from "@/model/entities/meetingPoint";
 import { AuthError, ValidationError } from "@/model/errors";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import type {
   IBookRequestUseCases,
   NegotiationDetail,
@@ -54,7 +55,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
 
     let trimmedMessage: string | undefined;
     if (options?.initialMessage !== undefined && options?.initialMessage !== null) {
-      const msg = options.initialMessage.trim();
+      const msg = sanitizeTextInput(options.initialMessage, { allowNewlines: true });
       if (msg.length > 500) {
         throw new ValidationError("A mensagem inicial não pode ultrapassar 500 caracteres.");
       }
@@ -90,16 +91,41 @@ export class BookRequestUseCases implements IBookRequestUseCases {
   async listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]> {
     const userId = requireSession(sessionUserId);
     const myListings = await this.books.listByOwner(userId);
-    const result: RequestWithListing[] = [];
-    const people = new Map<string, Counterpart>();
-    for (const listing of myListings) {
-      const requests = await this.requests.listByListing(listing.id);
+    if (myListings.length === 0) return [];
+
+    // Busca os pedidos de todos os anúncios em paralelo (evita cascata N+1 em Conversas/Estante).
+    const requestsPerListing = await Promise.all(
+      myListings.map((listing) => this.requests.listByListing(listing.id)),
+    );
+
+    const requesterIds = new Set<string>();
+    const offeredBookIds = new Set<string>();
+    for (const requests of requestsPerListing) {
       for (const request of requests) {
-        if (!people.has(request.requesterId)) {
-          people.set(request.requesterId, await this.findCounterpart(request.requesterId));
-        }
+        requesterIds.add(request.requesterId);
+        if (request.offeredBookId) offeredBookIds.add(request.offeredBookId);
+      }
+    }
+
+    const [counterpartEntries, offeredBookEntries] = await Promise.all([
+      Promise.all(
+        [...requesterIds].map(async (id) => [id, await this.findCounterpart(id)] as const),
+      ),
+      Promise.all(
+        [...offeredBookIds].map(async (id) => [id, await this.books.findById(id)] as const),
+      ),
+    ]);
+    const people = new Map<string, Counterpart>(counterpartEntries);
+    const offeredBooks = new Map<string, Book | null>(offeredBookEntries);
+
+    const result: RequestWithListing[] = [];
+    for (let i = 0; i < myListings.length; i += 1) {
+      const listing = myListings[i];
+      for (const request of requestsPerListing[i]) {
         const person = people.get(request.requesterId);
-        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
+        const offeredBook = request.offeredBookId
+          ? (offeredBooks.get(request.offeredBookId) ?? null)
+          : null;
         result.push({
           request,
           listing,
@@ -115,11 +141,26 @@ export class BookRequestUseCases implements IBookRequestUseCases {
   async listSentRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]> {
     const userId = requireSession(sessionUserId);
     const requests = await this.requests.listByRequester(userId);
+    if (requests.length === 0) return [];
+
+    // Deduplica e busca todos os anúncios e livros oferecidos em paralelo.
+    const bookIds = new Set<string>();
+    for (const request of requests) {
+      bookIds.add(request.listingId);
+      if (request.offeredBookId) bookIds.add(request.offeredBookId);
+    }
+    const bookEntries = await Promise.all(
+      [...bookIds].map(async (id) => [id, await this.books.findById(id)] as const),
+    );
+    const booksById = new Map<string, Book | null>(bookEntries);
+
     const result: RequestWithListing[] = [];
     for (const request of requests) {
-      const listing = await this.books.findById(request.listingId);
+      const listing = booksById.get(request.listingId) ?? null;
       if (listing) {
-        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
+        const offeredBook = request.offeredBookId
+          ? (booksById.get(request.offeredBookId) ?? null)
+          : null;
         result.push({ request, listing, offeredBook });
       }
     }

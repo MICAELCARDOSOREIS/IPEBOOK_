@@ -1,6 +1,7 @@
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react-native";
+// @ts-expect-error Exportado pelo mock de react-native
+import { Platform, StyleSheet, __emitKeyboardEvent } from "react-native";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 
 describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
@@ -13,8 +14,8 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
       <NeighborhoodSelectorModal
         visible={false}
         currentNeighborhood="all"
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
+        onSelect={jest.fn()}
+        onClose={jest.fn()}
       />,
     );
     expect(queryByText("Locais em Piripiri")).toBeNull();
@@ -25,8 +26,8 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
       <NeighborhoodSelectorModal
         visible={true}
         currentNeighborhood="all"
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
+        onSelect={jest.fn()}
+        onClose={jest.fn()}
       />,
     );
 
@@ -43,12 +44,12 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
       <NeighborhoodSelectorModal
         visible={true}
         currentNeighborhood="all"
-        onSelect={vi.fn()}
-        onClose={vi.fn()}
+        onSelect={jest.fn()}
+        onClose={jest.fn()}
       />,
     );
 
-    const input = getByPlaceholderText("Buscar ponto de encontro em Piripiri...");
+    const input = getByPlaceholderText("Buscar ponto de encontro");
     await React.act(async () => {
       fireEvent.changeText(input, "bandeira");
     });
@@ -58,8 +59,8 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
   });
 
   it("chama onSelect ao tocar em um ponto de encontro", async () => {
-    const onSelect = vi.fn();
-    const onClose = vi.fn();
+    const onSelect = jest.fn();
+    const onClose = jest.fn();
     const { getByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
@@ -76,12 +77,12 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
   });
 
   it("chama onClose ao tocar no botão fechar", async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     const { getByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
         currentNeighborhood="all"
-        onSelect={vi.fn()}
+        onSelect={jest.fn()}
         onClose={onClose}
       />,
     );
@@ -90,5 +91,37 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
     fireEvent.press(closeBtn);
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("desvia a lista de locais acima do teclado no Android quando keyboardDidShow dispara", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "android";
+    try {
+      const { getByTestId } = await render(
+        <NeighborhoodSelectorModal
+          visible={true}
+          currentNeighborhood="all"
+          onSelect={jest.fn()}
+          onClose={jest.fn()}
+        />,
+      );
+
+      const readPaddingBottom = () => {
+        const estilo = StyleSheet.flatten(getByTestId("neighborhood-selector-scrim").props.style);
+        return estilo.paddingBottom?.__getValue?.() ?? 0;
+      };
+
+      expect(readPaddingBottom()).toBe(0);
+      await React.act(async () => {
+        __emitKeyboardEvent("keyboardDidShow", 300);
+      });
+      expect(readPaddingBottom()).toBe(300);
+      await React.act(async () => {
+        __emitKeyboardEvent("keyboardDidHide", undefined);
+      });
+      expect(readPaddingBottom()).toBe(0);
+    } finally {
+      Platform.OS = originalPlatform;
+    }
   });
 });

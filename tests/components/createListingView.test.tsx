@@ -1,46 +1,46 @@
 import type React from "react";
-import { act, fireEvent, render } from "@testing-library/react-native";
-import { within } from "@testing-library/react-native";
-import { AccessibilityInfo } from "react-native";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { AccessibilityInfo, Platform } from "react-native";
+import * as container from "@/di/container";
+import * as useIsWideWebModule from "@/view/useIsWideWeb";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
 import CreateListing from "@/view/listings/createListing";
 
-vi.mock("@/viewmodel/useCreateListingViewModel", () => ({
-  useCreateListingViewModel: vi.fn(),
+jest.mock("@/viewmodel/useCreateListingViewModel", () => ({
+  useCreateListingViewModel: jest.fn(),
 }));
 
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
-const mockedUseCreateListingViewModel = vi.mocked(useCreateListingViewModel);
+const mockedUseCreateListingViewModel = jest.mocked(useCreateListingViewModel);
 
 function mockViewModel(state: CreateListingState, actions: Partial<CreateListingActions> = {}) {
   const fullActions: CreateListingActions = {
-    setIsbn: vi.fn(),
-    lookupIsbn: vi.fn().mockResolvedValue(false),
-    handleBarcodeScanned: vi.fn().mockResolvedValue(false),
-    clearIsbnFeedback: vi.fn(),
-    setTitle: vi.fn(),
-    setAuthor: vi.fn(),
-    setCategory: vi.fn(),
-    setModality: vi.fn(),
-    setPrice: vi.fn(),
-    setNeighborhood: vi.fn(),
-    setCondition: vi.fn(),
-    setDescription: vi.fn(),
-    setPhotoUrl: vi.fn(),
-    addPhoto: vi.fn(),
-    setPhotoAt: vi.fn(),
-    removePhoto: vi.fn(),
-    setIsBox: vi.fn(),
-    setBoxVolumesCount: vi.fn(),
-    saveDraft: vi.fn().mockResolvedValue(undefined),
-    loadDraft: vi.fn().mockResolvedValue(false),
-    clearDraft: vi.fn().mockResolvedValue(undefined),
-    saveForLater: vi.fn().mockResolvedValue(true),
-    resumeDraft: vi.fn(),
-    loadServerDraft: vi.fn().mockResolvedValue(null),
-    submit: vi.fn().mockResolvedValue(null),
-    reset: vi.fn(),
+    setIsbn: jest.fn(),
+    lookupIsbn: jest.fn().mockResolvedValue(false),
+    handleBarcodeScanned: jest.fn().mockResolvedValue(false),
+    clearIsbnFeedback: jest.fn(),
+    setTitle: jest.fn(),
+    setAuthor: jest.fn(),
+    setCategory: jest.fn(),
+    setModality: jest.fn(),
+    setPrice: jest.fn(),
+    setNeighborhood: jest.fn(),
+    setCondition: jest.fn(),
+    setDescription: jest.fn(),
+    setPhotoUrl: jest.fn(),
+    addPhoto: jest.fn(),
+    setPhotoAt: jest.fn(),
+    removePhoto: jest.fn(),
+    setIsBox: jest.fn(),
+    setBoxVolumesCount: jest.fn(),
+    saveDraft: jest.fn().mockResolvedValue(undefined),
+    loadDraft: jest.fn().mockResolvedValue(false),
+    clearDraft: jest.fn().mockResolvedValue(undefined),
+    saveForLater: jest.fn().mockResolvedValue(true),
+    resumeDraft: jest.fn(),
+    loadServerDraft: jest.fn().mockResolvedValue(null),
+    submit: jest.fn().mockResolvedValue(null),
+    reset: jest.fn(),
     ...actions,
   };
   mockedUseCreateListingViewModel.mockReturnValue([state, fullActions]);
@@ -98,6 +98,49 @@ async function goToStep(screen: Awaited<ReturnType<typeof render>>, step: 2 | 3)
 }
 
 describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
+  it("oculta o campo manual de ISBN no iOS", async () => {
+    const originalOs = Platform.OS;
+    mockViewModel({ ...filledState, isbn: "9788535914849" });
+    try {
+      Platform.OS = "ios";
+      const iosScreen = await renderScreen();
+      expect(iosScreen.queryByLabelText("ISBN (opcional)")).toBeNull();
+      expect(iosScreen.queryByRole("button", { name: "Buscar pelo ISBN" })).toBeNull();
+    } finally {
+      Platform.OS = originalOs;
+    }
+  });
+
+  it("oculta o campo manual de ISBN no Android", async () => {
+    const originalOs = Platform.OS;
+    mockViewModel({ ...filledState, isbn: "9788535914849" });
+    try {
+      Platform.OS = "android";
+      const androidScreen = await renderScreen();
+      expect(androidScreen.queryByLabelText("ISBN (opcional)")).toBeNull();
+      expect(androidScreen.queryByRole("button", { name: "Buscar pelo ISBN" })).toBeNull();
+    } finally {
+      Platform.OS = originalOs;
+    }
+  });
+
+  it("exibe o campo manual de ISBN apenas na Web e permite buscar", async () => {
+    const originalOs = Platform.OS;
+    const actions = mockViewModel({ ...filledState, isbn: "9788535914849" });
+    try {
+      Platform.OS = "web";
+      const webScreen = await renderScreen();
+      const isbn = webScreen.getByLabelText("ISBN (opcional)");
+      expect(isbn.props.keyboardType).toBe("number-pad");
+      await act(async () => {
+        fireEvent.press(webScreen.getByRole("button", { name: "Buscar pelo ISBN" }));
+      });
+      expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
+    } finally {
+      Platform.OS = originalOs;
+    }
+  });
+
   it("renderiza cabeçalho, indicador de etapa e campos do livro", async () => {
     mockViewModel(defaultState);
     const screen = await renderScreen();
@@ -159,7 +202,7 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
   });
 
   it("chama onCancel ao voltar da primeira etapa", async () => {
-    const onCancel = vi.fn();
+    const onCancel = jest.fn();
     mockViewModel(defaultState);
     const screen = await renderScreen({ onCancel });
 
@@ -299,7 +342,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("anuncia o erro para leitores de tela quando a publicação falha (Spec 042 / Issue #147)", async () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
@@ -314,11 +357,11 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
 
 describe("anúncio publicado (Figma 04.07)", () => {
   it("mostra o livro, os próximos passos e as ações de saída", async () => {
-    const onCreated = vi.fn();
-    const onViewMyListings = vi.fn();
-    const onGoHome = vi.fn();
+    const onCreated = jest.fn();
+    const onViewMyListings = jest.fn();
+    const onGoHome = jest.fn();
     const actions = mockViewModel(filledState, {
-      submit: vi.fn().mockResolvedValue({
+      submit: jest.fn().mockResolvedValue({
         id: "new-1",
         title: "Dom Casmurro",
         author: "Machado de Assis",
@@ -357,7 +400,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
   });
 
   it("não mostra a tela de sucesso quando a publicação falha", async () => {
-    mockViewModel(filledState, { submit: vi.fn().mockResolvedValue(null) });
+    mockViewModel(filledState, { submit: jest.fn().mockResolvedValue(null) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -437,5 +480,235 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
     });
 
     expect(actions.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona foco, submitEditing, scanner ISBN e remoção de foto na etapa 1", async () => {
+    const actions = mockViewModel({
+      ...filledState,
+      photoUrl: "https://cdn.ipebook.app/capa.jpg",
+    });
+    const screen = await renderScreen();
+
+    const titleField = screen.getByLabelText("Título");
+    const authorField = screen.getByLabelText("Autor");
+    const priceField = screen.getByLabelText("Preço (R$)");
+
+    await act(async () => {
+      fireEvent(titleField, "focus");
+      fireEvent(titleField, "submitEditing");
+      fireEvent(authorField, "focus");
+      fireEvent(authorField, "submitEditing");
+      fireEvent(priceField, "focus");
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Abrir leitor de código de barras pela câmera" }));
+    });
+    expect(screen.getByRole("button", { name: "Fechar leitor de código de barras" })).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Fechar leitor de código de barras" }));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Remover foto da capa" }));
+    });
+    expect(actions.setPhotoUrl).toHaveBeenCalledWith("");
+  });
+
+  it("abre etapa 2 pelo card de capa, escolhe foto por câmera/galeria e salva rascunho para depois", async () => {
+    const choose = jest
+      .fn()
+      .mockResolvedValueOnce("https://cdn.ipebook.app/capa-camera.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/extra-galeria.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/extra-galeria.jpg");
+    const photoSpy = jest
+      .spyOn(container, "makeListingPhotoViewModel")
+      .mockReturnValue([{ uploading: false, error: null }, { choose, clearError: jest.fn() }]);
+
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar foto da capa"));
+      });
+      expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar foto da capa"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Tirar foto com a câmera"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("camera", "cover");
+      expect(actions.setPhotoUrl).toHaveBeenCalledWith("https://cdn.ipebook.app/capa-camera.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar lombada"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library", "spine");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(0, "https://cdn.ipebook.app/extra-galeria.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar verso"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library", "back");
+      expect(actions.setPhotoAt).toHaveBeenCalledWith(1, "https://cdn.ipebook.app/extra-galeria.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
+      });
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho" }));
+      });
+      expect(actions.saveForLater).toHaveBeenCalledTimes(1);
+    } finally {
+      photoSpy.mockRestore();
+    }
+  });
+
+  it("aciona categoria, box/coleção, volumes, local de retirada e foco na descrição na etapa 3", async () => {
+    const actions = mockViewModel({
+      ...filledState,
+      category: "Literatura & Romance",
+      neighborhood: "Campus IFPI Piripiri",
+      isBox: true,
+      boxVolumesCount: "2",
+    });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Categoria Literatura & Romance"));
+      fireEvent.press(screen.getByLabelText("Categoria Didáticos & Concursos"));
+      fireEvent.press(screen.getByLabelText("Box ou coleção de livros"));
+      fireEvent.changeText(screen.getByLabelText("Volumes (opcional)"), "4");
+      fireEvent.press(screen.getByLabelText("Local de retirada Campus IFPI Piripiri"));
+      fireEvent.press(screen.getByLabelText("Local de retirada Praça da Bandeira"));
+      fireEvent(screen.getByLabelText("Descrição"), "focus");
+    });
+
+    expect(actions.setCategory).toHaveBeenCalledWith("");
+    expect(actions.setCategory).toHaveBeenCalledWith("Didáticos & Concursos");
+    expect(actions.setIsBox).toHaveBeenCalledWith(false);
+    expect(actions.setBoxVolumesCount).toHaveBeenCalledWith("4");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Piripiri");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Praça da Bandeira");
+  });
+
+  it("exibe ações de desktop na web larga e permite salvar para depois, voltar e publicar", async () => {
+    const wideSpy = jest.spyOn(useIsWideWebModule, "useIsWideWeb").mockReturnValue(true);
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar para depois" }));
+      });
+      expect(actions.saveForLater).toHaveBeenCalledTimes(1);
+
+      await goToStep(screen, 3);
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Voltar à etapa anterior" }));
+      });
+      expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Usar estas fotos" }));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Publicar anúncio" }));
+      });
+      expect(actions.submit).toHaveBeenCalledTimes(1);
+    } finally {
+      wideSpy.mockRestore();
+    }
+  });
+
+  it("permite salvar rascunho localmente quando está sem conexão, limpa aviso no botão Limpar e na reconexão", async () => {
+    const netSpy = jest.spyOn(container, "makeNetworkStatus").mockReturnValue({ isOnline: false });
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
+      });
+      expect(
+        screen.getByText("Sem internet agora: o rascunho ficará salvo neste aparelho para você continuar depois."),
+      ).toBeDefined();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho" }));
+      });
+
+      expect(actions.saveDraft).toHaveBeenCalled();
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      expect(
+        screen.getByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeDefined();
+
+      // Clicar em Limpar deve apagar o aviso de rascunho salvo localmente.
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Limpar rascunho" }));
+      });
+      expect(actions.reset).toHaveBeenCalledTimes(1);
+      expect(
+        screen.queryByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeNull();
+    } finally {
+      netSpy.mockRestore();
+    }
+  });
+
+  it("salva rascunho direto sem diálogo na web larga offline e limpa aviso ao reconectar", async () => {
+    const wideSpy = jest.spyOn(useIsWideWebModule, "useIsWideWeb").mockReturnValue(true);
+    let online = false;
+    const netSpy = jest.spyOn(container, "makeNetworkStatus").mockImplementation(() => ({ isOnline: online }));
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar para depois" }));
+      });
+      expect(actions.saveDraft).toHaveBeenCalled();
+      expect(actions.saveForLater).not.toHaveBeenCalled();
+      expect(
+        screen.getByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeDefined();
+
+      online = true;
+      await screen.rerender(
+        <CreateListing
+          sessionUserId="user-1"
+          onCreated={jest.fn()}
+          onCancel={jest.fn()}
+          onViewMyListings={jest.fn()}
+          onGoHome={jest.fn()}
+        />,
+      );
+      expect(
+        screen.queryByText("Rascunho salvo neste aparelho. Conecte-se para publicar ou sincronizar."),
+      ).toBeNull();
+    } finally {
+      wideSpy.mockRestore();
+      netSpy.mockRestore();
+    }
   });
 });

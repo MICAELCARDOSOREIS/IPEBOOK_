@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
 
 describe("withPress — resposta de toque M3 Expressive (Spec 109, ADR 0084)", () => {

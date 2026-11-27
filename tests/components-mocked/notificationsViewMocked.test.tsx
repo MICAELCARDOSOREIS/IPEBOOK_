@@ -1,16 +1,15 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { NotificationsActions, NotificationsState } from "@/viewmodel/useNotificationsViewModel";
 import Notifications from "@/view/notifications/notifications";
 
-vi.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+jest.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
 
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 function mock(state: Partial<NotificationsState>, actions: Partial<NotificationsActions> = {}) {
   const fullState: NotificationsState = {
@@ -25,18 +24,18 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     ...state,
   };
   const fullActions: NotificationsActions = {
-    reload: vi.fn(),
-    refresh: vi.fn().mockResolvedValue(undefined),
-    markAsRead: vi.fn(),
-    markAllAsRead: vi.fn(),
-    deleteNotification: vi.fn(),
-    clearAll: vi.fn(),
-    clearRead: vi.fn(),
-    clearActionError: vi.fn(),
-    setFilter: vi.fn(),
+    reload: jest.fn(),
+    refresh: jest.fn().mockResolvedValue(undefined),
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+    deleteNotification: jest.fn(),
+    clearAll: jest.fn(),
+    clearRead: jest.fn(),
+    clearActionError: jest.fn(),
+    setFilter: jest.fn(),
     ...actions,
   };
-  vi.mocked(useNotificationsViewModel).mockReturnValue([fullState, fullActions]);
+  jest.mocked(useNotificationsViewModel).mockReturnValue([fullState, fullActions]);
   return fullActions;
 }
 
@@ -45,17 +44,17 @@ describe("Notifications com ViewModel mockado (Issue #76)", () => {
     mock({ error: "Não foi possível carregar notificações." });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.getByText("Não foi possível carregar notificações.")).toBeDefined();
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     mock({ error: "Não foi possível carregar notificações." });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
   });
@@ -106,8 +105,8 @@ describe("Notifications — puxar para atualizar e rótulos (Spec 091)", () => {
 describe("Notifications — estado vazio leva ao catálogo", () => {
   it("pressiona 'Explorar livros' e chama a ação da rota, não o retorno", async () => {
     mock({});
-    const onBack = vi.fn();
-    const onExploreBooks = vi.fn();
+    const onBack = jest.fn();
+    const onExploreBooks = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<Notifications sessionUserId="u" onBack={onBack} onExploreBooks={onExploreBooks} />);

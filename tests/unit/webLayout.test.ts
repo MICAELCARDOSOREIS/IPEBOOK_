@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { webColumnCount, webColumnWidth, webContentWidth, webGridColumns, WEB_GUTTER } from "@/view/webLayout";
 
 /** Soma ocupada por `columns` itens de `webColumnWidth` mais os vãos, numa coluna de `available` px. */

@@ -1,23 +1,22 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { BlockedUsersActions, BlockedUsersState } from "@/viewmodel/useBlockedUsersViewModel";
 import { BlockedUsers } from "@/view/profile/blockedUsers";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useBlockedUsersViewModel", () => ({ useBlockedUsersViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useBlockedUsersViewModel", () => ({ useBlockedUsersViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBlockedUsersViewModel } from "@/viewmodel/useBlockedUsersViewModel";
 
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
-const mockedUseBlockedUsersViewModel = vi.mocked(useBlockedUsersViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
+const mockedUseBlockedUsersViewModel = jest.mocked(useBlockedUsersViewModel);
 
 function mockAuth(user: AuthState["user"]) {
   mockedUseAuthViewModel.mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
   ]);
 }
 
@@ -31,9 +30,9 @@ function mockBlocked(state: Partial<BlockedUsersState> = {}, actions: Partial<Bl
     ...state,
   };
   const fullActions: BlockedUsersActions = {
-    reload: vi.fn().mockResolvedValue(undefined),
-    unblockUser: vi.fn().mockResolvedValue(true),
-    clearActionMessage: vi.fn(),
+    reload: jest.fn().mockResolvedValue(undefined),
+    unblockUser: jest.fn().mockResolvedValue(true),
+    clearActionMessage: jest.fn(),
     ...actions,
   };
   mockedUseBlockedUsersViewModel.mockReturnValue([fullState, fullActions]);
@@ -56,7 +55,7 @@ describe("tela de Pessoas bloqueadas (Figma 07.10-07.12 / Spec 056)", () => {
 
   it("renderiza lista de bloqueados e abre diálogo de confirmação", async () => {
     mockAuth({ id: "user-1", email: "user@exemplo.com" });
-    const unblockMock = vi.fn().mockResolvedValue(true);
+    const unblockMock = jest.fn().mockResolvedValue(true);
     mockBlocked(
       {
         blockedUsers: [
@@ -109,7 +108,7 @@ describe("tela de Pessoas bloqueadas (Figma 07.10-07.12 / Spec 056)", () => {
   it("aciona callback onBack na barra superior", async () => {
     mockAuth({ id: "user-1", email: "user@exemplo.com" });
     mockBlocked({ blockedUsers: [] });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

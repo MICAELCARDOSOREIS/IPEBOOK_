@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { CrossrefBookMetadataService } from "@/infra/services/crossrefBookMetadataService";
 
 const ISBN13 = "9788497451703";
@@ -6,7 +5,7 @@ const ISBN10 = "8497451708";
 const ISBN_INVALIDO = "1234567890";
 
 function mockFetch(status: number, data: unknown) {
-  return vi.fn().mockResolvedValue({
+  return jest.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
     json: async () => data,
@@ -99,7 +98,7 @@ describe("CrossrefBookMetadataService (Spec 092/097)", () => {
   });
 
   it("retorna null para ISBN inválido sem disparar requisição", async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = jest.fn();
     const service = new CrossrefBookMetadataService(fetchMock as never);
     const result = await service.lookupByIsbn(ISBN_INVALIDO);
 
@@ -118,7 +117,7 @@ describe("CrossrefBookMetadataService (Spec 092/097)", () => {
   });
 
   it("ignora falha de rede ou timeout e retorna null com segurança", async () => {
-    const fetchErro = vi.fn().mockRejectedValue(new Error("Timeout de rede"));
+    const fetchErro = jest.fn().mockRejectedValue(new Error("Timeout de rede"));
     const service = new CrossrefBookMetadataService(fetchErro as never);
     const result = await service.lookupByIsbn(ISBN13);
 

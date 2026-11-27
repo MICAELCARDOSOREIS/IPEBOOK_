@@ -1,0 +1,263 @@
+appId: com.ipebook.app
+name: Leitor de QR Code na entrega e notificações push (Android)
+tags:
+  - android
+  - qr
+  - push
+  - hardware-nativo
+---
+- runFlow:
+    when:
+      true: ${E2E_DENY_NOTIFICATIONS == 'true'}
+    commands:
+      - launchApp:
+          stopApp: false
+          permissions:
+            notifications: deny
+- runFlow:
+    when:
+      true: ${E2E_DENY_NOTIFICATIONS != 'true'}
+    commands:
+      - launchApp:
+          stopApp: false
+# Pré-condição: sessão autenticada
+- tapOn: "Início"
+- assertVisible:
+    id: "home-top-profile-button"
+- tapOn:
+    id: "home-top-profile-button"
+- assertVisible: "Meu perfil"
+- assertVisible:
+    id: "profile-notifications-button"
+- tapOn:
+    id: "profile-notifications-button"
+- assertVisible: "Notificações"
+- runFlow:
+    when:
+      visible: "Pedir permissão de novo"
+    commands:
+      - tapOn: "Pedir permissão de novo"
+      - runFlow:
+          when:
+            visible: "Avisos no seu celular"
+          commands:
+            - assertVisible: "Permitir avisos"
+            - tapOn: "Agora não"
+- tapOn: "Voltar"
+- tapOn: "Voltar"
+- assertVisible:
+    id: "home-top-conversations-button"
+- tapOn:
+    id: "home-top-conversations-button"
+- assertVisible: "Conversas"
+- extendedWaitUntil:
+    visible: "(Ativas.*|Nenhuma conversa ainda)"
+    timeout: 25000
+- runFlow:
+    when:
+      visible: "Concluídas.*"
+    commands:
+      - tapOn: "Concluídas.*"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Ativas.*"
+    commands:
+      - tapOn: "Ativas.*"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Conversa com .*"
+    commands:
+      - tapOn:
+          text: "Conversa com .*"
+          index: 0
+      - assertVisible: "Escreva uma mensagem"
+      - extendedWaitUntil:
+          visible: "(Entrega do livro|Combinar encontro|Alterar sugestão|Reagendar encontro|Entrega realizada.*)"
+          timeout: 5000
+          optional: true
+      - runFlow:
+          when:
+            visible: "Combinar encontro"
+          commands:
+            - tapOn: "Combinar encontro"
+            - assertVisible: "Pontos"
+            - tapOn: "Voltar"
+      - runFlow:
+          when:
+            visible: "Entrega do livro"
+          commands:
+            - tapOn: "Entrega do livro"
+            - assertVisible: "Entrega do livro"
+            - extendedWaitUntil:
+                visible: "(Mostre este QR para quem recebe o livro|Confirmar recebimento|Entrega concluída.*)"
+                timeout: 15000
+            - runFlow:
+                when:
+                  visible: "Mostre este QR para quem recebe o livro"
+                commands:
+                  - assertVisible: "QR code da entrega.*"
+            - runFlow:
+                when:
+                  visible: "Ler QR Code com a câmera"
+                commands:
+                  - assertVisible: "Digitar código manualmente"
+                  - tapOn: "Ler QR Code com a câmera"
+                  - runFlow:
+                      when:
+                        visible: "Permitir câmera"
+                      commands:
+                        - tapOn: "Permitir câmera"
+                        - runFlow:
+                            when:
+                              visible: "(Durante o uso do app|While using the app)"
+                            commands:
+                              - tapOn: "(Durante o uso do app|While using the app)"
+                  - runFlow:
+                      when:
+                        visible: "Centralize o QR Code aqui"
+                      commands:
+                        - assertVisible: "Centralize o QR Code aqui"
+                  - tapOn: "Digitar código manualmente"
+                  - assertVisible: "Código da entrega"
+            - tapOn: "Voltar"
+      - tapOn: "Voltar"
+- runFlow:
+    when:
+      visible: ".*Combinem os detalhes.*"
+    commands:
+      - tapOn:
+          text: ".*Combinem os detalhes.*"
+          index: 0
+      - assertVisible: "Escreva uma mensagem"
+      - extendedWaitUntil:
+          visible: "(Entrega do livro|Combinar encontro|Alterar sugestão|Reagendar encontro|Entrega realizada.*)"
+          timeout: 20000
+      - runFlow:
+          when:
+            visible: "Entrega do livro"
+          commands:
+            - tapOn: "Entrega do livro"
+            - assertVisible: "Entrega do livro"
+            - extendedWaitUntil:
+                visible: "(Mostre este QR para quem recebe o livro|Confirmar recebimento|Entrega concluída.*)"
+                timeout: 15000
+            - runFlow:
+                when:
+                  visible: "Mostre este QR para quem recebe o livro"
+                commands:
+                  - assertVisible: "QR code da entrega.*"
+            - runFlow:
+                when:
+                  visible: "Ler QR Code com a câmera"
+                commands:
+                  - assertVisible: "Digitar código manualmente"
+                  - tapOn: "Ler QR Code com a câmera"
+                  - runFlow:
+                      when:
+                        visible: "Permitir câmera"
+                      commands:
+                        - tapOn: "Permitir câmera"
+                        - runFlow:
+                            when:
+                              visible: "(Durante o uso do app|While using the app)"
+                            commands:
+                              - tapOn: "(Durante o uso do app|While using the app)"
+                  - runFlow:
+                      when:
+                        visible: "Centralize o QR Code aqui"
+                      commands:
+                        - assertVisible: "Centralize o QR Code aqui"
+                  - tapOn: "Digitar código manualmente"
+                  - assertVisible: "Código da entrega"
+            - tapOn: "Voltar"
+      - runFlow:
+          when:
+            visible: "Abrir negociação de .*"
+          commands:
+            - tapOn: "Abrir negociação de .*"
+            - assertVisible: "Acompanhar encontro"
+            - runFlow:
+                when:
+                  visible: "Mostrar QR da entrega"
+                commands:
+                  - tapOn: "Mostrar QR da entrega"
+                  - assertVisible: "Entrega do livro"
+                  - tapOn: "Voltar"
+            - runFlow:
+                when:
+                  visible: "Ler QR da entrega"
+                commands:
+                  - tapOn: "Ler QR da entrega"
+                  - assertVisible: "Entrega do livro"
+                  - tapOn: "Voltar"
+            - tapOn: "Voltar"
+      - tapOn: "Voltar"
+- tapOn: "Voltar"
+- tapOn: "Estante"
+- assertVisible: "Estante"
+- runFlow:
+    when:
+      visible: "Filtrar por Reservados"
+    commands:
+      - tapOn: "Filtrar por Reservados"
+      - runFlow:
+          when:
+            visible: "Ver negociação de .*"
+          commands:
+            - tapOn:
+                text: "Ver negociação de .*"
+                index: 0
+            - runFlow:
+                when:
+                  visible: "Combinar encontro"
+                commands:
+                  - tapOn: "Combinar encontro"
+                  - assertVisible: "Combinar encontro"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Alterar sugestão"
+                commands:
+                  - tapOn: "Alterar sugestão"
+                  - assertVisible: "Reagendar encontro"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Entrega do livro"
+                commands:
+                  - tapOn: "Entrega do livro"
+                  - assertVisible: "Entrega do livro"
+                  - runFlow:
+                      when:
+                        visible: "Ler QR Code com a câmera"
+                      commands:
+                        - tapOn: "Digitar código manualmente"
+                        - assertVisible: "Código da entrega"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Acompanhar negociação"
+                commands:
+                  - tapOn: "Acompanhar negociação"
+                  - assertVisible: "Acompanhar encontro"
+                  - runFlow:
+                      when:
+                        visible: "Mostrar QR da entrega"
+                      commands:
+                        - tapOn: "Mostrar QR da entrega"
+                        - assertVisible: "Entrega do livro"
+                        - back
+                  - runFlow:
+                      when:
+                        visible: "Ler QR da entrega"
+                      commands:
+                        - tapOn: "Ler QR da entrega"
+                        - assertVisible: "Entrega do livro"
+                        - back
+                  - back
+            - back
+      - tapOn: "Filtrar por Todos"
+- tapOn: "Início"
+- assertVisible: "Encontre sua próxima história."

@@ -5,6 +5,7 @@ import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 
@@ -61,14 +62,15 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     panel: {
       width: "100%",
-      maxWidth: wideWeb ? 340 : "100%",
+      maxWidth: wideWeb ? 380 : "100%",
       flexShrink: 0,
       gap: tokens.spacing[12],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.card,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       elevation: 1,
       shadowColor: colors.ipe.trunk,
       shadowOpacity: 0.04,
@@ -107,7 +109,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     rowBorder: {
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
     },
     rowText: {
       flex: 1,

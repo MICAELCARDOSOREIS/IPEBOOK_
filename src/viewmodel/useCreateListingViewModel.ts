@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { compactPhotosForPersistence, toSlotPhotos } from "@/model/bookPhotos";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
@@ -250,7 +251,7 @@ export function useCreateListingViewModel(
 
   const addPhoto = useCallback((value: string) => {
     setState((prev) => {
-      if (prev.photos.length >= 5) {
+      if (compactPhotosForPersistence(prev.photos).length >= 5) {
         return { ...prev, error: "O anúncio pode conter no máximo 5 fotos." };
       }
       return {
@@ -264,10 +265,14 @@ export function useCreateListingViewModel(
 
   const setPhotoAt = useCallback((index: number, value: string) => {
     setState((prev) => {
-      if (index < 0 || index >= prev.photos.length) return prev;
+      if (index < 0 || index >= 5) return prev;
+      const next = [...prev.photos];
+      while (next.length <= index) next.push("");
+      next[index] = value.trim();
+      while (next.length > 0 && !next[next.length - 1]) next.pop();
       return {
         ...prev,
-        photos: prev.photos.map((photo, i) => (i === index ? value : photo)),
+        photos: next,
         error: null,
         success: false,
       };
@@ -393,7 +398,9 @@ export function useCreateListingViewModel(
       ...(cur.description.trim() ? { description: cur.description.trim() } : {}),
       ...cur.edition,
       ...(cur.photoUrl.trim() ? { photoUrl: cur.photoUrl.trim() } : {}),
-      ...(cur.photos.length > 0 ? { photos: cur.photos } : {}),
+      ...(compactPhotosForPersistence(cur.photos).length > 0
+        ? { photos: compactPhotosForPersistence(cur.photos) }
+        : {}),
       ...(cur.isBox ? { isBox: true } : {}),
       ...(cur.isBox && volumesNum ? { boxVolumesCount: volumesNum } : {}),
     };
@@ -412,7 +419,7 @@ export function useCreateListingViewModel(
       condition: book.condition ?? prev.condition,
       description: book.description ?? prev.description,
       photoUrl: book.photoUrl ?? prev.photoUrl,
-      photos: book.photos ?? prev.photos,
+      photos: book.photos ? toSlotPhotos(book.photos) : prev.photos,
       isBox: Boolean(book.isBox),
       boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
       edition: {

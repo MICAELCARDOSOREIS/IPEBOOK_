@@ -1,7 +1,6 @@
 import React from "react";
 import { act, render } from "@testing-library/react-native";
 import { Text, View } from "react-native";
-import { describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { BookUseCases } from "@/usecase/bookUseCases";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";

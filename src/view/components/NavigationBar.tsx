@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
 export type NavigationDestination = "home" | "search" | "shelf" | "conversations" | "profile";
 
 export type NavigationBarProps = {
   active: NavigationDestination;
   onNavigate: (destination: NavigationDestination) => void;
+  /** Chamado ao tocar na aba que já está ativa (ex.: rolar suave para o topo, Spec 144). */
+  onReselectActive?: (destination: NavigationDestination) => void;
+  /** Progresso contínuo (0..2) do pager nativo para deslizar a pílula 1:1 com o dedo (Spec 144). */
+  scrollProgress?: Animated.Value;
   disabledDestinations?: readonly NavigationDestination[];
   /** Selo numérico por destino (M3 badge); 0 ou ausente não mostra nada. */
   badges?: Partial<Record<NavigationDestination, number>>;
@@ -24,17 +30,24 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
 const INDICATOR_WIDTH = tokens.spacing[40] + tokens.spacing[24]; // 64 dp (proporção áurea do M3)
 const INDICATOR_HEIGHT = tokens.spacing[32]; // 32 dp (altura compacta e elegante)
 const DOCK_HORIZONTAL_PADDING = tokens.spacing[12]; // 12 dp
+const IOS_DOCK_HORIZONTAL_PADDING = tokens.spacing[6]; // 6 dp (cápsula iOS 26 envolve ícone + texto)
 const DOCK_VERTICAL_PADDING = tokens.spacing[6]; // 6 dp (respiro equilibrado)
 const INITIAL_DOCK_MAX_WIDTH = 340; // Largura balanceada para 3 abas sem distorção das bordas pílula
 
 /**
  * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
  */
-function getPillTargetX(index: number, totalItems: number, containerWidth: number): number {
+function getPillTargetX(
+  index: number,
+  totalItems: number,
+  containerWidth: number,
+  horizontalPadding: number,
+  pillWidth: number,
+): number {
   if (index < 0 || totalItems <= 0) return 0;
-  const availableWidth = Math.max(0, containerWidth - DOCK_HORIZONTAL_PADDING * 2);
+  const availableWidth = Math.max(0, containerWidth - horizontalPadding * 2);
   const itemWidth = availableWidth / totalItems;
-  return DOCK_HORIZONTAL_PADDING + index * itemWidth + (itemWidth - INDICATOR_WIDTH) / 2;
+  return horizontalPadding + index * itemWidth + (itemWidth - pillWidth) / 2;
 }
 
 /** Barra de navegação do design system (barra-de-navegacao.md), Material 3 Expressive como no Figma `02.01`:
@@ -42,10 +55,18 @@ function getPillTargetX(index: number, totalItems: number, containerWidth: numbe
  * com física de mola espacial (`tokens.spring.spatialStandard`), ícones com micro-bounce na seleção,
  * rótulo abaixo, suporte a hover no desktop e transluscência web. Restrita a 3 destinos (ADR 0011).
  */
-export function NavigationBar({ active, onNavigate, disabledDestinations = [], badges = {} }: NavigationBarProps) {
+export function NavigationBar({
+  active,
+  onNavigate,
+  onReselectActive,
+  scrollProgress,
+  disabledDestinations = [],
+  badges = {},
+}: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const styles = useMemo(() => createStyles(colors, reduceTransparency), [colors, reduceTransparency]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
   const [optimisticActive, setOptimisticActive] = useState<NavigationDestination>(active);
@@ -57,22 +78,28 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
     setOptimisticActive(active);
   }, [active]);
 
+  const isIos = Platform.OS === "ios";
+  const dockHorizontalPadding = isIos ? IOS_DOCK_HORIZONTAL_PADDING : DOCK_HORIZONTAL_PADDING;
+  const pillWidth = isIos
+    ? Math.max(INDICATOR_WIDTH, (dockWidth - dockHorizontalPadding * 2) / ITEMS.length)
+    : INDICATOR_WIDTH;
+
   const currentActive = optimisticActive ?? active;
   const activeIndex = ITEMS.findIndex((item) => item.key === currentActive);
   const hasActiveItem = activeIndex >= 0;
 
   // Posição inicial da pílula deslizante sem flash/salto no primeiro frame
   const initialX = useMemo(
-    () => getPillTargetX(Math.max(0, activeIndex), ITEMS.length, INITIAL_DOCK_MAX_WIDTH),
+    () => getPillTargetX(Math.max(0, activeIndex), ITEMS.length, INITIAL_DOCK_MAX_WIDTH, dockHorizontalPadding, pillWidth),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const slideAnim = useRef(new Animated.Value(initialX)).current;
 
-  // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda
+  // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda (fallback sem pager 1:1)
   useEffect(() => {
-    if (!hasActiveItem) return;
-    const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth);
+    if (!hasActiveItem || scrollProgress) return;
+    const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth);
     void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
       .then((reduced) => {
         if (reduced) {
@@ -83,13 +110,26 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
           toValue: targetX,
           tension: tokens.spring.spatialStandard.tension,
           friction: tokens.spring.spatialStandard.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {
         slideAnim.setValue(targetX);
       });
-  }, [activeIndex, dockWidth, hasActiveItem, slideAnim]);
+  }, [activeIndex, dockHorizontalPadding, dockWidth, hasActiveItem, pillWidth, scrollProgress, slideAnim]);
+
+  const pillTranslateX = useMemo(() => {
+    if (!scrollProgress) return slideAnim;
+    return scrollProgress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [
+        getPillTargetX(0, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+        getPillTargetX(1, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+        getPillTargetX(2, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth),
+      ],
+      extrapolate: "clamp",
+    });
+  }, [dockHorizontalPadding, dockWidth, pillWidth, scrollProgress, slideAnim]);
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
   // posiciona a cápsula com respiro sutil e ergonômico acima dos controles sem invadir a tela.
@@ -102,24 +142,31 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
       pointerEvents="box-none"
       style={[styles.floatingWrapper, { paddingBottom }]}
     >
-      <View
-        style={styles.dock}
-        onLayout={(e) => {
-          const w = e.nativeEvent.layout.width;
-          if (w > 0 && Math.abs(w - dockWidth) > 1) {
-            setDockWidth(w);
-          }
-        }}
-      >
-        {/* Pílula Deslizante Contínua Material 3 Expressive */}
+      <View style={styles.dockShadow}>
+        <View
+          testID="navigation-bar-dock"
+          style={styles.dock}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (w > 0 && Math.abs(w - dockWidth) > 1) {
+              setDockWidth(w);
+            }
+          }}
+        >
+          {Platform.OS === "ios" && !reduceTransparency ? (
+            <IosGlassBackdrop style={{ borderRadius: tokens.radius.full }} />
+          ) : null}
+
+        {/* Pílula Deslizante Contínua (iOS 26 envolve ícone + rótulo; Android/Web segue M3 Expressive) */}
         {hasActiveItem ? (
           <Animated.View
             pointerEvents="none"
             testID="navigation-bar-active-pill"
             style={[
               styles.slidingPill,
+              isIos && { width: pillWidth },
               {
-                transform: [{ translateX: slideAnim }],
+                transform: [{ translateX: pillTranslateX }],
               },
             ]}
           />
@@ -141,13 +188,19 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
               onHoverIn={() => setHoveredKey(item.key)}
               onHoverOut={() => setHoveredKey((prev) => (prev === item.key ? null : prev))}
               onPress={() => {
-                if (isDisabled || currentActive === item.key) return;
+                if (isDisabled) return;
+                if (currentActive === item.key) {
+                  triggerHaptic("light");
+                  onReselectActive?.(item.key);
+                  return;
+                }
                 const now = Date.now();
                 if (now - lastNavigateTime.current < DEBOUNCE_MS) {
                   return;
                 }
                 lastNavigateTime.current = now;
                 setOptimisticActive(item.key);
+                triggerHaptic("selection");
                 onNavigate(item.key);
               }}
               style={({ pressed }) => [
@@ -174,7 +227,9 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                         isDisabled
                           ? colors.secondaryText
                           : isActive
-                            ? colors.m3.onSecondaryContainer
+                            ? isIos
+                              ? colors.m3.onSurface
+                              : colors.m3.onSecondaryContainer
                             : isHovered
                               ? colors.m3.onSurface
                               : colors.m3.onSurfaceVariant
@@ -182,12 +237,13 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                     />
                     {badgeCount > 0 ? (
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
+                        <Text maxFontSizeMultiplier={1.2} style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
                       </View>
                     ) : null}
                   </View>
                   <Text
-                    numberOfLines={1}
+                    numberOfLines={isIos ? undefined : 1}
+                    maxFontSizeMultiplier={isIos ? 0 : 1.2}
                     style={[
                       styles.label,
                       isActive && styles.labelActive,
@@ -202,6 +258,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
             </Pressable>
           );
         })}
+        </View>
       </View>
     </View>
   );
@@ -237,7 +294,7 @@ function TabIconWithBounce({
             toValue: 1,
             tension: tokens.spring.spatialStandard.tension,
             friction: tokens.spring.spatialStandard.friction,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== "web",
           }).start();
         })
         .catch(() => {
@@ -257,10 +314,17 @@ const stylesLocal = StyleSheet.create({
   iconLayer: { zIndex: 1 },
 });
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, reduceTransparency: boolean = false) {
   const isWeb = Platform.OS === "web";
+  const isIos = Platform.OS === "ios";
   const webDockBg =
     colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
+
+  // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0115): vidro translúcido com fallback sólido ao reduzir transparência
+  const dockBg = isIos
+    ? (reduceTransparency ? colors.m3.surfaceContainer : "transparent")
+    : (isWeb ? webDockBg : colors.surface);
+  const dockBorderColor = isIos && !reduceTransparency ? "transparent" : colors.m3.outlineVariant;
 
   return StyleSheet.create({
     floatingWrapper: {
@@ -275,25 +339,26 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: "transparent",
       pointerEvents: "box-none",
     },
+    dockShadow: {
+      width: "100%",
+      maxWidth: INITIAL_DOCK_MAX_WIDTH,
+      borderRadius: tokens.radius.full,
+      backgroundColor: "transparent",
+    },
     dock: {
       position: "relative",
       flexDirection: "row",
       justifyContent: "space-around",
       alignItems: "center",
       width: "100%",
-      maxWidth: INITIAL_DOCK_MAX_WIDTH,
-      backgroundColor: isWeb ? webDockBg : colors.surface,
+      backgroundColor: dockBg,
       borderRadius: tokens.radius.full,
-      paddingVertical: DOCK_VERTICAL_PADDING,
-      paddingHorizontal: DOCK_HORIZONTAL_PADDING,
+      ...(isIos ? ({ borderCurve: "continuous" } as never) : {}),
+      paddingVertical: isIos ? tokens.spacing[4] : DOCK_VERTICAL_PADDING,
+      paddingHorizontal: isIos ? IOS_DOCK_HORIZONTAL_PADDING : DOCK_HORIZONTAL_PADDING,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: dockBorderColor,
       overflow: "hidden",
-      elevation: 4,
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
       ...(isWeb
         ? ({
             backdropFilter: "blur(20px)",
@@ -301,16 +366,26 @@ function createStyles(colors: ColorPalette) {
           } as never)
         : {}),
     },
-    slidingPill: {
-      position: "absolute",
-      top: DOCK_VERTICAL_PADDING + 2, // alinhado verticalmente com o centro do indicador de 32dp
-      left: 0,
-      width: INDICATOR_WIDTH,
-      height: INDICATOR_HEIGHT,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      zIndex: 0,
-    },
+    slidingPill: isIos
+      ? {
+          position: "absolute",
+          top: tokens.spacing[4],
+          bottom: tokens.spacing[4],
+          left: 0,
+          borderRadius: tokens.radius.full,
+          backgroundColor: reduceTransparency ? colors.m3.primaryContainer : "rgba(210, 235, 212, 0.86)",
+          zIndex: 0,
+        }
+      : {
+          position: "absolute",
+          top: DOCK_VERTICAL_PADDING + 2, // alinhado verticalmente com o centro do indicador de 32dp
+          left: 0,
+          width: INDICATOR_WIDTH,
+          height: INDICATOR_HEIGHT,
+          borderRadius: tokens.radius.full,
+          backgroundColor: colors.m3.secondaryContainer,
+          zIndex: 0,
+        },
     item: {
       flex: 1,
       minWidth: 0,
@@ -356,6 +431,8 @@ function createStyles(colors: ColorPalette) {
     itemPressed: { opacity: 0.8 },
     itemDisabled: { opacity: 0.38 },
     label: {
+      flexShrink: 1,
+      maxWidth: "100%",
       color: colors.m3.onSurfaceVariant,
       fontFamily: tokens.fontFamily.medium,
       fontSize: tokens.fontSize[12],
@@ -370,7 +447,7 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     labelActive: {
-      color: colors.m3.primary,
+      color: isIos ? colors.m3.onSurface : colors.m3.primary,
       fontFamily: tokens.fontFamily.semiBold,
       fontWeight: tokens.fontWeight.bold,
     },

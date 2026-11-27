@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { type ComponentRef, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,19 +11,28 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { ModalGlassSurface } from "@/view/components/ModalGlassSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
+import { TextButton } from "@/view/components/TextButton";
+import { formatPrice } from "@/view/formatPrice";
 import { withPress } from "@/view/pressFeedback";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 
 export type ProposalSheetProps = {
   visible: boolean;
@@ -30,35 +41,79 @@ export type ProposalSheetProps = {
   userBooks?: readonly Book[];
   loadingBooks?: boolean;
   submitting?: boolean;
+  submitDisabled?: boolean;
   error?: string | null;
   onSubmit: (options: { initialMessage?: string; offeredBookId?: string }) => Promise<void>;
 };
 
-export function ProposalSheet({
-  visible,
+const proposalSheetStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createStyles>>();
+function getProposalSheetStyles(colors: ColorPalette) {
+  let cached = proposalSheetStylesCache.get(colors);
+  if (!cached) {
+    cached = createStyles(colors);
+    proposalSheetStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+export function ProposalSheet(props: ProposalSheetProps) {
+  if (!props.visible) return null;
+  return (
+    <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
+      visible={props.visible}
+      transparent
+      animationType="fade"
+      onRequestClose={props.onClose}
+      accessibilityViewIsModal
+      aria-modal
+    >
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <ProposalSheetContent {...props} />
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+function ProposalSheetContent({
   onClose,
   targetBook,
   userBooks = [],
   loadingBooks = false,
   submitting = false,
+  submitDisabled = false,
   error = null,
   onSubmit,
-}: ProposalSheetProps) {
+}: Omit<ProposalSheetProps, "visible">) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const keyboardInset = useAnimatedKeyboardInset();
+  const isKeyboardVisible = useKeyboardVisible();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
+  const styles = getProposalSheetStyles(colors);
 
   const [message, setMessage] = useState("");
+  const [messageFocused, setMessageFocused] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
   const isTrade = targetBook.modality === "trade";
+  const headerIcon: AppIconName =
+    targetBook.modality === "trade"
+      ? "swap"
+      : targetBook.modality === "donation"
+        ? "heart"
+        : "category";
+  const salePriceLabel =
+    targetBook.modality === "sale" && targetBook.price != null ? formatPrice(targetBook.price) : null;
   const availableUserBooks = useMemo(
     () => userBooks.filter((b) => b.status === "available" && b.id !== targetBook.id),
     [userBooks, targetBook.id],
   );
 
   const handleSubmit = async () => {
+    if (submitDisabled) return;
     await onSubmit({
       initialMessage: message.trim() || undefined,
       offeredBookId: isTrade && selectedBookId ? selectedBookId : undefined,
@@ -68,17 +123,15 @@ export function ProposalSheet({
   const sheetTitle = isTrade ? "Proposta de Troca" : "Solicitar Negociação";
 
   return (
-    <Modal
-      statusBarTranslucent
-      navigationBarTranslucent
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
-    >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
+    <>
+      <Animated.View
+        testID="proposal-sheet-scrim"
+        style={[
+          styles.scrim,
+          wideWeb && styles.scrimWide,
+          !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar formulário de proposta"
@@ -86,13 +139,26 @@ export function ProposalSheet({
           onPress={onClose}
         />
 
-        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: Math.max(insets.bottom, tokens.spacing[16]) }]}>
+        <ModalGlassSurface
+          sheet
+          radius={tokens.radius.extraLarge}
+          style={[
+            styles.sheet,
+            wideWeb && styles.sheetWide,
+            {
+              paddingBottom:
+                !wideWeb && isKeyboardVisible
+                  ? tokens.spacing[12]
+                  : Math.max(insets.bottom, tokens.spacing[16]),
+            },
+          ]}
+        >
           {wideWeb ? null : <View style={styles.dragHandle} />}
 
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBox}>
-                <AppIcon name="swap" size={20} color={colors.action} />
+                <AppIcon name={headerIcon} size={20} color={colors.action} />
               </View>
               <Text accessibilityRole="header" style={styles.title}>
                 {sheetTitle}
@@ -110,6 +176,7 @@ export function ProposalSheet({
           </View>
 
           <ScrollView
+            ref={scrollRef}
             {...standardVerticalScrollProps}
             style={styles.content}
             contentContainerStyle={styles.contentContainer}
@@ -131,6 +198,9 @@ export function ProposalSheet({
                 </Text>
                 <View style={styles.tagWrapper}>
                   <Tag variant={targetBook.modality} />
+                  {salePriceLabel ? (
+                    <Text style={styles.targetBookPrice}>{salePriceLabel}</Text>
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -138,18 +208,27 @@ export function ProposalSheet({
             {/* Campo de mensagem opcional */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionLabel}>Mensagem para o leitor (opcional)</Text>
+                <Text style={styles.sectionLabel}>Mensagem para quem anunciou (opcional)</Text>
                 <Text style={styles.charCounter}>{message.length}/500</Text>
               </View>
               <TextInput
                 value={message}
                 onChangeText={(text) => setMessage(text.slice(0, 500))}
-                placeholder="Escreva uma mensagem para quem anunciou (opcional)"
+                onFocus={() => {
+                  setMessageFocused(true);
+                  if (Platform.OS !== "web") {
+                    setTimeout(() => {
+                      scrollRef.current?.scrollTo({ y: 112, animated: true });
+                    }, 120);
+                  }
+                }}
+                onBlur={() => setMessageFocused(false)}
+                placeholder="Ex.: Olá! Tenho interesse, podemos combinar no IFPI ou na Praça da Bandeira?"
                 placeholderTextColor={colors.m3.onSurfaceVariant}
                 multiline
                 numberOfLines={3}
                 maxLength={500}
-                style={styles.messageInput}
+                style={[styles.messageInput, messageFocused && styles.messageInputFocused]}
                 accessibilityLabel="Mensagem inicial da proposta"
               />
             </View>
@@ -237,19 +316,22 @@ export function ProposalSheet({
           <View style={styles.actions}>
             <FilledButton
               label={isTrade ? "Enviar proposta de troca" : "Confirmar interesse"}
+              disabled={submitDisabled}
               loading={submitting}
               loadingLabel="Enviando proposta…"
               onPress={() => void handleSubmit()}
             />
-            <OutlinedButton
-              label="Cancelar"
-              disabled={submitting}
-              onPress={onClose}
-            />
+            {wideWeb || !isKeyboardVisible ? (
+              <OutlinedButton
+                label="Cancelar"
+                disabled={submitting}
+                onPress={onClose}
+              />
+            ) : null}
           </View>
-        </View>
-      </View>
-    </Modal>
+        </ModalGlassSurface>
+      </Animated.View>
+    </>
   );
 }
 
@@ -269,7 +351,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderTopLeftRadius: tokens.radius.extraLarge,
       borderTopRightRadius: tokens.radius.extraLarge,
-      maxHeight: "90%",
+      maxHeight: "100%",
       shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.15,
@@ -325,7 +407,16 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
     },
     content: {
+      flexShrink: 1,
       paddingHorizontal: tokens.spacing[16],
+    },
+    keyboardAccessory: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[4],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
     },
     contentContainer: {
       paddingVertical: tokens.spacing[12],
@@ -353,8 +444,16 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     tagWrapper: {
-      alignSelf: "flex-start",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
       marginTop: tokens.spacing[2],
+    },
+    targetBookPrice: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
+      fontVariant: ["tabular-nums"],
     },
     section: {
       gap: tokens.spacing[8],
@@ -378,15 +477,24 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     messageInput: {
-      backgroundColor: colors.background,
+      backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.background,
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
       borderRadius: tokens.radius.medium,
-      padding: tokens.spacing[12],
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
       color: colors.m3.onSurface,
-      ...tokens.typography.bodyMedium,
-      minHeight: 80,
+      ...tokens.typography.bodyLarge,
+      fontSize: 16,
+      lineHeight: 22,
+      minHeight: 96,
       textAlignVertical: "top",
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+    },
+    messageInputFocused: {
+      borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
+      borderWidth: 1.5,
     },
     loadingContainer: {
       flexDirection: "row",
@@ -413,9 +521,11 @@ function createStyles(colors: ColorPalette) {
     bookOption: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 44 : undefined,
       gap: tokens.spacing[10],
       padding: tokens.spacing[10],
       borderRadius: tokens.radius.cardSmall,
+      ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.background,

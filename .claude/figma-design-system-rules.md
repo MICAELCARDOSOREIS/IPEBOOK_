@@ -10,7 +10,9 @@
 - **Fonte canônica:** [`design-system/tokens.json`](../design-system/tokens.json) (machine-readable,
   ~50 tokens de cor, tipografia, espaço, forma, elevação e movimento).
 - **Consumo em código:** [`src/view/tokens.ts`](../src/view/tokens.ts) — módulo TypeScript que
-  espelha o recorte de tema claro do JSON. Único ponto de leitura de tokens na camada de View.
+  espelha os temas claro (`colors`) e escuro (`darkColors`) para consumo dinâmico via `useTheme()`
+  ([`src/view/theme/ThemeProvider.tsx`](../src/view/theme/ThemeProvider.tsx)). Único ponto de
+  leitura de tokens na camada de View.
 - **Formato:** objetos JS/TS simples (`colors`, `spacing`, `radius`, `accessibility`, …),
   exportados via `export const tokens = { colors, spacing, radius, accessibility, ... }`.
 - **Regra obrigatória:** nenhum componente escreve cor, tamanho ou raio literal — sempre
@@ -24,13 +26,14 @@
 ## 2. Biblioteca de componentes
 
 - **Documentação/anatomia (fonte de verdade de design):**
-  [`design-system/04-componentes/`](../design-system/04-componentes/) — 23 arquivos Markdown,
-  um por componente, cada um com anatomia, estados (padrão/pressionado/foco/desabilitado) e
-  regras de acessibilidade.
-- **Implementação React Native:** [`src/view/components/`](../src/view/components/) — um
-  arquivo `.tsx` por componente de UI reutilizável. Hoje: `AppIcon`, `Icon`, `IconBadge`,
-  `BookCover`, `FilledButton`, `Logotipo`, `NavigationBar`, `SearchField`, `TextField`,
-  `TopAppBar`.
+  [`design-system/04-componentes/`](../design-system/04-componentes/) — 28 arquivos Markdown,
+  um por componente ou padrão, cada um com anatomia, estados (padrão/pressionado/foco/desabilitado)
+  e regras de acessibilidade.
+- **Implementação React Native:** [`src/view/components/`](../src/view/components/) — componentes
+  reutilizáveis de UI (como `AppIcon`, `FluentIcon`, `Avatar`, `BookCover`, `Chip`, `Dialog`,
+  `FilledButton`, `OutlinedButton`, `TextButton`, `Logotipo`, `NavigationBar`, `ScreenContainer`,
+  `SearchField`, `Snackbar`, `StepProgress`, `Tag`, `TextField`, `TopAppBar`, `WebHeader`, entre
+  outros).
 - **Arquitetura:** MVVM. `src/view/` é estritamente camada de apresentação (sem regra de
   negócio); lógica fica em `src/viewmodel/`, `src/usecase/`, `src/model/`. Um componente de
   Figma nunca deve receber lógica de domínio — só props e callbacks.
@@ -43,19 +46,22 @@
 
 ## 3. Frameworks e bibliotecas
 
-- **UI:** React 19 + React Native 0.86 via **Expo 57** (`expo-router` para navegação em
+- **UI:** React 19.3 + React Native 0.88 via **Expo 58** (`expo-router` para navegação baseada em
   arquivo).
 - **Web:** mesma base, renderizada com `react-native-web` — não há stack Web separada (ex.:
   Next.js); Android e Web compartilham os componentes de `src/view/components/`.
+- **Tipografia:** `Source Serif 4 Bold` para marca e manchetes (ADR 0007) e `Plus Jakarta Sans`
+  (400/500/600) para toda a interface (ADR 0107).
 - **Estilo:** `StyleSheet.create` do React Native (sem styled-components, sem Tailwind, sem
   CSS Modules). Toda cor/espaço/raio vem de `tokens.ts` (ver seção 1).
-- **Animação:** `react-native-reanimated` + `react-native-worklets` quando necessário (poucos
-  casos hoje).
+- **Animação:** `react-native-reanimated` + `react-native-worklets` e `Animated` com respeito a
+  `prefers-reduced-motion` / `AccessibilityInfo.isReduceMotionEnabled`.
 - **Build/bundler:** Metro (padrão do Expo). `npm run build:web` → `expo export --platform web`.
 - **Tipos:** TypeScript 6, `strict: true`, alias `@/*` → `src/*`.
-- iOS está fora do escopo atual de implementação (ver ADR 0008) mesmo que o Figma já tenha
-  componentes oficiais de iOS catalogados — não implementar nada iOS-specific sem checar esse
-  ADR antes.
+- **Plataformas:** Android (Material Design 3) e Web (PWA responsivo, incluindo ajustes para Safari
+  iOS na Spec 136 / ADR 0108) estão ativos; **iOS Nativo** (Liquid Glass / Apple HIG) está
+  especificado em [`specs/137-ios-nativo-apple-hig/`](../specs/137-ios-nativo-apple-hig/spec.md) e
+  deve permanecer isolado por `Platform.OS === "ios"` ou arquivos `.ios.tsx`.
 
 ## 4. Gestão de assets
 
@@ -73,29 +79,29 @@
 
 ## 5. Sistema de ícones
 
-- Implementado em [`src/view/components/Icon.tsx`](../src/view/components/Icon.tsx) e
-  [`AppIcon.tsx`](../src/view/components/AppIcon.tsx), usando `expo-symbols` (`SymbolView`).
-- **Mapa por plataforma, não arquivo SVG solto:** cada ícone é uma entrada
-  `{ ios: "sf-symbol-name", android: "material-symbol-name", web: "material-symbol-name" }`
-  (ver `ADR 0005` e `ADR 0009`). SF Symbols no iOS, Material Symbols no Android/Web.
+- Implementado em [`src/view/components/AppIcon.tsx`](../src/view/components/AppIcon.tsx) e
+  [`FluentIcon.tsx`](../src/view/components/FluentIcon.tsx), usando `expo-symbols` (`SymbolView`)
+  no iOS e ícones Material/Fluent no Android e na Web.
+- **Mapa por plataforma, não arquivo SVG solto:** cada ícone é mapeado centralmente em `AppIcon.tsx`
+  com resolução para iOS (SF Symbols), Android (Material Symbols) e Web (Fluent / Material, ver
+  ADR 0014).
 - **Convenção de nome:** chave em `camelCase` no mapa (`chevronRight`, `checkCircle`,
   `unarchive`...) descrevendo a função do ícone, não a forma visual.
 - Ao trazer um ícone novo do Figma: não exportar o SVG do Figma como arquivo — adicionar uma
-  nova entrada no mapa de `Icon.tsx`/`AppIcon.tsx` com o nome SF Symbol e Material Symbol
-  equivalentes. Se não houver equivalente em uma das plataformas, registrar a lacuna em vez de
-  inventar um nome.
+  nova entrada no mapa de `AppIcon.tsx` com os equivalentes por plataforma. Se não houver
+  equivalente em uma das plataformas, registrar a lacuna em vez de inventar um nome.
 
 ## 6. Abordagem de estilização
 
 - **Metodologia:** `StyleSheet.create` por componente (React Native nativo), sem metodologia
   CSS de web (não é BEM, não é CSS Modules, não é utility-first).
-- **Estilos globais:** não há folha de estilo global — cada componente é autocontido; valores
-  compartilhados vêm só de `tokens.ts`.
-- **Responsivo:** Android e Web compartilham os mesmos componentes RN; não há breakpoints CSS.
-  Ajuste de layout entre celular/tablet/desktop é feito com `Dimensions`/flexbox dentro do
-  próprio componente quando necessário, não com media queries.
-- **Tema:** só tema claro implementado (ver ADR 0008 — dark mode fora de escopo nesta etapa,
-  mesmo que os valores de dark já existam em `design-system/tokens.json`).
+- **Estilos globais:** não há folha de estilo global de componentes; valores compartilhados vêm de
+  `tokens.ts` e o tema é resolvido via `useTheme()` (`ThemeProvider`). Regras pontuais de CSS
+  global do PWA/Web (como scrollbar, foco e safe-areas do Safari) ficam em `src/app/+html.tsx`.
+- **Responsivo:** Android e Web compartilham os mesmos componentes RN; ajustes de layout para
+  desktop/telas largas utilizam `useIsWideWeb()` / `useWindowDimensions()` dentro do componente.
+- **Tema:** temas **claro e escuro** implementados com tokens semânticos em `tokens.ts` (`colors` e
+  `darkColors`) e `ThemeProvider` (ADR 0036).
 
 ## 7. Estrutura do projeto
 
@@ -121,7 +127,7 @@ src/
 design-system/    # fonte canônica de design (markdown + tokens.json), fora de src/
 docs/adr/         # decisões arquiteturais (consultar antes de mudanças estruturais)
 specs/            # especificações por funcionalidade (Spec Kit)
-tests/            # testes (Vitest), espelhando a estrutura de src/
+tests/            # testes automatizados (Jest) e suíte E2E Web CDP (tests/e2e/)
 ```
 
 - **Padrão de organização:** por camada MVVM primeiro (`view`/`viewmodel`/`usecase`/`model`/
@@ -136,7 +142,7 @@ tests/            # testes (Vitest), espelhando a estrutura de src/
 2. Para cada peça visual, achar o componente equivalente em `design-system/04-componentes/` e
    usar o `.tsx` já existente em `src/view/components/` — não recriar com markup bruto.
 3. Resolver toda cor/espaço/raio para `tokens.ts` — nunca literal.
-4. Resolver todo ícone para o mapa de `Icon.tsx`/`AppIcon.tsx` — nunca SVG solto.
+4. Resolver todo ícone para o mapa de `AppIcon.tsx` — nunca SVG solto.
 5. Colocar a tela na pasta de domínio correta em `src/app/` e `src/view/<dominio>/`.
 6. Rodar `npm run check:architecture` e os testes relevantes antes de considerar concluído.
 7. Se a tela do Figma usar um componente, token ou ícone que não existe ainda no código,

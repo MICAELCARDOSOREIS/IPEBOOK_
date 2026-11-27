@@ -1,27 +1,31 @@
 import { useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { Meeting } from "@/model/entities/meeting";
-import { makeAuthViewModel, makeUserMeetingsViewModel } from "@/di/container";
+import { makeAuthViewModel, makeNetworkStatus, makeUserMeetingsViewModel } from "@/di/container";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type MeetingHistoryProps = {
+  focusKey?: number;
   onBack?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
 };
 
-export default function MeetingHistory({ onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
+export default function MeetingHistory({ focusKey, onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
   const { colors } = useTheme();
@@ -31,6 +35,10 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
   const [state, actions] = makeUserMeetingsViewModel(userId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
+  const { isOnline } = makeNetworkStatus();
 
   function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {
     if (meeting.status === "cancelled") {
@@ -44,8 +52,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!authState.loading && !state.loading && !state.error && state.meetings.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             {onBack ? (
@@ -63,21 +70,25 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
                 Histórico de encontros
               </Text>
               <Text style={styles.wideSubtitle}>
-                Encontros nos 4 pontos seguros de Piripiri
+                Encontros nos 4 pontos recomendados de Piripiri
               </Text>
             </View>
           </View>
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Histórico de encontros" onBack={guardedBack} />
-      )}
-      {state.loading ? (
+      )}>
+      {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando encontros…" />
         </View>
       ) : state.error ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
         </View>
       ) : state.meetings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
@@ -85,12 +96,17 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
             <AppIcon name="calendar" size={48} color={colors.m3.onSurfaceVariant} />
             <Text style={styles.emptyTitle}>Nenhum encontro registrado</Text>
             <Text style={styles.emptyText}>
-              Quando você aceitar ou propor trocas, os encontros nos 4 pontos seguros de Piripiri aparecerão aqui.
+              Quando você aceitar ou propor trocas, os encontros nos 4 pontos recomendados de Piripiri aparecerão aqui.
             </Text>
+            {onBack ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Voltar ao perfil" onPress={guardedBack} style={withPress(styles.emptyAction)}>
+                <Text style={styles.emptyActionText}>Voltar ao perfil</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-meetings-2" : "list-meetings-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -166,7 +182,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
           }}
         />
       )}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -193,11 +209,11 @@ function createStyles(colors: ColorPalette) {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     wideTitle: {
       ...tokens.typography.brandLargeTitle,
@@ -224,7 +240,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[40],
       maxWidth: 640,
       width: "100%",
@@ -244,6 +260,16 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
       maxWidth: 400,
     },
+    emptyAction: {
+      marginTop: tokens.spacing[8],
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[24],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+    },
+    emptyActionText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
     list: {
       gap: tokens.spacing[12],
     },
@@ -261,9 +287,10 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[16],
       gap: tokens.spacing[8],
+      ...iosNeutralCardStyle(colors),
     },
     cardHeader: {
       flexDirection: "row",

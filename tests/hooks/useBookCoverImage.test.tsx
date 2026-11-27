@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BookCoverCache } from "@/viewmodel/bookCoverCache";
 import {
   type UseBookCoverImageOptions,
@@ -57,13 +56,13 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
   let testCache: BookCoverCache;
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     testCache = new BookCoverCache(50);
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
-    vi.useRealTimers();
+    jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   it("retorna idle quando url não é fornecida", () => {
@@ -151,7 +150,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Avança o tempo de backoff da 1ª tentativa (500ms)
     act(() => {
-      vi.advanceTimersByTime(500);
+      jest.advanceTimersByTime(500);
     });
 
     // 2ª falha via onError
@@ -164,7 +163,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Avança o tempo de backoff da 2ª tentativa (1000ms)
     act(() => {
-      vi.advanceTimersByTime(1000);
+      jest.advanceTimersByTime(1000);
     });
 
     // 3ª falha (esgota maxRetries de 2)
@@ -190,7 +189,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Expira o timeout inicial de 3000ms
     act(() => {
-      vi.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(3000);
     });
 
     expect(probe.current.retryCount).toBe(1);
@@ -198,12 +197,12 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Avança o backoff (400ms)
     act(() => {
-      vi.advanceTimersByTime(400);
+      jest.advanceTimersByTime(400);
     });
 
     // Expira o timeout da nova tentativa (3000ms)
     act(() => {
-      vi.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(3000);
     });
 
     // Como maxRetries era 1, agora falhou definitivamente
@@ -227,7 +226,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
     expect(probe.current.retryCount).toBe(1);
 
     act(() => {
-      vi.advanceTimersByTime(200);
+      jest.advanceTimersByTime(200);
     });
 
     // Agora responde com sucesso na 2ª tentativa
@@ -261,7 +260,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Dispara timeout do reload
     act(() => {
-      vi.advanceTimersByTime(1000);
+      jest.advanceTimersByTime(1000);
     });
     expect(probe.current.retryCount).toBe(1);
   });
@@ -319,7 +318,7 @@ describe("useBookCoverImage (Spec 040, ADR 0034)", () => {
 
     // Avançar tempo não deve causar efeito colateral nem exceção
     expect(() => {
-      vi.advanceTimersByTime(10000);
+      jest.advanceTimersByTime(10000);
     }).not.toThrow();
   });
 });

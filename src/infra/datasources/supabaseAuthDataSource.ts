@@ -6,6 +6,7 @@ import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/mode
 import { MIN_PASSWORD_LENGTH } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
+import type { IWebPushService } from "@/model/services/iWebPushService";
 
 /** Mensagens e limites de tempo para proteção contra requisições travadas sem internet. */
 export const AUTH_NETWORK_ERROR_MESSAGE = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
@@ -134,6 +135,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     private readonly client: SupabaseAppClient,
     private readonly recoveryRedirectUrl: string,
     private readonly nativeGoogle?: INativeGoogleSignIn,
+    private readonly webPush?: IWebPushService,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -253,10 +255,10 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : "http://localhost:8081";
       const { data, error } = await authClient.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${origin}/auth/callback` },
+        options: { redirectTo: `${origin}/auth/callback`, skipBrowserRedirect: true },
       });
-      if (error) throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
-      if (data?.url && typeof window !== "undefined") window.location.href = data.url;
+      if (error || !data?.url) throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
+      if (typeof window !== "undefined") window.location.href = data.url;
       const current = await this.currentUser();
       return current ?? { id: "pending", email: "", name: "Usuário Google" };
     }
@@ -302,6 +304,41 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     return { id: data.user.id, email: data.user.email ?? "", name: readFullName(data.user) };
   }
 
+  async signInWithApple(): Promise<User | null> {
+    if (Platform.OS !== "ios") throw new AuthError("Login com a Apple indisponível.");
+    const [apple, crypto] = await Promise.all([import("expo-apple-authentication"), import("expo-crypto")]);
+    const nonce = crypto.randomUUID();
+    const hashedNonce = await crypto.digestStringAsync(crypto.CryptoDigestAlgorithm.SHA256, nonce);
+    try {
+      const credential = await apple.signInAsync({
+        nonce: hashedNonce,
+        requestedScopes: [apple.AppleAuthenticationScope.FULL_NAME, apple.AppleAuthenticationScope.EMAIL],
+      });
+      if (!credential.identityToken) throw new AuthError("A Apple não enviou uma credencial válida.");
+      const { data, error } = await withAuthTimeout(this.client.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce,
+      }));
+      if (error || !data.user) {
+        if (isNetworkError(error)) throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+        throw new AuthError("Não foi possível autenticar com a Apple. Tente novamente.");
+      }
+
+      const name = [credential.fullName?.givenName, credential.fullName?.familyName].filter(Boolean).join(" ").trim();
+      if (name && !readFullName(data.user)) {
+        // A Apple só entrega o nome na primeira autorização. A sessão já é válida mesmo se a atualização falhar.
+        await withAuthTimeout(this.client.auth.updateUser({ data: { full_name: name } })).catch(() => undefined);
+      }
+      return { id: data.user.id, email: data.user.email ?? "", name: readFullName(data.user) ?? (name || undefined) };
+    } catch (error) {
+      if (typeof error === "object" && error && "code" in error && error.code === "ERR_REQUEST_CANCELED") return null;
+      if (error instanceof AuthError) throw error;
+      if (isNetworkError(error)) throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+      throw new AuthError("Não foi possível autenticar com a Apple. Tente novamente.");
+    }
+  }
+
   async setSessionFromUrl(url: string): Promise<User> {
     try {
       const parsed = new URL(url);
@@ -312,13 +349,23 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
 
+      // O provedor também devolve a recusa sem credenciais (ex.: `#error=access_denied&error_code=otp_expired`).
+      const providerError = hash.get("error") ?? query.get("error") ?? hash.get("error_code") ?? query.get("error_code");
+      if (providerError) {
+        const expired = [hash, query].some((params) =>
+          `${params.get("error_code") ?? ""} ${params.get("error_description") ?? ""}`.toLowerCase().includes("expired"),
+        );
+        if (expired) throw new ExpiredLinkError("O link de acesso expirou ou já foi usado. Solicite um novo.");
+        throw new AuthError("Não foi possível concluir o login com o provedor. Tente novamente.");
+      }
+
       if (code) {
         const { data, error } = await this.client.auth.exchangeCodeForSession(code);
         if (error || !data.user?.email) throw new AuthError("Falha ao autenticar com o código recebido.");
         return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
       }
 
-      if (accessToken && refreshToken) {
+      if (Platform.OS !== "web" && accessToken && refreshToken) {
         // Um link montado por terceiros não pode trocar a conta de quem já está logado (login forçado).
         const { data: atual } = await this.client.auth.getSession();
         const usuarioAtual = atual.session?.user?.id;
@@ -341,6 +388,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async signOut(): Promise<void> {
+    if (Platform.OS === "web" && this.webPush) {
+      await withAuthTimeout(this.webPush.disable(), 2000).catch(() => undefined);
+    }
     const { error } = await this.client.auth.signOut();
     if (error) throw new AuthError("Não foi possível sair. Tente novamente.");
     await this.nativeGoogle?.signOut();
@@ -413,6 +463,15 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async deleteAccount(userId: string): Promise<void> {
+    // Spec 143 / A3: impede apagar fotos no Storage quando a conta está suspensa (antes da recusa da RPC).
+    const { data: isSuspended, error: suspendedError } = await this.client.rpc("v2_current_user_suspended");
+    if (suspendedError) {
+      throw new AuthError("Não foi possível verificar o estado da conta antes da exclusão.");
+    }
+    if (isSuspended === true) {
+      throw new AuthError("Conta suspensa não pode ser excluída pelo app. Escreva para ipebook738@gmail.com.");
+    }
+
     // O banco não apaga arquivos do storage; sem isto as fotos seguiriam públicas após a exclusão.
     await this.removeUserPhotos(userId);
     const { error } = await this.client.rpc("delete_user_account", { target_user_id: userId });
@@ -422,28 +481,35 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     await this.client.auth.signOut();
   }
 
-  /** Remove todos os objetos da pasta `<userId>/` antes de concluir a exclusão da conta. */
+  /** Remove todos os objetos da pasta `<userId>/` paginando `bucket.list` até esgotar as páginas. */
   private async removeUserPhotos(userId: string): Promise<void> {
+    const PAGE_SIZE = 100;
     const bucket = this.client.storage.from(BUCKET_NAME);
     const paths: string[] = [];
     const directories = [userId];
     while (directories.length > 0) {
       const directory = directories.shift();
       if (!directory) break;
-      const { data, error } = await bucket.list(directory, { limit: 1000, offset: 0 });
-      if (error) throw new AuthError("Não foi possível preparar a exclusão das fotos.");
-      for (const item of data ?? []) {
-        const path = `${directory}/${item.name}`;
-        if (item.id) {
-          paths.push(path);
-        } else {
-          directories.push(path);
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data, error } = await bucket.list(directory, { limit: PAGE_SIZE, offset });
+        if (error) throw new AuthError("Não foi possível preparar a exclusão das fotos.");
+        const batch = data ?? [];
+        for (const item of batch) {
+          const path = `${directory}/${item.name}`;
+          if (item.id) {
+            paths.push(path);
+          } else {
+            directories.push(path);
+          }
         }
+        if (batch.length < PAGE_SIZE) break;
       }
     }
     if (paths.length === 0) return;
-    const { error } = await bucket.remove(paths);
-    if (error) throw new AuthError("Não foi possível excluir as fotos da conta.");
+    for (let i = 0; i < paths.length; i += PAGE_SIZE) {
+      const { error } = await bucket.remove(paths.slice(i, i + PAGE_SIZE));
+      if (error) throw new AuthError("Não foi possível excluir as fotos da conta.");
+    }
   }
 }
 

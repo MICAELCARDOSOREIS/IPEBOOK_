@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
 import {
   addMeetingToCalendar,
@@ -6,14 +5,14 @@ import {
   formatToGoogleCalendarDate,
 } from "@/view/calendarIntegration";
 
-vi.mock("expo-linking", () => ({
-  canOpenURL: vi.fn(),
-  openURL: vi.fn(),
+jest.mock("expo-linking", () => ({
+  canOpenURL: jest.fn(),
+  openURL: jest.fn(),
 }));
 
 describe("calendarIntegration", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it("formata data para padrão UTC do Google Calendar", () => {
@@ -40,7 +39,7 @@ describe("calendarIntegration", () => {
   });
 
   it("adiciona evento abrindo link externo via Linking", async () => {
-    vi.mocked(Linking.openURL).mockResolvedValue(undefined as never);
+    jest.mocked(Linking.openURL).mockResolvedValue(undefined as never);
 
     const success = await addMeetingToCalendar({
       title: "Encontro IpêBook",
@@ -52,7 +51,7 @@ describe("calendarIntegration", () => {
   });
 
   it("trata falha ao abrir link retornando false", async () => {
-    vi.mocked(Linking.openURL).mockRejectedValue(new Error("falha"));
+    jest.mocked(Linking.openURL).mockRejectedValue(new Error("falha"));
 
     const success = await addMeetingToCalendar({
       title: "Encontro IpêBook",

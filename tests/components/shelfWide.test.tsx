@@ -1,23 +1,22 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsActions, MyListingsState } from "@/viewmodel/useMyListingsViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({ useMyListingsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({ useMyListingsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: () => [{ user: { id: "u1" }, loading: false }, {}],
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
-vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
-  useReceivedRequestsViewModel: () => [{ items: [], loading: false, error: null }, { reload: vi.fn() }],
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
+  useReceivedRequestsViewModel: () => [{ items: [], loading: false, error: null }, { reload: jest.fn() }],
 }));
 
 import { MyListings } from "@/view/listings/myListings";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 
-const mockedUseMyListings = vi.mocked(useMyListingsViewModel);
+const mockedUseMyListings = jest.mocked(useMyListingsViewModel);
 
 const sampleBook: Book = {
   id: "b1",
@@ -40,13 +39,13 @@ describe("Estante na Web Larga (Spec 093 · Figma 05.01)", () => {
       pauseError: null,
     };
     const mockActions: MyListingsActions = {
-      reload: vi.fn(),
-      cancelListing: vi.fn(),
-      togglePauseListing: vi.fn(),
+      reload: jest.fn(),
+      cancelListing: jest.fn(),
+      togglePauseListing: jest.fn(),
     };
     mockedUseMyListings.mockReturnValue([mockState, mockActions]);
 
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToCreateListing = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -87,14 +86,14 @@ describe("Estante na Web Larga (Spec 093 · Figma 05.01)", () => {
       pauseError: null,
     };
     const mockActions: MyListingsActions = {
-      reload: vi.fn(),
-      cancelListing: vi.fn(),
-      togglePauseListing: vi.fn(),
+      reload: jest.fn(),
+      cancelListing: jest.fn(),
+      togglePauseListing: jest.fn(),
     };
     mockedUseMyListings.mockReturnValue([mockState, mockActions]);
 
-    const onNavigateToManageListing = vi.fn();
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToManageListing = jest.fn();
+    const onNavigateToCreateListing = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { validateListingBasics } from "@/viewmodel/listingBasicsValidation";
 
 describe("validateListingBasics (etapa 1 do anúncio)", () => {

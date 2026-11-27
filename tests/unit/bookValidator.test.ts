@@ -1,7 +1,4 @@
-import { describe, expect, it } from "vitest";
 import {
-  formatBookDisplay,
-  sanitizeBookInput,
   validateBookPayload,
   validateDraftPayload,
 } from "@/model/validators/bookValidator";
@@ -191,8 +188,8 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       expect(result.errors).toHaveLength(0);
     });
 
-    it("rejeita URL de foto de capa que não seja HTTP/HTTPS", () => {
-      const result = validateBookPayload({
+    it("rejeita URL de foto de capa e galeria que não seja HTTPS (Spec 143 / M7)", () => {
+      const ftpResult = validateBookPayload({
         id: "book-photo-bad",
         title: "Livro com URL Ruim",
         author: "Autor",
@@ -200,8 +197,21 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         modality: "donation",
         photoUrl: "ftp://servidor/arquivo.png",
       });
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+      expect(ftpResult.isValid).toBe(false);
+      expect(ftpResult.errors).toContain("URL da foto de capa deve ser um endereço HTTPS válido.");
+
+      const httpResult = validateBookPayload({
+        id: "book-photo-http",
+        title: "Livro com HTTP",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        photoUrl: "http://inseguro.example/capa.jpg",
+        photos: ["https://seguro.example/1.jpg", "http://inseguro.example/2.jpg"],
+      });
+      expect(httpResult.isValid).toBe(false);
+      expect(httpResult.errors).toContain("URL da foto de capa deve ser um endereço HTTPS válido.");
+      expect(httpResult.errors).toContain("Cada foto da galeria deve ser um endereço HTTPS válido.");
     });
 
     it("rejeita galeria com mais de 5 fotos", () => {
@@ -222,46 +232,6 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       });
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain("O anúncio pode conter no máximo 5 fotos.");
-    });
-  });
-
-  describe("sanitizeBookInput", () => {
-    it("remove espaços em branco nas extremidades dos campos", () => {
-      const sanitized = sanitizeBookInput({
-        id: "  123  ",
-        title: "  O Guarani  ",
-        author: "  José de Alencar  ",
-      });
-
-      expect(sanitized).toEqual({
-        id: "123",
-        title: "O Guarani",
-        author: "José de Alencar",
-      });
-    });
-
-    it("preserva campos indefinidos sem quebrar", () => {
-      const sanitized = sanitizeBookInput({});
-      expect(sanitized).toEqual({
-        id: undefined,
-        title: undefined,
-        author: undefined,
-      });
-    });
-  });
-
-  describe("formatBookDisplay", () => {
-    it("formata título e autor no padrão visual estabelecido", () => {
-      const formatted = formatBookDisplay({
-        title: "Vidas Secas",
-        author: "Graciliano Ramos",
-      });
-      expect(formatted).toBe("Vidas Secas — Graciliano Ramos");
-    });
-
-    it("substitui valores ausentes por texto padrão seguro", () => {
-      expect(formatBookDisplay({ title: "", author: "" })).toBe("Sem título — Autor desconhecido");
-      expect(formatBookDisplay({ title: "   ", author: "   " })).toBe("Sem título — Autor desconhecido");
     });
   });
 });
@@ -299,13 +269,6 @@ describe("Spec 030 — conservação e descrição", () => {
   it("aceita conservação e descrição ausentes ou nulas", () => {
     expect(validateBookPayload({ ...base, condition: null, description: null }).isValid).toBe(true);
     expect(validateBookPayload(base).isValid).toBe(true);
-  });
-
-  it("limpa espaços da descrição e preserva a conservação ao sanitizar", () => {
-    const sanitized = sanitizeBookInput({ ...base, condition: "good", description: "  Marcas leves  " });
-    expect(sanitized.condition).toBe("good");
-    expect(sanitized.description).toBe("Marcas leves");
-    expect(sanitizeBookInput({ ...base, description: "   " }).description).toBeUndefined();
   });
 });
 
@@ -388,24 +351,6 @@ describe("Spec 112 — suporte a box e coleções de livros", () => {
     expect(texto.errors).toContain(
       "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
     );
-  });
-
-  it("sanitiza campos de box corretamente", () => {
-    const sanitizado = sanitizeBookInput({
-      ...base,
-      isBox: true,
-      boxVolumesCount: 4,
-    });
-    expect(sanitizado.isBox).toBe(true);
-    expect(sanitizado.boxVolumesCount).toBe(4);
-
-    const invalido = sanitizeBookInput({
-      ...base,
-      isBox: false,
-      boxVolumesCount: 3.14,
-    });
-    expect(invalido.isBox).toBe(false);
-    expect(invalido.boxVolumesCount).toBeUndefined();
   });
 
   it("valida volumes em rascunhos com tolerância e regras de integridade (validateDraftPayload)", () => {

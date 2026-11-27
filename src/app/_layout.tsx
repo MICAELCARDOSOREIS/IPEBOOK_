@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Stack, usePathname, type ErrorBoundaryProps, type Href } from "expo-router";
 import { AppErrorFallback, startErrorReporting } from "@/view/components/AppErrorFallback";
 import { pushOnce, replaceOnce } from "@/view/pushOnce";
-import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import { Platform } from "react-native";
+import { AccessibilityInfo, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
@@ -21,6 +20,14 @@ import { PushRegistration } from "@/view/components/PushRegistration";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { AppUpdateGate } from "@/view/components/AppUpdateGate";
 import { ConnectionStatusBanner } from "@/view/components/ConnectionStatusBanner";
+import { getStackScreenOptions } from "@/view/stackScreenOptions";
+import {
+  type MainDockTab,
+  mainTabsScrollProgress,
+  selectMainTab,
+  triggerMainTabScrollToTop,
+  useMainTabsState,
+} from "@/view/mainTabsState";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -28,8 +35,12 @@ const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
   "/pesquisa": "search",
   "/meus-anuncios": "shelf",
   "/meus-pedidos": "conversations",
+  "/conversas": "conversations",
   "/perfil": "profile",
 };
+
+/** Destinos que exibem o dock flutuante de 3 abas no mobile (ADR 0011). */
+const DOCK_DESTINATIONS = new Set<NavigationDestination>(["home", "search", "shelf"]);
 
 /** Telas de acesso e boas-vindas têm o próprio topo (painel da marca), sem o cabeçalho do app. */
 const AUTH_ROUTES = new Set(["/bem-vindo", "/sobre", "/entrar", "/criar-conta", "/esqueci-senha", "/redefinir-senha", "/auth/callback", "/beta"]);
@@ -42,22 +53,36 @@ const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   profile: "/perfil" as Href,
 };
 
-/** Ícones da barra de status seguem o tema do app (preferência da pessoa), não só o do sistema. */
+/** Ícones da barra de status sempre escuros sobre a superfície clara editorial (ADR 0114). */
 function ThemedStatusBar() {
-  const { resolvedScheme } = useTheme();
-  return <StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />;
+  return <StatusBar style="dark" />;
 }
 
 function ThemedStack() {
   const { colors } = useTheme();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
+      .then((enabled) => {
+        if (active) setReduceMotion(Boolean(enabled));
+      })
+      .catch(() => {});
+    const sub = AccessibilityInfo?.addEventListener?.("reduceMotionChanged", (enabled) => {
+      setReduceMotion(Boolean(enabled));
+    });
+    return () => {
+      active = false;
+      sub?.remove?.();
+    };
+  }, []);
+
   return (
     <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: colors.surface },
-        animation: "fade",
-        animationDuration: 180,
-      }}
+      screenOptions={({ route }) =>
+        getStackScreenOptions(route?.name, colors.surface, reduceMotion)
+      }
     />
   );
 }
@@ -73,22 +98,27 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 export default function RootLayout() {
   const [fontsLoaded] = useIpebookFonts();
   const pathname = usePathname();
-  const activeDestination = ROOT_DESTINATIONS[pathname];
+  const mainTabs = useMainTabsState();
+  const isNativePagerActive = Platform.OS !== "web" && pathname === "/" && mainTabs.pagerMounted;
+  const activeDestination = isNativePagerActive ? mainTabs.activeTab : ROOT_DESTINATIONS[pathname];
   const wideWeb = useIsWideWeb();
   const navigateTo = (destination: NavigationDestination) => {
+    if (Platform.OS !== "web" && DOCK_DESTINATIONS.has(destination)) {
+      const targetTab = destination as MainDockTab;
+      if (pathname === "/" && mainTabs.pagerMounted) {
+        selectMainTab(targetTab, true);
+        return;
+      }
+    }
     const targetRoute = DESTINATION_ROUTES[destination];
     // Previne navegação duplicada e substitui a rota de topo sem empilhar histórico desnecessário entre abas
     if (pathname !== targetRoute) replaceOnce(targetRoute);
   };
-
-  // Trava o app em retrato em runtime (a app.json já trava em builds nativos; isto é a rede de
-  // segurança em Expo Go/dev). Web fica livre — lá o conteúdo é centralizado com maxWidth.
-  useEffect(() => {
-    if (Platform.OS === "web") return;
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {
-      /* dispositivo/emulador sem suporte à trava: ignora silenciosamente */
-    });
-  }, []);
+  const handleReselectActive = (destination: NavigationDestination) => {
+    if (DOCK_DESTINATIONS.has(destination)) {
+      triggerMainTabScrollToTop(destination as MainDockTab);
+    }
+  };
 
   // Oculta o botão flutuante de ferramentas de desenvolvimento (FAB Tools) do expo-dev-client
   // para evitar sobreposição nos cabeçalhos e botões da interface.
@@ -125,19 +155,30 @@ export default function RootLayout() {
         <PwaRegister />
         <PushRegistration pathname={pathname} onOpenRoute={(route) => pushOnce(route as never)} />
         <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
-          <KeyboardAwareRoot>
+          <KeyboardAwareRoot disabled={Platform.OS === "ios" && Boolean(activeDestination && DOCK_DESTINATIONS.has(activeDestination))}>
             {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (
               <ConnectedWebHeader
                 active={activeDestination}
                 pathname={pathname}
                 onNavigate={navigateTo}
+                onSearch={(term) => pushOnce({ pathname: "/pesquisa", params: { q: term } })}
                 onAnnounce={() => pushOnce("/anunciar")}
                 onOpenNotifications={() => pushOnce("/notificacoes")}
               />
             ) : null}
-            <ThemedStack />
-            {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
-              <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
+            {Platform.OS === "web" ? (
+              <View role="main" style={styles.main}>
+                <ThemedStack />
+              </View>
+            ) : <ThemedStack />}
+            {Platform.OS !== "ios" && activeDestination && DOCK_DESTINATIONS.has(activeDestination) && !wideWeb && !WEB_BETA_ONLY ? (
+              <ConnectedNavigationBar
+                active={activeDestination}
+                pathname={pathname}
+                onNavigate={navigateTo}
+                onReselectActive={handleReselectActive}
+                scrollProgress={isNativePagerActive ? mainTabsScrollProgress : undefined}
+              />
             ) : null}
           </KeyboardAwareRoot>
         </InitialRouteGate>
@@ -147,3 +188,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({ main: { flex: 1, minHeight: 0 } });

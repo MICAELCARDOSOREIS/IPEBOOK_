@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -13,7 +13,7 @@ import {
   type SearchSortOption,
 } from "@/viewmodel/searchFilters";
 
-import { withPress } from "@/view/pressFeedback";
+import { webCheckableProps, withPress } from "@/view/pressFeedback";
 export type WebFilterSidebarProps = {
   filters: SearchFilters;
   categories: readonly string[];
@@ -51,22 +51,41 @@ export function WebFilterSidebar({
 
   return (
     <View accessibilityLabel="Filtros" testID="web-filter-sidebar" style={styles.panel}>
-      {/* Rola por conta própria: em janelas baixas a coluna não cabe inteira ao lado dos resultados. */}
-      <ScrollView contentContainerStyle={styles.panelContent} keyboardShouldPersistTaps="handled">
-      <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
+      {/* Rola por conta própria e fica visível ao rolar os resultados na web. */}
+      <ScrollView
+        style={styles.panelScroll}
+        contentContainerStyle={styles.panelContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+      <View style={styles.headerRow}>
+        <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
+        {hasActiveFilters ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpar todos os filtros de busca"
+            onPress={onClear}
+            style={withPress(styles.clearButton)}
+          >
+            <Text style={styles.clear}>Limpar</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <View style={styles.group}>
         <Text style={styles.groupLabel}>Modalidade</Text>
         <View style={styles.chips}>
           {MODALITIES.map((item) => {
             const selected = filters.modality === item.value;
+            const toggle = () => onModality(selected ? "all" : item.value);
             return (
               <Pressable
                 key={item.value}
-                accessibilityRole="button"
+                accessibilityRole="checkbox"
                 accessibilityLabel={`Filtrar por ${item.label}`}
-                accessibilityState={{ selected }}
-                onPress={() => onModality(selected ? "all" : item.value)}
+                accessibilityState={{ checked: selected }}
+                {...webCheckableProps(selected, toggle)}
+                onPress={toggle}
                 style={withPress([styles.chip, selected && styles.chipSelected])}
               >
                 {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
@@ -124,6 +143,7 @@ export function WebFilterSidebar({
                   accessibilityRole="radio"
                   accessibilityLabel={`Ordenar por ${SORT_LABELS[opt]}`}
                   accessibilityState={{ selected }}
+                  aria-checked={selected}
                   onPress={() => onSortChange(opt)}
                   style={withPress([styles.chip, selected && styles.chipSelected])}
                 >
@@ -136,11 +156,6 @@ export function WebFilterSidebar({
         </View>
       ) : null}
 
-      {hasActiveFilters ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Limpar todos os filtros de busca" onPress={onClear}>
-          <Text style={styles.clear}>Limpar filtros</Text>
-        </Pressable>
-      ) : null}
       </ScrollView>
     </View>
   );
@@ -154,6 +169,7 @@ function CheckRow({ label, checked, onPress }: { label: string; checked: boolean
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked }}
+      {...webCheckableProps(checked, onPress)}
       onPress={onPress}
       style={withPress(styles.checkRow)}
     >
@@ -168,50 +184,99 @@ function CheckRow({ label, checked, onPress }: { label: string; checked: boolean
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     panel: {
-      width: 280,
+      width: 272,
       maxHeight: "100%",
       overflow: "hidden",
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
       alignSelf: "flex-start",
+      ...(Platform.OS === "web"
+        ? ({
+            position: "sticky",
+            top: tokens.spacing[24],
+            maxHeight: "calc(100vh - 96px)",
+          } as never)
+        : {}),
     },
-    panelContent: { gap: tokens.spacing[24], padding: tokens.spacing[24] },
-    title: { ...tokens.typography.titleBlock, color: colors.m3.onSurface },
-    group: { gap: tokens.spacing[4] },
-    groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: tokens.spacing[6] },
-    chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    chip: {
+    panelScroll: {
+      ...(Platform.OS === "web" ? ({ overscrollBehavior: "contain", scrollbarWidth: "none" } as never) : {}),
+    },
+    panelContent: { gap: tokens.spacing[12], padding: tokens.spacing[18] },
+    headerRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[6],
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
+    title: { ...tokens.typography.brandCardTitle, color: colors.brandBrown },
+    group: {
+      gap: tokens.spacing[4],
+      paddingTop: tokens.spacing[10],
+      borderTopWidth: 1,
+      borderTopColor: colors.book.paperEdge,
+    },
+    groupLabel: {
+      ...tokens.typography.labelMedium,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.brandBrown,
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
+      marginBottom: tokens.spacing[4],
+    },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[6] },
+    chip: {
+      flex: 1,
+      minWidth: 68,
+      justifyContent: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
       height: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[8],
       borderRadius: tokens.shapeMorph.chipUnselected,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.book.paperEdge,
+      backgroundColor: colors.surface,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     chipSelected: {
       backgroundColor: colors.nature.foliage,
       borderColor: colors.nature.foliage,
       borderRadius: tokens.shapeMorph.chipSelected,
-      borderWidth: 0,
-      paddingLeft: tokens.spacing[8],
+      borderWidth: 1,
+      paddingHorizontal: tokens.spacing[8],
     },
-    chipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    chipText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     chipTextSelected: { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
-    checkRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], minHeight: 40 },
+    checkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      minHeight: 28,
+      paddingVertical: 2,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     box: {
       width: 18,
       height: 18,
       borderRadius: tokens.radius.extraSmall,
-      borderWidth: 2,
-      borderColor: colors.m3.onSurfaceVariant,
+      borderWidth: 1.5,
+      borderColor: colors.m3.outline,
+      backgroundColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
     },
     boxChecked: { backgroundColor: colors.m3.primary, borderColor: colors.m3.primary },
-    checkLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
+    checkLabel: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface, flexShrink: 1 },
+    clearButton: {
+      minHeight: 32,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     clear: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   });
 }

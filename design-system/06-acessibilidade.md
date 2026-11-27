@@ -1,13 +1,11 @@
 # Acessibilidade
 
 Razão de contraste = (L1 + 0,05) / (L2 + 0,05), com L1 a luminância relativa da cor mais clara e
-L2 a da mais escura (fórmula WCAG). Os seis pares abaixo foram recalculados manualmente e batem
-com os valores documentados em `tokens.json`. Os demais tokens de cor não foram auditados manualmente — só têm a razão declarada na origem
-(artefato do Figma).
+L2 a da mais escura (fórmula WCAG). A tabela reúne pares verificados na paleta editorial clara.
 
 ## Contraste dos pares de cor
 
-| Par (texto sobre fundo) | Cores | Razão | Mínimo | Resultado |
+| Par de cores | Cores | Razão | Mínimo | Resultado |
 | --- | --- | --- | --- | --- |
 | `on-surface` sobre `surface` | `#1d1b18` sobre `#fcfaf5` | 16,47:1 | 4,5:1 | Aprovado |
 | `on-surface-variant` sobre `surface` | `#4d4740` sobre `#fcfaf5` | 8,79:1 | 4,5:1 | Aprovado |
@@ -15,6 +13,8 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
 | `focus-ring` sobre `surface` | `#4e8a68` sobre `#fcfaf5` | 3,90:1 | 3:1 (elemento gráfico/foco) | Aprovado |
 | `on-secondary-container` sobre `secondary-container` | `#132a17` sobre `#dce9dc` | 12,20:1 | 4,5:1 | Aprovado |
 | `on-doacao-container` sobre `doacao-container` | `#6e3a28` sobre `#f4ddd3` | 7,02:1 | 4,5:1 | Aprovado |
+| Borda da busca em repouso sobre `surface-container-low` | `#7e776f` sobre `#f7f3ec` | 3,99:1 | 3:1 | Aprovado |
+| Borda da busca em repouso sobre `surface` | `#7e776f` sobre `#fcfaf5` | 4,23:1 | 3:1 | Aprovado |
 
 ## Alvos de toque
 
@@ -34,9 +34,9 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
 
 ## Foco
 
-- Anel sólido em `colors.m3.focusRing`, por fora do componente, com a largura e a folga
-  definidas por `tokens.accessibility.focusWidth` e `tokens.accessibility.focusOffset` — nunca
-  removido, nem em botão nem em campo. A API atual usa 2 px de largura e 4 px de folga.
+- Na Web, a regra global de `:focus-visible` usa anel `colors.actionDeep` de 2 px com
+  folga de 2 px. A busca do cabeçalho aplica o foco visível no contêiner.
+  [Estilos globais](../src/app/+html.tsx).
 - Ordem de foco segue a ordem visual de leitura (topo → base, esquerda → direita).
 
 ## Leitor de tela
@@ -59,10 +59,50 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
 
 ## Texto ampliado e movimento
 
-- Nenhum componente usa altura fixa em elemento com texto: até 200% do tamanho de fonte do
-  sistema, listas e cartões crescem em vez de cortar o texto.
+- Em conteúdo, prefira altura mínima ou dimensionamento pelo texto. A ampliação até 200% deve
+  entrar nas verificações de layout. Barras fixas usam os limites de escala descritos abaixo,
+  e os chips têm alturas fixas que pedem verificação com fonte ampliada. O campo de busca
+  usa altura mínima.
 - Com "Remover animações" ativo no sistema, deslocamentos viram esmaecimento
   (`tokens.motion.duration.standard`), sem remover o feedback.
+
+## Acessibilidade no iOS (Apple HIG & Spec 137)
+
+As diretrizes do Apple Human Interface Guidelines (HIG) para acessibilidade no iPhone são atendidas
+de forma nativa e isolada (`Platform.OS === "ios"`), sem interferir nas regras de Material Design 3
+do Android ou Web:
+
+- **Alvos de toque Apple HIG:**
+  O HIG exige área interativa mínima de 44×44 pt. Os botões de navegação, fechar folha inferior e ações
+  rápidas no iOS adotam exatamente 44×44 pt (ex.: `TopAppBar.backButton`, `BottomSheet.closeButton`),
+  enquanto os botões primários e campos de texto mantêm 48 a 52 dp/pt, superando a exigência mínima.
+- **Reduzir Transparência (`UIAccessibilityIsReduceTransparencyEnabled`):**
+  Superfícies translúcidas Liquid Glass (`BottomSheet`, `NavigationBar`, `IosCardSurface` e `OutlinedButton`)
+  utilizam o hook `useReduceTransparency`. Quando o usuário ativa a redução de transparência nos Ajustes
+  do iOS, o efeito de desfoque translúcido ou preenchimento semitransparente é automaticamente substituído
+  por superfícies opacas sólidas em `colors.m3.surfaceContainer` ou `colors.background`, eliminando
+  interferência visual de fundos e garantindo contraste estrito. Os componentes `ScreenContainer` e
+  `TopAppBar` operam diretamente com fundo sólido, sem necessidade de translucidez.
+- **Dynamic Type (Tipografia Adaptável) e Escala Multiplataforma:**
+  Para suportar os tamanhos ampliados de acessibilidade (Accessibility Sizes AX1–AX5 no iOS e configurações de fonte no Android/Web) sem quebras críticas de layout:
+  - O uso defensivo de `maxFontSizeMultiplier` e `numberOfLines={1}` é multiplataforma (protegendo a interface no iOS, Android e Web), sendo o teto restritivo de 1.2x–1.3x reservado exclusivamente para barras e cabeçalhos fixos de navegação:
+    - Cabeçalhos fixos e barras superiores (`TopAppBar`, `BottomSheet`) aplicam `maxFontSizeMultiplier={1.3}`
+      com `numberOfLines={1}` e `accessibilityRole="header"`, permitindo que o leitor de tela (VoiceOver/TalkBack)
+      leia o título integralmente sem que o texto expulse os botões de ação ou sobreponha controles da barra.
+    - A barra inferior flutuante (`NavigationBar`) aplica `maxFontSizeMultiplier={1.2}` nos rótulos de abas
+      e badges para preservar a geometria da cápsula deslizante e o toque ergonômico.
+  - Áreas de conteúdo, cards e formulários não fixam altura vertical (`minHeight` ou livre) e crescem
+    dinamicamente para acomodar o texto em tamanhos maiores sem limitação artificial de escala.
+- **Leitor de Tela (VoiceOver):**
+  - Componentes com semântica de grupo declaram papéis formais (`accessibilityRole="tablist"` na barra
+    e `accessibilityRole="tab"` com `accessibilityState={{ selected }}` nos itens).
+  - Títulos de telas e seções declaram `accessibilityRole="header"`.
+  - Botões de fechar, voltar e limpar utilizam `accessibilityRole="button"` com rótulos descritivos
+    em português.
+- **Feedback Tátil Acessível (Haptics):**
+  Ações significativas (favoritar, aplicar filtros, tocar em botões principais e fechar folhas) disparam
+  micro-vibrações táteis (`triggerHaptic` com `selection`, `light` ou `success`) via `expo-haptics`,
+  oferecendo confirmação multissensorial independente da pista visual.
 
 ## Critérios da revisão visual iPhone e Web
 

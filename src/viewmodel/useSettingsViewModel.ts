@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
+import { clearBooksMemoryCaches } from "@/viewmodel/sessionCacheRegistry";
 
 export type SettingsState = {
   clearingCache: boolean;
@@ -38,6 +39,7 @@ export function useSettingsViewModel(
     setState((previous) => ({ ...previous, clearingCache: true, cacheError: null }));
     try {
       await useCases.clearBooksCache();
+      clearBooksMemoryCaches();
       setState((previous) => ({ ...previous, clearingCache: false, cacheCleared: true, cacheError: null }));
     } catch {
       setState((previous) => ({ ...previous, clearingCache: false, cacheCleared: false, cacheError: CLEAR_ERROR }));

@@ -22,25 +22,25 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 | `infra` | Implementar contratos com tecnologia concreta | [memoryBookDataSource.ts](../src/infra/datasources/memoryBookDataSource.ts) | Definir fluxo de tela |
 | `di` | Construir e conectar implementações | [container.ts](../src/di/container.ts) | Concentrar regras de negócio |
 
-`app/_layout.tsx` configura o Stack; `app/index.tsx` reexporta a View. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, download de arquivos, otimização de imagens e PWA).
+`app/_layout.tsx` configura o Stack e encapsula o `ThemeProvider`, `KeyboardAwareRoot`, `AppUpdateGate`, `PushRegistration` e `PwaRegister`; `app/index.tsx` liga a rota raiz às Views. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`, `IBookMetadataService`, `IPushNotificationService`, `IErrorReporter`, `IInAppUpdateService`, `IAppStoreLauncherService`, `IImagePickerService`, `IStoreReviewService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, `FileDownloadService`, `PwaService`, provedores de ISBN Open Library/Google Books/BrasilAPI/Crossref, `ExpoImagePickerService` com redução de imagem via `expo-image-manipulator`, `ExpoPushNotificationService`, `SentryErrorReporter`, `GooglePlayInAppUpdateService`, `ExpoStoreReviewService`, além dos equivalentes em memória para testes). `CachedBookDataSource` atua como decorator de cache offline em `AsyncStorage` sobre o catálogo.
 
 ## Fluxo da tela inicial
 
 ```mermaid
 flowchart TD
     R["app/index.tsx"] --> V["view/home.tsx"]
-    V --> VM["useHomeViewModel"]
+    V --> DI["di/container.ts (makeHomeViewModel)"]
+    DI --> VM["useHomeViewModel"]
     VM --> UC["IBookUseCases / BookUseCases"]
     UC --> DS["IBookDataSource"]
     MEM["MemoryBookDataSource"] -. implementa .-> DS
-    DI["di/container.ts"] -. compõe .-> UC
+    DI -. compõe .-> UC
     DI -. instancia .-> MEM
-    VM -. valor padrão injetado .-> DI
 ```
 
 Ao montar a tela, o hook chama `listBooks()`. O caso de uso delega a `list()` do datasource recebido no construtor. O datasource padrão retorna uma lista vazia. Quando resolve, o hook entrega o estado à View. Esta mostra lista, ausência de dados, carregamento ou erro.
 
-O container exporta uma instância compartilhada de `IBookUseCases`. Nos testes, a ViewModel recebe uma implementação alternativa pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
+Conforme a Spec 126 ([ADR 0098](adr/0098-estrategia-de-injecao-de-dependencia-nos-viewmodels.md)), todos os ViewModels de `src/viewmodel/` recebem suas dependências por parâmetro obrigatório (nenhum ViewModel importa `src/di/container.ts`). O container expõe fábricas `make*ViewModel` consumidas pelas Views. Nos testes de hooks, a ViewModel recebe uma implementação alternativa diretamente pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
 
 ## Contratos e modelo atual
 
@@ -123,7 +123,7 @@ correção, `anunciar.tsx` passava `sessionUserId={null}` fixo e o cadastro falh
 
 ## Negociação simples (specs/004, trilha do Antonio)
 
-Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" | "accepted" | "rejected"`, `createdAt`) em [bookRequest.ts](../src/model/entities/bookRequest.ts); `IBookRequestDataSource` (`create`, `findById`, `listByListing`, `listByRequester`, `updateStatus`) em [iBookRequestDataSource.ts](../src/model/datasources/iBookRequestDataSource.ts); e `IBookRequestUseCases` em [iBookRequestUseCases.ts](../src/usecase/iBookRequestUseCases.ts) implementado por `BookRequestUseCases`.
+Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" | "accepted" | "rejected" | "cancelled"`, além de `initialMessage` e `offeredBookId` opcionais pela Spec 113) em [bookRequest.ts](../src/model/entities/bookRequest.ts); `IBookRequestDataSource` (`create`, `findById`, `listByListing`, `listByRequester`, `updateStatus`) em [iBookRequestDataSource.ts](../src/model/datasources/iBookRequestDataSource.ts); e `IBookRequestUseCases` em [iBookRequestUseCases.ts](../src/usecase/iBookRequestUseCases.ts) implementado por `BookRequestUseCases`.
 
 `BookRequestUseCases` implementa quatro operações principais:
 - `requestNegotiation(listingId, requesterId)`: valida regras de bloqueio (não negociar próprio anúncio FR-001, não duplicar pedido pendente FR-002, não solicitar anúncio reservado FR-003) e cria pedido pendente.
@@ -134,10 +134,10 @@ Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" |
 ViewModels, Telas e Rotas:
 - `useRequestNegotiationViewModel`: gerencia o estado da ação de solicitar negociação na Home (`pendingListingId`, `requestedListingIds`, `errorListingId`).
 - `useReceivedRequestsViewModel`: gerencia a listagem e ações de responder (aceitar/recusar) aos pedidos recebidos.
-- `useSentRequestsViewModel`: gerencia a listagem e visualização do status dos pedidos enviados.
-- `src/view/requests/requestListLayout.tsx`: componente estrutural reaproveitável para listas de pedidos, com estados de carregamento, erro amigável e lista vazia.
-- `src/view/requests/receivedRequests.tsx` e `src/view/requests/sentRequests.tsx`: telas puras de pedidos recebidos e enviados, desacopladas do roteador por injeção de callbacks.
-- `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos.
+- `useConversationsViewModel`: consolida pedidos enviados/recebidos e mensagens das negociações ativas na aba de Conversas.
+- `src/view/requests/requestListLayout.tsx`: componente estrutural reaproveitável da lista de pedidos recebidos (`05.03`, `06.03`), com estados de carregamento, erro amigável e lista vazia.
+- `src/view/requests/receivedRequests.tsx` e `src/view/conversations/conversations.tsx`: telas puras de pedidos recebidos e conversas/pedidos enviados, desacopladas do roteador por injeção de callbacks.
+- `src/app/pedidos-recebidos.tsx`, `src/app/meus-pedidos.tsx` e `src/app/conversas.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos e conversas.
 
 ## Encontro da negociação (specs/052, trilha do Micael)
 

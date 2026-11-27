@@ -1,6 +1,5 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { bookUseCases } from "@/di/container";
 import Search from "@/view/search/search";
 

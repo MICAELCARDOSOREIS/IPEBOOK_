@@ -2,11 +2,44 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
-## 1.29.0 · 2026-11-24
+## 1.32.1 · 2026-11-24
 
-- Sincronizada a especificação visual iPhone com o Figma: botões em cápsula, variante Doação, rodapés, seletor de localização, filtros de favoritos/ajuda/agendamento e navegação Liquid Glass.
-- Registrados os 88 quadros inspecionados, mantendo o inventário anterior como histórico e as decisões de escopo de implementação.
-- Documentadas as referências de componentes Web, cards e acessibilidade, sem alterar o código de produção.
+- As abas de Termos e privacidade na Web passam a ter navegação por setas, foco no painel ativo
+  e associação semântica entre abas e painéis.
+- O campo de busca usa a borda semântica `outline` em repouso e altura mínima para acomodar
+  texto ampliado. O botão Limpar mantém feedback visual sem escala.
+- Acrescentadas verificações de regressão no Chrome CDP para teclado, foco e contraste.
+
+## 1.32.0 · 2026-11-24
+
+- Atualizadas as referências de Android e iPhone a partir do Figma, com pranchas, telas representativas
+  e links para os componentes. Retirado o lote anterior de exports de telas.
+- Sincronizadas as orientações de tema claro editorial, tipografia, busca e abas com a aplicação.
+- Sincronizada a especificação visual iPhone (`iphone-liquid-glass.md`) com o Figma: botões em cápsula,
+  variante Doação, rodapés, seletor de localização, filtros de favoritos/ajuda/agendamento e navegação Liquid Glass.
+- A verificação do design system passou a conferir a fonte de interface e funciona sem o lote antigo.
+
+## 1.31.0 · 2026-11-18
+
+- **Acessibilidade Digital no iOS Apple HIG (Spec 137, Issue #233)**:
+  - Documentação formal das diretrizes de acessibilidade iOS em `design-system/06-acessibilidade.md` (Reduzir Transparência, Dynamic Type, VoiceOver e alvos de toque Apple HIG).
+  - Blindagem de layout para Dynamic Type com `maxFontSizeMultiplier` defensivo em `TopAppBar`, `NavigationBar` e `BottomSheet`.
+  - Reforço da semântica de leitor de tela (VoiceOver) com papéis (`tablist`, `tab`, `header`, `button`), estados e rótulos contextuais em português.
+  - Adição de 11 testes unitários dedicados em `tests/unit/iosAccessibilityHig.test.tsx` cobrindo fallbacks opacos, escalonamento tipográfico e alvos de toque mínimos de 44×44 pt.
+
+## 1.30.0 · 2026-11-18
+
+- **Base Liquid Glass, Apple HIG e BottomSheet no iOS Nativo (Spec 137, ADRs 0115 e 0116)**:
+  - Adicionados tokens de vidro translúcido (`glass-fill`, `glass-stroke`) em `design-system/tokens.json` e espelho `src/view/tokens.ts`, integrados com `BlurView` nativo (`expo-blur`) no iOS e fallback opaco ao ativar acessibilidade de "Reduzir Transparência" (`useReduceTransparency`).
+  - Adicionado componente unificado `BottomSheet` (`src/view/components/BottomSheet.tsx`) com cantos contínuos de 28 dp (`tokens.radius.xxl`), alça de arraste com gesto *swipe-down* para fechar, modal com foco acessível e adoção direta na folha de ordenação (`SortSheet.tsx`).
+  - Padronização de feedback tátil via `expo-haptics` (`triggerHaptic`) nas ações de favoritar, remoção de favoritos, alternância de filtros e ordenação no iOS.
+
+## 1.29.0 · 2026-11-17
+
+- **Alinhamento geral da documentação com o código (`src/view/tokens.ts`, ADR 0107 e Specs 061–138)**:
+  - Substituídas referências antigas de tipografia `Roboto` por `Plus Jakarta Sans` (`design-system/README.md`, `01-principios.md`, `02-tokens.md`, `03-fundamentos.md` e `docs/design-system.md`).
+  - Atualizada a ficha `dialogo.md` para usar `tokens.colors.m3.scrim`, `tokens.radius.xxl` (28 dp) e `accessibilityViewIsModal`, corrigida a nota do `scrim` em `02-tokens.md` e sincronizados os hexadecimais de `fita-marcador.md` (`#F5B718` / `#D97706`), as 5 cores de `capa-ilustrativa.md` e todos os valores de `docs/design-system.md`.
+  - Removidos avisos obsoletos de "fora de escopo" nos componentes efetivamente entregues no código: `barra-de-navegacao.md` (3 destinos principais: Início, Explorar e Estante), `avatar.md` (`src/view/components/Avatar.tsx`), `estados-do-sistema.md` (`OfflineState` com recuperação automática + SWR), `bolha-de-mensagem.md` (`src/view/conversations/chat.tsx`), `interruptor.md` (`Switch` em `src/view/profile/settings.tsx`) e `fab.md` (FAB 56 × 56 dp em `src/view/listings/myListings.tsx`).
 
 ## 1.28.0 · 2026-11-09
 

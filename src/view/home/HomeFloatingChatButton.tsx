@@ -1,63 +1,58 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 
-export type HomeFloatingChatButtonProps = {
-  badgeCount?: number;
+export type HomeFloatingAddButtonProps = {
   onPress: () => void;
 };
 
 /**
- * Botão Flutuante de Mensagens/Conversas (FAB Material 3 - Estilo Ipêbook)
- * Renderizado no canto inferior direito da Home em telas móveis, posicionado
- * com respiro harmônico acima da barra de navegação flutuante, com acabamento
- * translúcido em vidro, borda sutil e state layer de hover.
+ * Botão Flutuante de Anunciar Livro (FAB Material 3 - Estilo Ipêbook)
+ * Renderizado no canto inferior direito da Home em telas móveis, acima do dock.
  */
-export function HomeFloatingChatButton({
-  badgeCount = 0,
-  onPress,
-}: HomeFloatingChatButtonProps) {
+export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Posiciona o botão flutuante com respiro harmônico de 12px acima do topo real da barra de navegação flutuante
-  // (dock de ~64dp com padding inferior de acordo com safe area)
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 64;
-  const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+  const navBarDockHeight = 80;
+  const bottom = isIos
+    ? insets.bottom + tokens.spacing[16]
+    : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   return (
     <Pressable
-      testID="home-floating-chat-button"
+      testID="home-floating-add-button"
       accessibilityRole="button"
-      accessibilityLabel={
-        badgeCount > 0
-          ? `Abrir mensagens flutuante, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}`
-          : "Abrir mensagens flutuante"
-      }
+      accessibilityLabel="Anunciar livro"
       onHoverIn={() => setIsHovered(true)}
       onHoverOut={() => setIsHovered(false)}
-      onPress={onPress}
+      onPress={() => {
+        if (isIos) triggerHaptic("light");
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.floatingChatButton,
+        isIos && (iosGlass ? styles.iosGlassButton : styles.iosOpaqueButton),
         { bottom },
         isHovered && styles.floatingChatButtonHovered,
         pressed && styles.floatingChatButtonPressed,
       ]}
     >
-      <AppIcon name="chat" size={26} color={colors.nature.foliage} />
-      {badgeCount > 0 ? (
-        <View style={styles.floatingChatBadge} testID="home-floating-chat-badge">
-          <Text style={styles.floatingChatBadgeText}>
-            {badgeCount > 9 ? "9+" : badgeCount}
-          </Text>
-        </View>
+      {iosGlass ? (
+        <IosGlassBackdrop style={styles.iosGlassShape} />
       ) : null}
+      <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
     </Pressable>
   );
 }
@@ -74,9 +69,7 @@ function createStyles(colors: ColorPalette) {
       width: 56,
       height: 56,
       borderRadius: tokens.radius.card,
-      backgroundColor: isWeb ? webFabBg : colors.nature.sprout,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      backgroundColor: isWeb ? webFabBg : colors.m3.primaryContainer,
       alignItems: "center",
       justifyContent: "center",
       elevation: 6,
@@ -104,24 +97,27 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.94 }],
       opacity: 0.9,
     },
-    floatingChatBadge: {
-      position: "absolute",
-      top: -4,
-      right: -4,
-      minWidth: 20,
-      height: 20,
+    iosGlassButton: {
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.error,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[4],
-      borderWidth: 2,
-      borderColor: colors.surface,
+      borderWidth: 1,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
+      shadowRadius: 10,
+      overflow: "hidden",
     },
-    floatingChatBadgeText: {
-      ...tokens.typography.badgeMicro,
-      color: colors.badge.completed.text,
-      fontWeight: "700",
+    iosOpaqueButton: {
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
     },
   });
 }

@@ -1,7 +1,7 @@
 # Interruptor (Switch)
 
-> [!WARNING]
-> **FORA DE ESCOPO NA BETA (Issue #55 e ADR 0019)**: Descartado para a versão beta. Preferências, filtros e confirmações utilizam `Chip`, botões explícitos ou diálogos diretos para garantir consistência e acessibilidade simplificada. Não implementar este componente.
+> [!NOTE]
+> **Implementado em Configurações (Spec 099 · ADR 0075).** O `Switch` nativo do React Native em [`src/view/profile/settings.tsx`](../../src/view/profile/settings.tsx) controla preferências de notificação. A linha clicável `toggleRow` usa `accessibilityRole="switch"` e cores do tema claro editorial.
 
 Origem no sistema base: Material 3, Switch. Situação: **Herdado**.
 

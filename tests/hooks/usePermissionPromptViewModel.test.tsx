@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { IPermissionPromptUseCases, PermissionDecision } from "@/usecase/iPermissionPromptUseCases";
 import { usePermissionPromptViewModel, type PermissionPromptState } from "@/viewmodel/usePermissionPromptViewModel";
 
@@ -10,12 +9,12 @@ afterEach(() => {
 });
 
 function fakeUseCases(decision: PermissionDecision, requestResult = true): IPermissionPromptUseCases & {
-  markAsked: ReturnType<typeof vi.fn>;
+  markAsked: ReturnType<typeof jest.fn>;
 } {
   return {
-    resolve: vi.fn().mockResolvedValue(decision),
-    request: vi.fn().mockResolvedValue(requestResult),
-    markAsked: vi.fn().mockResolvedValue(undefined),
+    resolve: jest.fn().mockResolvedValue(decision),
+    request: jest.fn().mockResolvedValue(requestResult),
+    markAsked: jest.fn().mockResolvedValue(undefined),
   };
 }
 

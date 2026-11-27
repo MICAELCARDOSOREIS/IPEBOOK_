@@ -1,6 +1,6 @@
 # Spec 120 — Refinamentos Visuais e Interativos das Telas
 
-**Status:** Em implementação  
+**Status:** Concluída  
 **Data:** 3 de novembro de 2026  
 **Contexto:** UX / Usabilidade / Mobile / Feedback Tátil / Material 3  
 **ADR vinculada:** [0094](../../docs/adr/0094-refinamentos-visuais-e-interativos-das-telas.md)  

@@ -1,20 +1,19 @@
 
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
-vi.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: () => [{ user: null, loading: false }, { signIn: vi.fn(), signOut: vi.fn() }],
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: () => [{ user: null, loading: false }, { signIn: jest.fn(), signOut: jest.fn() }],
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 
 import Home from "@/view/home";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 
-const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
+const mockedUseHomeViewModel = jest.mocked(useHomeViewModel);
 
 const sampleBooks: Book[] = [
   {
@@ -45,7 +44,7 @@ describe("Home na Web Larga (Spec 093 · Figma 02.01)", () => {
       loading: false,
       error: null,
     };
-    const mockActions: HomeActions = { reload: vi.fn() };
+    const mockActions: HomeActions = { reload: jest.fn() };
     mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -64,5 +63,6 @@ describe("Home na Web Larga (Spec 093 · Figma 02.01)", () => {
     expect(screen.getByText("livros anunciados")).toBeDefined();
     expect(screen.getByText("bairros com leitores")).toBeDefined();
     expect(screen.getByText("doação disponível")).toBeDefined();
+    expect(screen.getByText("1 livro gratuito em Piripiri")).toBeDefined();
   });
 });

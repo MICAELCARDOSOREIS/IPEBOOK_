@@ -36,6 +36,8 @@ type PagesFunction<TEnv = Env> = (
   context: EventContext<TEnv, "id", unknown>,
 ) => Response | Promise<Response>;
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Cloudflare Pages Function para gerar cards Open Graph e Twitter dinâmicos
  * quando links de livros (https://ipebook.app/livro/{id}) forem compartilhados no WhatsApp.
@@ -47,7 +49,7 @@ export const onRequest: PagesFunction = async (context) => {
 
   // Obtém o HTML base exportado estaticamente
   const response = await next();
-  if (!response.ok || !bookId) {
+  if (!response.ok || !bookId || !UUID_REGEX.test(bookId)) {
     return response;
   }
 

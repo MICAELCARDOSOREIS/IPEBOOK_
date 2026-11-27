@@ -1,23 +1,22 @@
 import type React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import * as Linking from "expo-linking";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PiripiriNeighborhood } from "@/model/entities/location";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ProfileState } from "@/viewmodel/useProfileViewModel";
 import ProfileHub from "@/view/profile/profileHub";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
-const mockedUseProfileViewModel = vi.mocked(useProfileViewModel);
-const mockedUsePreferencesViewModel = vi.mocked(useUserPreferencesViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
+const mockedUseProfileViewModel = jest.mocked(useProfileViewModel);
+const mockedUsePreferencesViewModel = jest.mocked(useUserPreferencesViewModel);
 
 const fakeProfile: NonNullable<ProfileState["profile"]> = {
   userId: "ana",
@@ -30,10 +29,10 @@ const fakeProfile: NonNullable<ProfileState["profile"]> = {
   socialHandle: undefined,
 };
 
-function mockAuth(user: AuthState["user"], signOut = vi.fn().mockResolvedValue(true)) {
+function mockAuth(user: AuthState["user"], signOut = jest.fn().mockResolvedValue(true)) {
   mockedUseAuthViewModel.mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut, requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut, requestPasswordReset: jest.fn() },
   ]);
   return { signOut };
 }
@@ -43,10 +42,10 @@ function mockProfile(
   loading = false,
   error: string | null = null,
 ) {
-  const reload = vi.fn();
+  const reload = jest.fn();
   mockedUseProfileViewModel.mockReturnValue([
     { profile, loading, saving: false, error },
-    { update: vi.fn().mockResolvedValue(true), reload },
+    { update: jest.fn().mockResolvedValue(true), reload },
   ]);
   return { reload };
 }
@@ -60,7 +59,7 @@ function mockPreferences(neighborhood?: PiripiriNeighborhood) {
       saving: false,
       error: null,
     },
-    { update: vi.fn().mockResolvedValue(true), reload: vi.fn() },
+    { update: jest.fn().mockResolvedValue(true), reload: jest.fn() },
   ]);
 }
 
@@ -87,7 +86,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("leva a Favoritos e alertas (atalho que saiu da Home, Spec 062)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToFavorites = vi.fn();
+    const onNavigateToFavorites = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<ProfileHub {...baseProps({ onNavigateToFavorites })} />);
@@ -101,7 +100,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("oferece a engrenagem de Configurações no topo do perfil (Spec 073, ADR 0060)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToSettings = vi.fn();
+    const onNavigateToSettings = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<ProfileHub {...baseProps({ onNavigateToSettings })} />);
@@ -135,8 +134,8 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("mostra nome, estatísticas e aciona a navegação de cada item do menu", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToEditProfile = vi.fn();
-    const onNavigateToRatings = vi.fn();
+    const onNavigateToEditProfile = jest.fn();
+    const onNavigateToRatings = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -163,7 +162,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("oferece publicar um livro como ação principal do perfil", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToCreateListing = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -182,7 +181,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("confirma e executa o logout ao tocar em Sair da conta", async () => {
     const { signOut } = mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onSignedOut = vi.fn();
+    const onSignedOut = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -202,9 +201,9 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   });
 
   it("mantém o diálogo de saída aberto e avisa quando o logout falha", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" }, vi.fn().mockResolvedValue(false));
+    mockAuth({ id: "ana", email: "ana@exemplo.com" }, jest.fn().mockResolvedValue(false));
     mockProfile();
-    const onSignedOut = vi.fn();
+    const onSignedOut = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -259,7 +258,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("redireciona para login se não houver sessão", async () => {
     mockAuth(null);
     mockProfile(null);
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     await act(async () => {
       await render(<ProfileHub {...baseProps({ onNavigateToSignIn })} />);
@@ -271,7 +270,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("sem conta (requireAuth=false) mostra estado de convidado sem dados inventados (Spec 048)", async () => {
     mockAuth(null);
     mockProfile(null);
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -297,7 +296,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("visitante ve só o card de entrada e a engrenagem, sem seção Conta (ADR 0060)", async () => {
     mockAuth(null);
     mockProfile(null);
-    const onNavigateToSettings = vi.fn();
+    const onNavigateToSettings = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -321,7 +320,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("aciona a navegação para Convidar amigos (Spec 057, Figma 08.02)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToInviteFriends = vi.fn();
+    const onNavigateToInviteFriends = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -363,7 +362,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("aciona a navegação para Histórico de encontros (Spec 071)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
-    const onNavigateToMeetingHistory = vi.fn();
+    const onNavigateToMeetingHistory = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -408,7 +407,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("mostra o Instagram e abre o perfil dele (Spec 081)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile({ ...fakeProfile, socialHandle: "@ana.lima" });
-    const openURL = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(true);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<ProfileHub {...baseProps()} />);
@@ -422,7 +421,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   it("sem Instagram oferece adicionar pelo Editar perfil (Spec 081)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile(fakeProfile);
-    const onNavigateToEditProfile = vi.fn();
+    const onNavigateToEditProfile = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<ProfileHub {...baseProps({ onNavigateToEditProfile })} />);

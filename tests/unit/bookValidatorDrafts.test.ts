@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { validateDraftPayload } from "@/model/validators/bookValidator";
 
 // Spec 017 — validação tolerante de rascunho: incompleto por natureza, mas ainda
@@ -33,17 +32,29 @@ describe("validateDraftPayload (Spec 017)", () => {
     expect(result.errors.some((e) => e.includes("conservação"))).toBe(true);
   });
 
-  it("recusa URL de foto inválida quando presente", () => {
-    const result = validateDraftPayload({ ownerId: "o", modality: "donation", photoUrl: "ftp://x" });
-    expect(result.isValid).toBe(false);
-    expect(result.errors.some((e) => e.includes("HTTP ou HTTPS"))).toBe(true);
-  });
+  it("recusa URL de foto inválida ou http:// quando presente (Spec 143 / M7)", () => {
+    const ftp = validateDraftPayload({ ownerId: "o", modality: "donation", photoUrl: "ftp://x" });
+    expect(ftp.isValid).toBe(false);
+    expect(ftp.errors.some((e) => e.includes("HTTPS"))).toBe(true);
 
-  it("aceita URLs http/https válidas na galeria", () => {
-    const result = validateDraftPayload({
+    const httpCover = validateDraftPayload({ ownerId: "o", modality: "donation", photoUrl: "http://exemplo.com/a.jpg" });
+    expect(httpCover.isValid).toBe(false);
+    expect(httpCover.errors.some((e) => e.includes("HTTPS"))).toBe(true);
+
+    const httpGallery = validateDraftPayload({
       ownerId: "o",
       modality: "donation",
       photos: ["https://exemplo.com/a.jpg", "http://exemplo.com/b.jpg"],
+    });
+    expect(httpGallery.isValid).toBe(false);
+    expect(httpGallery.errors.some((e) => e.includes("HTTPS"))).toBe(true);
+  });
+
+  it("aceita URLs https válidas na galeria", () => {
+    const result = validateDraftPayload({
+      ownerId: "o",
+      modality: "donation",
+      photos: ["https://exemplo.com/a.jpg", "https://exemplo.com/b.jpg"],
     });
     expect(result.isValid).toBe(true);
   });

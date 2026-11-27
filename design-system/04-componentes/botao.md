@@ -101,6 +101,14 @@ Em uma tela com botão de voltar na [Barra superior](barra-superior.md), a açã
 se chamar só "Voltar": dois controles com o mesmo nome acessível confundem leitores de tela. Use um
 rótulo que diga para onde se volta, como "Voltar à etapa anterior" (ver `createListing.tsx`).
 
-## Variação visual iPhone (planejamento)
+## Adaptação para iPhone nativo (Spec 137)
+
+- `FilledButton` mantém o verde IpêBook e a altura de 52 pt; no iOS recebe cantos
+  contínuos e elevação suave sem transparência no texto principal.
+- `OutlinedButton` usa Liquid Glass nativo no **iOS**, via `IosGlassBackdrop`.
+- O botão habilitado usa `surface-container-low` opaco com **Reduzir Transparência** ou quando o vidro está indisponível. Carregamento e desabilitado usam o contorno do estado inativo.
+- Android (M3 Expressive) e Web mantêm seus estilos e comportamentos existentes.
+
+## Variação visual iPhone (Figma)
 
 O componente [iPhone / Botão](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=928-1090&m=dev) usa SF Pro Semibold 17 pt, cápsula de 52 pt e estilos principal, secundário, texto, destrutivo e desativado. O componente [Doação](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=1353-3305&m=dev) usa `brand-amber` com `brand-brown`. Rodapés respeitam a área segura e mantêm fundo opaco quando a transparência compromete a legibilidade. Veja [a especificação iPhone](../iphone-liquid-glass.md). Não altera a API React Native atual.

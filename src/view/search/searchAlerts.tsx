@@ -1,6 +1,8 @@
-import { useId, useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useId, useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollEdgeFlatList } from "@/view/components/ScrollEdgeScreen";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { triggerHaptic } from "@/view/haptics";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -21,6 +23,7 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type SearchAlertsProps = {
   userId: string | null;
+  sessionLoading?: boolean;
   initialQuery?: string;
   onBack: () => void;
   onLogin: () => void;
@@ -34,7 +37,7 @@ export type SearchAlertsProps = {
  * `02.08 · Avisaremos você` (`19:420` / Web `148:968`),
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
-export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
+export default function SearchAlerts({ userId, sessionLoading = false, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedLogin = useGuardedPress(onLogin);
   const guardedSearchBooks = useGuardedPress(onSearchBooks);
@@ -46,6 +49,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   // Web larga: coluna mais ampla e dois alertas por linha.
   const wide = useIsWideWeb();
   const listColumns = useWebColumns(2, 3);
+  const [queryFocused, setQueryFocused] = useState(false);
   const errorId = useId();
   const loadError = state.loadError ?? null;
   const formError = loadError ? null : state.error;
@@ -56,10 +60,65 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
    */
   const showListChrome = state.loading || state.alerts.length > 0;
 
+  const hasScrollableAlerts = !sessionLoading && Boolean(userId) && !state.loading && !loadError;
+  const scrollForm = Platform.OS === "ios" && hasScrollableAlerts;
+  const form = (
+    <>
+      {showListChrome ? (
+        <View style={[styles.heroHeader, wide && styles.wideFullWidth]}>
+          <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
+          <Text style={styles.body}>
+            Avisamos quando houver um anúncio que combine com sua busca.
+          </Text>
+        </View>
+      ) : null}
+      <View style={[styles.formCard, wide && styles.wideFullWidth]}>
+        <Text style={styles.formTitle}>
+          Avisaremos você
+        </Text>
+        <Text style={styles.body}>
+          Avisaremos na central de notificações quando surgir um livro com este título ou autor.
+        </Text>
+        <TextInput
+          accessibilityLabel="Termo do alerta"
+          value={state.query}
+          onChangeText={actions.setQuery}
+          accessibilityHint={hasError ? formError ?? undefined : undefined}
+          aria-describedby={hasError ? errorId : undefined}
+          placeholder="Título ou autor"
+          placeholderTextColor={colors.secondaryText}
+          onFocus={() => setQueryFocused(true)}
+          onBlur={() => setQueryFocused(false)}
+          style={[styles.input, queryFocused && !hasError && styles.inputFocused, hasError && styles.inputError]}
+          maxLength={100}
+        />
+        {hasError ? (
+          <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
+            {formError}
+          </Text>
+        ) : null}
+        {state.message ? (
+          <Text accessibilityRole="alert" style={styles.successMessage}>
+            {state.message}
+          </Text>
+        ) : null}
+        <FilledButton
+          label="Criar alerta"
+          onPress={() => {
+            if (Platform.OS === "ios") triggerHaptic("selection");
+            void actions.create();
+          }}
+        />
+      </View>
+
+    </>
+  );
+
   return (
     <ScreenContainer
       maxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 720}
       scroll={false}
+      hasScrollableList={hasScrollableAlerts}
       paddingHorizontal={0}
       paddingTop={0}
       paddingBottom={0}
@@ -94,7 +153,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         )
       }
     >
-      {!userId ? (
+      {sessionLoading ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando alertas" />
+        </View>
+      ) : !userId ? (
         <View style={[styles.centered, wide && styles.centeredWide]}>
           <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
@@ -109,47 +172,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         </View>
       ) : (
         <View style={[styles.content, wide && styles.contentWide]}>
-          {showListChrome ? (
-            <View style={styles.heroHeader}>
-              <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
-              <Text style={styles.body}>
-                Avisamos quando houver um anúncio que combine com sua busca.
-              </Text>
-            </View>
-          ) : null}
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>
-              Avisaremos você
-            </Text>
-            <Text style={styles.body}>
-              Avisaremos na central de notificações quando surgir um livro com este título ou autor.
-            </Text>
-            <TextInput
-              accessibilityLabel="Termo do alerta"
-              value={state.query}
-              onChangeText={actions.setQuery}
-              accessibilityHint={hasError ? formError ?? undefined : undefined}
-              aria-describedby={hasError ? errorId : undefined}
-              placeholder="Título ou autor"
-              placeholderTextColor={colors.secondaryText}
-              style={[styles.input, hasError && styles.inputError]}
-              maxLength={100}
-            />
-            {hasError ? (
-              <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
-                {formError}
-              </Text>
-            ) : null}
-            {state.message ? (
-              <Text accessibilityRole="alert" style={styles.successMessage}>
-                {state.message}
-              </Text>
-            ) : null}
-            <FilledButton
-              label="Criar alerta"
-              onPress={() => void actions.create()}
-            />
-          </View>
+          {scrollForm ? null : form}
 
           {state.loading ? (
             <LoadingState label="Carregando alertas" />
@@ -160,12 +183,13 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               <OfflineState onRetry={() => void actions.reload()} />
             )
           ) : (
-            <FlatList
+            <ScrollEdgeFlatList
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
               numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
               style={styles.flexOne}
               data={state.alerts}
+              ListHeaderComponent={scrollForm ? form : undefined}
               keyExtractor={(item) => item.id}
               contentContainerStyle={[
                 styles.listContent,
@@ -189,7 +213,10 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
-                    onPress={() => guardedManageAlert(item.id)}
+                    onPress={() => {
+                      if (Platform.OS === "ios") triggerHaptic("light");
+                      guardedManageAlert(item.id);
+                    }}
                     style={withPress(styles.row)}
                   >
                     <AppIcon name="bell" size={24} color={colors.text} />
@@ -200,9 +227,9 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                     </View>
                   </Pressable>
                   {item.active ? (
-                    <View style={styles.activeAlertCard}>
+                    <View testID={`active-alert-card-${item.id}`} style={styles.activeAlertCard}>
                       <Text style={styles.activeAlertTitle}>Alerta ativo</Text>
-                      <Text style={styles.body}>
+                      <Text style={styles.activeAlertBody}>
                         {`Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`}
                       </Text>
                     </View>
@@ -249,7 +276,7 @@ function createStyles(colors: ColorPalette) {
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
   },
   wideTitle: {
     ...tokens.typography.brandLargeTitle,
@@ -287,9 +314,12 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[40],
     marginTop: tokens.spacing[40],
+  },
+  wideFullWidth: {
+    maxWidth: "100%",
   },
   heroHeader: {
     gap: tokens.spacing[4],
@@ -303,7 +333,7 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[20],
     gap: tokens.spacing[12],
     maxWidth: 640,
@@ -369,12 +399,18 @@ function createStyles(colors: ColorPalette) {
   input: {
     minHeight: tokens.accessibility.touchTarget,
     borderWidth: 1,
-    borderColor: colors.m3.outline,
-    backgroundColor: colors.surface,
+    borderColor: Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline,
+    backgroundColor: Platform.OS === "ios" ? tokens.ios.cell : colors.surface,
     borderRadius: tokens.radius.small,
+    ...(Platform.OS === "ios" ? { borderCurve: "continuous" as const } : {}),
     paddingHorizontal: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
     color: colors.text,
+    ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
+  },
+  inputFocused: {
+    borderColor: Platform.OS === "ios" ? colors.m3.focusRing : colors.action,
+    borderWidth: 2,
   },
   inputError: {
     borderColor: colors.error,
@@ -395,12 +431,17 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[32],
     marginTop: tokens.spacing[16],
     alignItems: "center",
   },
   alertItem: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[16],
     gap: tokens.spacing[12],
   },
   row: {
@@ -411,14 +452,18 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
   },
   activeAlertCard: {
-    backgroundColor: colors.badge.sale.background,
+    backgroundColor: colors.m3.primaryContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   activeAlertTitle: {
     ...tokens.typography.titleMedium,
-    color: colors.text,
+    color: colors.m3.onPrimaryContainer,
+  },
+  activeAlertBody: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onPrimaryContainer,
   },
   rowText: {
     flex: 1,

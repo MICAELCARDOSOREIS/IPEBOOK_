@@ -21,11 +21,11 @@ export type AboutSectionsProps = {
 const STEPS = [
   { title: "Anuncie ou procure", text: "Cadastre um livro com foto ou escaneie o código de barras. Ou busque por título, autor, categoria e bairro." },
   { title: "Combine pelo chat", text: "Peça o livro, converse com a pessoa e defina se é venda, troca ou doação." },
-  { title: "Encontre-se com segurança", text: "Escolha um ponto seguro de Piripiri, confirme o encontro e avalie a experiência." },
+  { title: "Combine o encontro", text: "Escolha um ponto recomendado de Piripiri, confirme o encontro e avalie a experiência." },
 ] as const;
 
 const SAFETY = [
-  "Encontros em pontos seguros e públicos da cidade",
+  "Encontros em pontos públicos recomendados da cidade",
   "Avaliações entre leitores e perfis com histórico",
   "Bloqueio e denúncia a qualquer momento",
   "Sem taxas: o IpêBook não cobra pelas negociações",

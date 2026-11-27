@@ -1,9 +1,11 @@
 import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
 import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useScrollFocusedInput } from "@/view/components/ScreenContainer";
+import { TextButton } from "@/view/components/TextButton";
 
 import { withPress } from "@/view/pressFeedback";
 
@@ -36,6 +38,8 @@ export type TextFieldProps = {
   returnKeyType?: ReturnKeyTypeOptions;
   /** Toque na ação do teclado; no último campo costuma enviar o formulário. */
   onSubmitEditing?: () => void;
+  /** Ação para os teclados numéricos do iOS, que podem não ter tecla de retorno. */
+  iosKeyboardDone?: boolean;
   /** Referência ao elemento TextInput para controle de foco programático (Spec 133 / Issue #217). */
   inputRef?: Ref<TextInputInstance>;
   /** Callback executada quando o campo ganha foco (útil para auto-scroll e IHC). */
@@ -70,6 +74,7 @@ export function TextField({
   textContentType,
   returnKeyType,
   onSubmitEditing,
+  iosKeyboardDone,
   inputRef,
   onFocus,
   onBlur,
@@ -79,18 +84,30 @@ export function TextField({
   const [revealed, setRevealed] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
+  const needsDoneBar =
+    iosKeyboardDone ??
+    (multiline ||
+      keyboardType === "numeric" ||
+      keyboardType === "decimal-pad" ||
+      keyboardType === "number-pad" ||
+      keyboardType === "phone-pad");
+  const showIosDoneAction = Platform.OS === "ios" && needsDoneBar && focused;
   const { colors } = useTheme();
+  const scrollFocusedInput = useScrollFocusedInput();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const hasValue = value.length > 0;
   const floating = focused || hasValue;
-  const accentColor = hasError ? colors.error : focused ? colors.action : colors.m3.onSurfaceVariant;
-  const borderColor = hasError ? colors.error : focused ? colors.action : colors.m3.outline;
+  const focusColor = Platform.OS === "ios" ? colors.m3.focusRing : colors.action;
+  const accentColor = hasError ? colors.error : focused ? focusColor : colors.m3.onSurfaceVariant;
+  const restingBorderColor = Platform.OS === "ios" ? tokens.ios.separator : colors.m3.outline;
+  const borderColor = hasError ? colors.error : focused ? focusColor : restingBorderColor;
 
   return (
     <View style={styles.field}>
       <View
         style={[
           styles.container,
+          Platform.OS === "ios" && styles.iosContainer,
           { borderColor, borderWidth: focused || hasError ? 2 : 1 },
           multiline && styles.containerMultiline,
           !editable && styles.disabled,
@@ -122,13 +139,19 @@ export function TextField({
           textAlignVertical={multiline ? "top" : "center"}
           onFocus={() => {
             setFocused(true);
+            scrollFocusedInput?.();
             onFocus?.();
           }}
           onBlur={() => {
             setFocused(false);
             onBlur?.();
           }}
-          style={[styles.input, multiline && styles.inputMultiline, secureTextEntry && styles.inputWithToggle]}
+          style={[
+            styles.input,
+            Platform.OS === "ios" && floating && styles.iosInputFloating,
+            multiline && styles.inputMultiline,
+            secureTextEntry && styles.inputWithToggle,
+          ]}
         />
         {secureTextEntry ? (
           <Pressable
@@ -145,13 +168,26 @@ export function TextField({
         {floating ? (
           <View
             pointerEvents="none"
-            style={[styles.notch, { backgroundColor: labelBackgroundColor ?? colors.background }]}
+            style={[
+              styles.notch,
+              Platform.OS === "ios"
+                ? styles.iosNotch
+                : { backgroundColor: labelBackgroundColor ?? colors.background },
+            ]}
           >
-            <Text style={[styles.floatingLabel, { color: accentColor }]}>{label}</Text>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.floatingLabel, Platform.OS === "ios" && styles.iosFloatingLabel, { color: accentColor }]}
+            >
+              {label}
+            </Text>
           </View>
         ) : (
           <Text
             pointerEvents="none"
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={[
               styles.restingLabel,
               multiline && styles.restingLabelMultiline,
@@ -162,20 +198,35 @@ export function TextField({
           </Text>
         )}
       </View>
-      {hasError ? (
-        <Text
-          nativeID={errorId}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          aria-live="polite"
-          style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
-        >
-          {error}
-        </Text>
-      ) : helperText ? (
-        <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
-          {helperText}
-        </Text>
+      {hasError || helperText || showIosDoneAction ? (
+        <View style={styles.supportingRow}>
+          <View style={styles.supportingTextWrap}>
+            {hasError ? (
+              <Text
+                nativeID={errorId}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+                aria-live="polite"
+                style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
+              >
+                {error}
+              </Text>
+            ) : helperText ? (
+              <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
+                {helperText}
+              </Text>
+            ) : null}
+          </View>
+          {showIosDoneAction ? (
+            <TextButton
+              label="Concluir"
+              onPress={() => {
+                Keyboard.dismiss();
+                onSubmitEditing?.();
+              }}
+            />
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -184,11 +235,18 @@ export function TextField({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[4] },
+    supportingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    supportingTextWrap: { flex: 1 },
     container: {
       minHeight: tokens.spacing[56],
       justifyContent: "center",
       borderRadius: tokens.radius.extraSmall,
       backgroundColor: "transparent",
+    },
+    iosContainer: {
+      borderRadius: tokens.radius.large,
+      borderCurve: "continuous",
+      backgroundColor: tokens.ios.cell,
     },
     containerMultiline: { minHeight: tokens.spacing[64] + tokens.spacing[32] },
     input: {
@@ -197,10 +255,24 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[8],
       color: colors.m3.onSurface,
       ...tokens.typography.bodyLarge,
+      ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as never) : {}),
     },
     inputMultiline: {
       minHeight: tokens.spacing[64] + tokens.spacing[24],
       paddingTop: tokens.spacing[16],
+    },
+    iosInputFloating: {
+      paddingTop: tokens.spacing[20],
+      paddingBottom: tokens.spacing[6],
+    },
+    iosNotch: {
+      top: tokens.spacing[6],
+      left: tokens.spacing[12],
+      backgroundColor: "transparent",
+    },
+    iosFloatingLabel: {
+      fontSize: tokens.fontSize[11],
+      lineHeight: tokens.lineHeight[14],
     },
     inputWithToggle: { paddingRight: tokens.spacing[48] },
     toggle: {

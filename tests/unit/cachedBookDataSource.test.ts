@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import { CachedBookDataSource, type IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
@@ -12,6 +11,10 @@ class MockStorage implements IKeyValueStorage {
 
   async setItem(key: string, value: string): Promise<void> {
     this.data.set(key, value);
+  }
+
+  async getAllKeys(): Promise<string[]> {
+    return [...this.data.keys()];
   }
 
   async removeItem(key: string): Promise<void> {
@@ -47,13 +50,13 @@ const sampleBooks: Book[] = [
 describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
   it("retorna livros do primário e armazena cópia no storage", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -71,16 +74,16 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("utiliza fallback de cache local quando a chamada primária falha por erro de rede", async () => {
     const primary: IBookDataSource = {
-      list: vi
+      list: jest
         .fn()
         .mockResolvedValueOnce(sampleBooks) // 1ª chamada tem sucesso
         .mockRejectedValueOnce(new Error("Network request failed")), // 2ª chamada falha (offline)
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -97,13 +100,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("propaga erro caso o primário falhe e não haja nada em cache", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -112,36 +115,104 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
   });
 
-  it("não usa cache expirado no fallback offline", async () => {
+  it("reabre a última cópia após cinco minutos sem alterar sua data", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
     const storage = new MockStorage();
-    await storage.setItem(
-      "ipebook:cache:books:list",
-      JSON.stringify({ timestamp: Date.now() - 10_000, data: sampleBooks }),
-    );
-    const cachedDs = new CachedBookDataSource(primary, { storage, ttlMs: 1_000 });
+    const timestamp = Date.now() - 360_000;
+    await storage.setItem("ipebook:cache:books:list", JSON.stringify({ timestamp, data: sampleBooks }));
+    const cachedDs = new CachedBookDataSource(primary, { storage });
 
-    await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
-    expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
+    await expect(cachedDs.readCatalog()).resolves.toEqual({ data: sampleBooks, cachedAt: timestamp });
+    await expect(cachedDs.list()).resolves.toEqual(sampleBooks);
+    expect(await storage.getItem("ipebook:cache:books:list")).toContain(String(timestamp));
+  });
+
+  it("substitui a cópia só após reconectar e conserva uma resposta vazia válida", async () => {
+    const list = jest.fn().mockResolvedValueOnce(sampleBooks).mockRejectedValueOnce(new Error("Sem rede"))
+      .mockResolvedValueOnce([]).mockRejectedValueOnce(new Error("Sem rede"));
+    const source = new CachedBookDataSource({ list } as unknown as IBookDataSource, { storage: new MockStorage() });
+
+    await expect(source.readCatalog()).resolves.toEqual({ data: sampleBooks, cachedAt: null });
+    await expect(source.readCatalog()).resolves.toEqual({ data: sampleBooks, cachedAt: expect.any(Number) });
+    await expect(source.readCatalog()).resolves.toEqual({ data: [], cachedAt: null });
+    await expect(source.readCatalog()).resolves.toEqual({ data: [], cachedAt: expect.any(Number) });
+  });
+
+  it("isola a Estante por conta após reiniciar e remove cópias ao limpar", async () => {
+    const listByOwner = jest.fn().mockResolvedValueOnce(sampleBooks).mockRejectedValue(new Error("Sem rede"));
+    const findById = jest.fn().mockResolvedValue(sampleBooks[0]);
+    const primary = { listByOwner, findById } as unknown as IBookDataSource;
+    const storage = new MockStorage();
+    await new CachedBookDataSource(primary, { storage }).listByOwner("user-1");
+
+    const source = new CachedBookDataSource(primary, { storage });
+    await expect(source.readOwnerListings("user-1")).resolves.toEqual({ data: [sampleBooks[0]], cachedAt: expect.any(Number) });
+    await expect(source.readOwnerListings("user-2")).rejects.toThrow("Sem rede");
+    await source.readBookDetail(sampleBooks[0].id);
+    await source.clearBooksCache();
+    expect(await storage.getAllKeys()).toEqual([]);
+  });
+
+  it("lê a cópia imediatamente quando o aparelho já detectou a desconexão", async () => {
+    const list = jest.fn().mockResolvedValue(sampleBooks);
+    const network = { isOnline: jest.fn().mockResolvedValueOnce(true).mockResolvedValue(false), subscribe: jest.fn() };
+    const source = new CachedBookDataSource({ list } as unknown as IBookDataSource, { storage: new MockStorage(), network });
+    await source.list();
+
+    await expect(source.readCatalog()).resolves.toEqual({ data: sampleBooks, cachedAt: expect.any(Number) });
+    await expect(source.list({ offset: 20 })).rejects.toThrow("Conecte-se à internet");
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it("recusa paginação e filtros offline sem sobrescrever a cópia integral", async () => {
+    const list = jest.fn()
+      .mockResolvedValueOnce(sampleBooks)
+      .mockResolvedValueOnce([sampleBooks[1]])
+      .mockRejectedValue(new Error("Sem rede"));
+    const primary = { list } as unknown as IBookDataSource;
+    const source = new CachedBookDataSource(primary, { storage: new MockStorage() });
+
+    await source.list();
+    await source.list({ modality: "trade" });
+    await expect(source.list({ offset: 20 })).rejects.toThrow("Sem rede");
+    await expect(source.list({ limit: 1 })).rejects.toThrow("Sem rede");
+    await expect(source.list({ modality: "trade" })).rejects.toThrow("Sem rede");
+    await expect(source.list()).resolves.toEqual(sampleBooks);
+  });
+
+  it("reabre detalhes públicos fora da lista depois de reiniciar", async () => {
+    const draft = { ...sampleBooks[0], id: "rascunho", status: "draft" };
+    const findById = jest.fn().mockResolvedValueOnce(sampleBooks[1]).mockResolvedValueOnce(draft)
+      .mockRejectedValue(new Error("Sem rede"));
+    const primary = { findById } as unknown as IBookDataSource;
+    const storage = new MockStorage();
+
+    const online = new CachedBookDataSource(primary, { storage });
+    await online.findById(sampleBooks[1].id);
+    await online.findById(draft.id);
+
+    const reopened = new CachedBookDataSource(primary, { storage });
+    await expect(reopened.findById(sampleBooks[1].id)).resolves.toEqual(sampleBooks[1]);
+    await expect(reopened.findById(draft.id)).rejects.toThrow("Sem rede");
   });
 
   it("encontra livro por ID no cache se a rede falhar", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn().mockRejectedValue(new Error("Network timeout")),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn().mockRejectedValue(new Error("Network timeout")),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -155,15 +226,15 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     expect(book).toEqual(sampleBooks[0]);
   });
 
-  it("invalida cache ao criar, atualizar ou remover anúncios", async () => {
+  it("mantém a cópia e incorpora um novo anúncio confirmado", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn(),
-      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo" }),
-      update: vi.fn().mockResolvedValue(sampleBooks[0]),
-      updateStatus: vi.fn().mockResolvedValue(sampleBooks[0]),
-      delete: vi.fn().mockResolvedValue(undefined),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn(),
+      create: jest.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo" }),
+      update: jest.fn().mockResolvedValue(sampleBooks[0]),
+      updateStatus: jest.fn().mockResolvedValue(sampleBooks[0]),
+      delete: jest.fn().mockResolvedValue(undefined),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -180,26 +251,29 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
       ownerId: "user-1",
     });
 
-    // O cache deve ter sido invalidado
-    expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
+    expect(JSON.parse((await storage.getItem("ipebook:cache:books:list")) ?? "").data.map((book: Book) => book.id))
+      .toEqual(["novo", "livro-1", "livro-2"]);
   });
 
   it("armazena e recupera os livros da estante do anunciante offline (Spec 130 / ADR 0101)", async () => {
-    const ownerBooks = [sampleBooks[0]];
+    const draft = { ...sampleBooks[0], id: "rascunho-privado", status: "draft" as const };
+    const ownerBooks = [sampleBooks[0], draft];
     const primary: IBookDataSource = {
-      list: vi.fn(),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi
+      list: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest
         .fn()
         .mockResolvedValueOnce(ownerBooks)
         .mockRejectedValueOnce(new Error("Network failed")),
     };
 
     const storage = new MockStorage();
+    const legacyKey = "ipebook:cache:books:owner:outro-usuario";
+    await storage.setItem(legacyKey, JSON.stringify({ timestamp: Date.now(), data: [draft] }));
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     // 1ª chamada: online
@@ -207,31 +281,33 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     expect(resultOnline).toEqual(ownerBooks);
     expect(primary.listByOwner).toHaveBeenCalledTimes(1);
 
-    const savedInStorage = await storage.getItem("ipebook:cache:books:owner:user-1");
+    const savedInStorage = await storage.getItem("ipebook:cache:books:owner-v2:user-1");
     expect(savedInStorage).not.toBeNull();
+    expect(savedInStorage).not.toContain(draft.id);
+    expect(await storage.getItem(legacyKey)).toBeNull();
 
     // 2ª chamada: offline
     const resultOffline = await cachedDs.listByOwner("user-1");
-    expect(resultOffline).toEqual(ownerBooks);
+    expect(resultOffline).toEqual([sampleBooks[0]]);
     expect(primary.listByOwner).toHaveBeenCalledTimes(2);
   });
 
-  it("invalida o cache da estante do anunciante ao criar novo livro (Spec 130 / ADR 0101)", async () => {
+  it("mantém a cópia da estante e incorpora o livro confirmado", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn(),
-      findById: vi.fn(),
-      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn().mockResolvedValue([sampleBooks[0]]),
+      list: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn().mockResolvedValue([sampleBooks[0]]),
     };
 
     const storage = new MockStorage();
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     await cachedDs.listByOwner("user-1");
-    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).not.toBeNull();
+    expect(await storage.getItem("ipebook:cache:books:owner-v2:user-1")).not.toBeNull();
 
     await cachedDs.create({
       title: "Outro Livro",
@@ -241,6 +317,7 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
       ownerId: "user-1",
     });
 
-    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).toBeNull();
+    expect(JSON.parse((await storage.getItem("ipebook:cache:books:owner-v2:user-1")) ?? "").data.map((book: Book) => book.id))
+      .toEqual(["novo", "livro-1"]);
   });
 });

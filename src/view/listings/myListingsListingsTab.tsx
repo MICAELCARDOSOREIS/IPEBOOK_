@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { formatPrice } from "@/view/formatPrice";
+import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
-import { AppIcon } from "@/view/components/AppIcon";
+import { formatPrice } from "@/view/formatPrice";
 import { ShelfRow } from "@/view/listings/shelfRow";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -137,15 +137,29 @@ export function MyListingsListingsTab({
         <View style={wideWeb ? styles.listCardWide : styles.listSectionMobile}>
           {wideWeb ? (
             <>
-              <Text style={styles.listTitle}>
-                {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
-              </Text>
+              <View style={styles.listHeaderRow}>
+                <Text style={styles.listTitle}>
+                  {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
+                </Text>
+              </View>
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Local</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+                <View style={styles.tableHeaderMain}>
+                  <View style={{ flex: 3, minWidth: 220 }}>
+                    <Text style={styles.tableHeaderText}>Livro</Text>
+                  </View>
+                  <View style={{ flex: 1.5, minWidth: 120 }}>
+                    <Text style={styles.tableHeaderText}>Modalidade</Text>
+                  </View>
+                  <View style={{ flex: 1.5, minWidth: 120 }}>
+                    <Text style={styles.tableHeaderText}>Local</Text>
+                  </View>
+                  <View style={{ flex: 1.2, minWidth: 100 }}>
+                    <Text style={styles.tableHeaderText}>Situação</Text>
+                  </View>
+                </View>
+                <View style={{ width: 148, alignItems: "flex-end" }}>
+                  <Text style={styles.tableHeaderText}>Ação</Text>
+                </View>
               </View>
             </>
           ) : null}
@@ -176,13 +190,12 @@ export function MyListingsListingsTab({
                   ? `Ver negociação de ${book.title}`
                   : `Gerenciar anúncio de ${book.title}`
               }
-              onPress={() => onNavigateToManageListing?.(book.id)}
-              onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
-              onNavigateToNegotiation={
+              onPress={() =>
                 book.status === "reserved" && onNavigateToNegotiationForBook
-                  ? () => onNavigateToNegotiationForBook(book.id)
-                  : undefined
+                  ? onNavigateToNegotiationForBook(book.id)
+                  : onNavigateToManageListing?.(book.id)
               }
+              onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
             />
           ))}
         </View>
@@ -191,7 +204,7 @@ export function MyListingsListingsTab({
       <View style={[styles.orientationBox, !wideWeb && styles.orientationBoxMobile]}>
         <AppIcon name="info" size={16} color={colors.secondaryText} />
         <Text style={styles.orientationHint}>
-          Toque em um livro para editar, pausar ou marcar como concluído.
+          Toque em um livro para gerenciar, pausar ou abrir a conversa.
         </Text>
       </View>
     </>
@@ -228,15 +241,54 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     listCardWide: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      paddingBottom: tokens.spacing[8],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      overflow: "hidden",
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
     },
-    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingHorizontal: tokens.spacing[4] },
+    listHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing[24],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[12],
+    },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
+      paddingVertical: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.book.paperEdge,
+    },
+    tableHeaderMain: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    tableHeaderText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurfaceVariant,
+    },
+    listTitle: {
+      ...tokens.typography.titleMedium,
+      fontVariant: ["tabular-nums"],
+      color: colors.m3.onSurface,
+    },
     orientationBox: {
       flexDirection: "row",
       alignItems: "center",

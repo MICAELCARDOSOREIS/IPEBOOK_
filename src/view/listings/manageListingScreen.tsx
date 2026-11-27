@@ -4,8 +4,10 @@ import ManageListing from "@/view/listings/manageListing";
 
 export type ManageListingScreenProps = {
   bookId: string;
+  focusKey?: number;
   onEdit?: (bookId: string) => void;
   onViewPublicListing?: (bookId: string) => void;
+  onOpenChat?: (requestId: string) => void;
   onRemoved?: () => void;
   onBack?: () => void;
   onRequireSignIn?: () => void;
@@ -13,8 +15,10 @@ export type ManageListingScreenProps = {
 
 export default function ManageListingScreen({
   bookId,
+  focusKey,
   onEdit,
   onViewPublicListing,
+  onOpenChat,
   onRemoved,
   onBack,
   onRequireSignIn,
@@ -33,8 +37,10 @@ export default function ManageListingScreen({
     <ManageListing
       bookId={bookId}
       sessionUserId={authState.user.id}
+      focusKey={focusKey}
       onEdit={onEdit}
       onViewPublicListing={onViewPublicListing}
+      onOpenChat={onOpenChat}
       onRemoved={onRemoved}
       onBack={onBack}
     />

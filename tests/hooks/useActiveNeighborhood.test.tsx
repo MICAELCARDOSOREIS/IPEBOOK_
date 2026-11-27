@@ -1,14 +1,14 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const store = new Map<string, string>();
+const mockStore = new Map<string, string>();
 
-vi.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStore.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStore.set(key, value);
     }),
   },
 }));
@@ -39,7 +39,7 @@ async function renderActiveNeighborhoodHook(defaultNeighborhood = "Centro") {
 
 describe("testes de hook: useActiveNeighborhood (Spec 067 / ADR 0050)", () => {
   beforeEach(() => {
-    store.clear();
+    mockStore.clear();
   });
 
   afterEach(async () => {
@@ -55,7 +55,7 @@ describe("testes de hook: useActiveNeighborhood (Spec 067 / ADR 0050)", () => {
   });
 
   it("carrega o bairro previamente salvo no AsyncStorage", async () => {
-    store.set(ACTIVE_NEIGHBORHOOD_STORAGE_KEY, "Praça da Bandeira");
+    mockStore.set(ACTIVE_NEIGHBORHOOD_STORAGE_KEY, "Praça da Bandeira");
     const hook = await renderActiveNeighborhoodHook("all");
     expect(hook.current.activeNeighborhood).toBe("Praça da Bandeira");
   });
@@ -66,7 +66,7 @@ describe("testes de hook: useActiveNeighborhood (Spec 067 / ADR 0050)", () => {
       await hook.current.selectNeighborhood("Campus IFPI Piripiri");
     });
     expect(hook.current.activeNeighborhood).toBe("Campus IFPI Piripiri");
-    expect(store.get(ACTIVE_NEIGHBORHOOD_STORAGE_KEY)).toBe("Campus IFPI Piripiri");
+    expect(mockStore.get(ACTIVE_NEIGHBORHOOD_STORAGE_KEY)).toBe("Campus IFPI Piripiri");
   });
 
   it("controla a abertura e fechamento do seletor", async () => {

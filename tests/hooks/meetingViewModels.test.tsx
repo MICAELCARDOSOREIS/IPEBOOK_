@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { MemoryMeetingDataSource } from "@/infra/datasources/memoryMeetingDataSource";
@@ -18,7 +17,7 @@ const mounted: ReactTestRenderer[] = [];
 const AGORA = new Date(2026, 9, 22, 14, 0, 0);
 const agora = () => AGORA;
 const PRACA = "Praça da Bandeira (Centro)";
-const logger: ILogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+const logger: ILogger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 let useCases: MeetingUseCases;
 
@@ -125,7 +124,9 @@ describe("useScheduleMeetingViewModel (Spec 052, 06.04/06.13)", () => {
   });
 
   it("mostra o erro de domínio e o de carga", async () => {
-    const failing: IMeetingUseCases = { ...useCases, getMeeting: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
+    const failing: IMeetingUseCases = Object.assign(Object.create(useCases), {
+      getMeeting: jest.fn().mockRejectedValue(new Error("rede")),
+    }) as unknown as IMeetingUseCases;
     const broken = await renderSchedule("dono", failing);
     expect(broken.current[0].loadError).toMatch(/Não foi possível carregar/);
 
@@ -159,7 +160,9 @@ describe("useMeetingViewModel (Spec 052, 06.05/06.11)", () => {
     const hook = await renderMeeting("dono");
     expect(hook.current[0].meeting).toBeNull();
     await act(async () => { expect(await hook.current[1].cancel()).toBe(false); });
-    const failing = { ...useCases, getMeeting: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
+    const failing = Object.assign(Object.create(useCases), {
+      getMeeting: jest.fn().mockRejectedValue(new Error("rede")),
+    }) as unknown as IMeetingUseCases;
     const broken = await renderMeeting("dono", failing);
     expect(broken.current[0].error).toMatch(/Não foi possível carregar/);
   });
@@ -196,7 +199,9 @@ describe("useUserMeetingsViewModel (Spec 071)", () => {
   });
 
   it("trata erro ao carregar os encontros", async () => {
-    const failing = { ...useCases, getUserMeetingHistory: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
+    const failing = Object.assign(Object.create(useCases), {
+      getUserMeetingHistory: jest.fn().mockRejectedValue(new Error("rede")),
+    }) as unknown as IMeetingUseCases;
     const hook = await renderUserMeetings("dono", failing);
     expect(hook.current[0].error).toMatch(/Não foi possível carregar/);
   });

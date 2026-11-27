@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { compactPhotosForPersistence, toSlotPhotos } from "@/model/bookPhotos";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -35,6 +36,7 @@ export type EditListingActions = {
   setDescription: (value: string) => void;
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
+  setPhotoAt?: (index: number, value: string) => void;
   removePhoto: (index: number) => void;
   setIsBox: (value: boolean) => void;
   setBoxVolumesCount: (value: string) => void;
@@ -103,7 +105,7 @@ export function useEditListingViewModel(
         condition: book.condition ?? null,
         description: book.description ?? "",
         photoUrl: book.photoUrl ?? "",
-        photos: book.photos ?? [],
+        photos: toSlotPhotos(book.photos),
         isBox: Boolean(book.isBox),
         boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
         loading: false,
@@ -167,12 +169,28 @@ export function useEditListingViewModel(
 
   const addPhoto = useCallback((value: string) => {
     setState((prev) => {
-      if (prev.photos.length >= 5) {
+      if (compactPhotosForPersistence(prev.photos).length >= 5) {
         return { ...prev, error: "O anúncio pode conter no máximo 5 fotos." };
       }
       return {
         ...prev,
         photos: [...prev.photos, value],
+        error: null,
+        success: false,
+      };
+    });
+  }, []);
+
+  const setPhotoAt = useCallback((index: number, value: string) => {
+    setState((prev) => {
+      if (index < 0 || index >= 5) return prev;
+      const next = [...prev.photos];
+      while (next.length <= index) next.push("");
+      next[index] = value.trim();
+      while (next.length > 0 && !next[next.length - 1]) next.pop();
+      return {
+        ...prev,
+        photos: next,
         error: null,
         success: false,
       };
@@ -251,7 +269,7 @@ export function useEditListingViewModel(
           condition: state.condition ?? undefined,
           description: state.description.trim() || undefined,
           photoUrl: state.photoUrl.trim() || undefined,
-          photos: state.photos.length > 0 ? state.photos : undefined,
+          photos: compactPhotosForPersistence(state.photos),
           isBox: state.isBox,
           boxVolumesCount: state.isBox ? volumesNum : undefined,
         },
@@ -261,6 +279,7 @@ export function useEditListingViewModel(
       setState((prev) => ({
         ...prev,
         book: updated,
+        photos: toSlotPhotos(updated.photos),
         saving: false,
         success: true,
       }));
@@ -313,6 +332,7 @@ export function useEditListingViewModel(
       setDescription,
       setPhotoUrl,
       addPhoto,
+      setPhotoAt,
       removePhoto,
       setIsBox,
       setBoxVolumesCount,

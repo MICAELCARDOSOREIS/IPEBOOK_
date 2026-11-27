@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { makeAuthViewModel, makeBlockedUsersViewModel, makeNetworkStatus } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -32,6 +34,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   const wide = useIsWideWeb();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBlockedUsersViewModel(sessionUserId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -46,8 +49,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!authState.loading && !state.loading && !state.error && state.blockedUsers.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             <Pressable
@@ -70,8 +72,8 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
-      )}
-      {state.loading ? (
+      )}>
+      {authState.loading || state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
@@ -83,7 +85,11 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
           </Text>
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
         </View>
       ) : state.blockedUsers.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
@@ -103,7 +109,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-blocked-2" : "list-blocked-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -166,7 +172,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         message={state.actionMessage ?? ""}
         onDismiss={actions.clearActionMessage}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -200,11 +206,11 @@ function createStyles(colors: ColorPalette) {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     wideTitle: {
       ...tokens.typography.brandLargeTitle,
@@ -242,7 +248,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[40],
       maxWidth: 640,
       width: "100%",
@@ -289,7 +295,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       padding: tokens.spacing[16],
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
     },
     userRow: {
       flexDirection: "row",

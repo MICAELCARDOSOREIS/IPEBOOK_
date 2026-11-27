@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh, useDebouncedRealtimeCallback } from "@/viewmodel/useRealtimeSync";
 
 export type UserMeetingsState = {
   meetings: readonly Meeting[];
@@ -16,10 +18,15 @@ export type UserMeetingsActions = {
 const LOAD_ERROR = "Não foi possível carregar o histórico de encontros. Tente novamente.";
 const sessionMeetingsCache = new Map<string, readonly Meeting[]>();
 
+registerSessionMemoryCache(() => {
+  sessionMeetingsCache.clear();
+});
+
 /** Histórico geral de encontros do usuário em suas trocas e vendas em Piripiri (Spec 071). */
 export function useUserMeetingsViewModel(
   sessionUserId: string | null,
   meetingUseCases: IMeetingUseCases,
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void,
 ): [UserMeetingsState, UserMeetingsActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialCached =
@@ -57,6 +64,10 @@ export function useUserMeetingsViewModel(
     }
   }, [sessionUserId, meetingUseCases, isTest]);
 
+  const debouncedReload = useDebouncedRealtimeCallback(() => {
+    void reload();
+  }, 200);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -64,6 +75,15 @@ export function useUserMeetingsViewModel(
       active.current = false;
     };
   }, [reload]);
+
+  useEffect(() => {
+    if (!sessionUserId || !subscribe) return;
+    return subscribe(sessionUserId, debouncedReload);
+  }, [sessionUserId, subscribe, debouncedReload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  }, Boolean(sessionUserId));
 
   return [state, { reload }];
 }

@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 
 import * as di from "@/di/container";
 
@@ -18,7 +17,7 @@ describe("DI Container (Injeção de dependências e use cases globais)", () => 
     expect(di.searchAlertUseCases).toBeDefined();
     expect(di.searchHistoryUseCases).toBeDefined();
     expect(di.onboardingUseCases).toBeDefined();
-    expect(di.themePreferenceUseCases).toBeDefined();
+    expect("themePreferenceUseCases" in di).toBe(false);
     expect(di.localCacheUseCases).toBeDefined();
     expect(di.userDataExportUseCases).toBeDefined();
     expect(di.userPreferencesUseCases).toBeDefined();
@@ -58,7 +57,7 @@ describe("DI Container (Injeção de dependências e use cases globais)", () => 
       ).rejects.toThrow("Pedido não encontrado.");
 
       // subscribeToMessages
-      const listener = vi.fn();
+      const listener = jest.fn();
       const unsub = negotiationMessageUseCases.subscribeToMessages("req_1", listener);
       expect(typeof unsub).toBe("function");
       unsub();

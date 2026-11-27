@@ -1,7 +1,5 @@
 
-import { View } from "react-native";
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import {
   checkAndTriggerInitialPetals,
@@ -10,8 +8,11 @@ import {
 } from "@/view/components/ipeCelebrationController";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 
-vi.mock("@/view/components/IpePetalsCelebration", () => ({
-  IpePetalsCelebration: ({ testID, variant }: any) => <View testID={`${testID}-${variant}`} />,
+jest.mock("@/view/components/IpePetalsCelebration", () => ({
+  IpePetalsCelebration: ({ testID, variant }: any) => {
+    const { View } = require("react-native");
+    return <View testID={`${testID}-${variant}`} />;
+  },
 }));
 
 describe("IpeCelebrationOverlay (Overlay de florada sobre Tab Bar e telas)", () => {

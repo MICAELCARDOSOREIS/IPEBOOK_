@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
-import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { triggerHaptic } from "@/view/haptics";
 import {
   makeAuthViewModel,
   makeChatWithUser,
@@ -17,6 +19,7 @@ import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
@@ -55,6 +58,9 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const guardedReportUser = useGuardedPress(onReportUser);
   const guardedOpenBook = useGuardedPress(onOpenBook);
   const wideWeb = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const [state, actions] = makePublicProfileViewModel(userId);
   const [auth] = makeAuthViewModel();
   // No próprio perfil não faz sentido conversar consigo nem se denunciar
@@ -89,11 +95,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   }, [profile?.name]);
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <ScrollEdgeScreen edges={["top", "bottom", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />}>
       {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
-      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />
 
-      <ScrollView
+      <ScrollEdgeScrollView
         ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
@@ -119,13 +124,18 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 style={styles.breadcrumb}
               />
             ) : null}
-            {/* 2. Identidade (Avatar 84px + Moldura Ipê + Nome em Serifa + Badges) */}
+            {/* 2. Identidade (Avatar 112px + Moldura Ipê + Nome em Serifa + Badges) */}
             <View style={styles.identitySection}>
-              <View style={styles.avatarWrapper}>
-                <Avatar name={profile.name} photoUrl={profile.photoUrl} size={84} />
+              <View style={[styles.avatarWrapper, isIos && styles.iosAvatarShadow]}>
+                <Avatar name={profile.name} photoUrl={profile.photoUrl} size={112} />
               </View>
               <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
-              <Text style={styles.subtitle}>Conheça a pessoa antes de combinar.</Text>
+              {isOwnProfile ? (
+                <View style={styles.ownProfilePill}>
+                  <AppIcon name="info" size={14} color={colors.nature.foliageDeep} />
+                  <Text style={styles.ownProfilePillText}>Seu perfil público · visível em Piripiri</Text>
+                </View>
+              ) : null}
               <View style={styles.identityBadgesRow}>
                 <View style={styles.locationBadge}>
                   <AppIcon name="place" size={13} color={colors.nature.foliage} />
@@ -147,89 +157,60 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
               </View>
             </View>
 
-            {/* 3. Cards Informativos Padronizados com Superfície M3 e Identidade Ipê */}
-            {/* Na web larga os três cartões ficam lado a lado, sem esticar pela largura toda. */}
+            {/* 3. Métricas Compactas: Avaliação + Negociações lado a lado e Data de entrada em faixa única */}
             <View style={styles.statsRow}>
-              {/* Card 1: Avaliações */}
-              {profile.ratingCount > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Avaliação média ${profile.averageRating?.toFixed(1)}. Ver avaliações da comunidade`}
-                  accessibilityHint="Rola a tela até as avaliações recebidas por esta pessoa"
-                  onPress={scrollToRatings}
-                  style={withPress(styles.infoCard)}
-                >
-                  <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
-                    <View style={styles.ratingNumberRow}>
-                      <Text style={[styles.statLargeValue, styles.statValueRating]}>
-                        {profile.averageRating?.toFixed(1)}
-                      </Text>
-                      <AppIcon name="star" size={11} color={colors.highlight} />
+              <View style={styles.metricsPair}>
+                {profile.ratingCount > 0 ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Avaliação média ${profile.averageRating?.toFixed(1)}. Ver avaliações da comunidade`}
+                    accessibilityHint="Rola a tela até as avaliações recebidas por esta pessoa"
+                    onPress={scrollToRatings}
+                    style={withPress(styles.metricCard)}
+                  >
+                    <View style={styles.metricTopRow}>
+                      <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
+                        <View style={styles.ratingNumberRow}>
+                          <Text style={[styles.statLargeValue, styles.statValueRating]}>
+                            {profile.averageRating?.toFixed(1)}
+                          </Text>
+                          <AppIcon name="star" size={12} color={colors.highlight} />
+                        </View>
+                      </View>
+                      <AppIcon name="chevronDown" size={16} color={colors.secondaryText} />
                     </View>
-                  </View>
-                  <View style={styles.cardHeaderTextCol}>
-                    <Text style={styles.cardTitle}>
+                    <Text style={styles.metricTitle}>
                       {`Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`}
                     </Text>
-                    <Text style={styles.cardSubtitle}>
-                      Avaliação da comunidade em Piripiri
+                  </Pressable>
+                ) : (
+                  <View style={styles.metricCard}>
+                    <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
+                      <AppIcon name="star" size={20} color={colors.ipe.bloomDeep} />
+                    </View>
+                    <Text style={styles.metricTitle}>Sem avaliações ainda</Text>
+                  </View>
+                )}
+
+                <View style={styles.metricCard}>
+                  <View style={[styles.cardLeadingBox, styles.cardLeadingBoxTrades]}>
+                    <Text style={[styles.statLargeValue, styles.statValueTrades]}>
+                      {profile.completedNegotiations}
                     </Text>
                   </View>
-                  <AppIcon name="chevronDown" size={18} color={colors.secondaryText} />
-                </Pressable>
-              ) : (
-                <View style={styles.infoCard}>
-                  <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
-                    <AppIcon name="star" size={22} color={colors.ipe.bloomDeep} />
-                  </View>
-                  <View style={styles.cardHeaderTextCol}>
-                    <Text style={styles.cardTitle}>Sem avaliações ainda</Text>
-                    <Text style={styles.cardSubtitle}>Novo membro no IpêBook</Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Card 2: Negociações Concluídas */}
-              <View style={styles.infoCard}>
-                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxTrades]}>
-                  <Text style={[styles.statLargeValue, styles.statValueTrades]}>{profile.completedNegotiations}</Text>
-                </View>
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
+                  <Text style={styles.metricTitle}>
                     {profile.completedNegotiations === 1 ? "Negociação concluída" : "Negociações concluídas"}
                   </Text>
-                  <Text style={styles.cardSubtitle}>Livros trocados, vendidos ou doados com sucesso</Text>
                 </View>
               </View>
 
-              {/* Card 3: Tempo de Comunidade */}
-              <View style={styles.infoCard}>
-                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxCalendar]}>
-                  <AppIcon name="calendar" size={22} color={colors.book.leather} />
-                </View>
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
-                    {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
-                </View>
+              <View style={styles.joinedStrip}>
+                <AppIcon name="calendar" size={16} color={colors.book.leather} />
+                <Text style={styles.joinedStripText}>
+                  {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
+                </Text>
               </View>
             </View>
-
-            {/* Aviso acolhedor quando for o próprio perfil */}
-            {isOwnProfile ? (
-              <View style={styles.ownProfileNoticeCard}>
-                <View style={styles.ownProfileNoticeIcon}>
-                  <AppIcon name="info" size={18} color={colors.nature.foliage} />
-                </View>
-                <View style={styles.ownProfileNoticeText}>
-                  <Text style={styles.ownProfileNoticeTitle}>Seu perfil público</Text>
-                  <Text style={styles.ownProfileNoticeSubtitle}>
-                    É assim que outros leitores de Piripiri visualizam você na comunidade.
-                  </Text>
-                </View>
-              </View>
-            ) : null}
 
             {/* 4. Ações Principais com Hierarquia M3 e Contraste Acessível */}
             {!isOwnProfile ? (
@@ -238,7 +219,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                   label={chatButtonLabel}
                   accessibilityLabel={`Conversar com ${profile.name}`}
                   loading={chat.busy}
-                  onPress={() => void chat.start()}
+                  onPress={() => {
+                    if (Platform.OS === "ios") triggerHaptic("light");
+                    void chat.start();
+                  }}
                 />
                 {chat.notice ? (
                   <Text accessibilityRole="alert" style={styles.cardSubtitle}>
@@ -249,9 +233,16 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Denunciar ou bloquear"
-                  onPress={() => setSafetyOpen(true)}
-                  style={withPress(styles.safetyButton)}
+                  onPress={() => {
+                    if (isIos) triggerHaptic("light");
+                    setSafetyOpen(true);
+                  }}
+                  style={withPress([
+                    styles.safetyButton,
+                    isIos && (iosGlass ? styles.iosSafetyGlass : styles.iosSafetyOpaque),
+                  ])}
                 >
+                  {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: tokens.radius.full }} /> : null}
                   <AppIcon name="flag" size={18} color={colors.error} />
                   <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
                 </Pressable>
@@ -277,7 +268,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             )}
           </View>
         ) : null}
-      </ScrollView>
+      </ScrollEdgeScrollView>
       {profile ? (
         <ProfileSafetySheet
           visible={safetyOpen}
@@ -303,7 +294,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
           }}
         />
       ) : null}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -346,7 +337,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       fontWeight: tokens.fontWeight.bold,
     },
     container: {
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[12],
     },
     breadcrumb: {
       marginBottom: tokens.spacing[4],
@@ -355,19 +346,25 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     wideBelowMain: { flex: 1 },
     mobileBelow: {
       gap: tokens.spacing[16],
-      marginTop: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
     },
     identitySection: {
       alignItems: "center",
       gap: tokens.spacing[6],
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
     },
     avatarWrapper: {
-      padding: 3,
+      padding: 4,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.petalSoft,
-      borderWidth: 1.5,
+      borderWidth: 2.5,
       borderColor: colors.ipe.bloom,
+    },
+    iosAvatarShadow: {
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.14,
+      shadowRadius: 14,
     },
     name: {
       ...tokens.typography.brandTitle,
@@ -393,8 +390,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     locationBadge: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 38 : undefined,
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.nature.sprout,
@@ -409,40 +407,92 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     socialBadge: {
       flexDirection: "row",
       alignItems: "center",
+      minHeight: Platform.OS === "ios" ? 38 : undefined,
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     socialHandle: {
       ...tokens.typography.footnote,
       fontFamily: fontFamily.semiBold,
       color: colors.action,
     },
-    statsRow: wideWeb ? { flexDirection: "row", gap: tokens.spacing[16] } : { gap: tokens.spacing[10] },
-    infoCard: {
-      flex: wideWeb ? 1 : undefined,
+    statsRow: wideWeb ? { flexDirection: "row", alignItems: "stretch", gap: tokens.spacing[12] } : { gap: tokens.spacing[8] },
+    metricsPair: {
+      flex: wideWeb ? 2 : undefined,
+      flexDirection: "row",
+      gap: tokens.spacing[10],
+    },
+    metricCard: {
+      flex: 1,
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[14],
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[14],
+      borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[8],
+      justifyContent: "space-between",
       elevation: 1,
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.04,
       shadowRadius: 3,
       shadowOffset: { width: 0, height: 1 },
     },
+    metricTopRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    metricTitle: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.text,
+      lineHeight: 18,
+    },
+    joinedStrip: {
+      flex: wideWeb ? 1 : undefined,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[10],
+    },
+    joinedStripText: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.medium,
+      color: colors.secondaryText,
+      flexShrink: 1,
+    },
+    ownProfilePill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      backgroundColor: colors.nature.sprout,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[4],
+    },
+    ownProfilePillText: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.medium,
+      color: colors.nature.foliageDeep,
+    },
     cardLeadingBox: {
-      minWidth: 48,
-      height: 48,
-      paddingHorizontal: tokens.spacing[6],
+      alignSelf: "flex-start",
+      minWidth: 44,
+      height: 36,
+      paddingHorizontal: tokens.spacing[8],
       borderRadius: tokens.radius.medium,
       justifyContent: "center",
       alignItems: "center",
@@ -461,7 +511,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     cardLeadingBoxCalendar: {
       backgroundColor: colors.book.pageCard,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     ratingNumberRow: {
       flexDirection: "row",
@@ -546,9 +596,19 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[8],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
+    },
+    iosSafetyGlass: {
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      overflow: "hidden",
+    },
+    iosSafetyOpaque: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
     },
     safetyButtonText: {
       ...tokens.typography.labelLarge,

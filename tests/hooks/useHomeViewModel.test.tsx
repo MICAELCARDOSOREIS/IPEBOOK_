@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { Book } from "@/model/entities/book";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -38,7 +37,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
   it("inicia em carregamento e atualiza para catálogo vazio com sucesso", async () => {
     const hook = await renderHook({ listBooks: async () => [] });
     expect(hook.loadingStates).toContain(true);
-    expect(hook.current[0]).toEqual({ books: [], loading: false, error: null });
+    expect(hook.current[0]).toEqual({ books: [], cachedAt: null, loading: false, error: null });
   });
 
   it("atualiza estado quando livros são carregados com sucesso", async () => {
@@ -52,7 +51,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
   });
 
   it("trata erro de domínio amigável e permite recuperação via reload", async () => {
-    const listBooks = vi
+    const listBooks = jest
       .fn()
       .mockRejectedValueOnce(new DomainError("Serviço de catálogo em manutenção."))
       .mockResolvedValueOnce([
@@ -92,7 +91,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     const livrosRecentes: readonly Book[] = [
       { id: "rec-1", title: "Resultado Recente", author: "Autor Moderno", ownerId: "u1", modality: "sale" as const, price: 20, status: "available" as const },
     ];
-    const listBooks = vi.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(livrosRecentes);
+    const listBooks = jest.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(livrosRecentes);
 
     const hook = await renderHook({ listBooks });
     expect(hook.current[0].loading).toBe(true);

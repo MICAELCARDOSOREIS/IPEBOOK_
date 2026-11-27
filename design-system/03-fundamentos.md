@@ -7,8 +7,8 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 
 - Use `primary` só para a ação principal da tela, o item ativo e links — nunca como cor
   decorativa. (Herdado)
-- Fundo de tela em `surface`; cartões e campos em `surface-container-low`; busca, diálogo e
-  bolha recebida em `surface-container-high`. (Herdado)
+- Fundo de tela em `surface`. O campo de busca usa `surface-container-low` em repouso e
+  `surface-container-highest` em foco. Consulte as fichas de cada componente para os demais fundos.
 - Cada modalidade tem uma cor fixa de contêiner: Venda `secondary-container`, Troca
   `tertiary-container`, Doação `doacao-container`. Nunca troque a cor de uma modalidade por
   outra. (Adaptado)
@@ -20,12 +20,12 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 ## Tipografia
 
 - Títulos de tela raiz, logotipo e título do livro usam a serifa da marca
-  (`fontFamily.brand` → Source Serif 4 Bold); todo o resto da interface usa a escala M3 em
-  Roboto. (Adaptado — ver [01-principios.md](01-principios.md) §4)
+  (`fontFamily.brand` → Source Serif 4 Bold); todo o resto da interface usa a escala tipográfica com
+  **Plus Jakarta Sans** (400, 500, 600 — [ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)). (Adaptado — ver [01-principios.md](01-principios.md) §4)
 - Rótulo de botão em `m3-label-lg`; texto de campo e mensagem em `m3-body-lg`; descrições em
   `m3-body-md`. (Herdado)
-- O texto respeita o tamanho de fonte escolhido no sistema Android, até 200%: nenhuma altura
-  fixa em elemento com texto; listas e cartões crescem. (Herdado)
+- O conteúdo deve se adaptar à fonte ampliada. Cabeçalhos e rótulos da navegação têm limites
+  de escala específicos, registrados em [Acessibilidade](06-acessibilidade.md#texto-ampliado-e-movimento).
 
 ## Espaçamento
 
@@ -64,12 +64,10 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 
 ## Orientação e layout responsivo
 
-- **Mobile é só retrato.** O app trava em `portrait` em dois níveis: a `orientation: "portrait"`
-  do `app.json` (trava nativa em builds Android/iOS) e, como rede de segurança em runtime, um
-  `lockAsync(PORTRAIT_UP)` do `expo-screen-orientation` no `src/app/_layout.tsx` (ignora Web).
-  (Adaptado — M3 é agnóstico de orientação; a escolha de retrato-only é da marca)
-- **O porquê:** a negociação entre vizinhos acontece numa mão, em qualquer lugar — não há tela
-  que ganhe com paisagem, e travar evita reflow acidental e estados de layout não testados.
+- **Android** acompanha a orientação e o tamanho da janela em celulares, tablets e dobráveis.
+  Use as áreas seguras para manter o conteúdo visível junto às barras do sistema e aos recortes,
+  inclusive nas laterais em paisagem.
+- **iOS** declara retrato em `ios.infoPlist.UISupportedInterfaceOrientations` no `app.json`.
 - **Web fica livre:** o navegador de desktop não força retrato. Em vez disso, o conteúdo é
   centralizado numa coluna de leitura com `maxWidth` (ver abaixo), com o fundo `surface` em
   volta. (Adaptado)

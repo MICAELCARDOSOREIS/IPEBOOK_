@@ -1,7 +1,7 @@
 import React from "react";
 import renderer, { act } from "react-test-renderer";
-import { describe, expect, it, vi } from "vitest";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
+import { FavoriteButton } from "@/view/components/FavoriteButton";
 import type { Book } from "@/model/entities/book";
 
 const sampleBook: Book = {
@@ -21,8 +21,8 @@ const sampleBook: Book = {
 
 describe("SearchBookCard", () => {
   it("renderiza modalidade doacao com gratuito e status disponivel", () => {
-    const onPress = vi.fn();
-    const onFavoriteToggle = vi.fn();
+    const onPress = jest.fn();
+    const onFavoriteToggle = jest.fn();
     let root: renderer.ReactTestRenderer;
 
     act(() => {
@@ -39,6 +39,7 @@ describe("SearchBookCard", () => {
     });
 
     expect(root!.root.findByProps({ accessibilityLabel: "Ver detalhe de Dom Casmurro, Machado de Assis em Centro" })).toBeTruthy();
+    expect(root!.root.findAllByProps({ testID: "ipe-ribbon" })).toHaveLength(0);
   });
 
   it("renderiza modalidade troca e preco formatado com status reservado", () => {
@@ -59,19 +60,22 @@ describe("SearchBookCard", () => {
           wideWeb={true}
           gridColumns={3}
           userId={null}
-          onPress={vi.fn()}
-          onFavoriteToggle={vi.fn()}
+          onPress={jest.fn()}
+          onFavoriteToggle={jest.fn()}
         />,
       );
     });
 
     expect(root!.root.findByProps({ accessibilityLabel: "Ver detalhe de Dom Casmurro, Machado de Assis" })).toBeTruthy();
+    expect(root!.root.findAllByProps({ testID: "ipe-ribbon" })).toHaveLength(0);
+    const favoriteBtn = root!.root.findByType(FavoriteButton);
+    expect(favoriteBtn.props.variant).toBe("overlay");
   });
 });
 
   it("dispara onPress e onFavoriteToggle ao interagir", () => {
-    const onPress = vi.fn();
-    const onFavoriteToggle = vi.fn();
+    const onPress = jest.fn();
+    const onFavoriteToggle = jest.fn();
     let root: renderer.ReactTestRenderer;
 
     act(() => {

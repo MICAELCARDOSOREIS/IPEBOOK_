@@ -2,7 +2,10 @@
 // Recebe `{ id }` de um aviso novo, reivindica o envio e manda o push pelo serviço do Expo.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
+  PUSH_ACCEPTED_RESPONSE,
+  PUSH_WEBHOOK_HEADER,
   buildPushMessage,
+  isAuthorizedWebhookSecret,
   isExpoPushToken,
   isInvalidTokenTicket,
   isTypeMuted,
@@ -10,6 +13,7 @@ import {
   type PushTicket,
   type StoredNotification,
 } from "./logic.ts";
+import { getWebPushCredentials, sendWebPush } from "./webPush.ts";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
@@ -19,6 +23,13 @@ function reply(status: number, body: Record<string, unknown>): Response {
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") return reply(405, { erro: "Use POST." });
+
+  // Spec 143 / A2: exige segredo dedicado de webhook em tempo constante antes de tocar no banco.
+  const expectedSecret = Deno.env.get("PUSH_WEBHOOK_SECRET");
+  const providedSecret = request.headers.get(PUSH_WEBHOOK_HEADER);
+  if (!isAuthorizedWebhookSecret(providedSecret, expectedSecret)) {
+    return reply(401, { erro: "Não autorizado." });
+  }
 
   const id = parseRequestId(await request.json().catch(() => null));
   if (!id) return reply(400, { erro: "Informe o id do aviso." });
@@ -37,8 +48,8 @@ Deno.serve(async (request) => {
     .eq("id", id)
     .is("pushed_at", null)
     .maybeSingle();
-  if (claimError) return reply(500, { erro: "Não foi possível ler o aviso." });
-  if (!claimed) return reply(200, { enviado: false, motivo: "aviso inexistente ou já enviado" });
+  if (claimError) return reply(500, { erro: "Falha interna ao processar aviso." });
+  if (!claimed) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 
   const notification = claimed as StoredNotification;
   const { data: preferences } = await admin
@@ -47,11 +58,17 @@ Deno.serve(async (request) => {
     .eq("user_id", notification.user_id)
     .maybeSingle();
   const token = preferences?.push_token;
-  if (!isExpoPushToken(token)) return reply(200, { enviado: false, motivo: "pessoa sem token de push" });
   // Spec 099: a pessoa desativou este tipo de aviso — o push não sai, mas o aviso segue no app.
   if (isTypeMuted(notification.type, preferences?.muted_types)) {
-    return reply(200, { enviado: false, motivo: "tipo de aviso desativado" });
+    return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
   }
+
+  const webCredentials = getWebPushCredentials();
+  const { data: webSubscriptions } = webCredentials
+    ? await admin.from("v2_web_push_subscriptions").select("endpoint,p256dh,auth_secret")
+      .eq("user_id", notification.user_id).limit(10)
+    : { data: null };
+  if (!isExpoPushToken(token) && !webSubscriptions?.length) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 
   // Reivindica o envio de forma atômica agora que há destino e permissão (RN-03).
   const { count } = await admin
@@ -59,20 +76,40 @@ Deno.serve(async (request) => {
     .update({ pushed_at: new Date().toISOString() }, { count: "exact" })
     .eq("id", id)
     .is("pushed_at", null);
-  if (!count) return reply(200, { enviado: false, motivo: "envio reivindicado por outra chamada" });
+  if (!count) return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 
-  const response = await fetch(EXPO_PUSH_URL, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(buildPushMessage(notification, token)),
-  }).catch(() => null);
-  if (!response?.ok) return reply(502, { enviado: false, motivo: "serviço de push indisponível" });
+  const sendNativePush = async (nativeToken: string) => {
+    const { count: unreadCount, error: badgeError } = await admin
+      .from("v2_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", notification.user_id)
+      .eq("read", false);
+    const response = await fetch(EXPO_PUSH_URL, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(buildPushMessage(notification, nativeToken, badgeError ? undefined : unreadCount ?? undefined)),
+    }).catch(() => null);
+    if (!response?.ok) return false;
+    const ticket = ((await response.json().catch(() => null)) as { data?: PushTicket } | null)?.data;
+    if (isInvalidTokenTicket(ticket)) {
+      await admin.from("v2_user_preferences").update({ push_token: null })
+        .eq("user_id", notification.user_id).eq("push_token", nativeToken);
+    }
+    return true;
+  };
 
-  const ticket = ((await response.json().catch(() => null)) as { data?: PushTicket } | null)?.data;
-  if (isInvalidTokenTicket(ticket)) {
-    // RN-04: o aparelho não existe mais.
-    await admin.from("v2_user_preferences").update({ push_token: null }).eq("user_id", notification.user_id);
-    return reply(200, { enviado: false, motivo: "token inválido removido" });
+  const webSends = webCredentials ? (webSubscriptions ?? []).map(async (destination) => {
+    const result = await sendWebPush(destination, webCredentials);
+    if (result === "expired") {
+      await admin.from("v2_web_push_subscriptions").delete().eq("endpoint", destination.endpoint)
+        .eq("user_id", notification.user_id).eq("auth_secret", destination.auth_secret);
+    }
+    return result !== "failed";
+  }) : [];
+  const sends = isExpoPushToken(token) ? [sendNativePush(token), ...webSends] : webSends;
+  const results = await Promise.allSettled(sends);
+  if (!results.some((result) => result.status === "fulfilled" && result.value)) {
+    return reply(502, { erro: "Serviço de push indisponível." });
   }
-  return reply(200, { enviado: ticket?.status === "ok" });
+  return reply(200, { ...PUSH_ACCEPTED_RESPONSE });
 });

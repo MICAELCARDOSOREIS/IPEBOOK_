@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View, type ScrollViewInstance } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, Switch, Text, View, type ScrollViewInstance } from "react-native";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
+import { triggerHaptic } from "@/view/haptics";
 import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { InstagramIcon } from "@/view/components/InstagramIcon";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -13,26 +14,18 @@ import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextButton } from "@/view/components/TextButton";
-import {
-  makeAuthViewModel,
-  makeIsModerator,
-  makeNotificationPreferencesViewModel,
-  makePublicProfileViewModel,
-  makeSettingsViewModel,
-} from "@/di/container";
-import {
-  NOTIFICATION_PREFERENCE_CATEGORIES,
-  type NotificationPreferenceKey,
-} from "@/viewmodel/useNotificationPreferencesViewModel";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
+import { makeAuthViewModel, makeIsModerator, makeNotificationPreferencesViewModel, makePublicProfileViewModel, makeSettingsViewModel } from "@/di/container";
+import { ALL_PIRIPIRI_LOCATIONS_LABEL, DEFAULT_PIRIPIRI_LOCATION } from "@/model/entities/location";
+import { NOTIFICATION_PREFERENCE_CATEGORIES, type NotificationPreferenceKey } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import type { ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { createSettingsStyles } from "@/view/profile/settingsStyles";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { withPress } from "@/view/pressFeedback";
-const WIDE_CONTENT_MAX_WIDTH = 1240;
 
 export type SettingsProps = {
   onBack: () => void;
@@ -56,10 +49,19 @@ type LinkItem = {
   icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail" | "instagram" | "flag";
   label: string;
   description?: string;
+  accessibilityLabel?: string;
   onPress?: () => void;
 };
 
 type SettingsSectionKey = "account" | "preferences" | "notifications" | "device" | "about";
+
+const ALL_LOCATION_VALUES = [
+  "all",
+  DEFAULT_PIRIPIRI_LOCATION,
+  ALL_PIRIPIRI_LOCATIONS_LABEL,
+  "Piripiri (Todos)",
+  "Todos os bairros (Piripiri)",
+];
 
 /**
  * Tela de configurações do aplicativo (Spec 073, ADR 0058 e ADR 0060).
@@ -102,13 +104,16 @@ export function Settings({
   const guardedNotifications = onNavigateToNotifications ? guardedNotificationsPress : undefined;
   const guardedSignedOutPress = useGuardedPress(onSignedOut);
   const guardedSignedOut = onSignedOut ? guardedSignedOutPress : undefined;
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const scrollRef = useRef<ScrollViewInstance>(null);
   const mainY = useRef(0);
   const sectionY = useRef<Record<string, number>>({});
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createSettingsStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const hasAccount = !!authState.user?.id;
   const sessionUserId = authState.user?.id ?? null;
@@ -119,9 +124,9 @@ export function Settings({
   const [expandedSection, setExpandedSection] = useState<SettingsSectionKey | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
-  const defaultNeighborhoodLabel =
-    neighborhood.activeNeighborhood === "all" || neighborhood.activeNeighborhood === "Todos os bairros (Piripiri)"
-      ? "Todos os bairros"
+  const defaultLocationLabel =
+    ALL_LOCATION_VALUES.includes(neighborhood.activeNeighborhood)
+      ? "Todos os locais de Piripiri"
       : neighborhood.activeNeighborhood;
 
   async function handleSignOut() {
@@ -248,9 +253,9 @@ export function Settings({
       <Pressable
         key={link.key}
         accessibilityRole="button"
-        accessibilityLabel={link.label}
+        accessibilityLabel={link.accessibilityLabel ?? link.label}
         onPress={link.onPress}
-        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        android_ripple={Platform.OS === "android" ? { color: colors.m3.surfaceContainerHigh } : undefined}
         style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
       >
         <View style={[styles.iconCircle, getIconToneStyle(link.icon, colors)]}>
@@ -281,8 +286,11 @@ export function Settings({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityState={{ expanded }}
-        onPress={() => setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey))}
-        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("selection");
+          setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey));
+        }}
+        android_ripple={Platform.OS === "android" ? { color: colors.m3.surfaceContainerHigh } : undefined}
         style={withPress([styles.disclosureHeader, expanded && styles.disclosureHeaderExpanded])}
       >
         <View style={styles.sectionHeaderRow}>
@@ -293,7 +301,7 @@ export function Settings({
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               {label}
             </Text>
-            <Text numberOfLines={1} style={styles.sectionSubtitle}>
+            <Text numberOfLines={2} style={styles.sectionSubtitle}>
               {subtitle}
             </Text>
           </View>
@@ -317,7 +325,7 @@ export function Settings({
       onPress={guardedEditProfile}
       style={withPress([styles.accountCard, wide && styles.accountCardWide])}
     >
-      <View style={styles.accountIdentity}>
+      <View style={[styles.accountIdentity, wide && styles.accountIdentityWide]}>
         <Avatar
           name={profileState.profile?.name || accountEmail || "Você"}
           photoUrl={profileState.profile?.photoUrl ?? undefined}
@@ -328,12 +336,21 @@ export function Settings({
           <Text numberOfLines={1} style={styles.accountName}>
             {accountDisplayName}
           </Text>
-          <Text numberOfLines={1} style={styles.linkDescription}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.linkDescription}>
             {accountEmail ?? "E-mail não informado"}
           </Text>
         </View>
       </View>
-      <View style={styles.accountAction}>
+      <View
+        style={[
+          styles.accountAction,
+          wide && styles.accountActionWide,
+          isIos && (iosGlass
+            ? { backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" }
+            : { backgroundColor: colors.m3.surfaceContainerHigh }),
+        ]}
+      >
+        {iosGlass ? <IosGlassBackdrop isInteractive style={{ borderRadius: 999 }} /> : null}
         <AppIcon name="edit" size={16} color={colors.m3.onSecondaryContainer} />
         <Text style={styles.accountActionText}>Editar</Text>
       </View>
@@ -341,8 +358,7 @@ export function Settings({
   ) : null;
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} header={wide ? (
         <View style={styles.wideTopHeader}>
           <View style={styles.wideTopHeaderLeft}>
             <Pressable
@@ -365,31 +381,42 @@ export function Settings({
         </View>
       ) : (
         <TopAppBar title="Configurações" onBack={guardedBack} contentMaxWidth={undefined} />
-      )}
-      <ScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
+      )}>
+      <ScrollEdgeScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
             <View style={styles.sidebar}>
               {accountCard}
-              <View accessibilityRole="menu" accessibilityLabel="Seções das configurações" style={styles.sideNav}>
-                {navItems.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    accessibilityRole="link"
-                    accessibilityLabel={`Ir para ${item.label}`}
-                    onPress={() => scrollRef.current?.scrollTo({ y: mainY.current + (sectionY.current[item.key] ?? 0) - 16, animated: true })}
-                    style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [styles.sideNavItem, (hovered || pressed) && styles.sideNavItemActive]}
-                  >
-                    <AppIcon name={item.icon} size={20} color={colors.m3.onSurfaceVariant} />
-                    <Text style={styles.sideNavLabel}>{item.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {hasAccount ? (
-                <View style={styles.sideSignOut}>
-                  <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
+              <View style={styles.sideNavCard}>
+                <View accessibilityRole="menu" accessibilityLabel="Seções das configurações" style={styles.sideNav}>
+                  {navItems.map((item) => {
+                    const isActive = expandedSection === item.key;
+                    return (
+                      <Pressable
+                        key={item.key}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Ir para ${item.label}`}
+                        onPress={() => {
+                          setExpandedSection(item.key as SettingsSectionKey);
+                          scrollRef.current?.scrollTo({ y: mainY.current + (sectionY.current[item.key] ?? 0) - 16, animated: true });
+                        }}
+                        style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [
+                          styles.sideNavItem,
+                          (isActive || hovered || pressed) && styles.sideNavItemActive,
+                        ]}
+                      >
+                        <AppIcon name={item.icon} size={20} color={isActive ? colors.brandBrown : colors.m3.onSurfaceVariant} />
+                        <Text style={[styles.sideNavLabel, isActive && styles.sideNavLabelActive]}>{item.label}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-              ) : null}
+                {hasAccount ? (
+                  <View style={styles.sideSignOut}>
+                    <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
+                  </View>
+                ) : null}
+              </View>
             </View>
           ) : null}
           <View
@@ -406,16 +433,17 @@ export function Settings({
             </View>
           ) : null}
 
-          {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
+          {/* Preferências de uso (Spec 091): filtro de local ao abrir Início e Explorar */}
           <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.preferences = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("preferences", "Preferências", `Bairro padrão: ${defaultNeighborhoodLabel}`, "place")}
+            {renderSectionHeader("preferences", "Preferências", "Filtro de localização do catálogo", "place")}
             {expandedSection === "preferences" ? (
               <View style={styles.sectionBodyList}>
                 {renderLink({
                   key: "neighborhood",
                   icon: "place",
-                  label: "Bairro padrão",
-                  description: `${defaultNeighborhoodLabel} · usado para mostrar livros perto de você`,
+                  label: "Local padrão",
+                  description: defaultLocationLabel,
+                  accessibilityLabel: `Local padrão: ${defaultLocationLabel}`,
                   onPress: neighborhood.openSelector,
                 }, 0)}
               </View>
@@ -434,7 +462,13 @@ export function Settings({
                       return (
                         <Pressable
                           key={key}
-                          onPress={() => void notifActions.setEnabled(key, !notifPrefs.enabled[key])}
+                          accessibilityRole="switch"
+                          accessibilityLabel={category.label}
+                          accessibilityState={{ checked: notifPrefs.enabled[key] }}
+                          onPress={() => {
+                            if (Platform.OS === "ios") triggerHaptic("selection");
+                            void notifActions.setEnabled(key, !notifPrefs.enabled[key]);
+                          }}
                           style={({ pressed }) => [
                             styles.toggleRow,
                             index > 0 && styles.linkDivider,
@@ -447,19 +481,23 @@ export function Settings({
                           </View>
                           <Switch
                             value={notifPrefs.enabled[key]}
-                            onValueChange={(value) => void notifActions.setEnabled(key, value)}
+                            onValueChange={(value) => {
+                              if (Platform.OS === "ios") triggerHaptic("selection");
+                              void notifActions.setEnabled(key, value);
+                            }}
                             accessibilityRole="switch"
                             accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
                             trackColor={{
                               false: colors.m3.surfaceContainerHighest,
-                              true: resolvedScheme === "dark" ? colors.m3.primaryContainer : colors.action,
+                              true: colors.action,
                             }}
+                            ios_backgroundColor={colors.m3.surfaceContainerHighest}
                             thumbColor={
-                              notifPrefs.enabled[key]
-                                ? resolvedScheme === "dark"
-                                  ? colors.m3.primary
-                                  : colors.m3.onPrimary
-                                : colors.m3.outline
+                              Platform.OS === "ios"
+                                ? undefined
+                                : notifPrefs.enabled[key]
+                                  ? colors.m3.onPrimary
+                                  : colors.m3.outline
                             }
                           />
                         </Pressable>
@@ -482,7 +520,7 @@ export function Settings({
             {expandedSection === "device" ? (
               <View style={styles.sectionBodyCard}>
                 <Text style={styles.sectionDescription}>
-                  Uma cópia do catálogo fica salva para abrir livros sem internet. Removê-la libera espaço; ela pode ser baixada novamente. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
+                  O catálogo, a Estante e detalhes de livros visitados podem ficar salvos neste aparelho para leitura sem internet. Você pode remover essas cópias e carregar os dados novamente ao conectar. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
                 </Text>
                 <OutlinedButton
                   label="Remover cópia do catálogo"
@@ -548,12 +586,11 @@ export function Settings({
           ) : null}
 
           <Text style={styles.footer}>
-            Leitura, anúncios e configurações funcionam sem internet. Só publicar, favoritar e
-            negociar pedem conexão.
+            Consulte os livros salvos e as configurações locais sem internet. Para publicar, favoritar ou negociar, conecte-se à internet.
           </Text>
           </View>
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       <NeighborhoodSelectorModal
         visible={neighborhood.isSelectorOpen}
@@ -588,7 +625,7 @@ export function Settings({
           setSignOutError(null);
         }}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -626,273 +663,4 @@ function getIconColor(icon: LinkItem["icon"], colors: ColorPalette) {
     default:
       return colors.m3.onSecondaryContainer;
   }
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
-    wideTopHeader: {
-      width: "100%",
-      maxWidth: WIDE_CONTENT_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[24],
-      paddingBottom: tokens.spacing[12],
-    },
-    wideTopHeaderLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-    },
-    wideBackButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    wideTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    wideSubtitle: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[2],
-    },
-    accountCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    accountIdentity: {
-      flex: 1,
-      minWidth: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    accountInfo: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
-    accountEyebrow: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    accountName: {
-      ...tokens.typography.titleMedium,
-      color: colors.text,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    accountAction: {
-      minHeight: 36,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    accountActionText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    signOutRow: { alignItems: "center", paddingTop: tokens.spacing[4] },
-    iconCircle: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    linkDivider: {
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-      marginLeft: 68,
-    },
-    linkPressed: { backgroundColor: colors.m3.surfaceContainerHigh },
-    scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
-    content: {
-      width: "100%",
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
-    },
-    contentWide: {
-      maxWidth: WIDE_CONTENT_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[48],
-    },
-    mainStacked: { gap: tokens.spacing[12] },
-    // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
-    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[16] },
-    sidebar: {
-      width: 300,
-      gap: tokens.spacing[16],
-      // Fica visível enquanto a coluna principal rola (só existe na web).
-      position: "sticky" as "relative",
-      top: tokens.spacing[16],
-    },
-    accountCardWide: { flexDirection: "column", alignItems: "flex-start", gap: tokens.spacing[12] },
-    sideNav: { gap: tokens.spacing[2] },
-    sideNavItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
-    },
-    sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
-    sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
-    sectionCard: {
-      borderRadius: tokens.radius.xl,
-      overflow: "hidden",
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    sectionHeaderRow: {
-      flex: 1,
-      minWidth: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    sectionHeaderTextCol: {
-      flex: 1,
-      minWidth: 0,
-      gap: tokens.spacing[2],
-    },
-    disclosureHeader: {
-      minHeight: 68,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
-    },
-    disclosureHeaderExpanded: {
-      backgroundColor: colors.m3.surfaceContainer,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-    },
-    sectionHeaderIcon: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.secondaryContainer,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    sectionHeader: {
-      ...tokens.typography.titleMedium,
-      color: colors.m3.onSurface,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    sectionSubtitle: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    chevronBadge: {
-      width: tokens.spacing[32],
-      height: tokens.spacing[32],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    chevronBadgeExpanded: {
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    sectionBodyList: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    sectionBodyCard: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    inlineFeedback: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingBottom: tokens.spacing[12],
-    },
-    sectionDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-    },
-    footer: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      textAlign: "center",
-      paddingHorizontal: tokens.spacing[20],
-      lineHeight: tokens.lineHeight[20],
-      marginTop: tokens.spacing[4],
-    },
-    feedbackSuccess: {
-      ...tokens.typography.bodyMedium,
-      color: colors.success,
-    },
-    feedbackError: {
-      ...tokens.typography.bodyMedium,
-      color: colors.error,
-    },
-    versionRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      minHeight: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[16],
-    },
-    versionLabel: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-    },
-    versionValue: {
-      ...tokens.typography.bodyMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.text,
-    },
-    linkRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[14],
-      minHeight: 64,
-      paddingVertical: tokens.spacing[10],
-      paddingHorizontal: tokens.spacing[16],
-    },
-    toggleRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[14],
-      minHeight: 64,
-      paddingVertical: tokens.spacing[10],
-      paddingHorizontal: tokens.spacing[16],
-    },
-    linkText: { flex: 1, gap: tokens.spacing[2] },
-    linkLabel: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurface,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    linkDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      lineHeight: tokens.lineHeight[20],
-    },
-  });
 }

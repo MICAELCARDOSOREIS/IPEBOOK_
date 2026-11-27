@@ -1,33 +1,57 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const picker = vi.hoisted(() => ({
-  requestMediaLibraryPermissionsAsync: vi.fn(),
-  requestCameraPermissionsAsync: vi.fn(),
-  launchImageLibraryAsync: vi.fn(),
-  launchCameraAsync: vi.fn(),
+jest.mock("expo-image-picker", () => ({
+  __esModule: true,
+  requestMediaLibraryPermissionsAsync: jest.fn(),
+  requestCameraPermissionsAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
+  launchCameraAsync: jest.fn(),
 }));
-const manipulator = vi.hoisted(() => {
-  const context = { resize: vi.fn(), renderAsync: vi.fn() };
-  return { context, manipulate: vi.fn(() => context) };
+jest.mock("expo-image-manipulator", () => {
+  const context = { resize: jest.fn(), renderAsync: jest.fn() };
+  return {
+    __esModule: true,
+    ImageManipulator: { manipulate: jest.fn(() => context) },
+    SaveFormat: { JPEG: "jpeg" },
+    __mockContext: context,
+  };
 });
-
-vi.mock("expo-image-picker", () => picker);
-vi.mock("expo-image-manipulator", () => ({
-  ImageManipulator: { manipulate: manipulator.manipulate },
-  SaveFormat: { JPEG: "jpeg" },
+jest.mock("react-native", () => ({ __esModule: true, Platform: { OS: "web" } }));
+jest.mock("expo-file-system", () => ({
+  File: class { async arrayBuffer() { return new Uint8Array([1]).buffer; } },
 }));
-vi.mock("react-native", () => ({ Platform: { OS: "web" } }));
 
+import { Platform } from "react-native";
 import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
-const saveAsync = vi.fn();
+const picker = jest.requireMock("expo-image-picker") as {
+  requestMediaLibraryPermissionsAsync: jest.Mock;
+  requestCameraPermissionsAsync: jest.Mock;
+  launchImageLibraryAsync: jest.Mock;
+  launchCameraAsync: jest.Mock;
+};
+const manipulatorModule = jest.requireMock("expo-image-manipulator") as {
+  ImageManipulator: { manipulate: jest.Mock };
+  __mockContext: { resize: jest.Mock; renderAsync: jest.Mock };
+};
+const manipulator = {
+  context: manipulatorModule.__mockContext,
+  manipulate: manipulatorModule.ImageManipulator.manipulate,
+};
+
+const saveAsync = jest.fn();
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
+  Platform.OS = "web";
   picker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ granted: true });
   manipulator.context.renderAsync.mockResolvedValue({ saveAsync });
   saveAsync.mockResolvedValue({ uri: "file:///reduzida.jpg", width: 1080, height: 1080 });
-  vi.stubGlobal("fetch", vi.fn(async (uri: string) => ({ arrayBuffer: async () => new TextEncoder().encode(uri).buffer })));
+  stubGlobal("fetch", jest.fn(async (uri: string) => ({ arrayBuffer: async () => new TextEncoder().encode(uri).buffer })));
+});
+
+afterEach(() => {
+  unstubAllGlobals();
 });
 
 describe("ExpoImagePickerService (Spec 087)", () => {
@@ -57,11 +81,32 @@ describe("ExpoImagePickerService (Spec 087)", () => {
     expect(saveAsync).toHaveBeenCalledWith({ compress: 0.7, format: "jpeg" });
   });
 
-  it("usa a proporção pedida no recorte da capa (5:8) e 1:1 por padrão (Spec 092)", async () => {
+  it("usa a proporção pedida no Android e 1:1 por padrão (Spec 092)", async () => {
+    Platform.OS = "android";
     picker.launchImageLibraryAsync.mockResolvedValue({ canceled: false, assets: [{ uri: "file:///a.jpg", width: 800, height: 800 }] });
     await new ExpoImagePickerService().pickImage("library", [5, 8]);
     expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ aspect: [5, 8], allowsEditing: true }));
     await new ExpoImagePickerService().pickSquareImage("library");
     expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ aspect: [1, 1] }));
+  });
+
+  it("no iOS mantém o enquadramento do livro e recorta o avatar em quadrado", async () => {
+    Platform.OS = "ios";
+    picker.launchImageLibraryAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: "file:///lombada.jpg", width: 2000, height: 4000 }],
+    });
+    const service = new ExpoImagePickerService();
+    await service.pickImage("library", [1, 6]);
+    expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ allowsEditing: false }));
+    expect(picker.requestMediaLibraryPermissionsAsync).not.toHaveBeenCalled();
+    expect(manipulator.manipulate).toHaveBeenLastCalledWith(
+      "file:///lombada.jpg",
+      { maxWidth: 1080, maxHeight: 1080 },
+    );
+    expect(manipulator.context.resize).not.toHaveBeenCalled();
+    await service.pickSquareImage("library");
+    expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ allowsEditing: true }));
+    expect(picker.requestMediaLibraryPermissionsAsync).toHaveBeenCalledTimes(1);
   });
 });

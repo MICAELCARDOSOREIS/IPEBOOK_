@@ -1,6 +1,5 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { authUseCases, imagePickerService, publicProfileUseCases } from "@/di/container";
 import type { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
 import Profile from "@/view/profile/profile";

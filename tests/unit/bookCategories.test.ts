@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { BOOK_CATEGORIES, type BookCategory } from "@/model/entities/book";
 import { LISTING_CATEGORIES } from "@/view/listings/createListingStep3";
 import { categoryTone } from "@/view/categoryTone";
@@ -56,18 +55,13 @@ describe("Macro-Categorias de Livros do IpêBook (ADR 0109)", () => {
     expect(matchesCategory("Qualquer coisa", "all")).toBe(true);
   });
 
-  it("gera paleta de cores consistente e com contraste para tema claro e escuro", () => {
+  it("gera paleta de cores consistente para cada categoria", () => {
     for (const cat of BOOK_CATEGORIES) {
-      const lightTone = categoryTone(cat, "light");
-      const darkTone = categoryTone(cat, "dark");
+      const tone = categoryTone(cat);
 
-      expect(lightTone.background).toBeTruthy();
-      expect(lightTone.text).toBeTruthy();
-      expect(darkTone.background).toBeTruthy();
-      expect(darkTone.text).toBeTruthy();
-
-      expect(categoryTone(cat, "light")).toEqual(lightTone);
-      expect(categoryTone(cat, "dark")).toEqual(darkTone);
+      expect(tone.background).toBeTruthy();
+      expect(tone.text).toBeTruthy();
+      expect(categoryTone(cat)).toEqual(tone);
     }
   });
 });

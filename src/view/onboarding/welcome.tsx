@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { triggerHaptic } from "@/view/haptics";
 import { accessibility, colors as lightColors, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
-import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import illustration from "./ilustracao-classicos.png";
@@ -22,14 +22,14 @@ export type WelcomeProps = {
   /** Links do rodapé da página na web larga. */
   onHelp?: () => void;
   onTerms?: () => void;
+  onExplore?: () => void;
   /** Spec 108: no site, os botões chamam para o teste do app em vez de entrar ou criar conta. */
   betaInvite?: boolean;
 };
 
 /**
  * Boas-vindas do primeiro acesso (Figma `01.01`, Android `324:38` / Web `146:457`).
- * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
- * oferece criar conta ou entrar — não há acesso de visitante.
+ * Ver issue #98 e ADR 0022. Na Web, também oferece acesso à busca pública.
  */
 const MODALITY_CONFIG = {
   Venda: {
@@ -48,16 +48,18 @@ const MODALITY_CONFIG = {
 
 type ModalityKey = keyof typeof MODALITY_CONFIG;
 
-export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+export default function Welcome({ onStart, onSignIn, onHelp, onTerms, onExplore, betaInvite = false }: WelcomeProps) {
   const guardedStart = useGuardedPress(onStart);
   const guardedSignIn = useGuardedPress(onSignIn);
   const guardedHelp = useGuardedPress(onHelp);
   const guardedTerms = useGuardedPress(onTerms);
-  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
+  const guardedExplore = useGuardedPress(onExplore);
+  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>("Venda");
   const labels = betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
     : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
 
@@ -78,7 +80,6 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
-            <ThemeToggleButton />
             {betaInvite ? null : (
               <Pressable
                 accessibilityRole="button"
@@ -119,6 +120,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
                   <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
                 </Pressable>
               )}
+              {onExplore ? (
+                <Pressable accessibilityRole="button" onPress={guardedExplore} style={withPress(styles.wideOutlined)}>
+                  <Text style={styles.wideOutlinedText}>Explorar livros</Text>
+                </Pressable>
+              ) : null}
             </View>
           </View>
           <View style={styles.widePanel}>
@@ -144,18 +150,20 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
   return (
     <ScreenContainer
       maxWidth={560}
-      paddingTop={tokens.spacing[24]}
-      paddingBottom={tokens.spacing[32]}
-      edges={["top", "bottom"]}
-      contentStyle={{ gap: tokens.spacing[16] }}
+      paddingTop={tokens.spacing[12]}
+      paddingBottom={tokens.spacing[24]}
+      contentStyle={{ gap: tokens.spacing[12] }}
     >
       <View style={styles.header}>
         <Logotipo />
-        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+        <View
+          style={[styles.location, isIos && styles.iosLocation]}
+          accessible
+          accessibilityLabel="Beta exclusiva em Piripiri, PI"
+        >
           <View style={styles.locationDot} />
           <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
-        {betaInvite ? <ThemeToggleButton /> : null}
       </View>
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
@@ -188,9 +196,13 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               accessibilityRole="button"
               accessibilityLabel={`${label}: toque para ver detalhes`}
               accessibilityState={{ selected: isSelected }}
-              onPress={() => setSelectedModality((prev) => (prev === label ? null : label))}
+              onPress={() => {
+                if (isIos) triggerHaptic("selection");
+                setSelectedModality((prev) => (prev === label ? null : label));
+              }}
               style={withPress([
                 styles.modality,
+                isIos && styles.iosModality,
                 {
                   backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLowest,
                   borderColor: tone.background,
@@ -259,7 +271,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
         </View>
       ) : null}
 
-      <View style={styles.trustBadge} accessible accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas">
+      <View
+        style={[styles.trustBadge, isIos && styles.iosTrustBadge]}
+        accessible
+        accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas"
+      >
         <AppIcon name="place" size={16} color={colors.action} />
         <Text style={styles.trustBadgeText}>Encontros em locais públicos de Piripiri · Sem taxas</Text>
       </View>
@@ -267,6 +283,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       <View style={styles.actions}>
         <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={guardedStart} />
         {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={guardedSignIn} />}
+        {onExplore ? <OutlinedButton label="Explorar livros" onPress={guardedExplore} /> : null}
       </View>
 
       {onHelp || onTerms ? (
@@ -322,7 +339,7 @@ function createStyles(colors: ColorPalette) {
   wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
   wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
   wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
-  wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
+  wideActions: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[16] },
   widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
   wideIllustration: { width: "90%", height: "90%" },
   wideCards: { flexDirection: "row", gap: tokens.spacing[24] },
@@ -344,6 +361,9 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
+  },
+  iosLocation: {
+    backgroundColor: colors.m3.surfaceContainer,
   },
   locationDot: {
     width: tokens.spacing[6],
@@ -368,7 +388,7 @@ function createStyles(colors: ColorPalette) {
   highlightText: {
     color: colors.m3.onTertiaryContainer,
   },
-  illustration: { width: "100%", height: 300 },
+  illustration: { width: "100%", height: 220 },
   subtitle: {
     ...tokens.typography.bodyLarge,
     color: colors.m3.onSurfaceVariant,
@@ -378,10 +398,15 @@ function createStyles(colors: ColorPalette) {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[8],
+    minHeight: accessibility.touchTarget,
     borderWidth: 1,
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
+  },
+  iosModality: {
+    minHeight: accessibility.touchTarget,
+    borderRadius: 22,
   },
   modalityDot: {
     width: 8,
@@ -416,11 +441,14 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.ipe.container,
     alignSelf: "flex-start",
   },
+  iosTrustBadge: {
+    borderColor: colors.m3.tertiaryContainer,
+  },
   trustBadgeText: {
     ...tokens.typography.labelSmall,
     color: colors.m3.onSurfaceVariant,
   },
-  actions: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+  actions: { gap: tokens.spacing[8], marginTop: tokens.spacing[8] },
   footerLinks: {
     flexDirection: "row",
     alignItems: "center",

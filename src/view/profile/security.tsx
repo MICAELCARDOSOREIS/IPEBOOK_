@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel } from "@/di/container";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type SecurityProps = {
@@ -25,6 +28,7 @@ export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const [authState, authActions] = makeAuthViewModel();
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -45,9 +49,8 @@ export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={720} title="Segurança e verificação" onBack={guardedBack} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 720} title="Segurança e verificação" onBack={guardedBack} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -96,8 +99,8 @@ export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
             )}
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -115,11 +118,12 @@ function createStyles(colors: ColorPalette) {
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: tokens.radius.medium,
+    borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[24],
     gap: tokens.spacing[12],
+    ...iosNeutralCardStyle(colors),
   },
   cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   sectionHeader: {

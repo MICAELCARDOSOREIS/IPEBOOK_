@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
 import { LoadingState } from "@/view/components/LoadingState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { ScrollEdgeFlatList, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -41,8 +42,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
   const wide = useIsWideWeb();
 
   return (
-    <SafeAreaView style={styles.page}>
-      {wide ? (
+    <ScrollEdgeScreen style={styles.page} scrolling={!state.loading && !state.error && state.ratings.length > 0} header={wide ? (
         <View style={styles.wideHeader}>
           <View style={styles.wideHeaderLeft}>
             <Pressable
@@ -65,7 +65,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
         </View>
       ) : (
         <TopAppBar contentMaxWidth={undefined} title="Avaliações recebidas" onBack={guardedBack} />
-      )}
+      )}>
       {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando avaliações" />
@@ -87,11 +87,17 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
       ) : state.ratings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={[styles.status, wide && styles.emptyWide]}>
-            <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>Você ainda não recebeu avaliações</Text>
+            <Text style={styles.emptyText}>
+              As avaliações aparecem aqui depois que uma venda, troca ou doação é concluída e a outra pessoa conta como foi.
+            </Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Voltar ao perfil" onPress={guardedBack} style={withPress(styles.retryButton)}>
+              <Text style={styles.retryText}>Voltar ao perfil</Text>
+            </Pressable>
           </View>
         </View>
       ) : (
-        <FlatList
+        <ScrollEdgeFlatList
           key={wide ? "grid-ratings-2" : "list-ratings-1"}
           numColumns={wide ? 2 : 1}
           columnWrapperStyle={wide ? styles.gridRow : undefined}
@@ -124,7 +130,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
           }}
         />
       )}
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -168,11 +174,11 @@ function createStyles(colors: ColorPalette) {
     width: tokens.spacing[40],
     height: tokens.spacing[40],
     borderRadius: tokens.radius.full,
-    backgroundColor: colors.m3.surfaceContainerHigh,
+    backgroundColor: colors.m3.surfaceContainerLow,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
   },
   wideTitle: {
     ...tokens.typography.brandLargeTitle,
@@ -190,7 +196,7 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[40],
     maxWidth: 640,
     width: "100%",
@@ -199,7 +205,8 @@ function createStyles(colors: ColorPalette) {
     paddingTop: tokens.spacing[40],
   },
   errorText: { ...tokens.typography.bodyMedium, color: colors.error, textAlign: "center" },
-  emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center" },
+  emptyTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, textAlign: "center" },
+  emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center", maxWidth: 420 },
   retryButton: {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[24],
@@ -219,9 +226,10 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
+    ...iosNeutralCardStyle(colors),
   },
   stars: { ...tokens.typography.titleBlock, color: colors.highlight },
   starsEmpty: { color: colors.m3.outline },

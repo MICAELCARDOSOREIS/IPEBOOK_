@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@/model/entities/user";
-import { DomainError } from "@/model/errors";
+import { AuthError, DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
+import { clearAllSessionMemoryCaches, registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type AuthState = {
   user: User | null;
@@ -17,6 +18,7 @@ export type AuthActions = {
   signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle?: () => Promise<boolean>;
+  signInWithApple?: () => Promise<boolean>;
   handleAuthCallback?: (url: string) => Promise<boolean>;
   signOut: () => Promise<boolean>;
   requestPasswordReset: (email: string) => Promise<boolean>;
@@ -26,10 +28,39 @@ export type AuthActions = {
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
 
+/**
+ * O retorno do provedor sempre traz credenciais (código PKCE ou tokens no fragmento) ou o erro do
+ * Supabase. A rota também abre com URLs alheias ao login — por exemplo, o endereço do servidor de
+ * desenvolvimento do Expo (`exp+ipebook://?__expo_url=...`) —, que não têm sessão a restaurar.
+ */
+function hasAuthReturnParams(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const query = new URLSearchParams(parsed.search);
+    const hash = new URLSearchParams(parsed.hash.replace(/^#/, ""));
+    return ["code", "access_token", "error", "error_code"].some((key) => query.has(key) || hash.has(key));
+  } catch {
+    return false;
+  }
+}
+
 let sessionAuthCache: { resolved: boolean; user: User | null } = {
   resolved: false,
   user: null,
 };
+
+registerSessionMemoryCache(() => {
+  sessionAuthCache = { resolved: false, user: null };
+});
+
+function updateSessionAuthCache(nextUser: User | null): void {
+  const previousUserId = sessionAuthCache.user?.id ?? null;
+  const nextUserId = nextUser?.id ?? null;
+  if (previousUserId && previousUserId !== nextUserId) {
+    clearAllSessionMemoryCaches();
+  }
+  sessionAuthCache = { resolved: true, user: nextUser };
+}
 
 export function useAuthViewModel(
   auth: IAuthUseCases,
@@ -55,10 +86,10 @@ export function useAuthViewModel(
         const user = timeoutPromise
           ? await Promise.race([auth.getSession(), timeoutPromise])
           : await auth.getSession();
-        if (!isTest) sessionAuthCache = { resolved: true, user };
+        if (!isTest) updateSessionAuthCache(user);
         if (active.current) setState({ user, loading: false, error: null });
       } catch {
-        if (!isTest) sessionAuthCache = { resolved: true, user: null };
+        if (!isTest) updateSessionAuthCache(null);
         if (active.current) setState({ user: null, loading: false, error: null });
       }
     })();
@@ -67,11 +98,15 @@ export function useAuthViewModel(
     };
   }, [auth, isTest]);
 
-  const run = useCallback(async (action: () => Promise<User>) => {
+  const run = useCallback(async (action: () => Promise<User | null>) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       const user = await action();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!user) {
+        if (active.current) setState((previous) => ({ ...previous, loading: false }));
+        return false;
+      }
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) setState({ user, loading: false, error: null });
       return true;
     } catch (error) {
@@ -97,7 +132,7 @@ export function useAuthViewModel(
     try {
       await auth.signUp(email, password, name);
       const user = await auth.getSession();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) setState({
         user,
         loading: false,
@@ -177,7 +212,7 @@ export function useAuthViewModel(
         throw new DomainError("Login com Google indisponível.");
       }
       const user = await auth.signInWithGoogle();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -200,14 +235,31 @@ export function useAuthViewModel(
     }
   }, [auth, logger, isTest]);
 
+  const signInWithApple = useCallback(
+    () => run(() => auth.signInWithApple?.() ?? Promise.resolve(null)),
+    [auth, run],
+  );
+
   const handleAuthCallback = useCallback(async (url: string) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       if (!auth.setSessionFromUrl) {
         throw new DomainError("Processamento de retorno de autenticação indisponível.");
       }
+      if (!hasAuthReturnParams(url)) {
+        logger.warn("Retorno de autenticação sem credenciais ignorado");
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: "Não foi possível concluir o login. Abra o link recebido novamente.",
+            statusMessage: null,
+          }));
+        }
+        return false;
+      }
       const user = await auth.setSessionFromUrl(url);
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -221,7 +273,13 @@ export function useAuthViewModel(
           statusMessage: null,
         }));
       }
-      logger.error("Falha ao processar callback de autenticação", error);
+      // Link expirado, recusado pelo provedor ou falha de rede é resultado esperado deste fluxo,
+      // não defeito do app: fica como aviso para não virar alerta de erro.
+      if (error instanceof AuthError) {
+        logger.warn("Retorno de autenticação recusado");
+      } else {
+        logger.error("Falha ao processar callback de autenticação", error);
+      }
       return false;
     }
   }, [auth, logger, isTest]);
@@ -230,6 +288,7 @@ export function useAuthViewModel(
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       await auth.signOut();
+      clearAllSessionMemoryCaches();
       if (!isTest) sessionAuthCache = { resolved: true, user: null };
       if (active.current) setState({ user: null, loading: false, error: null });
       return true;
@@ -250,7 +309,7 @@ export function useAuthViewModel(
   const refreshSession = useCallback(async () => {
     try {
       const user = await auth.getSession();
-      if (!isTest) sessionAuthCache = { resolved: true, user };
+      if (!isTest) updateSessionAuthCache(user);
       if (!active.current) return;
       setState((previous) => (previous.user?.id === user?.id ? previous : { ...previous, user, loading: false, error: null }));
     } catch {
@@ -259,8 +318,8 @@ export function useAuthViewModel(
   }, [auth, isTest]);
 
   const actions = useMemo<AuthActions>(
-    () => ({ signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),
-    [signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession],
+    () => ({ signUp, signIn, signInWithGoogle, signInWithApple, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),
+    [signUp, signIn, signInWithGoogle, signInWithApple, handleAuthCallback, signOut, requestPasswordReset, refreshSession],
   );
 
   return [state, actions];

@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { RequestStatus } from "@/model/entities/bookRequest";
@@ -16,6 +16,7 @@ export type NegotiationStatusCardProps = {
   sessionUserId: string;
   deliveryCompleted: boolean;
   embedded?: boolean;
+  busy?: boolean;
   combineAccessibilityLabel?: string;
   combineButtonLabel?: string;
   onCombineMeeting?: () => void;
@@ -35,6 +36,7 @@ export function NegotiationStatusCard({
   sessionUserId,
   deliveryCompleted,
   embedded,
+  busy,
   combineAccessibilityLabel,
   combineButtonLabel,
   onCombineMeeting,
@@ -48,6 +50,21 @@ export function NegotiationStatusCard({
 }: NegotiationStatusCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const [now, setNow] = useState(Date.now);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const proposalTime = meeting?.status === "proposed" ? Date.parse(meeting.scheduledAt) : null;
+  const expired = proposalTime !== null && proposalTime <= now;
+
+  useEffect(() => {
+    if (proposalTime === null || !Number.isFinite(proposalTime)) return;
+    const current = Date.now();
+    setNow(current);
+    const delay = Math.min(proposalTime - current, 2_147_483_647);
+    if (delay <= 0) return;
+    const timer = setTimeout(() => setNow(Date.now()), delay);
+    return () => clearTimeout(timer);
+  }, [proposalTime]);
 
   if (requestStatus !== "accepted") {
     return null;
@@ -101,15 +118,19 @@ export function NegotiationStatusCard({
           </View>
         </View>
 
-        <View style={styles.actionsGrid}>
+        <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact]}>
           {onOpenDelivery ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Entrega do livro"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDelivery}
-              style={withPress(styles.actionButtonPrimary)}
+              style={withPress([styles.actionButtonPrimary, embedded && styles.actionButtonCompact, embedded && styles.actionButtonPrimaryCompact])}
             >
-              <Text style={styles.actionButtonPrimaryText}>Entrega do livro</Text>
+              <AppIcon name="checkCircle" size={embedded ? 15 : 16} color={colors.nature.onFoliage} />
+              <Text numberOfLines={1} style={[styles.actionButtonPrimaryText, embedded && styles.actionButtonCompactText]}>
+                Confirmar entrega
+              </Text>
             </Pressable>
           ) : null}
 
@@ -117,32 +138,52 @@ export function NegotiationStatusCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Como chegar"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDirections}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
-              <AppIcon name="place" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>Como chegar</Text>
+              <AppIcon name="place" size={embedded ? 15 : 16} color={colors.m3.onSurface} />
+              <Text numberOfLines={1} style={[styles.actionButtonSecondaryText, embedded && styles.actionButtonCompactText]}>
+                Como chegar
+              </Text>
             </Pressable>
           ) : null}
 
-          {onAddToCalendar ? (
+          {embedded && (onAddToCalendar || onRescheduleMeeting) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Mais opções do encontro"
+              accessibilityState={{ expanded: showMoreOptions }}
+              hitSlop={4}
+              onPress={() => setShowMoreOptions((prev) => !prev)}
+              style={withPress(styles.moreOptionsButton)}
+            >
+              <AppIcon name="more" size={18} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          ) : null}
+
+          {(!embedded || showMoreOptions) && onAddToCalendar ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Adicionar à agenda"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onAddToCalendar}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>Adicionar à agenda</Text>
+              <Text style={styles.actionButtonSecondaryText}>
+                {embedded ? "Agenda" : "Adicionar à agenda"}
+              </Text>
             </Pressable>
           ) : null}
 
-          {onRescheduleMeeting ? (
+          {(!embedded || showMoreOptions) && onRescheduleMeeting ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Reagendar encontro"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onRescheduleMeeting}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="swap" size={16} color={colors.m3.onSurface} />
               <Text style={styles.actionButtonSecondaryText}>Reagendar</Text>
@@ -167,19 +208,20 @@ export function NegotiationStatusCard({
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.title}>
-              {isProposer ? `Aguardando resposta de ${counterpartName}` : `Encontro sugerido por ${counterpartName}`}
+              {expired ? "Horário expirado" : isProposer ? `Aguardando resposta de ${counterpartName}` : `Encontro sugerido por ${counterpartName}`}
             </Text>
             <Text style={styles.subtitle}>
-              {whenFormatted} em {meeting.pointName || point?.name || "Ponto seguro"}
+              {whenFormatted} em {meeting.pointName || point?.name || "Ponto recomendado"}
             </Text>
           </View>
         </View>
 
         <View style={styles.actionsGrid}>
-          {!isProposer && onConfirmMeeting ? (
+          {!expired && !isProposer && onConfirmMeeting ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Confirmar encontro"
+              disabled={busy}
               onPress={onConfirmMeeting}
               style={withPress(styles.actionButtonPrimary)}
             >
@@ -190,13 +232,13 @@ export function NegotiationStatusCard({
           {(onSuggestOtherTime ?? onCombineMeeting) ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={isProposer ? "Alterar data sugerida" : "Sugerir outro horário"}
+              accessibilityLabel={expired ? "Sugerir novo horário" : isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
               onPress={onSuggestOtherTime ?? onCombineMeeting}
               style={withPress(styles.actionButtonSecondary)}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
               <Text style={styles.actionButtonSecondaryText}>
-                {isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
+                {expired ? "Sugerir novo horário" : isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
               </Text>
             </Pressable>
           ) : null}
@@ -213,7 +255,7 @@ export function NegotiationStatusCard({
           <AppIcon name="place" size={20} color={colors.nature.foliage} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Nenhum encontro marcado</Text>
+          <Text style={styles.title}>{meeting?.status === "cancelled" ? "Encontro cancelado" : "Nenhum encontro marcado"}</Text>
           <Text style={styles.subtitle}>Escolha um ponto público e horário em Piripiri.</Text>
         </View>
       </View>
@@ -270,7 +312,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: 0,
       backgroundColor: "transparent",
       padding: 0,
-      paddingTop: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+      gap: tokens.spacing[8],
       borderTopWidth: 1,
       borderTopColor: colors.m3.outlineVariant,
     },
@@ -310,6 +353,34 @@ function createStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[8],
       marginTop: tokens.spacing[6],
+    },
+    actionsGridCompact: {
+      gap: tokens.spacing[6],
+      marginTop: tokens.spacing[2],
+    },
+    actionButtonCompact: {
+      flexGrow: 1,
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+      paddingVertical: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[10],
+      minHeight: Platform.OS === "ios" ? 44 : 40,
+    },
+    actionButtonPrimaryCompact: {
+      paddingHorizontal: tokens.spacing[12],
+    },
+    actionButtonCompactText: {
+      fontSize: 13,
+    },
+    moreOptionsButton: {
+      width: Platform.OS === "ios" ? 44 : 38,
+      height: Platform.OS === "ios" ? 44 : 38,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      alignItems: "center",
+      justifyContent: "center",
     },
     actionButtonPrimary: {
       flexDirection: "row",

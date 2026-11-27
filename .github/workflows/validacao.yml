@@ -61,3 +61,11 @@ jobs:
           EXPO_PUBLIC_BACKEND: memory
           EXPO_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dummy
+
+      - name: Executar suíte E2E Web via Chrome CDP
+        run: npm run test:e2e:build
+        env:
+          CI: '1'
+          EXPO_PUBLIC_BACKEND: memory
+          EXPO_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dummy

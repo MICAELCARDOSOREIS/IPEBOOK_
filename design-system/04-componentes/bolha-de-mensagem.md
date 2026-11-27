@@ -1,24 +1,23 @@
 # Bolha de mensagem (MessageBubble)
 
-> [!WARNING]
-> **FORA DE ESCOPO NA BETA (ADR 0011 e ADR 0019)**: O Ipebook não possui chat síncrono instantâneo em tempo real. As negociações são estritamente assíncronas baseadas em estados (`pending` → `accepted`/`rejected`) com sugestão automática de pontos de encontro públicos seguros em Piripiri, PI. Não implementar este componente.
+> [!NOTE]
+> **IMPLEMENTADO (Specs 061, 082, 086, 089 · ADRs 0044 e 0062)**: Embora o [ADR 0011](../../docs/adr/0011-navegacao-tres-destinos.md) tenha iniciado o beta sem chat síncrono, a conversa em tempo real vinculada a cada negociação foi entregue em [`src/view/conversations/chat.tsx`](../../src/view/conversations/chat.tsx) e [`src/view/conversations/chatStyles.ts`](../../src/view/conversations/chatStyles.ts). Os envios usam bolhas agrupadas por remetente com `tokens.radius.bubbleCorner` (6 dp) no canto de saída, horário formatado (`labelSmall`), rótulo acessível completo no leitor de tela e cartões centrais dedicados para propostas/status (`ChatProposalCards.tsx` e `NegotiationStatusCard.tsx`).
 
 Origem no sistema base: nenhum componente M3 dedicado a chat. Situação: **Novo**.
 
 ## Quando usar
 
-- Na tela de negociação/conversa (spec 004), para cada mensagem trocada.
+- Na tela de negociação/conversa ([`src/view/conversations/chat.tsx`](../../src/view/conversations/chat.tsx) — Specs 061, 082, 086 e 089), para cada mensagem trocada.
 
 ## Quando não usar
 
-- Para avisos do sistema dentro da conversa (ex. "Proposta aceita") — usar um estilo de linha
-  centralizada separado, não a bolha.
+- Para avisos do sistema ou cartões de proposta dentro da conversa (ex.: "Proposta aceita") — usar `ChatProposalCards` / `NegotiationStatusCard`, não a bolha.
 
 ## Anatomia
 
-1. Container com canto de saída em `radius-xs`
-2. Texto da mensagem
-3. Indicador de estado (só na mensagem enviada): entregue, lida ou falha
+1. Container com cantos amplos (`radius.large` / `radius.xl`) e canto de saída em `radius.bubbleCorner` (6 dp)
+2. Texto da mensagem (`bodyLarge` / `bodyMedium`)
+3. Horário formatado (`formatBubbleTime`, `labelSmall`) e leitor de tela completo (`Você às HH:MM: ...`)
 
 ## Variantes
 

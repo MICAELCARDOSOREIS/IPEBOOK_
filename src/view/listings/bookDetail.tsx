@@ -1,40 +1,49 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { captureRef } from "react-native-view-shot";
 import {
   makeAuthViewModel,
   makeBookDetailViewModel,
   makeMyListingsViewModel,
+  makeNetworkStatus,
   makePublicProfileViewModel,
   makeRequestNegotiationViewModel,
   makeShareListingViewModel,
 } from "@/di/container";
-import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { formatPrice } from "@/view/formatPrice";
+import { extractBookSidePhotos } from "@/model/bookPhotos";
+import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { formatBookLocation } from "@/model/entities/location";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { captureRef } from "react-native-view-shot";
+import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
+import { AppIcon } from "@/view/components/AppIcon";
+import { Avatar } from "@/view/components/Avatar";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { ErrorState } from "@/view/components/ErrorState";
+import { FilledButton } from "@/view/components/FilledButton";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { LoadingState } from "@/view/components/LoadingState";
-import { FilledButton } from "@/view/components/FilledButton";
-import { Snackbar } from "@/view/components/Snackbar";
-import { AppIcon } from "@/view/components/AppIcon";
-import { BookDetailHeroSection, DetailRow, SellerCard } from "@/view/listings/BookDetailSections";
+import { OfflineState } from "@/view/components/OfflineState";
+import { formatPrice } from "@/view/formatPrice";
+import { triggerHaptic } from "@/view/haptics";
+import { BookDetailHeroSection, BookDetailReportSection, DetailRow, ShareListingFeedback } from "@/view/listings/BookDetailSections";
+import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
-import { ProposalSheet } from "@/view/listings/ProposalSheet";
-import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
-import { updateWebSocialMeta } from "@/view/webMeta";
-import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
 import { withPress } from "@/view/pressFeedback";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useOnRefocus } from "@/view/useRefocusKey";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { updateWebSocialMeta } from "@/view/webMeta";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
+import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
+
 interface ModalityThemeColors {
   background: string;
   text: string;
@@ -70,10 +79,12 @@ export type BookDetailProps = {
   onNavigateToMyRequests?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
   onNavigateToCategorySearch?: (category: string) => void;
+  focusKey?: number;
 };
 
 export default function BookDetail({
   bookId,
+  focusKey,
   onBack,
   onNavigateToUserProfile,
   onNavigateToReport,
@@ -84,13 +95,23 @@ export default function BookDetail({
   onNavigateToCategorySearch,
 }: BookDetailProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [authState] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBookDetailViewModel(bookId, sessionUserId);
+  const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const [negotiation, negotiationActions] = makeRequestNegotiationViewModel();
   const [share, shareActions] = makeShareListingViewModel();
+  const shareButtonRef = useRef<React.ComponentRef<typeof View>>(null);
   const book = state.book;
   const [ownerProfileState] = makePublicProfileViewModel(book?.ownerId ?? "");
   const [galleryVisible, setGalleryVisible] = useState(false);
@@ -142,7 +163,12 @@ export default function BookDetail({
     }
     return captureRef(shareCardRef, { format: "png", quality: 1, result: "tmpfile" });
   };
-  const photos = book ? [book.photoUrl, ...(book.photos ?? [])].filter((url): url is string => Boolean(url)) : [];
+  const sidePhotos = useMemo(() => extractBookSidePhotos(book?.photos), [book?.photos]);
+  const photos = book
+    ? [book.photoUrl, sidePhotos.spinePhotoUrl, sidePhotos.backPhotoUrl, ...sidePhotos.extras].filter(
+        (url): url is string => Boolean(url),
+      )
+    : [];
 
   const formattedPrice = useMemo(() => {
     if (!book) return "";
@@ -155,7 +181,7 @@ export default function BookDetail({
     return "Gratuito";
   }, [book]);
 
-  const conditionLabel = book?.condition ? BOOK_CONDITION_LABELS[book.condition] : "Bom estado";
+  const conditionLabel = (book?.condition && BOOK_CONDITION_LABELS[book.condition]) || "Bom estado";
   const categoryLabel = book?.category || "Literatura";
   const neighborhoodLabel = formatBookLocation(book?.neighborhood);
   const primaryActionLabel = book ? PRIMARY_ACTION_LABEL[book.modality] : "";
@@ -185,6 +211,9 @@ export default function BookDetail({
 
   const handlePrimaryAction = useCallback(() => {
     if (!book) return;
+    if (Platform.OS === "ios") {
+      triggerHaptic("selection");
+    }
     if (!sessionUserId) {
       guardedNavigateToSignIn();
       return;
@@ -199,7 +228,7 @@ export default function BookDetail({
 
   const handleProposalSubmit = useCallback(
     async (options: { initialMessage?: string; offeredBookId?: string }) => {
-      if (!book || !sessionUserId) return;
+      if (!isOnline || !book || !sessionUserId) return;
       setProposalSubmitting(true);
       setProposalError(null);
       try {
@@ -218,7 +247,7 @@ export default function BookDetail({
         setProposalSubmitting(false);
       }
     },
-    [book, sessionUserId, negotiationActions, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests],
+    [book, isOnline, sessionUserId, negotiationActions, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests],
   );
 
   const handleStatusPress = () => {
@@ -275,11 +304,6 @@ export default function BookDetail({
     [book],
   );
 
-  const handleShareToWhatsApp = useCallback(() => {
-    if (!book || !shareableListing) return;
-    void shareActions.shareToWhatsApp(book.id, shareableListing, captureShareImage);
-  }, [book, shareableListing, shareActions, captureShareImage]);
-
   const handleShareLink = useCallback(() => {
     void shareActions.share(book?.id ?? bookId, shareableListing, captureShareImage);
   }, [book?.id, bookId, shareableListing, shareActions, captureShareImage]);
@@ -319,6 +343,7 @@ export default function BookDetail({
         onNavigateToSignIn ? (
           <FilledButton
             label={primaryActionLabel}
+            disabled={!isOnline}
             onPress={guardedNavigateToSignIn}
             backgroundColor={heroColors?.background}
             textColor={heroColors?.text}
@@ -361,6 +386,7 @@ export default function BookDetail({
         ) : (
           <FilledButton
             label={primaryActionLabel}
+            disabled={!isOnline}
             loading={negotiation.pendingListingId === book.id}
             loadingLabel="Solicitando negociação"
             onPress={handlePrimaryAction}
@@ -386,14 +412,32 @@ export default function BookDetail({
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
+      {isIos && !wideWeb && scrolledPastHero && insets.top > 0 ? (
+        reduceTransparency ? (
+          <View pointerEvents="none" style={[styles.iosStatusBarShield, styles.iosStatusBarShieldOpaque, { height: insets.top }]} />
+        ) : (
+          <View pointerEvents="none" style={[styles.iosStatusBarShield, { height: insets.top }]}>
+            <IosGlassBackdrop />
+          </View>
+        )
+      ) : null}
       <ScrollView
         {...standardVerticalScrollProps}
+        scrollEventThrottle={isIos && !wideWeb ? 16 : undefined}
+        onScroll={
+          isIos && !wideWeb
+            ? (e) => {
+                const passed = e.nativeEvent.contentOffset.y > 180;
+                if (passed !== scrolledPastHero) setScrolledPastHero(passed);
+              }
+            : undefined
+        }
         contentContainerStyle={[
           wideWeb ? styles.scrollContentWide : styles.scrollContent,
           {
             paddingBottom:
               !wideWeb && actionBar
-                ? scrollBottomPadding.withBottomBar
+                ? tokens.spacing[24]
                 : scrollBottomPadding.withoutBottomBar + insets.bottom,
           },
         ]}
@@ -425,9 +469,10 @@ export default function BookDetail({
           sharing={share.sharing}
           isFavorite={state.isFavorite}
           favoriteLoading={state.favoriteLoading}
+          favoriteDisabled={!isOnline}
           onBack={guardedBack}
-          onShareWhatsApp={handleShareToWhatsApp}
           onShareLink={handleShareLink}
+          shareButtonRef={shareButtonRef}
           onToggleFavorite={() => void actions.toggleFavorite(sessionUserId)}
           onOpenGallery={() => setGalleryVisible(true)}
         />
@@ -438,41 +483,82 @@ export default function BookDetail({
           </View>
         ) : state.error ? (
           <View style={styles.status}>
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            {isOnline ? (
+              <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            ) : (
+              <OfflineState autoRetry={false} onRetry={actions.reload} />
+            )}
           </View>
         ) : book ? (
           <View style={[styles.content, wideWeb && styles.contentWide]}>
+            <CachedBookNotice cachedAt={state.cachedAt} variant="detail" />
             {/* 2. Título, autor, valor e etiqueta da modalidade */}
             <View style={styles.titleSection}>
               <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
               <Text style={styles.author}>{book.author}</Text>
             </View>
             <View style={styles.priceRow}>
-              <Text style={styles.priceValue}>{formattedPrice}</Text>
-              <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
-                <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
-                  {modalityTag[book.modality].label}
-                </Text>
-              </View>
-              {book.isBox ? (
-                <View
-                  style={[
-                    styles.tag,
-                    { backgroundColor: colors.m3.secondaryContainer, marginLeft: 8 },
-                  ]}
-                >
-                  <Text style={[styles.tagText, { color: colors.m3.onSecondaryContainer }]}>
-                    {book.boxVolumesCount ? `Box (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+              <View style={styles.priceRowMain}>
+                <Text style={styles.priceValue}>{formattedPrice}</Text>
+                <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
+                  <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
+                    {modalityTag[book.modality].label}
                   </Text>
                 </View>
-              ) : null}
+                {book.isBox ? (
+                  <View
+                    style={[
+                      styles.tag,
+                      { backgroundColor: colors.m3.secondaryContainer },
+                    ]}
+                  >
+                    <Text style={[styles.tagText, { color: colors.m3.onSecondaryContainer }]}>
+                      {book.boxVolumesCount ? `Box (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  ownerProfileState.profile?.name?.trim()
+                    ? `Anunciado por ${ownerProfileState.profile.name.trim()}`
+                    : "Anunciado por outro membro da comunidade"
+                }
+                hitSlop={4}
+                onPress={() => guardedNavigateToUserProfile(book.ownerId)}
+                style={withPress([styles.inlineSellerPill, iosGlass && styles.iosGlassPill])}
+              >
+                {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassPillShape} /> : null}
+                <Avatar
+                  name={ownerProfileState.profile?.name?.trim() || "Comunidade"}
+                  photoUrl={ownerProfileState.profile?.photoUrl}
+                  size={28}
+                />
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.inlineSellerName}>
+                  {ownerProfileState.profile?.name?.trim() || "Anunciante"}
+                </Text>
+                <AppIcon name="chevronRight" size={16} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
             </View>
 
             {wideWeb ? actionBar : null}
 
             {/* 3. Cartão da modalidade (troca e doação) */}
             {book.modality !== "sale" ? (
-              <View style={[styles.modalityCard, { backgroundColor: modalityTag[book.modality].background }]}>
+              <View
+                style={[
+                  styles.modalityCard,
+                  { backgroundColor: modalityTag[book.modality].background },
+                  iosGlass && styles.iosGlassCard,
+                ]}
+              >
+                {iosGlass ? (
+                  <IosGlassBackdrop
+                    tintColor={modalityTag[book.modality].background}
+                    style={styles.iosGlassCardShape}
+                  />
+                ) : null}
                 <AppIcon
                   name={book.modality === "trade" ? "swap" : "info"}
                   size={20}
@@ -491,8 +577,16 @@ export default function BookDetail({
               </View>
             ) : null}
 
+            {book.synopsis ? (
+              <View style={styles.synopsisSection}>
+                <Text accessibilityRole="header" style={styles.synopsisTitle}>Sinopse</Text>
+                <Text style={styles.synopsisText}>{book.synopsis}</Text>
+              </View>
+            ) : null}
+
             {/* 4. Detalhes: conservação, categoria e retirada */}
-            <View style={styles.detailList}>
+            <View style={[styles.detailList, iosGlass && styles.iosGlassCard]}>
+              {iosGlass ? <IosGlassBackdrop style={styles.iosGlassCardShape} /> : null}
               {book.isBox ? (
                 <DetailRow
                   icon="conservation"
@@ -515,16 +609,6 @@ export default function BookDetail({
               <Text style={styles.descriptionText}>{book.description}</Text>
             ) : null}
 
-            {book.synopsis ? (
-              <View style={styles.synopsisSection}>
-                <Text accessibilityRole="header" style={styles.synopsisTitle}>Sinopse</Text>
-                <Text style={styles.synopsisText}>{book.synopsis}</Text>
-              </View>
-            ) : null}
-
-            {/* 5. Anunciante */}
-            <SellerCard profile={ownerProfileState.profile} onPress={() => guardedNavigateToUserProfile(book.ownerId)} />
-
             {/* Banner de negociação em andamento quando o usuário já solicitou o livro */}
             {isRequested && !isOwner ? (
               <Pressable
@@ -537,8 +621,16 @@ export default function BookDetail({
                     backgroundColor: heroColors.container,
                     borderColor: heroColors.border,
                   },
+                  iosGlass && styles.iosGlassCard,
                 ])}
               >
+                {iosGlass ? (
+                  <IosGlassBackdrop
+                    tintColor={heroColors?.container}
+                    isInteractive
+                    style={styles.iosGlassCardShape}
+                  />
+                ) : null}
                 <View style={[styles.activeNegotiationIconBox, heroColors && { backgroundColor: heroColors.background }]}>
                   <AppIcon name="chat" size={24} color={heroColors?.text ?? colors.nature.foliage} />
                 </View>
@@ -558,13 +650,13 @@ export default function BookDetail({
               <View style={styles.safeMeetingCard}>
                 <AppIcon name="place" size={20} color={colors.m3.onSecondaryContainer} />
                 <View style={styles.safeMeetingText}>
-                  <Text style={styles.safeMeetingTitle}>Encontro seguro</Text>
+                  <Text style={styles.safeMeetingTitle}>Encontro recomendado</Text>
                   <Text style={styles.safeMeetingBody}>Prefira locais públicos. Pague só depois de conferir o exemplar.</Text>
                 </View>
               </View>
             ) : null}
 
-            {state.favoriteError ? (
+            {isOnline && state.favoriteError ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text>
             ) : null}
             {negotiation.errorListingId === book.id && !isRequested ? (
@@ -573,8 +665,9 @@ export default function BookDetail({
                   accessibilityRole="button"
                   accessibilityLabel="Você já tem uma proposta para este anúncio. Toque para ver a negociação"
                   onPress={navigateToActiveNegotiation}
-                  style={withPress(styles.activeNegotiationBanner)}
+                  style={withPress([styles.activeNegotiationBanner, iosGlass && styles.iosGlassCard])}
                 >
+                  {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassCardShape} /> : null}
                   <View style={styles.activeNegotiationIconBox}>
                     <AppIcon name="chat" size={24} color={colors.nature.foliage} />
                   </View>
@@ -588,30 +681,9 @@ export default function BookDetail({
                 <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
               )
             ) : null}
-            {share.error ? (
-              <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text>
-            ) : null}
 
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
-              <View style={styles.reportSection}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Denunciar anúncio"
-                  onPress={() => guardedNavigateToReport(book.id)}
-                  style={withPress(styles.reportCard)}
-                >
-                  <View style={styles.reportIconBox}>
-                    <AppIcon name="flag" size={18} color={colors.error} />
-                  </View>
-                  <View style={styles.reportContent}>
-                    <Text style={styles.reportTitle}>Denunciar anúncio</Text>
-                    <Text style={styles.reportSubtitle}>
-                      Conteúdo impróprio, dados falsos ou suspeita de golpe
-                    </Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                </Pressable>
-              </View>
+              <BookDetailReportSection onPress={() => guardedNavigateToReport(book.id)} />
             ) : null}
           </View>
         ) : null}
@@ -636,7 +708,16 @@ export default function BookDetail({
 
       {/* 6. Barra fixa inferior: ação principal por modalidade */}
       {actionBar && !wideWeb ? (
-        <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[
+            styles.bottomBarContainer,
+            isIos && !reduceTransparency && styles.iosBottomBarGlass,
+          ]}
+        >
+          {isIos && !reduceTransparency ? (
+            <IosGlassBackdrop />
+          ) : null}
           {actionBar}
         </SafeAreaView>
       ) : null}
@@ -649,10 +730,11 @@ export default function BookDetail({
         />
       ) : null}
 
-      <Snackbar
-        visible={share.linkCopied}
-        message="Link copiado"
-        onDismiss={shareActions.dismissLinkCopied}
+      <ShareListingFeedback
+        state={share}
+        onDismissCopied={shareActions.dismissLinkCopied}
+        onDismissError={shareActions.dismissError}
+        shareButtonRef={shareButtonRef}
       />
 
       {book ? (
@@ -663,6 +745,7 @@ export default function BookDetail({
           category={book.category}
           isFavorite={state.isFavorite}
           favoriteLoading={state.favoriteLoading}
+          favoriteDisabled={!isOnline}
           onToggleFavorite={() => {
             if (!sessionUserId) {
               setReservedSheetVisible(false);
@@ -691,7 +774,8 @@ export default function BookDetail({
           userBooks={myListingsState.books}
           loadingBooks={myListingsState.loading}
           submitting={proposalSubmitting}
-          error={proposalError}
+          submitDisabled={!isOnline}
+          error={isOnline ? proposalError : "Conecte-se à internet para enviar a proposta."}
           onSubmit={handleProposalSubmit}
         />
       ) : null}
@@ -709,13 +793,25 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     offscreen: { position: "absolute", left: -10000, top: 0 },
     page: { flex: 1, backgroundColor: colors.background },
+    iosStatusBarShield: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      backgroundColor: "transparent",
+      overflow: "hidden",
+    },
+    iosStatusBarShieldOpaque: {
+      backgroundColor: colors.background,
+    },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, centralizado em WEB_MAX_WIDTH.
     scrollContentWide: {
       flexDirection: "row",
       flexWrap: "wrap",
-      alignItems: "flex-start",
-      columnGap: tokens.spacing[40],
+      alignItems: "stretch",
+      columnGap: tokens.spacing[32],
       rowGap: tokens.spacing[16],
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
@@ -724,18 +820,29 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[20],
       paddingBottom: tokens.spacing[32],
     },
-    safeMeetingCard: { flexDirection: "row", gap: tokens.spacing[12], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    safeMeetingCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      marginTop: "auto",
+    },
     safeMeetingText: { flex: 1, gap: tokens.spacing[2] },
     safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     contentWide: {
       flex: 1,
-      maxWidth: 480,
-      padding: tokens.spacing[20],
-      gap: tokens.spacing[12],
-      borderRadius: tokens.radius.xl,
+      minWidth: 420,
+      maxWidth: 680,
+      padding: tokens.spacing[28],
+      gap: tokens.spacing[16],
+      borderRadius: tokens.radius.xxl,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
@@ -743,41 +850,30 @@ function createStyles(colors: ColorPalette) {
     errorText: { ...tokens.typography.bodyLarge, color: colors.error, textAlign: "center", },
     content: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[20], gap: tokens.spacing[16], },
     titleSection: { gap: tokens.spacing[4] },
-    title: { ...tokens.typography.brandSection, color: colors.m3.onSurface, },
+    title: { ...tokens.typography.brandSection, color: colors.brandBrown, },
     author: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    priceRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    priceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    priceRowMain: { flexDirection: "row", alignItems: "center", flexShrink: 0, gap: tokens.spacing[8] },
+    inlineSellerPill: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], flexShrink: 1, minHeight: 40, paddingLeft: tokens.spacing[6], paddingRight: tokens.spacing[10], paddingVertical: tokens.spacing[4], borderRadius: tokens.radius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.book.paperEdge },
+    inlineSellerName: { flexShrink: 1, ...tokens.typography.labelLarge, fontFamily: fontFamily.medium, color: colors.m3.onSurface },
     priceValue: { ...tokens.typography.titleBar, fontWeight: tokens.fontWeight.bold, color: colors.m3.onSurface },
-    tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[8], paddingVertical: tokens.spacing[2] },
+    tag: { borderRadius: tokens.radius.full, paddingHorizontal: tokens.spacing[10], paddingVertical: tokens.spacing[3] },
     tagText: { ...tokens.typography.labelMedium },
     modalityCard: { flexDirection: "row", gap: tokens.spacing[12], borderRadius: tokens.radius.card, padding: tokens.spacing[16], },
     modalityCardText: { flex: 1, gap: tokens.spacing[2] },
     modalityCardTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold },
     modalityCardBody: { ...tokens.typography.bodyMedium },
-    detailList: { backgroundColor: colors.m3.surfaceContainerLow, borderRadius: tokens.radius.card, paddingHorizontal: tokens.spacing[16], },
-    synopsisSection: { gap: tokens.spacing[8] },
+    detailList: { backgroundColor: colors.surface, borderRadius: tokens.radius.card, borderWidth: 1, borderColor: colors.book.paperEdge, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[4], ...iosNeutralCardStyle(colors) },
+    synopsisSection: { gap: tokens.spacing[10], paddingVertical: tokens.spacing[4] },
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
-    synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
+    synopsisText: { ...tokens.typography.subheadline, lineHeight: 25, letterSpacing: 0.15, color: colors.m3.onSurfaceVariant },
     descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    reportSection: { paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[16], },
-    reportCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      minHeight: 56,
-    },
-    reportIconBox: { width: tokens.spacing[32], height: tokens.spacing[32], borderRadius: tokens.radius.cardSmall, backgroundColor: colors.m3.errorContainerM3 ?? colors.errorContainer ?? "#F9DEDC", alignItems: "center", justifyContent: "center", },
-    reportContent: { flex: 1, gap: tokens.spacing[2], },
-    reportTitle: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface, },
-    reportSubtitle: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, },
-    reportButton: { minHeight: tokens.accessibility.touchTarget, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], },
-    reportText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
-    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer },
+    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.book.paperEdge, overflow: "hidden" },
+    iosBottomBarGlass: { backgroundColor: "transparent", borderTopColor: "transparent" },
+    iosGlassPill: { borderCurve: "continuous", backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" },
+    iosGlassPillShape: { ...StyleSheet.absoluteFill, borderRadius: tokens.radius.full, overflow: "hidden" },
+    iosGlassCard: { borderRadius: tokens.radius.xl, borderCurve: "continuous", backgroundColor: "transparent", borderColor: "transparent", overflow: "hidden" },
+    iosGlassCardShape: { ...StyleSheet.absoluteFill, borderRadius: tokens.radius.xl, overflow: "hidden" },
     bottomBar: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12], },
     primarySlot: { flex: 1 },
     statusButton: { flex: 1, minHeight: 52, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", paddingHorizontal: tokens.spacing[16], },
@@ -790,16 +886,7 @@ function createStyles(colors: ColorPalette) {
     statusTextDelivered: { color: colors.m3.onSurfaceVariant, },
     statusTextRequested: { ...tokens.typography.bodyMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurfaceVariant, },
     statusTextAccepted: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onPrimary, },
-    activeNegotiationBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.nature.sprout,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-    },
+    activeNegotiationBanner: { flexDirection: "row", alignItems: "center", backgroundColor: colors.nature.sprout, borderRadius: tokens.radius.card, padding: tokens.spacing[16], gap: tokens.spacing[12], borderWidth: 1, borderColor: colors.nature.foliage },
     activeNegotiationIconBox: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.nature.onFoliage, alignItems: "center", justifyContent: "center", },
     activeNegotiationContent: { flex: 1, gap: tokens.spacing[2], },
     activeNegotiationTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.bold, color: colors.nature.foliageDeep, },

@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import Notifications from "@/view/notifications/notifications";
 import ResetPassword from "@/view/auth/resetPassword";
 import SearchAlerts from "@/view/search/searchAlerts";
@@ -13,9 +12,9 @@ describe("Spec 039 — alinhamento fino das telas do Micael ao Figma", () => {
         <SearchAlerts
           userId="usuario-038-alerta"
           initialQuery="Astronomia"
-          onBack={vi.fn()}
-          onLogin={vi.fn()}
-          onManageAlert={vi.fn()}
+          onBack={jest.fn()}
+          onLogin={jest.fn()}
+          onManageAlert={jest.fn()}
         />,
       );
     });
@@ -35,7 +34,7 @@ describe("Spec 039 — alinhamento fino das telas do Micael ao Figma", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <Notifications sessionUserId="usuario-038-notificacoes" onBack={vi.fn()} />,
+        <Notifications sessionUserId="usuario-038-notificacoes" onBack={jest.fn()} />,
       );
     });
 
@@ -48,8 +47,8 @@ describe("Spec 039 — alinhamento fino das telas do Micael ao Figma", () => {
       screen = await render(
         <ResetPassword
           link="ipebook://redefinir-senha?code=038"
-          onBack={vi.fn()}
-          onNavigateToSignIn={vi.fn()}
+          onBack={jest.fn()}
+          onNavigateToSignIn={jest.fn()}
         />,
       );
     });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { registerSessionMemoryCache } from "@/viewmodel/sessionCacheRegistry";
 
 export type DraftsState = {
   drafts: readonly Book[];
@@ -23,6 +24,10 @@ export type DraftsActions = {
  */
 const sessionDraftsCache = new Map<string, readonly Book[]>();
 
+registerSessionMemoryCache(() => {
+  sessionDraftsCache.clear();
+});
+
 export function useDraftsViewModel(
   sessionUserId: string | null,
   useCases: IBookUseCases,
@@ -39,6 +44,8 @@ export function useDraftsViewModel(
   });
   const active = useRef(false);
   const request = useRef(0);
+  const draftsRef = useRef<readonly Book[]>(state.drafts);
+  draftsRef.current = state.drafts;
 
   const reload = useCallback(async () => {
     if (!active.current) return;
@@ -71,28 +78,46 @@ export function useDraftsViewModel(
 
   const discardDraft = useCallback(
     async (bookId: string): Promise<boolean> => {
-      setState((previous) => ({ ...previous, discardingId: bookId, discardError: null }));
+      const previousDrafts = draftsRef.current;
+      const optimisticDrafts = previousDrafts.filter((draft) => draft.id !== bookId);
+      if (!isTest && sessionUserId) sessionDraftsCache.set(sessionUserId, optimisticDrafts);
+      setState((previous) => ({
+        ...previous,
+        drafts: optimisticDrafts,
+        discardingId: bookId,
+        discardError: null,
+      }));
       try {
         await useCases.discardDraft(bookId, sessionUserId);
-        setState((previous) => ({
-          ...previous,
-          discardingId: null,
-          drafts: previous.drafts.filter((draft) => draft.id !== bookId),
-        }));
+        if (active.current) {
+          setState((previous) => {
+            const nextDrafts = previous.drafts.filter((draft) => draft.id !== bookId);
+            if (!isTest && sessionUserId) sessionDraftsCache.set(sessionUserId, nextDrafts);
+            return {
+              ...previous,
+              discardingId: null,
+              drafts: nextDrafts,
+            };
+          });
+        }
         return true;
       } catch (error) {
-        setState((previous) => ({
-          ...previous,
-          discardingId: null,
-          discardError:
-            error instanceof DomainError
-              ? error.message
-              : "Não foi possível descartar o rascunho. Tente novamente.",
-        }));
+        if (!isTest && sessionUserId) sessionDraftsCache.set(sessionUserId, previousDrafts);
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            drafts: previousDrafts,
+            discardingId: null,
+            discardError:
+              error instanceof DomainError
+                ? error.message
+                : "Não foi possível descartar o rascunho. Tente novamente.",
+          }));
+        }
         return false;
       }
     },
-    [useCases, sessionUserId],
+    [useCases, sessionUserId, isTest],
   );
 
   useEffect(() => {

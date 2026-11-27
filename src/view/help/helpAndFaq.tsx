@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
+import { HelpContactLinks } from "@/view/help/HelpContactLinks";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -19,7 +21,7 @@ export type HelpAndFaqProps = {
   onOpenConversations?: () => void;
 };
 
-const WIDE_CONTENT_MAX_WIDTH = 1240;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
 
@@ -51,7 +53,10 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   // Web larga: coluna mais larga, com as respostas em duas colunas.
   const wide = useIsWideWeb();
   const columns = useWebColumns(2, 3);
-  const columnWidth = { width: webColumnWidth(columns) };
+  const columnWidth =
+    Platform.OS === "web"
+      ? ({ width: `calc((100% - ${(columns - 1) * 16}px) / ${columns})` as unknown as `${number}%` })
+      : { width: webColumnWidth(columns) };
 
   const normalizedQuery = normalizeSearchText(searchQuery);
 
@@ -70,13 +75,13 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
     const inQuestion = normalizeSearchText(item.question).includes(normalizedQuery);
     const inAnswer = normalizeSearchText(item.answer).includes(normalizedQuery);
-    return inQuestion || inAnswer;
+    const inLinks = item.links?.some(({ label }) => normalizeSearchText(label).includes(normalizedQuery));
+    return inQuestion || inAnswer || inLinks;
   });
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView
+    <ScrollEdgeScreen style={styles.page} header={<TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />}>
+      <ScrollEdgeScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -90,9 +95,11 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
           <TextField
             label="Buscar dúvida"
+            labelBackgroundColor={colors.background}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Ex: ponto de encontro, doação, senha..."
+            returnKeyType="search"
           />
 
           <View style={styles.filterContainer}>
@@ -137,6 +144,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   <View key={item.id} style={[styles.faqCard, wide && (isOddLast ? styles.fullRow : columnWidth)]}>
                     <Text style={styles.question}>{item.question}</Text>
                     <Text style={styles.answer}>{item.answer}</Text>
+                    {item.links ? <HelpContactLinks links={item.links} /> : null}
                   </View>
                 );
               })
@@ -153,8 +161,8 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
             </View>
           ) : null}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -192,7 +200,7 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
     borderRadius: tokens.shapeMorph.chipUnselected,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     backgroundColor: colors.m3.surfaceContainerLowest,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -225,7 +233,8 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[20],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[12],
     alignItems: "center",
   },
@@ -234,7 +243,8 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
+    ...iosNeutralCardStyle(colors),
     gap: tokens.spacing[8],
   },
   question: {

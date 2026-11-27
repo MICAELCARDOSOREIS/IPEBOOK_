@@ -1,6 +1,6 @@
 # 0069 — Mapa interativo do Mapbox no app nativo
 
-Data: 2026-10-27. Status: aceito. Substitui parcialmente o [ADR 0068](0068-mapa-estatico-mapbox-no-encontro.md).
+Data: 2026-10-27. Status: aceito; substituído pelo [ADR 0111](0111-encontro-sem-mapa-mapbox.md). Substitui parcialmente o [ADR 0068](0068-mapa-estatico-mapbox-no-encontro.md).
 
 ## Contexto
 O mapa estático (ADR 0068) não permite zoom, arraste nem toque no pino, e os pontos 2, 3 e 4 ficam sobrepostos por serem praças vizinhas. Pediu-se o mapa interativo e uma nova build do app (Spec 094).

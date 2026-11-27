@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { topBarInset } from "@/view/topBarInset";
 
 describe("topBarInset", () => {

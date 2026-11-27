@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Verificação de prontidão da configuração nativa e de release do Ipebook (CA da Spec 074).
 // Falha com código 1 quando qualquer invariante de build estiver quebrado, para que o
-// `npm run validate` e a CI impeçam a integração. Não requer o Expo rodando: lê os arquivos.
+// `npm run validate` e a CI impeçam a integração. Não inicia o servidor do Expo.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getPrebuildConfigAsync } from "@expo/prebuild-config";
+import configPlugins from "expo/config-plugins";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const falhas = [];
@@ -34,6 +36,70 @@ const app = lerJson("app.json").expo;
 const manifest = lerJson("public/manifest.json");
 const eas = lerJson("eas.json");
 
+const platforms = ["android"];
+const { exp } = await getPrebuildConfigAsync(raiz, { platforms });
+const { _internal } = await configPlugins.compileModsAsync(exp, { projectRoot: raiz, platforms, introspect: true });
+const configNativa = _internal.modResults;
+const appAndroid = configNativa.android.manifest.manifest.application[0];
+const mainActivity = appAndroid.activity.find((activity) => activity.$["android:name"] === ".MainActivity");
+conferir(
+  "Atividade principal Android redimensionável e sem orientação fixa",
+  (!app.orientation || app.orientation === "default") && mainActivity &&
+    !mainActivity.$["android:screenOrientation"] &&
+    [appAndroid, mainActivity].every(({ $ }) =>
+      $["android:resizeableActivity"] !== "false" && !$["android:minAspectRatio"] && !$["android:maxAspectRatio"],
+    ),
+  "o manifesto gerado deve permitir rotação, tela dividida e redimensionamento.",
+);
+const atributosDeJanelaLegados = new Set([
+  "android:statusBarColor",
+  "android:navigationBarColor",
+  "android:windowLayoutInDisplayCutoutMode",
+  "android:windowOptOutEdgeToEdgeEnforcement",
+]);
+conferir(
+  "Tema Android sem atributos legados de barras e janela",
+  configNativa.android.styles.resources.style.every(({ item }) =>
+    !item?.some(({ $ }) => atributosDeJanelaLegados.has($.name))),
+  "os estilos gerados pelo Expo ainda declaram atributos legados de ponta a ponta.",
+);
+const estiloSistemaAndroid = configNativa.android.strings?.resources?.string?.find(
+  ({ $ }) => $.name === "expo_system_ui_user_interface_style",
+)?._;
+const corFundoJanelaAndroid = configNativa.android.colors?.resources?.color?.find(
+  ({ $ }) => $.name === "activityBackground",
+)?._;
+conferir(
+  "Tema claro exclusivo travado no prebuild Android (ADR 0114 / expo-system-ui)",
+  app.userInterfaceStyle === "light" &&
+    estiloSistemaAndroid === "light" &&
+    corFundoJanelaAndroid?.toUpperCase() === "#FCFAF5",
+  `esperado expo_system_ui_user_interface_style="light" e activityBackground="#FCFAF5" (obtido: style="${estiloSistemaAndroid ?? "ausente"}", bg="${corFundoJanelaAndroid ?? "ausente"}"). Verifique se expo-system-ui está instalado.`,
+);
+const corSplashAndroid = configNativa.android.colors?.resources?.color?.find(
+  ({ $ }) => $.name === "splashscreen_background",
+)?._;
+const estiloSplashAndroid = configNativa.android.styles?.resources?.style?.find(
+  ({ $ }) => $.name === "Theme.App.SplashScreen",
+);
+const temIconeSplashAndroid12 = Boolean(
+  estiloSplashAndroid?.item?.some(
+    ({ $, _ }) => $.name === "windowSplashScreenAnimatedIcon" && _ === "@drawable/splashscreen_logo",
+  ),
+);
+const temFundoSplashAndroid12 = Boolean(
+  estiloSplashAndroid?.item?.some(
+    ({ $, _ }) => $.name === "windowSplashScreenBackground" && _ === "@color/splashscreen_background",
+  ),
+);
+conferir(
+  "Splash nativa Android 12+ configurada com a marca do app (expo-splash-screen)",
+  corSplashAndroid?.toUpperCase() === "#FCFAF5" &&
+    temIconeSplashAndroid12 &&
+    temFundoSplashAndroid12,
+  `esperado splashscreen_background="#FCFAF5" e Theme.App.SplashScreen com windowSplashScreenAnimatedIcon/Background (obtido: bg="${corSplashAndroid ?? "ausente"}", icon=${temIconeSplashAndroid12}, bgItem=${temFundoSplashAndroid12}).`,
+);
+
 console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
 /** Rotas de `src/app` com segmento dinâmico (`livro/[id].tsx`, `negociacao/[id]/entrega.tsx`). */
 function rotasDinamicas(dir = join(raiz, "src/app"), prefixo = "") {
@@ -56,11 +122,6 @@ for (const rota of rotasDinamicas()) {
   );
 }
 const cabecalhos = readFileSync(join(raiz, "public/_headers"), "utf-8");
-conferir(
-  "CSP libera imagens do Mapbox (mapa estático do encontro)",
-  /img-src[^;]*https:\/\/api\.mapbox\.com/.test(cabecalhos),
-  "public/_headers não inclui https://api.mapbox.com em img-src; o mapa do encontro seria bloqueado na web.",
-);
 for (const origem of ["covers.openlibrary.org", "*.archive.org", "books.google.com"]) {
   conferir(
     `CSP libera as capas de ${origem} (ISBN e galeria de fotos)`,
@@ -125,13 +186,21 @@ conferir(
 
 console.log("\n\x1b[36m▶ Config plugins nativos exigidos pelas bibliotecas em uso\x1b[0m");
 const plugins = (app.plugins ?? []).map((p) => (Array.isArray(p) ? p[0] : p));
-for (const necessario of ["expo-camera", "expo-notifications"]) {
+for (const necessario of ["expo-camera", "expo-notifications", "expo-splash-screen"]) {
   conferir(
     `plugin ${necessario} registrado`,
     plugins.includes(necessario),
     `${necessario} é usado em runtime; sem o plugin o \`expo prebuild\` não gera permissões nem recursos nativos e a funcionalidade quebra no app instalado.`,
   );
 }
+const pluginSplash = (app.plugins ?? []).find((p) => (Array.isArray(p) ? p[0] : p) === "expo-splash-screen");
+conferir(
+  "expo-splash-screen configurado com assets/splash-icon.png e fundo #FCFAF5",
+  Array.isArray(pluginSplash) &&
+    pluginSplash[1]?.image === "./assets/splash-icon.png" &&
+    String(pluginSplash[1]?.backgroundColor ?? "").toUpperCase() === "#FCFAF5",
+  "sem o plugin expo-splash-screen apontando para ./assets/splash-icon.png e #FCFAF5, o prebuild Android 12+ deixa o placeholder quadriculado padrão do Expo.",
+);
 const pluginCamera = (app.plugins ?? []).find((p) => (Array.isArray(p) ? p[0] : p) === "expo-camera");
 conferir(
   "expo-camera sem permissão de áudio e com justificativa em português",
@@ -139,6 +208,24 @@ conferir(
     pluginCamera[1]?.recordAudioAndroid === false &&
     typeof pluginCamera[1]?.cameraPermission === "string",
   "o leitor de ISBN não grava áudio: a permissão deve ser mínima, e a frase de justificativa é exigência da Play Store.",
+);
+const permissoesBloqueadas = new Set(app.android?.blockedPermissions ?? []);
+conferir(
+  "Permissões Android desnecessárias bloqueadas (SYSTEM_ALERT_WINDOW e WRITE_EXTERNAL_STORAGE)",
+  permissoesBloqueadas.has("android.permission.SYSTEM_ALERT_WINDOW") &&
+    permissoesBloqueadas.has("android.permission.WRITE_EXTERNAL_STORAGE"),
+  "declare android.blockedPermissions para impedir que SYSTEM_ALERT_WINDOW e WRITE_EXTERNAL_STORAGE vazem para o AAB de produção.",
+);
+conferir(
+  "iOS infoPlist não declara permissão de localização sem uso",
+  !app.ios?.infoPlist?.NSLocationWhenInUseUsageDescription,
+  "o app não usa localização/GPS; declarar NSLocationWhenInUseUsageDescription sem uso pode gerar rejeição na App Store.",
+);
+const pluginsSentry = plugins.filter((nome) => nome === "@sentry/react-native" || nome === "@sentry/react-native/expo");
+conferir(
+  "Plugin do Sentry registrado sem duplicação",
+  pluginsSentry.length === 1,
+  `esperado exatamente 1 registro do plugin Sentry em app.json (encontrados ${pluginsSentry.length}).`,
 );
 
 console.log("\n\x1b[36m▶ Assets nativos presentes e com tamanho mínimo de loja\x1b[0m");

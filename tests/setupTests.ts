@@ -1,12 +1,28 @@
 import Module from "node:module";
-import { fileURLToPath } from "node:url";
-import { expect, vi } from "vitest";
+import path from "node:path";
+import type { ReactNode } from "react";
 
-vi.mock("expo-symbols", () => ({
+jest.mock("expo-symbols", () => ({
   SymbolView: (props: any) => null,
 }));
 
-const mockPath = fileURLToPath(new URL("./mocks/react-native.cjs", import.meta.url));
+jest.mock("expo-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => children,
+  useIsFocused: () => true,
+  router: {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: () => false,
+  },
+  useFocusEffect: (cb: () => void | (() => void)) => {
+    void cb;
+  },
+  usePathname: () => "/",
+  useLocalSearchParams: () => ({}),
+}));
+
+const mockPath = path.resolve(__dirname, "mocks/react-native.cjs");
 
 // Redireciona qualquer require('react-native') feito pelo RNTL para o mock nativo
 // @ts-expect-error interceptando resolução de módulo do Node
@@ -18,9 +34,4 @@ Module._resolveFilename = function (req: string, ...args: any[]) {
   }
   return origResolve.call(this, req, ...args);
 };
-
-const anyGlobal = globalThis as unknown as { expect: typeof expect };
-if (!anyGlobal.expect) {
-  anyGlobal.expect = expect;
-}
 

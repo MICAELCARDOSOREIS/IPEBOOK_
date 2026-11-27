@@ -28,6 +28,8 @@ export default function MeusPedidosRoute() {
         onRequireSignIn={() => replaceOnce("/entrar")}
         onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
         onOpenNegotiation={(id) => pushOnce(`/negociacao/${id}`)}
+        onScheduleMeeting={(id) => pushOnce(`/negociacao/${id}/encontro` as never)}
+        onOpenDelivery={(id) => pushOnce(`/negociacao/${id}/entrega` as never)}
         onReportListing={(id) => pushOnce(`/denunciar/${id}`)}
         onOpenReceivedRequests={() => pushOnce("/pedidos-recebidos")}
         onOpenListing={(id) => pushOnce(`/livro/${id}`)}

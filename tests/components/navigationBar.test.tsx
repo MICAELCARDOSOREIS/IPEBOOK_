@@ -1,5 +1,4 @@
 
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react-native";
 import { NavigationBar } from "@/view/components/NavigationBar";
 
@@ -43,14 +42,14 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
   });
 
   it("chama onNavigate com o destino tocado", async () => {
-    const onNavigate = vi.fn();
+    const onNavigate = jest.fn();
     const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
     fireEvent.press(getByLabelText("Estante"));
     expect(onNavigate).toHaveBeenCalledWith("shelf");
   });
 
   it("desabilita destinos indicados em disabledDestinations e não dispara onNavigate", async () => {
-    const onNavigate = vi.fn();
+    const onNavigate = jest.fn();
     const { getByLabelText } = await render(
       <NavigationBar active="home" disabledDestinations={["shelf"]} onNavigate={onNavigate} />
     );
@@ -65,7 +64,7 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
 
   it("eleva os itens e aplica padding seguro contra a barra de navegação do sistema (3 botões Android / Home Indicator)", async () => {
     const safeArea = await import("react-native-safe-area-context");
-    const spy = vi.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
+    const spy = jest.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
       top: 24,
       bottom: 48, // Altura padrão da barra nativa de 3 botões do Android
       left: 0,
@@ -106,7 +105,7 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
 
   it("aplica padding mínimo de 12dp quando insets.bottom é zero", async () => {
     const safeArea = await import("react-native-safe-area-context");
-    const spy = vi.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
+    const spy = jest.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
       top: 0,
       bottom: 0,
       left: 0,
@@ -124,7 +123,7 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
   });
 
   it("ignora duplo toque rápido no mesmo destino ou destino diferente (debounce)", async () => {
-    const onNavigate = vi.fn();
+    const onNavigate = jest.fn();
     const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
     const shelfTab = getByLabelText("Estante");
 

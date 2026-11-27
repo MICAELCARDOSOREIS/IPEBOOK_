@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useEffect, useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScrollEdgeScreen, ScrollEdgeScrollView } from "@/view/components/ScrollEdgeScreen";
 import {
   makeAuthViewModel,
   makeMyListingsViewModel,
@@ -14,17 +14,21 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
+import { TopAppBarBackButton } from "@/view/components/TopAppBar";
 import {
   ProfileIdentityCard,
-  ProfileMenuSection,
   type ProfileMenuItem,
+  ProfileMenuSection,
 } from "@/view/profile/ProfileHubSections";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { type ColorPalette, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
+import { useOnRefocus } from "@/view/useRefocusKey";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
@@ -43,6 +47,7 @@ export type ProfileHubProps = {
   onSignedOut: () => void;
   /** Contador manual de notificações não lidas (útil para testes determinísticos). */
   unreadNotificationsCount?: number;
+  focusKey?: number;
 };
 
 /**
@@ -64,20 +69,32 @@ export default function ProfileHub({
   onNavigateToSettings,
   onSignedOut,
   unreadNotificationsCount: explicitUnreadCount,
+  focusKey,
 }: ProfileHubProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, profileActions] = makeProfileViewModel(userId);
-  const [notificationsState] = makeNotificationsViewModel(userId);
+  const [notificationsState, notificationsActions] = makeNotificationsViewModel(userId);
   const unreadNotificationsCount = explicitUnreadCount ?? notificationsState.unreadCount;
-  const [myListingsState] = makeMyListingsViewModel(userId);
+  const [myListingsState, myListingsActions] = makeMyListingsViewModel(userId);
+  useOnRefocus(focusKey, () => {
+    profileActions.reload();
+    void notificationsActions.refresh();
+    void myListingsActions.reload();
+  });
   const [preferencesState] = makeUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const wideWeb = useIsWideWeb();
+  // Abaixo disso as duas colunas (380 + 480 px) não cabem na área útil e a página rola na horizontal.
+  const stackColumns = useHydratedWindowWidth() < 1100;
 
   const guardedBack = useGuardedPress(onBack);
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
@@ -147,7 +164,7 @@ export default function ProfileHub({
       icon: "shelf",
       iconColor: colors.text,
       label: "Minhas publicações",
-      description: `${activeBooks} ativas · ${reservedBooks} reservada${reservedBooks !== 1 ? "s" : ""}`,
+      description: `${activeBooks} ativa${activeBooks !== 1 ? "s" : ""} · ${reservedBooks} reservada${reservedBooks !== 1 ? "s" : ""}`,
       onPress: guardedNavigateToMyListings,
       showChevron: true,
     },
@@ -158,7 +175,7 @@ export default function ProfileHub({
       label: "Avaliações recebidas",
       description:
         profile.ratingCount > 0
-          ? `★ ${ratingText} em ${completedTrocas} trocas`
+          ? `★ ${ratingText} em ${completedTrocas} troca${completedTrocas !== 1 ? "s" : ""}`
           : "Veja o que a comunidade disse sobre você",
       onPress: guardedNavigateToRatings,
       showChevron: true,
@@ -168,7 +185,7 @@ export default function ProfileHub({
       icon: "calendar",
       iconColor: colors.text,
       label: "Histórico de encontros",
-      description: "Encontros nos pontos seguros de Piripiri",
+      description: "Encontros nos pontos recomendados de Piripiri",
       onPress: guardedNavigateToMeetingHistory,
       showChevron: true,
     },
@@ -221,33 +238,31 @@ export default function ProfileHub({
   }
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <ScrollView
+    <ScrollEdgeScreen edges={["top", "left", "right"]} style={styles.page} header={null}>
+      <ScrollEdgeScrollView
         {...standardVerticalScrollProps}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: wideWeb ? tokens.spacing[32] : 160 },
+          { paddingBottom: wideWeb ? tokens.spacing[32] : scrollBottomPadding.withoutBottomBar + insets.bottom },
         ]}
       >
         <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
           <View style={[styles.headerRow, wideWeb && styles.fullRow]}>
-            {!wideWeb && onBack ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Voltar"
-                hitSlop={8}
-                onPress={guardedBack}
-                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
-              >
-                <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-              </Pressable>
-            ) : null}
-            <Text accessibilityRole="header" style={styles.title}>
-              Meu perfil
-            </Text>
+            {!wideWeb && onBack ? <TopAppBarBackButton onBack={guardedBack} /> : null}
+            <View style={styles.headerTitleGroup}>
+              <Text accessibilityRole="header" style={[styles.title, wideWeb && styles.titleWide]}>
+                Meu perfil
+              </Text>
+              {wideWeb && isSignedIn ? (
+                <Text style={styles.subtitle}>
+                  Gerencie sua identidade, acompanhe suas trocas e ajuste sua conta em Piripiri.
+                </Text>
+              ) : null}
+            </View>
             <View style={styles.headerActions}>
+              {wideWeb ? null : (
               <Pressable
                 testID="profile-notifications-button"
                 accessibilityRole="button"
@@ -258,9 +273,14 @@ export default function ProfileHub({
                 }
                 hitSlop={8}
                 onPress={guardedNavigateToNotifications}
-                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+                style={({ pressed }) => [
+                  styles.settingsButton,
+                  isIos && (iosGlass ? styles.iosIconGlass : styles.iosIconOpaque),
+                  pressed && (isIos && iosGlass ? styles.iosIconPressed : styles.settingsButtonPressed),
+                ]}
               >
-                <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
+                {iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassIconShape} /> : null}
+                <AppIcon name="bell" size={isIos ? 20 : 24} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
                 {unreadNotificationsCount > 0 ? (
                   <View style={styles.notificationBadge} testID="profile-notifications-badge">
                     <Text style={styles.notificationBadgeText}>
@@ -269,14 +289,21 @@ export default function ProfileHub({
                   </View>
                 ) : null}
               </Pressable>
+              )}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Abrir configurações"
                 hitSlop={8}
                 onPress={guardedNavigateToSettings}
-                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+                style={({ pressed }) => [
+                  styles.settingsButton,
+                  !wideWeb && isIos && (iosGlass ? styles.iosIconGlass : styles.iosIconOpaque),
+                  wideWeb && styles.settingsButtonWide,
+                  pressed && (!wideWeb && isIos && iosGlass ? styles.iosIconPressed : styles.settingsButtonPressed),
+                ]}
               >
-                <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
+                {!wideWeb && iosGlass ? <IosGlassBackdrop isInteractive style={styles.iosGlassIconShape} /> : null}
+                <AppIcon name="settings" size={!wideWeb && isIos ? 20 : 24} color={!wideWeb && isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
               </Pressable>
             </View>
           </View>
@@ -287,8 +314,8 @@ export default function ProfileHub({
             <ErrorState message={state.error} onRetry={profileActions.reload} />
           ) : isSignedIn ? (
             wideWeb ? (
-              <View style={styles.wideGrid} testID="profile-wide-grid">
-                <View style={styles.wideSideCol}>
+              <View style={[styles.widePage, stackColumns && styles.wideGridStacked]} testID="profile-wide-grid">
+                <View style={[styles.wideIdentity, stackColumns && styles.wideIdentityStacked]}>
                   <ProfileIdentityCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -299,25 +326,20 @@ export default function ProfileHub({
                     ratingText={ratingText}
                     wideWeb
                     onEditProfile={guardedNavigateToEditProfile}
-                    onCreateListing={onNavigateToCreateListing ? guardedNavigateToCreateListing : undefined}
                     onMyListings={guardedNavigateToMyListings}
                     onMeetingHistory={guardedNavigateToMeetingHistory}
                     onRatings={guardedNavigateToRatings}
                   />
                 </View>
-
-                {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
-                <View style={styles.wideMainCol}>
-                  <View style={styles.wideSectionsRow}>
-                    <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
-                    <ProfileMenuSection
-                      title="Conta"
-                      items={accountItems}
-                      wideWeb
-                      defaultIconColor={colors.m3.onSurfaceVariant}
-                      onSignOut={openSignOutDialog}
-                    />
-                  </View>
+                <View style={styles.wideSectionsRow}>
+                  <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
+                  <ProfileMenuSection
+                    title="Conta"
+                    items={accountItems}
+                    wideWeb
+                    defaultIconColor={colors.m3.onSurfaceVariant}
+                    onSignOut={openSignOutDialog}
+                  />
                 </View>
               </View>
             ) : (
@@ -347,7 +369,8 @@ export default function ProfileHub({
             )
           ) : (
             /* Estado de convidado: sem conta não há identidade nem atividade a exibir */
-            <View style={[styles.guestCard, wideWeb && styles.fullRow]}>
+            <View style={[styles.guestCard, isIos && (iosGlass ? styles.iosGlassGuestCard : styles.iosOpaqueGuestCard), wideWeb && styles.fullRow]}>
+              {iosGlass ? <IosGlassBackdrop style={styles.iosGlassGuestShape} /> : null}
               <Text style={styles.guestTitle}>Você ainda não entrou</Text>
               <Text style={styles.guestText}>
                 Crie uma conta grátis para publicar livros, favoritar buscas e negociar trocas em Piripiri.
@@ -359,7 +382,7 @@ export default function ProfileHub({
             </View>
           )}
         </View>
-      </ScrollView>
+      </ScrollEdgeScrollView>
 
       <Dialog
         visible={confirmingSignOut}
@@ -375,7 +398,7 @@ export default function ProfileHub({
           setSignOutError(null);
         }}
       />
-    </SafeAreaView>
+    </ScrollEdgeScreen>
   );
 }
 
@@ -385,32 +408,34 @@ function createStyles(colors: ColorPalette) {
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `07.01`): cartão e métricas em coluna lateral, "Atividade" e "Conta" lado a lado.
     contentWide: {
-      maxWidth: 1240,
+      maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
       gap: tokens.spacing[24],
     },
     fullRow: { width: "100%" },
-    wideGrid: {
+    widePage: {
+      width: "100%",
       flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[32],
+      alignItems: "stretch",
+      gap: tokens.spacing[24],
+    },
+    wideIdentity: {
+      width: 390,
+      flexShrink: 0,
+    },
+    wideIdentityStacked: {
       width: "100%",
     },
-    wideSideCol: {
-      width: 380,
-      gap: tokens.spacing[20],
-    },
-    wideMainCol: {
-      flex: 1,
-      minWidth: 480,
-    },
+    wideGridStacked: { flexDirection: "column" },
     wideSectionsRow: {
+      flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       flexWrap: "wrap",
       gap: tokens.spacing[24],
-      alignItems: "flex-start",
+      alignItems: "stretch",
       width: "100%",
     },
     content: {
@@ -424,10 +449,21 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
     },
-    title: {
+    headerTitleGroup: {
       flex: 1,
+      minWidth: 0,
+      gap: tokens.spacing[4],
+    },
+    title: {
       ...tokens.typography.brandTitle,
       color: colors.brandBrown,
+    },
+    titleWide: {
+      ...tokens.typography.brandLargeTitle,
+    },
+    subtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
     },
     headerActions: {
       flexDirection: "row",
@@ -459,6 +495,44 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
+    settingsButtonWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    iosIconGlass: {
+      minWidth: 44,
+      minHeight: 44,
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.full,
+      backgroundColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosIconOpaque: {
+      minWidth: 44,
+      minHeight: 44,
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
+    },
+    iosIconPressed: {
+      opacity: 0.78,
+      transform: [{ scale: 0.94 }],
+    },
+    iosGlassIconShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     settingsButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainerHigh,
@@ -466,10 +540,29 @@ function createStyles(colors: ColorPalette) {
     },
     status: { alignItems: "center", paddingVertical: tokens.spacing[32] },
     guestCard: {
+      position: "relative",
+      overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.xl,
       padding: tokens.spacing[24],
       gap: tokens.spacing[12],
+    },
+    iosGlassGuestCard: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: "transparent",
+    },
+    iosOpaqueGuestCard: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassGuestShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xxl,
+      overflow: "hidden",
     },
     guestTitle: {
       ...tokens.typography.brandCardTitle,

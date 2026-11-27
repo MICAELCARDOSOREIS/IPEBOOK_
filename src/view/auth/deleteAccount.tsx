@@ -56,10 +56,10 @@ export default function DeleteAccount({
   if (state.success) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Conta excluída" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Conta excluída" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -71,6 +71,11 @@ export default function DeleteAccount({
           <Text style={styles.bodyCenter}>
             Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
           </Text>
+          {Platform.OS === "ios" ? (
+            <Text style={styles.bodyCenter}>
+              Se você usou Entrar com a Apple, abra Ajustes, toque no seu nome e vá a Iniciar Sessão com a Apple. Selecione IpêBook e toque em Apagar.
+            </Text>
+          ) : null}
           <View style={styles.fullWidthButton}>
             <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
           </View>
@@ -82,10 +87,10 @@ export default function DeleteAccount({
   if (!sessionUserId && sessionLoading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Privacidade e dados" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -104,10 +109,10 @@ export default function DeleteAccount({
   if (!sessionUserId) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Privacidade e dados" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -118,7 +123,9 @@ export default function DeleteAccount({
           <Text style={styles.bodyCenter}>
             {onNavigateToLogin
               ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
-              : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
+              : Platform.OS === "ios"
+                ? "No aplicativo do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o endereço cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."
+                : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
           </Text>
           {onNavigateToLogin ? (
             <View style={styles.fullWidthButton}>
@@ -244,6 +251,8 @@ export default function DeleteAccount({
             loading={state.loading}
             loadingLabel="Excluindo conta..."
             disabled={state.loading || state.exporting}
+            backgroundColor={colors.error}
+            textColor={colors.surface}
             onPress={() => void actions.deleteAccount(sessionUserId)}
           />
         </View>
@@ -272,7 +281,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.book.paperEdge,
     },
     navigationRowText: { flex: 1, gap: tokens.spacing[4] },
     navigationRowTitle: {
@@ -306,7 +315,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[8],
     },
     privacyInfoTitle: {

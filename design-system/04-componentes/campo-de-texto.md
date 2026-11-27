@@ -79,3 +79,13 @@ function CampoDeTexto({ label, value, onChangeText, error }: { label: string; va
   );
 }
 ```
+
+
+## Adaptação para iPhone nativo (Spec 137)
+
+- No iOS, o contêiner recebe superfície opaca `surface-container-low`,
+  cantos contínuos de 14 pt e rótulo recortado na mesma cor da superfície.
+- Foco e erro continuam identificados por borda de 2 pt, texto de apoio e
+  informações acessíveis (`aria-invalid`, `aria-describedby` e `accessibilityHint`).
+- O fundo sólido do campo preserva a legibilidade da digitação. O vidro fica nas ações e na navegação.
+- Android e Web preservam o campo Material 3 contornado.

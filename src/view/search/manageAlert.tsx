@@ -2,20 +2,25 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Dialog } from "@/view/components/Dialog";
+import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
-import { makeSearchAlertsViewModel } from "@/di/container";
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ManageAlertProps = {
   alertId: string;
   userId: string | null;
+  sessionLoading?: boolean;
   onBack: () => void;
   onEditAlert: (alertId: string) => void;
   /** Volta para a lista depois que o alerta deixa de existir. */
@@ -26,6 +31,7 @@ export type ManageAlertProps = {
 export default function ManageAlert({
   alertId,
   userId,
+  sessionLoading = false,
   onBack,
   onEditAlert,
   onAlertDeleted,
@@ -34,21 +40,42 @@ export default function ManageAlert({
   const guardedEdit = useGuardedPress(onEditAlert);
   const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
   const [state, actions] = makeSearchAlertsViewModel(userId);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const alert = state.alerts.find((item) => item.id === alertId);
+  const loadError = state.loadError ?? (!alert ? state.error : null);
 
-  if (state.loading) {
+  if (sessionLoading || state.loading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
+    );
+  }
+
+  if (loadError && !alert) {
+    return (
+      <ScreenContainer
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
+      >
+        {isOnline ? (
+          <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+        ) : (
+          <OfflineState onRetry={() => void actions.reload()} />
+        )}
       </ScreenContainer>
     );
   }
@@ -56,11 +83,11 @@ export default function ManageAlert({
   if (!alert) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <Text accessibilityRole="header" style={styles.headline}>
           Alerta não encontrado
@@ -75,12 +102,12 @@ export default function ManageAlert({
 
   return (
     <ScreenContainer
-      maxWidth={560}
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
       paddingHorizontal={tokens.spacing[24]}
       paddingTop={tokens.spacing[24]}
       paddingBottom={scrollBottomPadding.withoutBottomBar}
-      header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-      contentStyle={styles.content}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+      contentStyle={[styles.content, wide && styles.contentWide]}
       overlay={
         <Dialog
           visible={confirmingDelete}
@@ -104,11 +131,11 @@ export default function ManageAlert({
       </Text>
       <Text style={styles.body}>Acompanhe e ajuste o que você quer encontrar.</Text>
 
-      <View style={alert.active ? styles.statusCard : styles.statusCardPaused}>
-        <Text style={styles.statusTitle}>
+      <View testID="manage-alert-status-card" style={alert.active ? styles.statusCard : styles.statusCardPaused}>
+        <Text style={alert.active ? styles.statusTitle : styles.statusTitlePaused}>
           {alert.active ? "Alerta ativo" : "Alerta pausado"}
         </Text>
-        <Text style={styles.body}>
+        <Text style={alert.active ? styles.statusBody : styles.body}>
           {alert.active
             ? "Você será avisado quando um livro combinar com esta busca."
             : "Retome o alerta quando quiser voltar a receber novidades."}
@@ -162,13 +189,22 @@ function createStyles(colors: ColorPalette) {
     paddingTop: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
+  contentWide: {
+    maxWidth: 680,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.xl,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[28],
+    marginTop: tokens.spacing[16],
+  },
   headline: {
     ...tokens.typography.displayLarge,
     color: colors.text,
   },
   body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   statusCard: {
-    backgroundColor: colors.badge.sale.background,
+    backgroundColor: colors.m3.primaryContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
@@ -180,6 +216,14 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   statusTitle: {
+    ...tokens.typography.titleMedium,
+    color: colors.m3.onPrimaryContainer,
+  },
+  statusBody: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onPrimaryContainer,
+  },
+  statusTitlePaused: {
     ...tokens.typography.titleMedium,
     color: colors.text,
   },

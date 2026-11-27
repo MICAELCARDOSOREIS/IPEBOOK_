@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { BookUseCases } from "@/usecase/bookUseCases";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { AuthError } from "@/model/errors";

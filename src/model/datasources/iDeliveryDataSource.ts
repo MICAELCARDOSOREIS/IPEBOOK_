@@ -7,4 +7,8 @@ export interface IDeliveryDataSource {
   createCode(requestId: string, actorId: string): Promise<DeliveryCode>;
   /** Confirma a entrega com o código mostrado pelo anunciante (RN-02 a RN-06). */
   complete(requestId: string, code: string, actorId: string): Promise<Delivery>;
+  /** Assina conclusão de entrega em tempo real para a negociação. */
+  subscribeToRequest?(requestId: string, onChange: () => void): () => void;
+  /** Assina conclusões de entrega visíveis pela sessão atual (RLS). */
+  subscribeToAll?(onChange: () => void): () => void;
 }

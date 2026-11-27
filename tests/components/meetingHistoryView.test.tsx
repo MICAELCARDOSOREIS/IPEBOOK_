@@ -1,15 +1,14 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Meeting } from "@/model/entities/meeting";
 import type { UserMeetingsState, UserMeetingsActions } from "@/viewmodel/useUserMeetingsViewModel";
 import MeetingHistory from "@/view/profile/meetingHistory";
 
-vi.mock("@/viewmodel/useUserMeetingsViewModel", () => ({
-  useUserMeetingsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useUserMeetingsViewModel", () => ({
+  useUserMeetingsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(() => [{ user: { id: "user1" }, loading: false, error: null }]),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(() => [{ user: { id: "user1" }, loading: false, error: null }]),
 }));
 
 import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
@@ -19,8 +18,8 @@ afterEach(async () => {
 });
 
 function mockViewModel(state: UserMeetingsState, actions: Partial<UserMeetingsActions> = {}) {
-  const fullActions: UserMeetingsActions = { reload: vi.fn().mockResolvedValue(undefined), ...actions };
-  vi.mocked(useUserMeetingsViewModel).mockReturnValue([state, fullActions]);
+  const fullActions: UserMeetingsActions = { reload: jest.fn().mockResolvedValue(undefined), ...actions };
+  jest.mocked(useUserMeetingsViewModel).mockReturnValue([state, fullActions]);
   return fullActions;
 }
 
@@ -67,7 +66,7 @@ describe("MeetingHistory (Spec 071)", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Tentar novamente" }));
     });
-    expect(actions.reload).toHaveBeenCalledOnce();
+    expect(actions.reload).toHaveBeenCalledTimes(1);
   });
 
   it("exibe estado vazio quando o usuário não tiver encontros", async () => {
@@ -77,13 +76,13 @@ describe("MeetingHistory (Spec 071)", () => {
       screen = await render(<MeetingHistory />);
     });
     expect(screen.getByText("Nenhum encontro registrado")).toBeDefined();
-    expect(screen.getByText(/4 pontos seguros de Piripiri/)).toBeDefined();
+    expect(screen.getByText(/4 pontos recomendados de Piripiri/)).toBeDefined();
   });
 
   it("lista encontros realizados, confirmados e cancelados e permite navegar para a negociação", async () => {
     mockViewModel({ meetings: [meetingConfirmado, meetingRealizado, meetingCancelado], loading: false, error: null });
-    const onNavigateToNegotiation = vi.fn();
-    const onBack = vi.fn();
+    const onNavigateToNegotiation = jest.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -107,6 +106,6 @@ describe("MeetingHistory (Spec 071)", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Voltar" }));
     });
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

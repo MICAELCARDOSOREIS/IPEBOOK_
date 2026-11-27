@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { AppleSignInButton } from "@/view/auth/AppleSignInButton";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { makeAuthViewModel } from "@/di/container";
@@ -22,6 +23,7 @@ import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignUpProps = {
   onAuthenticated?: () => void;
+  onGoogleStart?: () => void;
   onNavigateToSignIn?: () => void;
   onNavigateToTerms?: () => void;
   onBack?: () => void;
@@ -32,6 +34,7 @@ const TERMS_ERROR = "É preciso aceitar os termos de uso para criar a conta.";
 /** Figma `01.03 · Criar conta` (nó `336:118`). */
 export default function SignUp({
   onAuthenticated,
+  onGoogleStart,
   onNavigateToSignIn,
   onNavigateToTerms,
   onBack,
@@ -49,20 +52,21 @@ export default function SignUp({
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const emailInputRef = useRef<TextInputInstance>(null);
   const passwordInputRef = useRef<TextInputInstance>(null);
-  const busy = submitting || googleLoading;
+  const busy = submitting || socialProvider !== null;
 
-  const handleGoogleSignIn = async () => {
+  const handleSocialSignIn = async (provider: "google" | "apple") => {
     if (busy) return;
-    setGoogleLoading(true);
+    setSocialProvider(provider);
     try {
-      const success = await actions.signInWithGoogle?.();
+      if (provider === "google") onGoogleStart?.();
+      const success = await (provider === "apple" ? actions.signInWithApple?.() : actions.signInWithGoogle?.());
       if (success) guardedAuthenticated();
     } finally {
-      setGoogleLoading(false);
+      setSocialProvider(null);
     }
   };
 
@@ -86,9 +90,9 @@ export default function SignUp({
     <AuthShell>
       <ScreenContainer
         maxWidth={560}
-        paddingTop={tokens.spacing[16]}
+        paddingTop={tokens.spacing[8]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={onBack ? <TopAppBar contentMaxWidth={560} title="Criar conta" onBack={guardedBack} /> : undefined}
+        header={onBack ? <TopAppBar alignToWindow={false} contentMaxWidth={560} title="Criar conta" onBack={guardedBack} /> : undefined}
         contentStyle={[
           styles.content,
           wideWeb && { justifyContent: "center" },
@@ -127,10 +131,12 @@ export default function SignUp({
               label="Continuar com Google"
               accessibilityLabel="Continuar com Google"
               icon={<GoogleLogo size={20} />}
-              loading={googleLoading}
+              loading={socialProvider === "google"}
               disabled={busy}
-              onPress={() => void handleGoogleSignIn()}
+              onPress={() => void handleSocialSignIn("google")}
             />
+
+            <AppleSignInButton disabled={busy} onPress={() => void handleSocialSignIn("apple")} />
 
             <View accessibilityRole="none" style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -225,10 +231,11 @@ export default function SignUp({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     content: {
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[8],
     },
     footerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[6],

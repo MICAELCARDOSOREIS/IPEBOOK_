@@ -1,6 +1,7 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
+// @ts-expect-error Exportado pelo mock de react-native
+import { Platform, StyleSheet, __emitKeyboardEvent } from "react-native";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import type { Book } from "@/model/entities/book";
@@ -50,17 +51,46 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetSaleBook}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
     });
 
     expect(screen.getByRole("header", { name: "Solicitar Negociação" })).toBeDefined();
-    expect(screen.getByLabelText("Mensagem inicial da proposta")).toBeDefined();
+    expect(screen.getByText("R$ 30,00")).toBeDefined();
+    expect(screen.getByText("Mensagem para quem anunciou (opcional)")).toBeDefined();
+    const input = screen.getByLabelText("Mensagem inicial da proposta");
+    expect(input.props.placeholder).not.toMatch(/opcional/i);
+    const inputStyle = StyleSheet.flatten(input.props.style);
+    expect(inputStyle.fontSize).toBeGreaterThanOrEqual(16);
     expect(screen.queryByText(/oferecer um livro/i)).toBeNull();
+  });
+
+  it("mantém a mensagem digitada e bloqueia apenas o envio durante a desconexão", async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    const onClose = jest.fn();
+    const form = (submitDisabled: boolean) => (
+      <ThemeProvider>
+        <ProposalSheet visible targetBook={targetSaleBook} onClose={onClose} onSubmit={onSubmit} submitDisabled={submitDisabled} />
+      </ThemeProvider>
+    );
+
+    const screen = await render(form(false));
+    await fireEvent.changeText(screen.getByLabelText("Mensagem inicial da proposta"), "Posso buscar amanhã?");
+    await screen.rerender(form(true));
+    const submit = screen.getByRole("button", { name: "Confirmar interesse" });
+    expect(submit).toBeDisabled();
+    await fireEvent.press(submit);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeEnabled();
+    expect(screen.getByDisplayValue("Posso buscar amanhã?")).toBeDefined();
+
+    await screen.rerender(form(false));
+    await fireEvent.press(screen.getByRole("button", { name: "Confirmar interesse" }));
+    expect(onSubmit).toHaveBeenCalledWith({ initialMessage: "Posso buscar amanhã?", offeredBookId: undefined });
   });
 
   it("renderiza opções de livros do usuário quando o anúncio é de troca", async () => {
@@ -70,10 +100,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -92,10 +122,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             loadingBooks={true}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -111,10 +141,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={[]}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -132,10 +162,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             error="Erro ao processar a proposta."
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -145,14 +175,14 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("permite selecionar e desmarcar livro de troca voltando para nenhum específico", async () => {
-    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
             onSubmit={onSubmit}
@@ -184,14 +214,14 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("envia mensagem e livro selecionado no onSubmit", async () => {
-    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
             onSubmit={onSubmit}
@@ -226,7 +256,7 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("aciona onClose ao clicar em Cancelar ou no botão fechar do topo", async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -235,7 +265,7 @@ describe("ProposalSheet (Spec 113)", () => {
             visible={true}
             onClose={onClose}
             targetBook={targetSaleBook}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -252,5 +282,38 @@ describe("ProposalSheet (Spec 113)", () => {
       fireEvent.press(closeBtn);
     });
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("desvia a folha acima do teclado no Android quando keyboardDidShow dispara", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "android";
+    try {
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <ThemeProvider>
+            <ProposalSheet
+              visible={true}
+              onClose={jest.fn()}
+              targetBook={targetSaleBook}
+              onSubmit={jest.fn()}
+            />
+          </ThemeProvider>,
+        );
+      });
+
+      const readPaddingBottom = () => {
+        const estilo = StyleSheet.flatten(screen.getByTestId("proposal-sheet-scrim").props.style);
+        return estilo.paddingBottom?.__getValue?.() ?? 0;
+      };
+
+      expect(readPaddingBottom()).toBe(0);
+      __emitKeyboardEvent("keyboardDidShow", 310);
+      expect(readPaddingBottom()).toBe(310);
+      __emitKeyboardEvent("keyboardDidHide", undefined);
+      expect(readPaddingBottom()).toBe(0);
+    } finally {
+      Platform.OS = originalPlatform;
+    }
   });
 });

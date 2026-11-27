@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryModerationDataSource } from "@/infra/datasources/memoryModerationDataSource";
 import type { ModerationItem } from "@/model/entities/moderation";
 import { AuthError, ValidationError } from "@/model/errors";

@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { AppNotification } from "@/model/entities/notification";
 import { AuthError, ValidationError } from "@/model/errors";
@@ -18,10 +17,10 @@ describe("NotificationUseCases", () => {
   const createMockDataSource = (
     overrides?: Partial<INotificationDataSource>,
   ): INotificationDataSource => ({
-    listByUser: vi.fn(async () => [mockNotification]),
-    markAsRead: vi.fn(async () => {}),
-    markAllAsRead: vi.fn(async () => {}),
-    addNotification: vi.fn(async () => {}),
+    listByUser: jest.fn(async () => [mockNotification]),
+    markAsRead: jest.fn(async () => {}),
+    markAllAsRead: jest.fn(async () => {}),
+    addNotification: jest.fn(async () => {}),
     ...overrides,
   });
 
@@ -102,7 +101,7 @@ describe("NotificationUseCases", () => {
     });
 
     it("exclui a notificação com sucesso", async () => {
-      const deleteNotification = vi.fn(async () => {});
+      const deleteNotification = jest.fn(async () => {});
       const ds = createMockDataSource({ deleteNotification });
       const useCases = new NotificationUseCases(ds);
 
@@ -121,8 +120,8 @@ describe("NotificationUseCases", () => {
     });
 
     it("chama clearAll e clearRead no dataSource quando autenticado", async () => {
-      const clearAll = vi.fn(async () => {});
-      const clearRead = vi.fn(async () => {});
+      const clearAll = jest.fn(async () => {});
+      const clearRead = jest.fn(async () => {});
       const ds = createMockDataSource({ clearAll, clearRead });
       const useCases = new NotificationUseCases(ds);
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -11,6 +11,9 @@ import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
+import { hasPhotoPermission } from "@/view/listings/photoPermission";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -24,6 +27,7 @@ export type CreateListingStep2Props = {
   onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => void;
   uploading?: boolean;
   photoError?: string | null;
+  photoPermissionDenied?: boolean;
 };
 
 export function CreateListingStep2({
@@ -37,6 +41,7 @@ export function CreateListingStep2({
   onChoosePhoto,
   uploading = false,
   photoError,
+  photoPermissionDenied,
 }: CreateListingStep2Props) {
   const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
   const [pendingPhoto, setPendingPhoto] = useState<{
@@ -48,6 +53,14 @@ export function CreateListingStep2({
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const bookSide = sheetSlot?.slot === "cover" ? "cover"
+    : sheetSlot?.index === 0 ? "spine"
+    : sheetSlot?.index === 1 ? "back"
+    : undefined;
+  const photoTitle = bookSide === "spine" ? "Foto da lombada"
+    : bookSide === "back" ? "Foto do verso"
+    : "Foto da capa";
 
   return (
     <>
@@ -68,14 +81,14 @@ export function CreateListingStep2({
         <View testID="step2-side-slots" style={wideWeb ? styles.webSideSlots : styles.sideSlots}>
           <AddPhotoCard
             label="Lombada"
-            photoUrl={photos[0]}
+            photoUrl={photos[0] || undefined}
             onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
             onRemovePhoto={() => onRemovePhoto(0)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
           <AddPhotoCard
             label="Verso"
-            photoUrl={photos[1]}
+            photoUrl={photos[1] || undefined}
             onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
             onRemovePhoto={() => onRemovePhoto(1)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
@@ -92,6 +105,7 @@ export function CreateListingStep2({
       {photoError ? (
         <View style={styles.photoErrorBlock}>
           <InlineErrorCard message={photoError} />
+          {Platform.OS === "ios" && photoPermissionDenied ? <OpenAppSettingsButton /> : null}
           <Text style={styles.tipText}>
             Dá para publicar sem foto: enquanto não houver imagem, usamos uma capa ilustrativa do livro.
           </Text>
@@ -101,6 +115,7 @@ export function CreateListingStep2({
       {showLinkField ? (
         <TextField
           label="Endereço da foto da capa"
+          labelBackgroundColor={wideWeb ? colors.m3.surfaceContainerLow : undefined}
           value={photoUrl}
           onChangeText={onSetPhotoUrl}
           editable={!loading}
@@ -114,12 +129,20 @@ export function CreateListingStep2({
 
       <PhotoSourceSheet
         visible={sheetSlot !== null}
-        title={sheetSlot?.slot === "cover" ? "Foto da capa" : "Mais uma foto"}
+        title={photoTitle}
+        bookSide={bookSide}
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
-          // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
-          if (slot) setPendingPhoto({ ...slot, source });
+          if (!slot) return;
+          void hasPhotoPermission(source).then((granted) => {
+            if (granted) {
+              onChoosePhoto?.(slot.slot, source, slot.index);
+            } else {
+              // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
+              setPendingPhoto({ ...slot, source });
+            }
+          });
         }}
         onClose={() => setSheetSlot(null)}
       />
@@ -136,17 +159,27 @@ export function CreateListingStep2({
         onDismiss={() => setPendingPhoto(null)}
       />
 
-      <View style={wideWeb ? styles.webTipBox : styles.tipBox}>
-        <View style={styles.tipHeaderRow}>
-          <AppIcon name="info" size={18} color={colors.action} />
-          <Text style={styles.tipTitle}>Dica de foto</Text>
+      {wideWeb ? (
+        <View style={styles.webTipBox}>
+          <View style={styles.tipHeaderRow}>
+            <AppIcon name="info" size={18} color={colors.action} />
+            <Text style={styles.tipTitle}>Dica de foto</Text>
+          </View>
+          <Text style={styles.tipText}>
+            Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
+          </Text>
         </View>
-        <Text style={styles.tipText}>
-          {wideWeb
-            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o verso (contracapa) para quem busca em Piripiri conferir a real conservação e ver o livro completo em 3D."
-            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do verso completam o livro em 3D e ajudam a conferir a conservação."}
-        </Text>
-      </View>
+      ) : (
+        <IosCardSurface variant="glass" style={styles.tipBox}>
+          <View style={styles.tipHeaderRow}>
+            <AppIcon name="info" size={18} color={colors.action} />
+            <Text style={styles.tipTitle}>Dica de foto</Text>
+          </View>
+          <Text style={styles.tipText}>
+            Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
+          </Text>
+        </IosCardSurface>
+      )}
 
       {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
@@ -198,9 +231,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     webTipBox: {
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       borderRadius: tokens.radius.large,
       padding: tokens.spacing[16],
       gap: tokens.spacing[6],

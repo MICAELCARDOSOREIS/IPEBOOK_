@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { AuthError, ValidationError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
@@ -47,12 +46,24 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     );
   });
 
-  it("encerra a sessão ao sair e volta ao estado de visitante", async () => {
-    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+  it("encerra a sessão ao sair, limpa o cache local de livros e volta ao estado de visitante", async () => {
+    const clearBooksCache = jest.fn().mockResolvedValue(undefined);
+    const useCases = new AuthUseCases(new MemoryAuthDataSource(), undefined, { clearBooksCache });
     await useCases.signUp("pessoa@exemplo.com", "12345678", "Leitora Teste");
 
     await useCases.signOut();
 
+    expect(clearBooksCache).toHaveBeenCalledTimes(1);
+    await expect(useCases.getSession()).resolves.toBeNull();
+  });
+
+  it("não falha o logout se a limpeza do cache local lançar erro após encerrar a sessão", async () => {
+    const clearBooksCache = jest.fn().mockRejectedValue(new Error("storage indisponível"));
+    const useCases = new AuthUseCases(new MemoryAuthDataSource(), undefined, { clearBooksCache });
+    await useCases.signUp("pessoa@exemplo.com", "12345678", "Leitora Teste");
+
+    await expect(useCases.signOut()).resolves.toBeUndefined();
+    expect(clearBooksCache).toHaveBeenCalledTimes(1);
     await expect(useCases.getSession()).resolves.toBeNull();
   });
 
@@ -194,5 +205,46 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
 
     await useCasesWithSessionUrl.setSessionFromUrl("https://ipebook.app/auth/callback?sem-nome=1");
     expect(ensured).toEqual([{ id: "u-sem-nome", name: "Leitor IpêBook" }]);
+  });
+
+  it("substitui nome placeholder Usuário #XXXX no perfil público ao fazer login com e-mail", async () => {
+    const updated: Array<{ userId: string; name: string }> = [];
+    const useCases = new AuthUseCases(
+      {
+        signUp: async () => ({ id: "u-a3d2", email: "ana@ipebook.app", name: "Ana Paula" }),
+        signIn: async () => ({ id: "u-a3d2", email: "ana@ipebook.app", name: "Ana Paula" }),
+        signOut: async () => {},
+        currentUser: async () => null,
+        requestPasswordReset: async () => {},
+        completePasswordReset: async () => {},
+        deleteAccount: async () => {},
+      },
+      {
+        ensure: async () => {
+          throw new Error("não deve criar duplicado");
+        },
+        findById: async () => ({
+          userId: "u-a3d2",
+          name: "Usuário #A3D2",
+          joinedAt: "2026-10-20T00:00:00Z",
+          photoUrl: "https://cdn.example/ana.jpg",
+          socialHandle: "@ana",
+        }),
+        update: async (userId, patch) => {
+          updated.push({ userId, name: patch.name });
+          return {
+            userId,
+            name: patch.name,
+            joinedAt: "2026-10-20T00:00:00Z",
+            photoUrl: patch.photoUrl,
+            socialHandle: patch.socialHandle,
+          };
+        },
+      },
+    );
+
+    const user = await useCases.signIn("ana@ipebook.app", "12345678");
+    expect(user.name).toBe("Ana Paula");
+    expect(updated).toEqual([{ userId: "u-a3d2", name: "Ana Paula" }]);
   });
 });

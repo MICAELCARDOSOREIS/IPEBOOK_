@@ -3,36 +3,47 @@
  * Fornece App Shell offline, Stale-While-Revalidate para assets e Network-First para catálogo de livros.
  */
 
-const STATIC_CACHE_NAME = "ipebook-static-v1";
-const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v1";
-const CATALOG_CACHE_NAME = "ipebook-catalog-v1";
+const STATIC_CACHE_NAME = "ipebook-static-v2";
+const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v2";
+const CATALOG_CACHE_NAME = "ipebook-catalog-v2";
 
 const APP_SHELL_URLS = [
   "/",
-  "/index.html",
   "/manifest.json",
   "/icone-192.png",
   "/icone-512.png",
   "/favicon.ico",
-  "/bem-vindo.html",
-  "/pesquisa.html",
-  "/termos.html",
-  "/ajuda.html",
+  "/bem-vindo",
+  "/pesquisa",
+  "/termos",
+  "/ajuda",
 ];
 
 const ACTIVE_CACHES = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, CATALOG_CACHE_NAME];
+
+self.addEventListener("push", (event) => {
+  event.waitUntil(self.registration.showNotification("IpêBook", {
+    body: "Há um novo aviso na sua Central de notificações.",
+    icon: "/icone-192.png",
+    tag: "ipebook-avisos",
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow(new URL("/notificacoes", self.location.origin).href));
+});
 
 // Instalação: Pré-cache do App Shell e ativação imediata
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE_NAME)
-      .then((cache) =>
-        cache.addAll(APP_SHELL_URLS).catch((err) => {
-          // Log suave para não quebrar a instalação se alguma rota específica falhar no pré-cache
-          console.warn("[IpêBook SW] Falha parcial no pré-cache:", err);
-        })
-      )
+      .then(async (cache) => {
+        const results = await Promise.allSettled(APP_SHELL_URLS.map((url) => cache.add(url)));
+        const failedUrls = APP_SHELL_URLS.filter((_, index) => results[index].status === "rejected");
+        if (failedUrls.length) console.warn("[IpêBook SW] Recursos não armazenados no pré-cache:", failedUrls);
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -121,7 +132,7 @@ function createOfflineCatalogResponse() {
     message: "Você está sem conexão com a internet e não há dados em cache para esta consulta de livros.",
   });
   return new Response(payload, {
-    status: 200,
+    status: 503,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "X-Ipebook-Offline": "true",
@@ -135,6 +146,20 @@ function isStaticAsset(url) {
   if (pathname.startsWith("/assets/")) return true;
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") return true;
   return /\.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i.test(pathname);
+}
+
+function isCatalogRequest(url, authorization, apiKey) {
+  return (
+    apiKey?.startsWith("sb_publishable_") === true &&
+    (!authorization || authorization === `Bearer ${apiKey}`) &&
+    url.protocol === "https:" &&
+    url.hostname.endsWith(".supabase.co") &&
+    url.pathname === "/rest/v1/v2_books" &&
+    url.searchParams.getAll("status").includes("neq.draft") &&
+    /^[a-z_,]+$/.test(url.searchParams.get("select") ?? "") &&
+    !url.searchParams.has("owner_id") &&
+    !url.searchParams.has("id")
+  );
 }
 
 // Interceptação de requisições
@@ -159,14 +184,17 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Rotas de autenticação Supabase transitam sem cache para preservar segurança de credenciais
-  if (url.pathname.includes("/auth/v1/")) {
+  if (
+    url.pathname.includes("/auth/v1/") ||
+    /^\/(?:auth\/callback|redefinir-senha)(?:\.html|\/)?$/.test(url.pathname)
+  ) {
     return;
   }
 
   const acceptHeader = request.headers ? request.headers.get("accept") : "";
   const isNavigate = request.mode === "navigate" || (acceptHeader && acceptHeader.includes("text/html"));
 
-  // 1. Navegação SPA: Tenta rede, fallback para cache da página ou index.html do App Shell
+  // 1. Navegação SPA: tenta a rede, depois o cache da página ou da raiz.
   if (isNavigate) {
     event.respondWith(
       fetch(request)
@@ -180,7 +208,7 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => {
           const cached = await caches.match(request);
           if (cached) return cached;
-          const appShell = await caches.match("/index.html");
+          const appShell = await caches.match("/");
           if (appShell) return appShell;
           return createOfflineHtmlResponse();
         })
@@ -189,22 +217,27 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 2. Requisições ao Catálogo de Livros Supabase: Estratégia Network-First com fallback de cache
-  if (url.pathname.includes("/rest/v1/livros")) {
+  if (request.cache !== "no-store" && isCatalogRequest(url, request.headers.get("authorization"), request.headers.get("apikey"))) {
     event.respondWith(
       fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status < 400) {
-            const clone = networkResponse.clone();
-            caches.open(CATALOG_CACHE_NAME).then((cache) => cache.put(request, clone));
+        .then(async (networkResponse) => {
+          if (networkResponse.status === 200) {
+            try {
+              const cache = await caches.open(CATALOG_CACHE_NAME);
+              await cache.put(request, networkResponse.clone());
+            } catch {
+              // A resposta da rede continua disponível se o cache estiver indisponível.
+            }
           }
           return networkResponse;
         })
         .catch(async () => {
-          const cachedResponse = await caches.match(request);
-          if (cachedResponse) {
-            return cachedResponse;
+          try {
+            const cache = await caches.open(CATALOG_CACHE_NAME);
+            return (await cache.match(request)) ?? createOfflineCatalogResponse();
+          } catch {
+            return createOfflineCatalogResponse();
           }
-          return createOfflineCatalogResponse();
         })
     );
     return;

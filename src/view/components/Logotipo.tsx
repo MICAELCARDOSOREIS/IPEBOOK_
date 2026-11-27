@@ -17,6 +17,7 @@ export function Logotipo({ inverse = false, underline = false }: LogotipoProps) 
   const marca = (
     <Text
       accessibilityRole="header"
+      aria-level={2}
       style={{
         ...tokens.typography.brandTitle,
         color: inverse ? colors.cover.text : colors.brandBrown,

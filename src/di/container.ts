@@ -70,10 +70,8 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { INITIAL_DEV_BOOKS } from "@/di/seedBooks";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
-import { AsyncStorageThemePreferenceDataSource } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
 import { AsyncStorageLocalCacheDataSource } from "@/infra/datasources/asyncStorageLocalCacheDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
-import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryThemePreferenceDataSource";
 import { MemoryLocalCacheDataSource } from "@/infra/datasources/memoryLocalCacheDataSource";
 import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
@@ -88,6 +86,9 @@ import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
+import { WebPushService } from "@/infra/services/webPushService";
+import type { IWebPushService } from "@/model/services/iWebPushService";
+import { useWebPushViewModel } from "@/viewmodel/useWebPushViewModel";
 import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
 import { ExpoStoreReviewService } from "@/infra/services/expoStoreReviewService";
 import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
@@ -99,7 +100,6 @@ import { FileDownloadService } from "@/infra/services/fileDownloadService";
 import type { IPwaService } from "@/model/services/iPwaService";
 import { PwaService } from "@/infra/services/pwaService";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
-import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
@@ -111,7 +111,6 @@ import { SupabaseBlockedUserDataSource } from "@/infra/datasources/supabaseBlock
 import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource";
 import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
 import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
-import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import { LocalCacheUseCases } from "@/usecase/localCacheUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
@@ -137,8 +136,31 @@ import { MemoryInAppUpdateService } from "@/infra/services/memoryInAppUpdateServ
 import { AppUpdateUseCases } from "@/usecase/appUpdateUseCases";
 import { useAppUpdateViewModel } from "@/viewmodel/useAppUpdateViewModel";
 
+const usaBackendSupabase =
+  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase";
+
+export const networkStatusDataSource: INetworkStatusDataSource =
+  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
+
+let supabaseAppClient: ReturnType<typeof createSupabaseAppClient> | null = null;
+
+/**
+ * Um único cliente para todo o app: duas instâncias do GoTrueClient dividindo a mesma chave de
+ * sessão geram aviso no navegador e podem disputar o refresh do token (Spec 136).
+ */
+function getSupabaseAppClient() {
+  if (!supabaseAppClient) {
+    supabaseAppClient = createSupabaseAppClient(
+      process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
+    );
+  }
+  return supabaseAppClient;
+}
+
 function createDataSources(): {
   auth: IAuthDataSource;
+  webPush?: IWebPushService;
   books: IBookDataSource;
   requests: IBookRequestDataSource;
   meetings: IMeetingDataSource;
@@ -161,20 +183,20 @@ function createDataSources(): {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
     : new AsyncStorageSearchHistoryDataSource();
-  if (process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase") {
+  if (usaBackendSupabase) {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
-    const client = createSupabaseAppClient(
-      process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
-    );
+    const client = getSupabaseAppClient();
+    const webPush = new WebPushService(client, process.env.EXPO_PUBLIC_WEB_PUSH_VAPID_KEY);
     return {
+      webPush,
       auth: new SupabaseAuthDataSource(
         client,
         redirectUrl,
         new GoogleNativeSignInService(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
+        webPush,
       ),
-      books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
+      books: new CachedBookDataSource(new SupabaseBookDataSource(client), { network: networkStatusDataSource }),
       requests: new SupabaseBookRequestDataSource(client),
       meetings: new SupabaseMeetingDataSource(client),
       deliveries: new SupabaseDeliveryDataSource(client),
@@ -205,12 +227,16 @@ function createDataSources(): {
   const auth = new MemoryAuthDataSource();
   const ratings = new MemoryRatingDataSource();
   const blockedUsers = new MemoryBlockedUserDataSource([], profiles);
+  const meetings = new MemoryMeetingDataSource(requests, books, notifications);
+  const deliveries = new MemoryDeliveryDataSource(requests, books, notifications);
+  const userPreferences = new MemoryUserPreferencesDataSource();
+  const messages = new MemoryMessageDataSource();
   return {
     auth,
     books,
     requests,
-    meetings: new MemoryMeetingDataSource(requests, books, notifications),
-    deliveries: new MemoryDeliveryDataSource(requests, books, notifications),
+    meetings,
+    deliveries,
     reports,
     notifications,
     favorites,
@@ -219,11 +245,20 @@ function createDataSources(): {
     profiles,
     ratings,
     userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts, {
-      auth, profiles, notifications, reports, ratings,
+      auth,
+      profiles,
+      userPreferences,
+      messages,
+      meetings,
+      deliveries,
+      blockedUsers,
+      notifications,
+      reports,
+      ratings,
     }),
-    userPreferences: new MemoryUserPreferencesDataSource(),
+    userPreferences,
     blockedUsers,
-    messages: new MemoryMessageDataSource(),
+    messages,
     photos: new MemoryPhotoStorageDataSource(),
     moderation: new MemoryModerationDataSource(),
     betaTesters: new MemoryBetaTesterDataSource(),
@@ -231,16 +266,12 @@ function createDataSources(): {
 }
 
 const dataSources = createDataSources();
+export const makeWebPushViewModel = (userId: string | null) => useWebPushViewModel(dataSources.webPush, userId);
 const bookDataSource = dataSources.books;
 
 const appUpdatePolicyDataSource =
-  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
-    ? new SupabaseAppVersionPolicyDataSource(
-        createSupabaseAppClient(
-          process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-          process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
-        ),
-      )
+  usaBackendSupabase
+    ? new SupabaseAppVersionPolicyDataSource(getSupabaseAppClient())
     : new MemoryAppVersionPolicyDataSource();
 export const appUpdateUseCases = new AppUpdateUseCases(
   appUpdatePolicyDataSource,
@@ -255,14 +286,11 @@ export const appUpdateUseCases = new AppUpdateUseCases(
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
 );
-export const themePreferenceUseCases: IThemePreferenceUseCases = new ThemePreferenceUseCases(
-  process.env.NODE_ENV === "test" ? new MemoryThemePreferenceDataSource() : new AsyncStorageThemePreferenceDataSource(),
-);
 export const localCacheUseCases: ILocalCacheUseCases = new LocalCacheUseCases(
-  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(),
+  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(
+      bookDataSource instanceof CachedBookDataSource ? bookDataSource : undefined,
+    ),
 );
-export const networkStatusDataSource: INetworkStatusDataSource =
-  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
@@ -329,6 +357,7 @@ export const blockedUserUseCases: IBlockedUserUseCases = new BlockedUserUseCases
   dataSources.blockedUsers,
 );
 
+import type { MessageSubscriptionStatusCallback } from "@/model/datasources/iMessageDataSource";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import {
   getNegotiationMessages,
@@ -350,10 +379,15 @@ export const negotiationMessageUseCases = {
     getNegotiationMessages(requestId, sessionUserId, messageUseCaseContext),
   sendMessage: (params: SendMessageParams) =>
     sendNegotiationMessage(params, messageUseCaseContext),
-  subscribeToMessages: (requestId: string, onMessage: (msg: NegotiationMessage) => void) =>
-    messageDataSource.subscribeToMessages?.(requestId, onMessage) ?? (() => {}),
-  subscribeToAllMessages: (onMessage: (msg: NegotiationMessage) => void) =>
-    messageDataSource.subscribeToAllMessages?.(onMessage) ?? (() => {}),
+  subscribeToMessages: (
+    requestId: string,
+    onMessage: (msg: NegotiationMessage) => void,
+    onStatus?: MessageSubscriptionStatusCallback,
+  ) => messageDataSource.subscribeToMessages?.(requestId, onMessage, onStatus) ?? (() => {}),
+  subscribeToAllMessages: (
+    onMessage: (msg: NegotiationMessage) => void,
+    onStatus?: MessageSubscriptionStatusCallback,
+  ) => messageDataSource.subscribeToAllMessages?.(onMessage, onStatus) ?? (() => {}),
   hideConversation: async (requestId: string, userId: string) => {
     await messageDataSource.hideConversation?.(requestId, userId);
   },
@@ -485,14 +519,64 @@ export const makeCreateListingViewModel = () =>
 export const makeEditListingViewModel = (bookId: string, sessionUserId: string | null) =>
   useEditListingViewModel(bookId, sessionUserId, bookUseCases);
 export const makeManageListingViewModel = (bookId: string, sessionUserId: string | null) =>
-  useManageListingViewModel(bookId, sessionUserId, bookUseCases);
+  useManageListingViewModel(bookId, sessionUserId, bookUseCases, bookRequestUseCases);
 export const makeDraftsViewModel = (sessionUserId: string | null) => useDraftsViewModel(sessionUserId, bookUseCases);
 export const makeBookDetailViewModel = (bookId: string, userId: string | null = null) =>
   useBookDetailViewModel(bookId, bookUseCases, favoriteUseCases, userId);
 export const makeListingPhotoViewModel = (sessionUserId: string | null) =>
   useListingPhotoViewModel(sessionUserId, imagePickerService, listingPhotoUseCases);
+function combineSubscriptions(...unsubscribers: Array<(() => void) | undefined>): () => void {
+  return () => {
+    for (const off of unsubscribers) {
+      off?.();
+    }
+  };
+}
+
+/**
+ * Assinaturas em tempo real estáveis (referência fixa de módulo): combinam a tabela direta
+ * com `v2_notifications` para refletir mudanças de proposta, encontro e entrega instantaneamente.
+ */
+const subscribeRequestLive = (requestId: string, sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.requests.subscribeToRequest?.(requestId, onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
+const subscribeMeetingLive = (requestId: string, sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.meetings.subscribeToRequest?.(requestId, onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
+const subscribeDeliveryLive = (requestId: string, sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.deliveries.subscribeToRequest?.(requestId, onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
+const subscribeReceivedRequestsLive = (sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.requests.subscribeToAll?.(onChange),
+    dataSources.deliveries.subscribeToAll?.(onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
+const subscribeMyListingsLive = (sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.requests.subscribeToAll?.(onChange),
+    dataSources.deliveries.subscribeToAll?.(onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
+const subscribeUserMeetingsLive = (sessionUserId: string, onChange: () => void) =>
+  combineSubscriptions(
+    dataSources.meetings.subscribeToAll?.(onChange),
+    notificationUseCases.subscribe?.(sessionUserId, onChange),
+  );
+
 export const makeMyListingsViewModel = (sessionUserId: string | null) =>
-  useMyListingsViewModel(sessionUserId, bookUseCases);
+  useMyListingsViewModel(sessionUserId, bookUseCases, subscribeMyListingsLive);
 export const makePublicProfileViewModel = (userId: string) =>
   usePublicProfileViewModel(userId, publicProfileUseCases);
 export const makeShareListingViewModel = () => useShareListingViewModel(shareUseCases);
@@ -503,30 +587,27 @@ import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsVie
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
 
 /** Lote pedidos, encontro e entrega (T006). */
 export const makeRequestNegotiationViewModel = () => useRequestNegotiationViewModel(bookRequestUseCases);
 export const makeReceivedRequestsViewModel = (sessionUserId: string | null) =>
-  useReceivedRequestsViewModel(sessionUserId, bookRequestUseCases);
-export const makeSentRequestsViewModel = (sessionUserId: string | null) =>
-  useSentRequestsViewModel(sessionUserId, bookRequestUseCases);
+  useReceivedRequestsViewModel(sessionUserId, bookRequestUseCases, subscribeReceivedRequestsLive);
 export const makeRequestDetailViewModel = (requestId: string, sessionUserId: string | null) =>
-  useRequestDetailViewModel(requestId, sessionUserId, bookRequestUseCases);
+  useRequestDetailViewModel(requestId, sessionUserId, bookRequestUseCases, subscribeRequestLive);
 export const makeMeetingViewModel = (requestId: string, sessionUserId: string | null) =>
-  useMeetingViewModel(requestId, sessionUserId, meetingUseCases, rateLimiter, logger);
+  useMeetingViewModel(requestId, sessionUserId, meetingUseCases, rateLimiter, logger, subscribeMeetingLive);
 export const makeScheduleMeetingViewModel = (requestId: string, sessionUserId: string | null) =>
   useScheduleMeetingViewModel(requestId, sessionUserId, meetingUseCases, undefined, rateLimiter, logger);
 export const makeUserMeetingsViewModel = (sessionUserId: string | null) =>
-  useUserMeetingsViewModel(sessionUserId, meetingUseCases);
+  useUserMeetingsViewModel(sessionUserId, meetingUseCases, subscribeUserMeetingsLive);
 export const makeDeliveryViewModel = (requestId: string, sessionUserId: string | null) =>
-  useDeliveryViewModel(requestId, sessionUserId, deliveryUseCases);
+  useDeliveryViewModel(requestId, sessionUserId, deliveryUseCases, undefined, subscribeDeliveryLive);
 export const makeDeliveryStatus = (
   requestId: string,
   sessionUserId: string | null,
   refreshKey = 0,
-) => useDeliveryStatus(requestId, sessionUserId, refreshKey, deliveryUseCases);
+) => useDeliveryStatus(requestId, sessionUserId, refreshKey, deliveryUseCases, subscribeDeliveryLive);
 
 import { useChatWithUser, type ChatWithUserDeps } from "@/viewmodel/useChatWithUser";
 import { useConversationsViewModel, type ConversationsDeps } from "@/viewmodel/useConversationsViewModel";
@@ -547,17 +628,16 @@ const defaultConversationsDeps: ConversationsDeps = {
   listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
   cancelRequest: (requestId, userId) => bookRequestUseCases.cancelRequest(requestId, userId),
   getProfile: async (userId) => {
-    const profile = await publicProfileUseCases.getPublicProfile(userId);
-    return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
+    const profile = await dataSources.profiles.findById(userId);
+    return { name: profile?.name ?? null, photoUrl: profile?.photoUrl ?? null };
   },
-  subscribe: (sessionUserId, onChange) => {
-    const offMessages = negotiationMessageUseCases.subscribeToAllMessages(() => onChange());
-    const offNotifications = notificationUseCases.subscribe?.(sessionUserId, onChange) ?? (() => {});
-    return () => {
-      offMessages();
-      offNotifications();
-    };
-  },
+  subscribe: (sessionUserId, onChange) =>
+    combineSubscriptions(
+      negotiationMessageUseCases.subscribeToAllMessages(() => onChange()),
+      dataSources.requests.subscribeToAll?.(onChange),
+      dataSources.deliveries.subscribeToAll?.(onChange),
+      notificationUseCases.subscribe?.(sessionUserId, onChange),
+    ),
 };
 
 const defaultChatWithUserDeps: ChatWithUserDeps = {
@@ -567,7 +647,11 @@ const defaultChatWithUserDeps: ChatWithUserDeps = {
 
 const defaultNavigationBadgesDeps: NavigationBadgesDeps = {
   listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
-  subscribe: (id, onChange) => notificationUseCases.subscribe?.(id, onChange) ?? (() => {}),
+  subscribe: (id, onChange) =>
+    combineSubscriptions(
+      dataSources.requests.subscribeToAll?.(onChange),
+      notificationUseCases.subscribe?.(id, onChange),
+    ),
 };
 
 /** Lote conversas e notificações (T007). */
@@ -587,8 +671,13 @@ export const makeNegotiationRatingViewModel = (
 ) => useNegotiationRatingViewModel(requestId, sessionUserId, ratedUserId, ratingUseCases, storeReviewService);
 export const makeNavigationBadgesViewModel = (sessionUserId: string | null, refreshKey: string) =>
   useNavigationBadgesViewModel(sessionUserId, refreshKey, defaultNavigationBadgesDeps);
-export const makeNotificationsViewModel = (sessionUserId: string | null) =>
-  useNotificationsViewModel(sessionUserId, notificationUseCases, pushNotificationService);
+export const makeNotificationsViewModel = (sessionUserId: string | null, includeMeetings = false) =>
+  useNotificationsViewModel(
+    sessionUserId,
+    notificationUseCases,
+    pushNotificationService,
+    includeMeetings ? meetingUseCases : undefined,
+  );
 export const makeNotificationPreferencesViewModel = (sessionUserId: string | null) =>
   useNotificationPreferencesViewModel(sessionUserId, userPreferencesUseCases);
 export const makePushRegistration = (
@@ -600,8 +689,11 @@ export const makePushRegistration = (
 /** Prompt de permissão de notificação (Spec 020): explica o motivo antes do aviso nativo, uma vez por aparelho. */
 export const makeNotificationsPromptViewModel = () =>
   usePermissionPromptViewModel(notificationsPermissionPromptUseCases);
+const subscribeReceivedRatingsLive = (sessionUserId: string, onChange: () => void) =>
+  notificationUseCases.subscribe?.(sessionUserId, onChange) ?? (() => {});
+
 export const makeReceivedRatingsViewModel = (sessionUserId: string | null) =>
-  useReceivedRatingsViewModel(sessionUserId, ratingUseCases);
+  useReceivedRatingsViewModel(sessionUserId, ratingUseCases, subscribeReceivedRatingsLive);
 
 import { startErrorReporting } from "@/viewmodel/errorReporting";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -619,7 +711,6 @@ import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel
 import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
 import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
-import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 
 const defaultProfileSafetyDeps: ProfileSafetyDeps = {
@@ -656,6 +747,5 @@ export const makeReportUserViewModel = () => useReportUserViewModel(reportUseCas
 export const makeResetPasswordViewModel = () => useResetPasswordViewModel(authUseCases);
 export const makeSettingsViewModel = () =>
   useSettingsViewModel(localCacheUseCases, searchHistoryUseCases);
-export const makeThemeViewModel = () => useThemeViewModel(themePreferenceUseCases);
 export const makeUserPreferencesViewModel = (userId: string | null) =>
   useUserPreferencesViewModel(userId, userPreferencesUseCases);

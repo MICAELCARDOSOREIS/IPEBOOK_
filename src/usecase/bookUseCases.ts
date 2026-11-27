@@ -14,6 +14,26 @@ export class BookUseCases implements IBookUseCases {
     return this.dataSource.list(options);
   }
 
+  async readCatalog() {
+    return this.dataSource.readCatalog?.() ?? { data: await this.listBooks(), cachedAt: null };
+  }
+
+  async readBookDetail(id: string) {
+    const result = await (this.dataSource.readBookDetail?.(id) ??
+      this.getBookById(id).then((data) => ({ data, cachedAt: null })));
+    if (!result.data) throw new DataSourceError("Anúncio não encontrado.");
+    return { data: result.data, cachedAt: result.cachedAt };
+  }
+
+  async readMyListings(sessionUserId: string | null) {
+    if (!sessionUserId?.trim()) {
+      throw new AuthError("Sessão obrigatória para visualizar seus anúncios.");
+    }
+    const result = await (this.dataSource.readOwnerListings?.(sessionUserId.trim()) ??
+      this.listMyListings(sessionUserId).then((data) => ({ data, cachedAt: null })));
+    return { ...result, data: result.data.filter((book) => book.status !== "draft") };
+  }
+
   async createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book> {
     if (!sessionUserId) {
       throw new AuthError("Sessão obrigatória para cadastrar anúncio.");

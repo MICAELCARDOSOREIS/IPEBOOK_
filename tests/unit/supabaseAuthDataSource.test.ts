@@ -1,17 +1,66 @@
-import { describe, expect, it, vi } from "vitest";
+import { Platform } from "react-native";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
 import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { signInAsync } from "expo-apple-authentication";
+
+jest.mock("expo-apple-authentication", () => ({
+  signInAsync: jest.fn(),
+  AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+}));
+
+jest.mock("expo-crypto", () => ({
+  randomUUID: () => "nonce-original",
+  digestStringAsync: jest.fn().mockResolvedValue("hash-do-nonce"),
+  CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+}));
 
 function fakeClient(auth: Record<string, unknown>): SupabaseAppClient {
   return { auth } as unknown as SupabaseAppClient;
 }
 
+describe("Login nativo com a Apple", () => {
+  let original: typeof Platform.OS;
+
+  beforeEach(() => {
+    original = Platform.OS;
+    Platform.OS = "ios";
+    jest.mocked(signInAsync).mockReset();
+  });
+
+  afterEach(() => { Platform.OS = original; });
+
+  it("envia o hash à Apple, o nonce original ao Supabase e guarda o nome inicial", async () => {
+    jest.mocked(signInAsync).mockResolvedValue({
+      identityToken: "token-apple", fullName: { givenName: "Ana", familyName: "Silva" },
+    } as Awaited<ReturnType<typeof signInAsync>>);
+    const signInWithIdToken = jest.fn().mockResolvedValue({
+      data: { user: { id: "u1", email: "relay@privaterelay.appleid.com" } }, error: null,
+    });
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+    const ds = new SupabaseAuthDataSource(fakeClient({ signInWithIdToken, updateUser }), "https://app/redefinir-senha");
+    await expect(ds.signInWithApple()).resolves.toEqual({
+      id: "u1", email: "relay@privaterelay.appleid.com", name: "Ana Silva",
+    });
+    expect(signInAsync).toHaveBeenCalledWith({ nonce: "hash-do-nonce", requestedScopes: [0, 1] });
+    expect(signInWithIdToken).toHaveBeenCalledWith({ provider: "apple", token: "token-apple", nonce: "nonce-original" });
+    expect(updateUser).toHaveBeenCalledWith({ data: { full_name: "Ana Silva" } });
+  });
+
+  it("deixa a sessão intacta quando a pessoa cancela a folha da Apple", async () => {
+    jest.mocked(signInAsync).mockRejectedValue({ code: "ERR_REQUEST_CANCELED" });
+    const signInWithIdToken = jest.fn();
+    const ds = new SupabaseAuthDataSource(fakeClient({ signInWithIdToken }), "https://app/redefinir-senha");
+    await expect(ds.signInWithApple()).resolves.toBeNull();
+    expect(signInWithIdToken).not.toHaveBeenCalled();
+  });
+});
+
 describe("SupabaseAuthDataSource (Issue #97)", () => {
   it("cria a conta quando o e-mail é novo", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: { id: "u1", email: "nova@exemplo.com", identities: [{ id: "i1" }], user_metadata: {} } },
         error: null,
       }),
@@ -23,7 +72,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("lança EmailAlreadyRegisteredError quando o e-mail já está cadastrado e confirmado", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: { id: "u1", email: "existente@exemplo.com", identities: [], user_metadata: {} } },
         error: null,
       }),
@@ -36,7 +85,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("lança AuthError genérico quando o Supabase retorna erro no cadastro", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: "falhou" } }),
+      signUp: jest.fn().mockResolvedValue({ data: { user: null }, error: { message: "falhou" } }),
     });
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
     await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow("falhou");
@@ -44,7 +93,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("lança AuthError com mensagem amigável de limite de tentativas quando o Supabase retorna rate limit (429)", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "For security purposes, you can only request this after 43 seconds.", status: 429, code: "over_email_send_rate_limit" },
       }),
@@ -57,7 +106,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("lança AuthError com a mensagem de senha derivada do validador (Spec 125 D6)", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "Password should be at least 6 characters.", status: 400, code: "weak_password" },
       }),
@@ -71,7 +120,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("lança EmailAlreadyRegisteredError quando o Supabase retorna erro de usuário existente", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "User already registered", status: 400, code: "user_already_exists" },
       }),
@@ -84,7 +133,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("signIn lança mensagem amigável quando e-mail ainda não foi confirmado", async () => {
     const client = fakeClient({
-      signInWithPassword: vi.fn().mockResolvedValue({
+      signInWithPassword: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "Email not confirmed", status: 400 },
       }),
@@ -97,7 +146,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("signIn lança mensagem amigável de conexão quando a rede falha", async () => {
     const client = fakeClient({
-      signInWithPassword: vi.fn().mockResolvedValue({
+      signInWithPassword: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "Network request failed", status: 0 },
       }),
@@ -110,7 +159,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("signUp lança mensagem amigável de conexão quando a rede falha", async () => {
     const client = fakeClient({
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: null },
         error: { message: "Failed to fetch", status: 0 },
       }),
@@ -123,7 +172,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("requestPasswordReset lança mensagem amigável de conexão quando a rede falha", async () => {
     const client = fakeClient({
-      resetPasswordForEmail: vi.fn().mockResolvedValue({
+      resetPasswordForEmail: jest.fn().mockResolvedValue({
         error: { message: "fetch failed" },
       }),
     });
@@ -134,19 +183,19 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
   });
 
   it("signIn encerra com mensagem de timeout quando a conexão fica travada", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
       const client = fakeClient({
-        signInWithPassword: vi.fn(() => new Promise(() => {})),
+        signInWithPassword: jest.fn(() => new Promise(() => {})),
       });
       const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
       const expectation = expect(ds.signIn("a@b.com", "senha12345")).rejects.toThrow(
         "Tempo limite de conexão esgotado. Verifique sua internet e tente novamente.",
       );
-      await vi.advanceTimersByTimeAsync(16_000);
+      await jest.advanceTimersByTimeAsync(16_000);
       await expectation;
     } finally {
-      vi.useRealTimers();
+      jest.useRealTimers();
     }
   });
 
@@ -158,7 +207,7 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("completePasswordReset lança ExpiredLinkError quando a troca do código falha", async () => {
     const client = fakeClient({
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error: { message: "código inválido" } }),
+      exchangeCodeForSession: jest.fn().mockResolvedValue({ error: { message: "código inválido" } }),
     });
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
     await expect(
@@ -168,8 +217,8 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
 
   it("completePasswordReset lança ExpiredLinkError quando a sessão não é criada", async () => {
     const client = fakeClient({
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      exchangeCodeForSession: jest.fn().mockResolvedValue({ error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
     });
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
     await expect(
@@ -178,11 +227,11 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
   });
 
   it("completePasswordReset atualiza a senha com sucesso", async () => {
-    const signOut = vi.fn().mockResolvedValue({ error: null });
+    const signOut = jest.fn().mockResolvedValue({ error: null });
     const client = fakeClient({
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: "t" } }, error: null }),
-      updateUser: vi.fn().mockResolvedValue({ error: null }),
+      exchangeCodeForSession: jest.fn().mockResolvedValue({ error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: { access_token: "t" } }, error: null }),
+      updateUser: jest.fn().mockResolvedValue({ error: null }),
       signOut,
     });
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
@@ -195,9 +244,9 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     const atacante = { id: "atacante", email: "a@x.com", user_metadata: {} };
 
     it("recusa tokens vindos na query string", async () => {
-      const setSession = vi.fn();
+      const setSession = jest.fn();
       const ds = new SupabaseAuthDataSource(
-        fakeClient({ setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
+        fakeClient({ setSession, getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
         "https://app/redefinir-senha",
       );
       await expect(ds.setSessionFromUrl("https://ipebook.app/auth/callback?access_token=a&refresh_token=r")).rejects.toBeInstanceOf(AuthError);
@@ -205,11 +254,11 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     });
 
     it("não troca uma sessão ativa pela conta de outra pessoa", async () => {
-      const setSession = vi.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+      const setSession = jest.fn().mockResolvedValue({ data: { user: atacante }, error: null });
       const ds = new SupabaseAuthDataSource(
         fakeClient({
           setSession,
-          getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "vitima", email: "v@x.com" } } }, error: null }),
+          getSession: jest.fn().mockResolvedValue({ data: { session: { user: { id: "vitima", email: "v@x.com" } } }, error: null }),
         }),
         "https://app/redefinir-senha",
       );
@@ -218,41 +267,135 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     });
 
     it("aceita tokens no hash quando não há sessão (confirmação de e-mail)", async () => {
-      const setSession = vi.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+      const setSession = jest.fn().mockResolvedValue({ data: { user: atacante }, error: null });
       const ds = new SupabaseAuthDataSource(
-        fakeClient({ setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
+        fakeClient({ setSession, getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
         "https://app/redefinir-senha",
       );
       await expect(ds.setSessionFromUrl(tokensNoHash)).resolves.toMatchObject({ id: "atacante" });
+    });
+
+    it("na web recusa tokens no fragmento e usa a troca PKCE para o código", async () => {
+      const original = Platform.OS;
+      Platform.OS = "web";
+      try {
+        const setSession = jest.fn();
+        const exchangeCodeForSession = jest.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+        const ds = new SupabaseAuthDataSource(
+          fakeClient({ setSession, exchangeCodeForSession }),
+          "https://app/redefinir-senha",
+        );
+        await expect(ds.setSessionFromUrl(tokensNoHash)).rejects.toBeInstanceOf(AuthError);
+        expect(setSession).not.toHaveBeenCalled();
+        const callback = "https://app/auth/callback?code=codigo";
+        await expect(ds.setSessionFromUrl(callback)).resolves.toMatchObject({ id: "atacante" });
+        expect(exchangeCodeForSession).toHaveBeenCalledWith("codigo");
+      } finally {
+        Platform.OS = original;
+      }
+    });
+
+    it("traduz o link expirado devolvido pelo provedor em ExpiredLinkError", async () => {
+      const ds = new SupabaseAuthDataSource(fakeClient({}), "https://app/redefinir-senha");
+      await expect(
+        ds.setSessionFromUrl(
+          "ipebook://auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
+        ),
+      ).rejects.toBeInstanceOf(ExpiredLinkError);
+    });
+
+    it("traduz a recusa do provedor sem expiração em falha de login", async () => {
+      const ds = new SupabaseAuthDataSource(fakeClient({}), "https://app/redefinir-senha");
+      await expect(ds.setSessionFromUrl("ipebook://auth/callback#error=access_denied")).rejects.toThrow(
+        "Não foi possível concluir o login com o provedor. Tente novamente.",
+      );
     });
   });
 
   it("apaga as fotos da pessoa no storage antes de excluir a conta (LGPD)", async () => {
     const ordem: string[] = [];
-    const list = vi.fn(async (prefix: string) => {
+    const list = jest.fn(async (prefix: string) => {
       if (prefix === "u1") return { data: [{ name: "livro1", id: null }, { name: "avatar.jpg", id: "f0" }], error: null };
       if (prefix === "u1/livro1") return { data: [{ name: "capa.jpg", id: "f1" }], error: null };
       return { data: [], error: null };
     });
-    const remove = vi.fn(async (paths: string[]) => { ordem.push(`remove:${[...paths].sort().join(",")}`); return { error: null }; });
+    const remove = jest.fn(async (paths: string[]) => { ordem.push(`remove:${[...paths].sort().join(",")}`); return { error: null }; });
     const client = {
-      auth: { signOut: vi.fn().mockResolvedValue({ error: null }) },
-      storage: { from: vi.fn(() => ({ list, remove })) },
-      rpc: vi.fn(async () => { ordem.push("rpc"); return { error: null }; }),
+      auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
+      storage: { from: jest.fn(() => ({ list, remove })) },
+      rpc: jest.fn(async (fn: string) => {
+        ordem.push(`rpc:${fn}`);
+        return fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null };
+      }),
     } as unknown as SupabaseAppClient;
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
     await ds.deleteAccount("u1");
-    expect(ordem).toEqual(["remove:u1/avatar.jpg,u1/livro1/capa.jpg", "rpc"]);
+    expect(ordem).toEqual([
+      "rpc:v2_current_user_suspended",
+      "remove:u1/avatar.jpg,u1/livro1/capa.jpg",
+      "rpc:delete_user_account",
+    ]);
+  });
+
+  it("não apaga fotos no storage nem exclui a conta quando o usuário está suspenso (Spec 143 / A3)", async () => {
+    const list = jest.fn();
+    const remove = jest.fn();
+    const rpc = jest.fn(async (fn: string) => {
+      if (fn === "v2_current_user_suspended") return { data: true, error: null };
+      return { error: null };
+    });
+    const client = {
+      auth: { signOut: jest.fn() },
+      storage: { from: jest.fn(() => ({ list, remove })) },
+      rpc,
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+
+    await expect(ds.deleteAccount("u1")).rejects.toThrow("Conta suspensa não pode ser excluída pelo app.");
+    expect(list).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("v2_current_user_suspended");
+  });
+
+  it("pagina bucket.list e remove todas as fotos em lotes quando ultrapassam 100 arquivos (Spec 143 / A3)", async () => {
+    const firstPage = Array.from({ length: 100 }, (_, i) => ({ name: `foto-${i}.jpg`, id: `id-${i}` }));
+    const secondPage = [{ name: "foto-100.jpg", id: "id-100" }];
+    const list = jest.fn(async (_prefix: string, options?: { limit?: number; offset?: number }) => {
+      if (options?.offset === 0) return { data: firstPage, error: null };
+      if (options?.offset === 100) return { data: secondPage, error: null };
+      return { data: [], error: null };
+    });
+    const removedBatches: number[] = [];
+    const remove = jest.fn(async (paths: string[]) => {
+      removedBatches.push(paths.length);
+      return { error: null };
+    });
+    const client = {
+      auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
+      storage: { from: jest.fn(() => ({ list, remove })) },
+      rpc: jest.fn(async (fn: string) =>
+        fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null },
+      ),
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+
+    await ds.deleteAccount("u1");
+    expect(list).toHaveBeenCalledWith("u1", { limit: 100, offset: 0 });
+    expect(list).toHaveBeenCalledWith("u1", { limit: 100, offset: 100 });
+    expect(removedBatches).toEqual([100, 1]);
   });
 
   it("não exclui a conta quando a limpeza do storage falha", async () => {
-    const rpc = vi.fn();
+    const rpc = jest.fn(async (fn: string) =>
+      fn === "v2_current_user_suspended" ? { data: false, error: null } : { error: null },
+    );
     const client = {
-      auth: { signOut: vi.fn() },
+      auth: { signOut: jest.fn() },
       storage: {
-        from: vi.fn(() => ({
-          list: vi.fn().mockResolvedValue({ data: null, error: new Error("storage indisponível") }),
-          remove: vi.fn(),
+        from: jest.fn(() => ({
+          list: jest.fn().mockResolvedValue({ data: null, error: new Error("storage indisponível") }),
+          remove: jest.fn(),
         })),
       },
       rpc,
@@ -260,6 +403,6 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
 
     await expect(ds.deleteAccount("u1")).rejects.toBeInstanceOf(AuthError);
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalledWith("delete_user_account", expect.anything());
   });
 });

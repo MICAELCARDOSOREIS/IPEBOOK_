@@ -1,15 +1,14 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 
-vi.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: jest.fn() }));
 
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 
-const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
+const mockedUseHomeViewModel = jest.mocked(useHomeViewModel);
 
 const books: Book[] = [
   {
@@ -57,7 +56,7 @@ const books: Book[] = [
 ];
 
 function stateWith(overrides: Partial<HomeState>): [HomeState, HomeActions] {
-  return [{ books: [], loading: false, error: null, ...overrides }, { reload: vi.fn() }];
+  return [{ books: [], loading: false, error: null, ...overrides }, { reload: jest.fn() }];
 }
 
 describe("OwnerListings (perfil público na web larga)", () => {
@@ -79,7 +78,7 @@ describe("OwnerListings (perfil público na web larga)", () => {
 
   it("aciona onOpenBook com o id do livro tocado", async () => {
     mockedUseHomeViewModel.mockReturnValue(stateWith({ books }));
-    const onOpenBook = vi.fn();
+    const onOpenBook = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -113,7 +112,7 @@ describe("OwnerListings (perfil público na web larga)", () => {
   });
 
   it("mostra o erro com tentativa nova em vez de esconder a seção", async () => {
-    const reload = vi.fn();
+    const reload = jest.fn();
     mockedUseHomeViewModel.mockReturnValue([
       { books: [], loading: false, error: "Não foi possível carregar os anúncios." },
       { reload },

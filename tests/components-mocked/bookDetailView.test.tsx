@@ -1,20 +1,19 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { RequestNegotiationState } from "@/viewmodel/useRequestNegotiationViewModel";
 import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 import BookDetail from "@/view/listings/bookDetail";
 
-vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
-vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
-  useMyListingsViewModel: vi.fn().mockReturnValue([{ books: [], loading: false, error: null }, { reload: vi.fn() }]),
+jest.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: jest.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
+jest.mock("react-native-view-shot", () => ({ captureRef: jest.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({
+  useMyListingsViewModel: jest.fn().mockReturnValue([{ books: [], loading: false, error: null }, { reload: jest.fn() }]),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -61,7 +60,7 @@ function setup(
     ownerName?: string;
   } = {},
 ) {
-  vi.mocked(usePublicProfileViewModel).mockReturnValue([
+  jest.mocked(usePublicProfileViewModel).mockReturnValue([
     {
       profile: options.ownerName
         ? {
@@ -76,30 +75,31 @@ function setup(
       loading: false,
       error: null,
     },
-    { reload: vi.fn() },
+    { reload: jest.fn() },
   ]);
-  const reload = vi.fn();
-  vi.mocked(useBookDetailViewModel).mockReturnValue([
+  const reload = jest.fn();
+  const toggleFavorite = jest.fn();
+  jest.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
-    { reload, toggleFavorite: vi.fn() },
+    { reload, toggleFavorite },
   ]);
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
   ]);
-  const request = vi.fn().mockResolvedValue(true);
-  vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+  const request = jest.fn().mockResolvedValue(true);
+  jest.mocked(useRequestNegotiationViewModel).mockReturnValue([
     { ...emptyNegotiation, ...options.negotiation },
-    { request, checkActiveRequest: vi.fn().mockResolvedValue(null) },
+    { request, checkActiveRequest: jest.fn().mockResolvedValue(null) },
   ]);
-  const share = vi.fn().mockResolvedValue(undefined);
-  const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);
-  const shareImage = vi.fn().mockResolvedValue(undefined);
-  vi.mocked(useShareListingViewModel).mockReturnValue([
+  const share = jest.fn().mockResolvedValue(undefined);
+  const shareToWhatsApp = jest.fn().mockResolvedValue(undefined);
+  const shareImage = jest.fn().mockResolvedValue(undefined);
+  jest.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn() },
+    { share, shareImage, shareToWhatsApp, dismissLinkCopied: jest.fn(), dismissError: jest.fn() },
   ]);
-  return { request, share, shareToWhatsApp, shareImage, reload };
+  return { request, share, shareToWhatsApp, shareImage, reload, toggleFavorite };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -156,7 +156,6 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     expect(screen.queryByText("Propor troca")).toBeNull();
     expect(screen.getByLabelText("Compartilhar anúncio")).toBeDefined();
-    expect(screen.getByLabelText("Compartilhar anúncio no WhatsApp")).toBeDefined();
   });
 
   it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
@@ -218,7 +217,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onNavigateToUserProfile ao tocar no nome de quem anunciou (US5)", async () => {
     setup(book({ ownerId: "owner-xyz" }), user, { ownerName: "Joana Lima" });
-    const onNavigateToUserProfile = vi.fn();
+    const onNavigateToUserProfile = jest.fn();
     const screen = await renderDetail({ onNavigateToUserProfile });
     await act(async () => { fireEvent.press(screen.getByLabelText("Anunciado por Joana Lima")); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
@@ -230,7 +229,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
     expect(screen.getByLabelText("Anunciado por Joana Lima")).toBeDefined();
-    expect(screen.getByText("Joana Lima")).toBeDefined();
+    expect(screen.getAllByText("Joana Lima").length).toBeGreaterThanOrEqual(1);
   });
 
   it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {
@@ -275,7 +274,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onNavigateToReport ao tocar em denunciar anúncio", async () => {
     setup(book({ ownerId: "other" }), user);
-    const onNavigateToReport = vi.fn();
+    const onNavigateToReport = jest.fn();
     const screen = await renderDetail({ onNavigateToReport });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar anúncio")); });
     expect(onNavigateToReport).toHaveBeenCalledWith("b1");
@@ -283,7 +282,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onBack ao tocar no botão voltar da barra superior (FR-011)", async () => {
     setup(book({}), user);
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderDetail({ onBack });
     fireEvent.press(screen.getByLabelText("Voltar"));
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -300,23 +299,6 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     );
   });
 
-  it("compartilha no WhatsApp ao tocar no botão da barra superior com os dados e a captura do cartão (Spec 092, Spec 118)", async () => {
-    const { shareToWhatsApp } = setup(
-      book({ ownerId: "other", modality: "sale", price: 42, neighborhood: "Centro" }),
-      null,
-    );
-    const screen = await renderDetail();
-    const whatsappButton = screen.getByLabelText("Compartilhar anúncio no WhatsApp");
-    await act(async () => { fireEvent.press(whatsappButton); });
-    expect(shareToWhatsApp).toHaveBeenCalledWith(
-      "b1",
-      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42, neighborhood: "Centro" }),
-      expect.any(Function),
-    );
-    const capture = vi.mocked(shareToWhatsApp).mock.calls[0][2] as () => Promise<string>;
-    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
-  });
-
   it("mostra confirmação de link copiado (Spec 019)", async () => {
     setup(book({}), user, { share: { linkCopied: true } });
     const screen = await renderDetail();
@@ -327,5 +309,74 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({}), user, { share: { error: "Não foi possível compartilhar o anúncio. Tente novamente." } });
     const screen = await renderDetail();
     expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
+  });
+
+  it("aciona gerenciamento para dono, favoritos, galeria e folha de reservado", async () => {
+    const onNavigateToManageListing = jest.fn();
+    const { toggleFavorite } = setup(book({ ownerId: user.id, photoUrl: "https://cdn.ipebook.app/capa.jpg" }), user);
+    const ownerScreen = await renderDetail({ onNavigateToManageListing });
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Gerenciar anúncio" }));
+    });
+    expect(onNavigateToManageListing).toHaveBeenCalledWith("b1");
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Adicionar aos favoritos" }));
+    });
+    expect(toggleFavorite).toHaveBeenCalledWith(user.id);
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Ver fotos do anúncio em tela cheia" }));
+    });
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Fechar galeria de fotos" }));
+    });
+
+    const onNavigateToCategorySearch = jest.fn();
+    const onNavigateToUserProfile = jest.fn();
+    setup(book({ ownerId: "other", status: "reserved", category: "Ficção" }), user, { ownerName: "Carlos" });
+    const reservedScreen = await renderDetail({
+      onNavigateToCategorySearch,
+      onNavigateToUserProfile,
+    });
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    const dismissCategory = reservedScreen.getByTestId("reserved-listing-sheet").props.onDismiss;
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByLabelText("Buscar outros livros da categoria Ficção"));
+    });
+    await act(async () => { dismissCategory(); });
+    expect(onNavigateToCategorySearch).toHaveBeenCalledWith("Ficção");
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    const dismissProfile = reservedScreen.getByTestId("reserved-listing-sheet").props.onDismiss;
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByLabelText("Ver perfil e outros anúncios de Carlos"));
+    });
+    await act(async () => { dismissProfile(); });
+    expect(onNavigateToUserProfile).toHaveBeenCalledWith("other");
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    await fireEvent.press(reservedScreen.getByLabelText("Fechar ao tocar fora"));
+    expect(reservedScreen.queryByTestId("reserved-listing-sheet")).toBeNull();
+  });
+
+  it("abre e fecha a folha de proposta sem enviar", async () => {
+    setup(book({ ownerId: "other", status: "available" }), user);
+    const screen = await renderDetail();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Propor troca" }));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Cancelar" }));
+    });
   });
 });

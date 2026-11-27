@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { AppleSignInButton } from "@/view/auth/AppleSignInButton";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { makeAuthViewModel } from "@/di/container";
@@ -20,6 +21,7 @@ import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignInProps = {
   onAuthenticated?: () => void;
+  onGoogleStart?: () => void;
   onNavigateToSignUp?: () => void;
   onNavigateToForgotPassword?: () => void;
   onBack?: () => void;
@@ -28,6 +30,7 @@ export type SignInProps = {
 /** Figma `01.10 · Entrar com e-mail` (nó `354:6017`). */
 export default function SignIn({
   onAuthenticated,
+  onGoogleStart,
   onNavigateToSignUp,
   onNavigateToForgotPassword,
   onBack,
@@ -42,19 +45,20 @@ export default function SignIn({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const passwordInputRef = useRef<TextInputInstance>(null);
-  const busy = submitting || googleLoading;
+  const busy = submitting || socialProvider !== null;
 
-  const handleGoogleSignIn = async () => {
+  const handleSocialSignIn = async (provider: "google" | "apple") => {
     if (busy) return;
-    setGoogleLoading(true);
+    setSocialProvider(provider);
     try {
-      const success = await actions.signInWithGoogle?.();
+      if (provider === "google") onGoogleStart?.();
+      const success = await (provider === "apple" ? actions.signInWithApple?.() : actions.signInWithGoogle?.());
       if (success) guardedAuthenticated();
     } finally {
-      setGoogleLoading(false);
+      setSocialProvider(null);
     }
   };
 
@@ -75,7 +79,7 @@ export default function SignIn({
         maxWidth={560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={onBack ? <TopAppBar contentMaxWidth={560} title="Entrar com e-mail" onBack={guardedBack} /> : undefined}
+        header={onBack ? <TopAppBar alignToWindow={false} contentMaxWidth={560} title="Entrar com e-mail" onBack={guardedBack} /> : undefined}
         contentStyle={[
           styles.content,
           wideWeb && { justifyContent: "center" },
@@ -90,10 +94,12 @@ export default function SignIn({
           label="Continuar com Google"
           accessibilityLabel="Continuar com Google"
           icon={<GoogleLogo size={20} />}
-          loading={googleLoading}
+          loading={socialProvider === "google"}
           disabled={busy}
-          onPress={() => void handleGoogleSignIn()}
+          onPress={() => void handleSocialSignIn("google")}
         />
+
+        <AppleSignInButton disabled={busy} onPress={() => void handleSocialSignIn("apple")} />
 
         <View accessibilityRole="none" style={styles.divider}>
           <View style={styles.dividerLine} />
@@ -186,6 +192,7 @@ function createStyles(colors: ColorPalette) {
     },
     footerRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[6],

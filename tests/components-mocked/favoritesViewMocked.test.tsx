@@ -1,26 +1,25 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { FavoritesActions, FavoritesState } from "@/viewmodel/useFavoritesViewModel";
 import Favorites from "@/view/favorites/favorites";
 
-vi.mock("@/viewmodel/useFavoritesViewModel", () => ({ useFavoritesViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+jest.mock("@/viewmodel/useFavoritesViewModel", () => ({ useFavoritesViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
 
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 function mock(state: Partial<FavoritesState>, actions: Partial<FavoritesActions> = {}) {
   const fullState: FavoritesState = { books: [], loading: false, error: null, removingId: null, actionError: null, ...state };
   const fullActions: FavoritesActions = {
-    reload: vi.fn(),
-    removeFavorite: vi.fn().mockResolvedValue(true),
-    clearActionError: vi.fn(),
+    reload: jest.fn(),
+    removeFavorite: jest.fn().mockResolvedValue(true),
+    clearActionError: jest.fn(),
     ...actions,
   };
-  vi.mocked(useFavoritesViewModel).mockReturnValue([fullState, fullActions]);
+  jest.mocked(useFavoritesViewModel).mockReturnValue([fullState, fullActions]);
   return fullActions;
 }
 
@@ -29,38 +28,38 @@ describe("Favorites com ViewModel mockado (Issue #76)", () => {
     const actions = mock({ error: "Não foi possível carregar favoritos." });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
     expect(screen.getByText("Não foi possível carregar favoritos.")).toBeDefined();
     expect(actions.reload).toBeDefined();
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     mock({ error: "Não foi possível carregar favoritos." });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
   });
 
   it("mostra o estado de carregamento com LoadingState", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     mock({ loading: true });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
     expect(screen.getByTestId("loading-skeleton-list")).toBeDefined();
   });
 
   it("mostra o aviso para entrar quando não há userId", async () => {
     mock({});
-    const onLogin = vi.fn();
+    const onLogin = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId={null} onBack={vi.fn()} onLogin={onLogin} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId={null} onBack={jest.fn()} onLogin={onLogin} onBook={jest.fn()} />);
     });
     expect(screen.getByText("Entre para ver seus favoritos")).toBeDefined();
     await act(async () => {
@@ -84,11 +83,11 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
   };
 
   it("mostra modalidade, preço, conservação e bairro na linha", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     mock({ books: [book] });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
 
     expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
@@ -97,11 +96,11 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
   });
 
   it("desfavorita pelo coração da própria linha", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     const actions = mock({ books: [book] });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
 
     await act(async () => {
@@ -112,12 +111,12 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
   });
 
   it("mantém a lista visível quando a remoção falha e só avisa pelo snackbar", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     mock({ books: [book], actionError: "Não foi possível atualizar o favorito." });
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+      screen = await render(<Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />);
     });
 
     expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
@@ -125,7 +124,7 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
   });
 
   it("exibe chips de filtro no celular e nota de privacidade no rodapé (Spec 120)", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     mock({
       books: [
         { ...book, id: "b1", title: "Livro Disponível", status: "available" as const },
@@ -136,7 +135,7 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />
+        <Favorites userId="u1" onBack={jest.fn()} onLogin={jest.fn()} onBook={jest.fn()} />
       );
     });
 

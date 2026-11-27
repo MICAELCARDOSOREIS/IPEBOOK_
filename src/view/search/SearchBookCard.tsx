@@ -1,36 +1,68 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { type GestureResponderEvent, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { triggerHaptic } from "@/view/haptics";
 import { formatPrice } from "@/view/formatPrice";
+import { isMainTabsSwipeActive } from "@/view/mainTabsState";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { getTouchOrigin, isDragPressRelease, type TouchOrigin } from "@/view/useGuardedPress";
 import { webColumnWidth } from "@/view/webLayout";
 
 export type SearchBookCardProps = {
   item: Book;
   wideWeb: boolean;
+  compactWeb?: boolean;
   gridColumns: number;
   userId: string | null;
-  onPress: () => void;
-  onFavoriteToggle: (selected: boolean) => void;
+  onPress: (bookId: string) => void;
+  onFavoriteToggle: (selected: boolean, bookTitle?: string) => void;
 };
 
-export function SearchBookCard({
+const cardStylesCache = new WeakMap<ColorPalette, ReturnType<typeof createCardStyles>>();
+function getCardStyles(colors: ColorPalette) {
+  let cached = cardStylesCache.get(colors);
+  if (!cached) {
+    cached = createCardStyles(colors);
+    cardStylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
+function SearchBookCardComponent({
   item,
   wideWeb,
+  compactWeb,
   gridColumns,
   userId,
   onPress,
   onFavoriteToggle,
 }: SearchBookCardProps) {
   const { colors } = useTheme();
-  const styles = React.useMemo(() => createCardStyles(colors), [colors]);
+  const isIos = Platform.OS === "ios";
+  const styles = getCardStyles(colors);
+  const [isHovered, setIsHovered] = useState(false);
+  const pressOriginRef = useRef<TouchOrigin | null>(null);
+
+  const handlePressIn = (event?: GestureResponderEvent) => {
+    pressOriginRef.current = getTouchOrigin(event);
+  };
+
+  const handleCardPress = (event?: GestureResponderEvent, withHaptic = true) => {
+    const origin = pressOriginRef.current;
+    pressOriginRef.current = null;
+    if (isMainTabsSwipeActive() || isDragPressRelease(origin, event)) {
+      return;
+    }
+    if (withHaptic && isIos) triggerHaptic("light");
+    onPress(item.id);
+  };
 
   const priceOrCondition =
     item.price != null
@@ -46,12 +78,28 @@ export function SearchBookCard({
       ? { background: colors.badge.paused.background, text: colors.badge.paused.text, label: "Pausado" }
       : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
 
+  const wideColumnMaxWidth =
+    Platform.OS === "web"
+      ? (`calc((100% - ${(gridColumns - 1) * tokens.spacing[24]}px) / ${gridColumns})` as unknown as `${number}%`)
+      : webColumnWidth(gridColumns);
+
   return (
-    <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
+    <View
+      style={[
+        styles.card,
+        isIos && styles.iosOpaqueCard,
+        wideWeb && styles.cardWide,
+        wideWeb && isHovered && styles.cardWideHovered,
+        wideWeb && { maxWidth: wideColumnMaxWidth },
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPress={(event) => handleCardPress(event, true)}
+        onHoverIn={() => setIsHovered(true)}
+        onHoverOut={() => setIsHovered(false)}
         style={({ pressed }) => [
           styles.cardMain,
           wideWeb && styles.cardMainWide,
@@ -59,30 +107,39 @@ export function SearchBookCard({
         ]}
       >
         <ModalityCoverArea modality={item.modality}>
-          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
+          <View style={styles.coverShadowWrap}>
+            <BookCover
+              id={item.id}
+              title={item.title}
+              photoUrl={item.photoUrl}
+              variant={wideWeb ? "card" : "list"}
+            />
+          </View>
         </ModalityCoverArea>
         <View style={[styles.cardInfo, wideWeb && styles.cardInfoWide]}>
-          <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
-            <View style={styles.cardBadgesGroup}>
-              <Tag variant={item.modality} />
-              {item.isBox ? (
-                <Tag
-                  variant="box"
-                  label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
-                />
-              ) : null}
+          <View style={styles.cardTopGroup}>
+            <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
+              <View style={styles.cardBadgesGroup}>
+                <Tag variant={item.modality} />
+                {item.isBox ? (
+                  <Tag
+                    variant="box"
+                    label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                  />
+                ) : null}
+              </View>
+              <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
             </View>
-            <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
+            <View style={styles.cardTitleBlock}>
+              <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
+              <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
+              {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
+            </View>
           </View>
-          <View style={styles.cardTitleBlock}>
-            <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
-            <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
-            {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
-          </View>
-          <View style={styles.cardFooterRow}>
+          <View style={[styles.cardFooterRow, compactWeb && styles.cardFooterCompact]}>
             <View style={styles.cardLocationBadge}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-              <Text numberOfLines={1} style={styles.cardLocationText}>
+              <Text numberOfLines={compactWeb ? undefined : 1} style={styles.cardLocationText}>
                 {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
@@ -98,13 +155,15 @@ export function SearchBookCard({
         <FavoriteButton
           bookId={item.id}
           userId={userId}
-          onToggleSuccess={onFavoriteToggle}
+          variant={wideWeb ? "overlay" : "default"}
+          onToggleSuccess={(selected) => onFavoriteToggle(selected, item.title)}
         />
         {!wideWeb ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${item.title}`}
-            onPress={onPress}
+            onPressIn={handlePressIn}
+            onPress={(event) => handleCardPress(event, false)}
             style={styles.chevronButton}
           >
             <AppIcon name="chevronRight" size={18} color={colors.nature.foliage} />
@@ -115,6 +174,9 @@ export function SearchBookCard({
   );
 }
 
+export const SearchBookCard = React.memo(SearchBookCardComponent);
+SearchBookCard.displayName = "SearchBookCard";
+
 function createCardStyles(colors: ColorPalette) {
   return StyleSheet.create({
     card: {
@@ -123,7 +185,7 @@ function createCardStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[6],
       paddingVertical: tokens.spacing[12],
@@ -135,16 +197,30 @@ function createCardStyles(colors: ColorPalette) {
       shadowRadius: 6,
       gap: tokens.spacing[8],
     },
+    iosOpaqueCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
+    },
     cardWide: {
       flex: 1,
       minWidth: 0,
       flexDirection: "column",
       alignItems: "stretch",
-      padding: tokens.spacing[12],
+      backgroundColor: colors.surface,
+      padding: tokens.spacing[14],
       marginHorizontal: 0,
       marginBottom: tokens.spacing[20],
       position: "relative",
       borderRadius: tokens.radius.xl,
+      ...(Platform.OS === "web" ? ({ transitionProperty: "transform, box-shadow, border-color", transitionDuration: "150ms" } as never) : {}),
+    },
+    cardWideHovered: {
+      borderColor: colors.m3.outline,
+      elevation: 4,
+      shadowOpacity: 0.14,
+      shadowRadius: 12,
     },
     cardMain: {
       flex: 1,
@@ -152,6 +228,7 @@ function createCardStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     cardMainWide: {
       flexDirection: "column",
@@ -161,6 +238,14 @@ function createCardStyles(colors: ColorPalette) {
     cardMainPressed: {
       transform: [{ scale: 0.985 }],
     },
+    coverShadowWrap: {
+      borderRadius: tokens.radius.cardSmall,
+      elevation: 5,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.24,
+      shadowRadius: 6,
+    },
     cardInfo: {
       flex: 1,
       minWidth: 0,
@@ -168,9 +253,12 @@ function createCardStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     cardInfoWide: {
-      justifyContent: "flex-start",
+      justifyContent: "space-between",
       paddingRight: 0,
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[10],
+    },
+    cardTopGroup: {
+      gap: tokens.spacing[6],
     },
     cardTitleBlock: {
       gap: 2,
@@ -189,7 +277,8 @@ function createCardStyles(colors: ColorPalette) {
     },
     categoryBadge: {
       ...tokens.typography.captionSmall,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.brandBrown,
+      fontWeight: tokens.fontWeight.medium,
       paddingTop: 2,
     },
     cardMetaRow: {
@@ -215,10 +304,11 @@ function createCardStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       flexWrap: "nowrap",
       gap: tokens.spacing[6],
-      paddingTop: tokens.spacing[6],
+      paddingTop: tokens.spacing[8],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
     },
+    cardFooterCompact: { flexDirection: "column", alignItems: "flex-start" },
     cardLocationBadge: {
       flexDirection: "row",
       alignItems: "center",
@@ -262,8 +352,8 @@ function createCardStyles(colors: ColorPalette) {
     },
     cardActionsWide: {
       position: "absolute",
-      top: tokens.spacing[14],
-      right: tokens.spacing[14],
+      top: tokens.spacing[12],
+      right: tokens.spacing[12],
       flexDirection: "row",
       width: "auto",
       height: "auto",

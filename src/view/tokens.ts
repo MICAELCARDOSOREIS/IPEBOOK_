@@ -1,8 +1,7 @@
 /**
  * IpêBook — Tokens de Design (IHC / UI)
- * Fonte canônica: design-system/tokens.json (ver ADR 0010). `colors` é o tema claro; `darkColors`
- * (mesma forma) é o tema escuro, habilitado pela ADR 0036 — ver `src/view/theme/ThemeProvider.tsx`
- * e `useTheme()` para o consumo dinâmico.
+ * Fonte canônica: design-system/tokens.json (ver ADR 0010 e ADR 0114). `colors` define a paleta
+ * clara editorial do aplicativo — ver `src/view/theme/ThemeProvider.tsx` e `useTheme()`.
  *
  * Regra de Camada MVVM: Pertence estritamente à camada de View (UI).
  */
@@ -130,6 +129,20 @@ export const colors = {
   },
 } as const;
 
+/** Vidro Liquid Glass no tema claro (iOS 26 / ADR 0008, ADR 0114, Spec 137, design-system/tokens.json).
+ * Exposto fora de ColorPalette por ter escopo restrito a superfícies claras do iOS. */
+export const glass = {
+  fill: "rgba(252, 250, 245, 0.58)",
+  stroke: "rgba(255, 255, 255, 0.75)",
+} as const;
+
+/** Tokens específicos de controles iOS 26 (Pranchas 09 e 10 do Figma `APP · 20 · iPhone · iOS 26`). */
+export const ios = {
+  cell: "#f7f3ec",
+  separator: "rgba(60, 50, 40, 0.16)",
+  destructiveFill: "#f9dedc",
+} as const;
+
 /** Mesma forma de `colors`, com folhas widened para `string` — permite que `colors` e `darkColors`
  * (valores hex diferentes) compartilhem um único tipo, consumido por `useTheme()`. */
 type WidenToString<T> = T extends string
@@ -138,130 +151,6 @@ type WidenToString<T> = T extends string
     ? readonly WidenToString<U>[]
     : { [K in keyof T]: WidenToString<T[K]> };
 export type ColorPalette = WidenToString<typeof colors>;
-
-/**
- * Tema escuro (ADR 0036): mesma forma de `colors`, valores de `design-system/tokens.json` (coluna
- * `dark`) onde documentados. Tokens sem par `dark` explícito (ex. `success` como cor de texto)
- * reaproveitam o equivalente semântico mais próximo (`m3.primary` escuro) — verificado em
- * `tests/unit/themeContrast.test.ts`, nunca um valor inventado sem checagem de contraste.
- */
-export const darkColors: ColorPalette = {
-  // Identidade e Marca
-  background: "#151311",
-  surface: "#1d1b19",
-  text: "#e8e2db",
-  secondaryText: "#cdc5bc",
-  action: "#98D6A2",
-  actionDeep: "#B4E8BD",
-  soft: "#27422C",
-  border: "#968f86",
-  highlight: "#F59E0B",
-  gold: "#D97706",
-  brandBrown: "#e2b48c",
-  brandAmber: "#f59e0b",
-
-  // Metáfora de Identidade: Livro, Ipê e Verde (Tema Escuro)
-  book: {
-    page: "#151311",         // Café noturno profundo
-    pageCard: "#1D1B19",     // Cartão de leitura noturna
-    ink: "#E8E2DB",          // Tinta clara suave com contraste AAA
-    inkSecondary: "#CDC5BC", // Metadados secundários
-    leather: "#E2B48C",      // Carvalho e lombada no modo escuro
-    paperEdge: "#2C2A27",    // Linha de folheio escura
-  },
-
-  nature: {
-    foliage: "#98D6A2",      // Verde broto/folha de ipê luminoso botânico
-    foliageDeep: "#B4E8BD",  // Verde claro destacado
-    sprout: "#27422C",       // Verde musgo escuro para contêineres
-    onFoliage: "#053712",    // Texto escuro de alto contraste sobre verde folha
-  },
-
-  // Ipê da marca (Spec 078, Spec 116): florada no tema escuro com alto contraste e aconchego.
-  ipe: {
-    container: "#38290E",
-    onContainer: "#FFE099",
-    bloom: "#F59E0B",
-    bloomDeep: "#D97706",
-    petalSoft: "#281E0B",
-    ribbon: "#F59E0B",
-    trunk: "#e2b48c",
-  },
-
-  // Estados
-  success: "#98D6A2",
-  error: "#ffb4ab",
-  errorContainer: "#8c1d18",
-  disabledBackground: "#27422C",
-  disabledText: "#cdc5bc",
-
-  // Badges por Modalidade e Status (cores canônicas vibrantes unificadas nos dois temas)
-  badge: {
-    sale: { background: "#1E4E27", text: "#FFFFFF" },
-    trade: { background: "#58331F", text: "#FFFFFF" },
-    donation: { background: "#F5B718", text: "#451A03" },
-    reserved: { background: "#F5B718", text: "#451A03" },
-    completed: { background: "#2B6334", text: "#FFFFFF" },
-    paused: { background: "#52525B", text: "#FFFFFF" },
-    available: { background: "#1E4E27", text: "#FFFFFF" },
-  },
-
-  // Tons pastel por categoria de livro no tema escuro (Spec 091).
-  categoryTones: [
-    { background: "#2C4660", text: "#CFE3F5" },
-    { background: "#48325E", text: "#EBD9F7" },
-    { background: "#63303B", text: "#FAD9DF" },
-    { background: "#27504A", text: "#CDEFE9" },
-    { background: "#554C1E", text: "#F1E8C0" },
-    { background: "#65402A", text: "#FADFCC" },
-  ],
-
-  // Capas ilustrativas: tons saturados, iguais nos dois temas (design-system/tokens.json).
-  cover: {
-    blue: "#253C4F",
-    brown: "#7B4A2F",
-    green: "#30574A",
-    wine: "#6B2A36",
-    ochre: "#86581A",
-    sun: "#DDAF38",
-    text: "#F5EFE8",
-    gold: "#D9A93A",
-    page: "#F1E9D6",
-    artBackgrounds: ["#3A2A20", "#2C5232", "#14284B"],
-  },
-
-  // Papéis Material 3 (design-system/tokens.json, tema escuro).
-  m3: {
-    primary: "#98d6a2",
-    onPrimary: "#053712",
-    primaryContainer: "#184e21",
-    onPrimaryContainer: "#b4e8bd",
-    secondary: "#b2cbb5",
-    onSecondary: "#1b361f",
-    onSurface: "#e8e2db",
-    onSurfaceVariant: "#cdc5bc",
-    surfaceContainerLowest: "#0f0e0c",
-    surfaceContainerLow: "#1d1b19",
-    surfaceContainer: "#221f1d",
-    surfaceContainerHigh: "#2c2a27",
-    surfaceContainerHighest: "#373431",
-    outline: "#968f86",
-    outlineVariant: "#4b4640",
-    secondaryContainer: "#324936",
-    onSecondaryContainer: "#d0e7d3",
-    tertiaryContainer: "#4D380A",
-    onTertiaryContainer: "#FED766",
-    doacaoContainer: "#5a2f22",
-    onDoacaoContainer: "#ffdbcf",
-    errorContainerM3: "#8c1d18",
-    onErrorContainer: "#ffdad6",
-    inverseSurface: "#e8e2db",
-    inverseOnSurface: "#322f2b",
-    focusRing: "#4e8a68",
-    scrim: "#00000052",
-    shadow: "#000000",
-  },
-} as const;
 
 /**
  * Elevação Material 3 (design-system/tokens.json → shadow.tokens), tema claro. Duas sombras
@@ -512,6 +401,8 @@ export const shapeMorph = {
 
 export const tokens = {
   colors,
+  glass,
+  ios,
   spacing,
   radius,
   accessibility,

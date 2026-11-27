@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { Chip } from "@/view/components/Chip";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
@@ -22,10 +21,11 @@ describe("ModalityCoverArea e PhotoSourceSheet", () => {
   it("envolve a capa e usa o título padrão da folha de fotos", async () => {
     const area = await render(<ModalityCoverArea modality="donation"><></></ModalityCoverArea>);
     expect(area.toJSON()).not.toBeNull();
-    const onClose = vi.fn();
-    const onChoose = vi.fn();
+    const onClose = jest.fn();
+    const onChoose = jest.fn();
     const sheet = await render(<PhotoSourceSheet visible onChoose={onChoose} onClose={onClose} />);
     expect(sheet.getByText("Adicionar foto")).toBeDefined();
+    expect(sheet.queryByText("Como enquadrar")).toBeNull();
     await act(async () => { fireEvent.press(sheet.getByLabelText("Cancelar")); });
     expect(onClose).toHaveBeenCalledTimes(1);
     await act(async () => { fireEvent.press(sheet.getByLabelText("Tirar foto com a câmera")); });
@@ -36,7 +36,7 @@ describe("ModalityCoverArea e PhotoSourceSheet", () => {
 describe("CreateListingStep1 — avisos do ISBN e fotos da etapa 2", () => {
   const step1 = {
     modality: "sale" as const, title: "", author: "", price: "", photoUrl: "", loading: false, error: null,
-    onSetModality: vi.fn(), onSetTitle: vi.fn(), onSetAuthor: vi.fn(), onSetPrice: vi.fn(), onSetPhotoUrl: vi.fn(), onGoToPhotos: vi.fn(),
+    onSetModality: jest.fn(), onSetTitle: jest.fn(), onSetAuthor: jest.fn(), onSetPrice: jest.fn(), onSetPhotoUrl: jest.fn(), onGoToPhotos: jest.fn(),
   };
 
   it("mostra aviso de erro, de informação e a busca em andamento", async () => {
@@ -47,8 +47,8 @@ describe("CreateListingStep1 — avisos do ISBN e fotos da etapa 2", () => {
   });
 
   it("etapa 2 remove fotos e mostra a prévia", async () => {
-    const onRemovePhoto = vi.fn();
-    const onSetPhotoUrl = vi.fn();
+    const onRemovePhoto = jest.fn();
+    const onSetPhotoUrl = jest.fn();
     const screen = await render(
       <CreateListingStep2 photoUrl="https://cdn/capa.jpg" photos={["https://cdn/a.jpg", "https://cdn/b.jpg"]} loading={false} error="Falhou" onSetPhotoUrl={onSetPhotoUrl} onRemovePhoto={onRemovePhoto} />,
     );

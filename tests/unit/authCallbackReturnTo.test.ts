@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
-import { consumeAuthReturnTo, setAuthReturnTo } from "@/view/auth/authReturnTo";
+import { consumeAuthReturnTo, getInternalAuthReturnTo, setAuthReturnTo } from "@/view/auth/authReturnTo";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
 describe("authReturnTo (Spec 108: preservação da rota de retorno OAuth)", () => {
   beforeEach(() => {
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       sessionStorage: {
         _data: {} as Record<string, string>,
         getItem(key: string) {
@@ -19,11 +19,25 @@ describe("authReturnTo (Spec 108: preservação da rota de retorno OAuth)", () =
     });
   });
 
+  afterEach(() => {
+    unstubAllGlobals();
+  });
+
   it("salva e consome auth_return_to retornando para /beta", () => {
     setAuthReturnTo("/beta");
     expect(consumeAuthReturnTo("/")).toBe("/beta");
     // Após consumir, uma segunda chamada devolve o fallback
     expect(consumeAuthReturnTo("/")).toBe("/");
+  });
+
+  it("preserva o caminho e a consulta internos e ignora destinos externos ou de autenticação", () => {
+    const route = "/conversa/id?origem=aviso%20novo";
+    expect(getInternalAuthReturnTo(route)).toBe(route);
+    expect(getInternalAuthReturnTo("https://example.test/conversa/id")).toBeUndefined();
+    expect(getInternalAuthReturnTo("/entrar")).toBeUndefined();
+    expect(getInternalAuthReturnTo(["/perfil"])).toBeUndefined();
+    setAuthReturnTo("https://example.test");
+    expect(consumeAuthReturnTo()).toBe("/");
   });
 
   it("retorna fallback quando nenhuma rota foi salva", () => {

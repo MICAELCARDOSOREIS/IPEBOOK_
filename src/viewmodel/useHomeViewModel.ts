@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { registerBooksMemoryCache, subscribeBooksCatalogMutated } from "@/viewmodel/sessionCacheRegistry";
+import { useAppForegroundRefresh } from "@/viewmodel/useRealtimeSync";
 
 export type HomeState = {
   books: readonly Book[];
+  cachedAt?: number | null;
   loading: boolean;
   error: string | null;
 };
@@ -17,6 +20,11 @@ let sessionBooksCache: readonly Book[] | null = null;
 let lastSessionBooksLoadAt = 0;
 const CATALOG_CACHE_TTL_MS = 60_000; // 1 minuto de frescor para navegação instantânea entre abas
 
+registerBooksMemoryCache(() => {
+  sessionBooksCache = null;
+  lastSessionBooksLoadAt = 0;
+});
+
 export function getCachedCatalogBookById(bookId: string): Book | null {
   if (process.env.NODE_ENV === "test" || !sessionBooksCache) return null;
   return sessionBooksCache.find((b) => b.id === bookId) ?? null;
@@ -27,6 +35,7 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
   const initialBooks = !isTest && sessionBooksCache ? sessionBooksCache : [];
   const [state, setState] = useState<HomeState>({
     books: initialBooks,
+    cachedAt: null,
     loading: initialBooks.length === 0,
     error: null,
   });
@@ -38,13 +47,14 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
     const current = ++request.current;
     setState((previous) => ({ ...previous, loading: previous.books.length === 0, error: null }));
     try {
-      const result = await books.listBooks();
-      if (!isTest) {
-        sessionBooksCache = result;
+      const { data, cachedAt } = await (books.readCatalog?.() ??
+        books.listBooks().then((result) => ({ data: result, cachedAt: null })));
+      if (!isTest && cachedAt === null) {
+        sessionBooksCache = data;
         lastSessionBooksLoadAt = Date.now();
       }
       if (active.current && current === request.current) {
-        setState({ books: result, loading: false, error: null });
+        setState({ books: data, cachedAt, loading: false, error: null });
       }
     } catch (error) {
       if (active.current && current === request.current) {
@@ -76,6 +86,16 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
       request.current += 1;
     };
   }, [reload, isTest]);
+
+  useEffect(() => {
+    return subscribeBooksCatalogMutated(() => {
+      void reload();
+    });
+  }, [reload]);
+
+  useAppForegroundRefresh(() => {
+    void reload();
+  });
 
   return [state, { reload }];
 }

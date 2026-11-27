@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import type { Book } from "@/model/entities/book";
 import {
   makeAuthViewModel,
   makeHomeViewModel,
@@ -9,36 +8,39 @@ import {
   makeNotificationsViewModel,
   makeProfileViewModel,
 } from "@/di/container";
-import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
+import { CachedBookNotice } from "@/view/components/CachedBookNotice";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
-import { LoadingState } from "@/view/components/LoadingState";
-import { OfflineState } from "@/view/components/OfflineState";
-import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
-import {
-  CAROUSEL_MAX_ITEMS,
-  CatalogCarousel,
-  HomeEmptyCatalogSection,
-  HomeShortcutsSection,
-  carouselOffsetFor,
-} from "@/view/home/CatalogCarousel";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { ScreenContainer } from "@/view/components/ScreenContainer";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-import { IpeMark } from "@/view/components/IpeMark";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
+import { IpeMark } from "@/view/components/IpeMark";
 import {
   resetAppLaunchCelebrationForTesting,
   triggerIpePetals,
 } from "@/view/components/ipeCelebrationController";
-import { HomeFloatingChatButton } from "@/view/home/HomeFloatingChatButton";
-import type { BookModality } from "@/model/entities/book";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { LoadingState } from "@/view/components/LoadingState";
+import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
+import { OfflineState } from "@/view/components/OfflineState";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
+import {
+  CAROUSEL_MAX_ITEMS,
+  CatalogCarousel,
+  carouselOffsetFor,
+  HomeEmptyCatalogSection,
+  HomeShortcutsSection,
+} from "@/view/home/CatalogCarousel";
+import { HomeFloatingAddButton } from "@/view/home/HomeFloatingChatButton";
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
+import { useReloadOnReconnect } from "@/viewmodel/useReloadOnReconnect";
 
 export { carouselOffsetFor };
 
@@ -49,6 +51,7 @@ export type HomeProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToNotifications?: () => void;
   onNavigateToConversations?: () => void;
+  onNavigateToCreateListing?: () => void;
   onNavigateToProfile?: () => void;
   /** Contador manual de conversas/mensagens não lidas (útil para testes determinísticos). */
   conversationsBadgeCount?: number;
@@ -58,6 +61,8 @@ export type HomeProps = {
   onNavigateToSearch?: (filter?: { modality?: BookModality; neighborhood?: string }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
+  /** Incrementado ao tocar na aba Início já ativa para rolar suave ao topo (Spec 144). */
+  scrollToTopTick?: number;
 };
 export { resetAppLaunchCelebrationForTesting };
 
@@ -81,13 +86,21 @@ export default function Home({
   onNavigateToBookDetail,
   onNavigateToNotifications,
   onNavigateToConversations,
+  onNavigateToCreateListing,
   onNavigateToProfile,
   conversationsBadgeCount: explicitConversationsBadgeCount,
   onNavigateToTerms: _onNavigateToTerms,
   onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
+  scrollToTopTick = 0,
 }: HomeProps = {}) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (scrollToTopTick > 0) {
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+    }
+  }, [scrollToTopTick]);
   const neighborhoodHook = useActiveNeighborhood("all");
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
@@ -97,13 +110,19 @@ export default function Home({
   const [profileState] = makeProfileViewModel(authState.user?.id ?? null);
   // Mantém refresh em segundo plano para manter estado atualizado ao puxar para atualizar
   const [, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
-  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, "home");
+  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, String(focusKey ?? "home"));
   const conversationsBadgeCount = explicitConversationsBadgeCount ?? navBadges.conversations;
   const { isOnline } = makeNetworkStatus();
+  useReloadOnReconnect(isOnline, actions.reload);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
+  // Os dois blocos do hero pedem 320 px cada; com o padding do cartão, só cabem lado a lado daqui para cima.
+  const stackHero = useHydratedWindowWidth() < 1100;
   const isWeb = Platform.OS === "web";
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !reduceTransparency;
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
   const treeRotate = useRef(new Animated.Value(0)).current;
@@ -126,6 +145,14 @@ export default function Home({
     }
   }, [onNavigateToConversations, authState.user, onNavigateToSignIn]);
   const guardedNavigateToConversations = useGuardedPress(handleConversationsPress);
+  const handleCreateListingPress = useCallback(() => {
+    if (onNavigateToCreateListing) {
+      onNavigateToCreateListing();
+    } else if (!authState.user && onNavigateToSignIn) {
+      onNavigateToSignIn();
+    }
+  }, [onNavigateToCreateListing, authState.user, onNavigateToSignIn]);
+  const guardedNavigateToCreateListing = useGuardedPress(handleCreateListingPress);
   const guardedNavigateToHelp = useGuardedPress(onNavigateToHelp);
   const guardedNavigateToSearch = useGuardedPress(onNavigateToSearch);
 
@@ -216,12 +243,10 @@ export default function Home({
     const set = new Set(state.books.map((b) => b.neighborhood).filter(Boolean));
     return Math.max(1, set.size);
   }, [state.books]);
-  // Adiciona um pequeno incremento ao contador de doações para incentivar a descoberta
-  const displayDonationCount = donationCount > 0 ? donationCount + 2 : 0;
   const donationSummary =
-    displayDonationCount === 0
+    donationCount === 0
       ? "Veja as doações em Piripiri"
-      : `${displayDonationCount} ${displayDonationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
   const displayNeighborhood =
     !isSpecificNeighborhood
@@ -232,68 +257,107 @@ export default function Home({
     ? `Em ${effectiveNeighborhood}`
     : "Perto de você";
 
-  const listHeader = (
-    <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
-      {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
-      {wideWeb ? null : (
-        <View style={styles.topBar}>
+  const mobileTopBar = wideWeb ? null : (
+    <View style={[styles.topBar, styles.topBarFixed, isIos && { backgroundColor: "transparent" }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
+        hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
+        onPress={handleSelectNeighborhood}
+        style={({ pressed }) => [
+          styles.neighborhoodPill,
+          isIos && (iosGlass ? styles.iosNeighborhoodPillGlass : styles.iosNeighborhoodPillOpaque),
+          pressed && styles.profileButtonPressed,
+        ]}
+      >
+        {iosGlass ? <IosGlassBackdrop style={styles.iosTopGlassShape} /> : null}
+        <AppIcon name="place" size={20} color={colors.m3.primary} />
+        <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+        <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+      </Pressable>
+
+      <View style={styles.topRightActions}>
+        {authState.loading ? null : authState.user ? (
+          <>
+            <Pressable
+              testID="home-top-conversations-button"
+              accessibilityRole="button"
+              accessibilityLabel={
+                conversationsBadgeCount > 0
+                  ? `Abrir conversas, ${conversationsBadgeCount} ${conversationsBadgeCount === 1 ? "nova" : "novas"}`
+                  : "Abrir conversas"
+              }
+              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+              onPress={() => guardedNavigateToConversations()}
+              style={({ pressed }) => [
+                styles.topIconButton,
+                isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
+                pressed && styles.profileButtonPressed,
+              ]}
+            >
+              {iosGlass ? (
+                <IosGlassBackdrop style={styles.iosTopGlassShape} />
+              ) : null}
+              <AppIcon name="chat" size={20} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+              {conversationsBadgeCount > 0 ? (
+                <View style={styles.topIconBadge} testID="home-top-conversations-badge">
+                  <Text style={styles.topIconBadgeText}>
+                    {conversationsBadgeCount > 9 ? "9+" : conversationsBadgeCount}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+            <Pressable
+              testID="home-top-profile-button"
+              accessibilityRole="button"
+              accessibilityLabel={
+                authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
+              }
+              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+              onPress={() => guardedNavigateToProfile()}
+              style={({ pressed }) => [
+                styles.profileButton,
+                isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
+                pressed && styles.profileButtonPressed,
+              ]}
+            >
+              {iosGlass && !profileState.profile?.photoUrl ? (
+                <IosGlassBackdrop style={styles.iosTopGlassShape} />
+              ) : null}
+              {profileState.profile?.photoUrl ? (
+                <Image
+                  source={{ uri: profileState.profile.photoUrl }}
+                  accessibilityLabel={authState.user.name ?? "Meu perfil"}
+                  style={styles.profileAvatarImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <AppIcon name="person" size={22} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+              )}
+            </Pressable>
+          </>
+        ) : (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
-            hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
-            onPress={handleSelectNeighborhood}
-            style={withPress(styles.neighborhoodPill)}
+            accessibilityLabel="Entrar no aplicativo"
+            hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
+            onPress={() => guardedNavigateToSignIn()}
+            style={withPress(styles.sessionPill)}
           >
-            <AppIcon name="place" size={20} color={colors.m3.primary} />
-            <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
-            <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.sessionPillText}>Entrar</Text>
           </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
-          <View style={styles.topRightActions}>
-            {authState.loading ? null : authState.user ? (
-              <Pressable
-                testID="home-top-profile-button"
-                accessibilityRole="button"
-                accessibilityLabel={
-                  authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
-                }
-                hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-                onPress={() => guardedNavigateToProfile()}
-                style={({ pressed }) => [
-                  styles.profileButton,
-                  pressed && styles.profileButtonPressed,
-                ]}
-              >
-                {profileState.profile?.photoUrl ? (
-                  <Image
-                    source={{ uri: profileState.profile.photoUrl }}
-                    accessibilityLabel={authState.user.name ?? "Meu perfil"}
-                    style={styles.profileAvatarImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <AppIcon name="person" size={22} color={colors.m3.onSurfaceVariant} />
-                )}
-              </Pressable>
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Entrar no aplicativo"
-                hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
-                onPress={() => guardedNavigateToSignIn()}
-                style={withPress(styles.sessionPill)}
-              >
-                <Text style={styles.sessionPillText}>Entrar</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      )}
+  const listHeader = (
+    <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
 
       {/* 2. Manchete Editorial com o Ipê de Piripiri (Figma 02.01 / Spec 078) */}
       <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
-        <View style={[styles.heroRow, wideWeb && styles.heroRowWide]}>
-          <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide]}>
+        <View style={[styles.heroRow, wideWeb && styles.heroRowWide, wideWeb && stackHero && styles.heroRowStacked]}>
+          <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide, wideWeb && stackHero && styles.heroColStacked]}>
             {wideWeb ? (
               <View style={styles.heroLocationRowWide}>
                 <Pressable
@@ -343,8 +407,7 @@ export default function Home({
           </View>
 
           {wideWeb ? (
-            <View style={styles.heroAsideWide}>
-              {/* Cartão interativo da Florada do Ipê */}
+            <View style={[styles.heroAsideWide, stackHero && styles.heroColStacked]}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Celebrar florada do Ipê"
@@ -368,7 +431,7 @@ export default function Home({
                       ],
                     }}
                   >
-                    <IpeMark size={76} />
+                    <IpeMark size={88} />
                   </Animated.View>
                   <View style={styles.heroCelebrationTextsWide}>
                     <Text style={styles.heroCelebrationTitleWide}>Florada do Ipê</Text>
@@ -378,55 +441,6 @@ export default function Home({
                   </View>
                 </View>
               </Pressable>
-
-              {/* Destaques Comunitários: Doações e Trocas */}
-              <View style={styles.heroHighlightsRowWide}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Doações da semana: ${donationSummary}`}
-                  onPress={() => guardedNavigateToSearch({ modality: "donation" })}
-                  style={({ pressed }) => [
-                    styles.heroHighlightCardWide,
-                    isWeb && ({ cursor: "pointer" } as any),
-                    pressed && expressivePressedStyle,
-                  ]}
-                >
-                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.donation.background }]}>
-                    <AppIcon name="bookmark" size={18} color={colors.badge.donation.text} />
-                  </View>
-                  <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
-                      Doações
-                    </Text>
-                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
-                      {donationCount > 0 ? `${donationCount} ${donationCount === 1 ? "gratuito" : "gratuitos"}` : "Ver lista"}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Trocar livros com leitores de Piripiri"
-                  onPress={() => guardedNavigateToSearch({ modality: "trade" })}
-                  style={({ pressed }) => [
-                    styles.heroHighlightCardWide,
-                    isWeb && ({ cursor: "pointer" } as any),
-                    pressed && expressivePressedStyle,
-                  ]}
-                >
-                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.trade.background }]}>
-                    <AppIcon name="swap" size={18} color={colors.badge.trade.text} />
-                  </View>
-                  <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
-                      Trocas
-                    </Text>
-                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
-                      Sem custo
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
             </View>
           ) : (
             <Pressable
@@ -459,51 +473,31 @@ export default function Home({
       </View>
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      {wideWeb ? (
-        <View style={styles.chipsContainerWide} testID="home-quick-filter-chips">
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          {...standardHorizontalScrollProps}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
-          style={styles.chipsScrollView}
-        >
-          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-            const isSelected = selectedModality === mod;
-            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
-            return (
-              <Chip
-                key={mod}
-                size="compact"
-                label={label}
-                accessibilityLabel={`Filtrar por ${label}`}
-                selected={isSelected}
-                tone={tone}
-                onPress={() => setSelectedModality(mod)}
-              />
-            );
-          })}
-        </ScrollView>
-      )}
+      <View style={wideWeb ? styles.chipsContainerWide : styles.chipsRow} testID="home-quick-filter-chips">
+        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+          const isSelected = selectedModality === mod;
+          const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+          const tone =
+            mod === "all"
+              ? isIos
+                ? { background: colors.m3.primaryContainer, text: colors.action }
+                : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+              : colors.badge[mod];
+          return (
+            <Chip
+              key={mod}
+              size="compact"
+              label={label}
+              accessibilityLabel={`Filtrar por ${label}`}
+              selected={isSelected}
+              tone={tone}
+              onPress={() => setSelectedModality(mod)}
+            />
+          );
+        })}
+      </View>
+
+      <CachedBookNotice cachedAt={state.cachedAt} variant="catalog" />
 
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
       {state.loading ? (
@@ -512,13 +506,13 @@ export default function Home({
         isOnline ? (
           <ErrorState message={state.error} onRetry={() => void actions.reload()} />
         ) : (
-          <OfflineState onRetry={() => void actions.reload()} />
+          <OfflineState autoRetry={false} onRetry={() => void actions.reload()} />
         )
       ) : recentBooks.length > 0 ? (
         <CatalogCarousel
           title="Recém-adicionados"
           displayTitle={carouselDisplayTitle}
-          badgeText={`${neighborhoodBooks.length} ${neighborhoodBooks.length === 1 ? "livro" : "livros"}`}
+          badgeText={wideWeb ? `${neighborhoodBooks.length} ${neighborhoodBooks.length === 1 ? "livro" : "livros"}` : undefined}
           books={recentBooks}
           onNavigateToBookDetail={guardedNavigateToBookDetail}
           onViewMore={() => {
@@ -565,19 +559,14 @@ export default function Home({
 
   return (
     <ScreenContainer
+      testID="home-screen"
       edges={["top", "left", "right"]}
-      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
-      paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
-      paddingBottom={wideWeb ? tokens.spacing[32] : scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24]}
-      contentStyle={wideWeb ? styles.wideHomeContent : undefined}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => void handleRefresh()}
-          colors={[colors.action, colors.ipe.bloom]}
-          tintColor={colors.ipe.bloom}
-        />
-      }
+      header={mobileTopBar}
+      scroll={false}
+      maxWidth={null}
+      paddingHorizontal={0}
+      paddingTop={0}
+      paddingBottom={0}
       overlay={
         <>
           <IpeCelebrationOverlay />
@@ -587,42 +576,108 @@ export default function Home({
             onSelect={neighborhoodHook.selectNeighborhood}
             onClose={neighborhoodHook.closeSelector}
           />
-          {!wideWeb && (onNavigateToConversations || onNavigateToSignIn) ? (
-            <HomeFloatingChatButton
-              badgeCount={conversationsBadgeCount}
-              onPress={() => guardedNavigateToConversations()}
-            />
+          {!wideWeb && (onNavigateToCreateListing || onNavigateToSignIn) ? (
+            <HomeFloatingAddButton onPress={() => guardedNavigateToCreateListing()} />
           ) : null}
         </>
       }
     >
-      {listHeader}
+      <ScrollView
+        ref={scrollRef}
+        {...standardVerticalScrollProps}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
+        style={styles.homeScroll}
+        contentContainerStyle={[
+          styles.homeScrollContent,
+          {
+            maxWidth: wideWeb ? WEB_MAX_WIDTH : 720,
+            paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
+            paddingBottom: wideWeb
+              ? tokens.spacing[32]
+              : isIos
+                ? scrollBottomPadding.nativeTabWithFab
+                : scrollBottomPadding.withBottomBarAndFab + tokens.spacing[24],
+          },
+          wideWeb && styles.wideHomeContent,
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={[colors.action, colors.ipe.bloom]}
+            tintColor={colors.ipe.bloom}
+          />
+        }
+      >
+        {listHeader}
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    homeScroll: { flex: 1, width: "100%" },
+    homeScrollContent: { flexGrow: 1, width: "100%", alignSelf: "center" },
     wideHomeContent: { width: "100%", },
     headerContainer: { marginBottom: tokens.spacing[16], },
     headerContainerWide: { marginBottom: tokens.spacing[24], width: "100%", },
 
     // 1. Top bar
+    nativeSafeHeader: { flex: 0 },
     topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8], marginBottom: tokens.spacing[12], },
+    topBarFixed: {
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[4],
+      paddingBottom: tokens.spacing[4],
+      marginBottom: 0,
+      backgroundColor: colors.background,
+    },
     topBarWide: { marginBottom: tokens.spacing[16], },
     neighborhoodPill: {
       flexShrink: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      paddingLeft: tokens.spacing[12],
-      paddingRight: tokens.spacing[8],
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      paddingHorizontal: tokens.spacing[14],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
     },
     neighborhoodText: { flexShrink: 1, ...tokens.typography.labelLarge, color: colors.m3.onSurface, },
     topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
+    topIconButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    topIconBadge: {
+      position: "absolute",
+      top: -2,
+      right: -2,
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    topIconBadgeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onPrimary,
+      fontSize: 10,
+      lineHeight: 12,
+    },
     profileButton: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
@@ -633,6 +688,45 @@ function createStyles(colors: ColorPalette) {
       overflow: "hidden",
     },
     profileButtonPressed: { transform: [{ scale: 0.94 }], backgroundColor: colors.m3.surfaceContainerHighest, },
+    iosTopIconGlass: {
+      width: 42,
+      height: 42,
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: "transparent",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosTopIconOpaque: {
+      width: 42,
+      height: 42,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosTopGlassShape: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    iosNeighborhoodPillGlass: {
+      height: 42,
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      borderCurve: "continuous",
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosNeighborhoodPillOpaque: {
+      height: 42,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+      borderCurve: "continuous",
+    },
     profileAvatarImage: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, },
     sessionPill: { paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, minHeight: 36, justifyContent: "center", },
     sessionPillText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.action, },
@@ -640,12 +734,14 @@ function createStyles(colors: ColorPalette) {
     // 2. Hero editorial
     heroSection: { marginBottom: tokens.spacing[12], },
     heroSectionWide: {
-      padding: tokens.spacing[20],
-      marginBottom: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
+      marginBottom: tokens.spacing[24],
+      marginTop: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[32],
+      paddingVertical: tokens.spacing[28],
       borderRadius: tokens.radius.xxl,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       width: "100%",
     },
     heroTitle: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, },
@@ -653,45 +749,25 @@ function createStyles(colors: ColorPalette) {
     heroSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, marginTop: tokens.spacing[6], },
     heroSubtitleWide: { ...tokens.typography.webLead, },
     heroRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[16], },
-    heroRowWide: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[24], },
+    heroRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[32], },
+    heroRowStacked: { flexDirection: "column", alignItems: "stretch" },
     heroLocationRowWide: { flexDirection: "row", alignItems: "center", marginBottom: tokens.spacing[4], },
     heroTextContainer: { flex: 1, },
-    heroTextContainerWide: { flex: 1.2, minWidth: 320, maxWidth: 640, gap: tokens.spacing[8], justifyContent: "center", },
-    heroAsideWide: { flex: 1, maxWidth: 480, minWidth: 320, flexShrink: 0, justifyContent: "center", gap: tokens.spacing[10], },
+    heroTextContainerWide: { flexGrow: 1, flexShrink: 1, minWidth: 280, maxWidth: 760, gap: tokens.spacing[10], justifyContent: "center", },
+    heroAsideWide: { width: 380, maxWidth: "38%", flexShrink: 0, justifyContent: "center" },
+    heroColStacked: { minWidth: 0, maxWidth: "100%", width: "100%" },
     heroCelebrationCardWide: {
-      backgroundColor: colors.ipe.petalSoft,
-      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.ipe.container,
       borderWidth: 1.5,
       borderColor: colors.ipe.bloom,
-      padding: tokens.spacing[12],
-      gap: tokens.spacing[8],
-      shadowColor: colors.ipe.bloomDeep,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 2,
+      borderRadius: tokens.radius.xl,
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[10],
     },
     heroCelebrationRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
     heroCelebrationTextsWide: { flex: 1, gap: tokens.spacing[2], },
-    heroCelebrationTitleWide: { ...tokens.typography.titleMedium, color: colors.brandBrown, fontWeight: tokens.fontWeight.bold, },
-    heroCelebrationBodyWide: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 18, },
-    heroHighlightsRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
-    heroHighlightCardWide: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[14],
-      borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    heroHighlightIconBoxWide: { width: 32, height: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
-    heroHighlightTextBoxWide: { flex: 1, gap: tokens.spacing[2], },
-    heroHighlightTitleWide: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.text, },
-    heroHighlightSubtitleWide: { ...tokens.typography.captionSmall, color: colors.secondaryText, },
+    heroCelebrationTitleWide: { fontFamily: tokens.fontFamily.brand, fontSize: 20, lineHeight: 26, color: colors.ipe.onContainer, fontWeight: tokens.fontWeight.bold, },
+    heroCelebrationBodyWide: { ...tokens.typography.footnote, fontSize: 14, color: colors.ipe.onContainer, lineHeight: 20, },
     chipsContainerWide: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
     heroMarkContainer: { alignItems: "center", justifyContent: "center", padding: tokens.spacing[4], },
     heroMarkContainerWide: {
@@ -723,20 +799,19 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[8],
       paddingVertical: tokens.spacing[12],
       paddingHorizontal: tokens.spacing[20],
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
       alignSelf: "flex-start",
     },
     statItemWide: { alignItems: "flex-start", },
-    statNumberWide: { ...tokens.typography.brandTitle, color: colors.m3.primary, },
+    statNumberWide: { ...tokens.typography.brandTitle, color: colors.brandBrown, },
     statLabelWide: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, marginTop: tokens.spacing[4], },
-    statDividerWide: { width: 1, height: 32, backgroundColor: colors.m3.outlineVariant, },
+    statDividerWide: { width: 1, height: 32, backgroundColor: colors.book.paperEdge, },
 
     // 3. Chips de Filtro
     chipsContainer: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
-    chipsScrollView: { marginBottom: tokens.spacing[20], marginHorizontal: -tokens.spacing[16], },
-    chipsScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], paddingLeft: tokens.spacing[16], paddingRight: tokens.spacing[28], },
+    chipsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[4], marginBottom: tokens.spacing[20] },
   });
 }

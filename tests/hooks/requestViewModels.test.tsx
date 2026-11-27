@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import type { Book } from "@/model/entities/book";
@@ -9,7 +8,6 @@ import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
 import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -128,6 +126,24 @@ describe("useRequestNegotiationViewModel (ISO/IEC 25010 - Adequação Funcional)
     let fallbackResult: unknown;
     await act(async () => { fallbackResult = await hook2.current[1].request("listing-1", "alice"); });
     expect(fallbackResult).toMatchObject({ listingId: "listing-1", requesterId: "alice", status: "pending" });
+
+    // Sem sessão em checkActiveRequest limpa o estado ativo
+    let cleared: unknown = "sentinel";
+    await act(async () => {
+      cleared = await hook2.current[1].checkActiveRequest("listing-1", null);
+    });
+    expect(cleared).toBeNull();
+    expect(hook2.current[0].activeRequestId).toBeNull();
+
+    // Erro não-Error com texto de pedido pendente e getActiveRequest retornando null
+    const stringReject = {
+      requestNegotiation: async () => { throw "pedido pendente"; },
+      getActiveRequest: async () => null,
+    } as unknown as IBookRequestUseCases;
+    const hook3 = await renderHook(() => useRequestNegotiationViewModel(stringReject));
+    let strRes: unknown;
+    await act(async () => { strRes = await hook3.current[1].request("listing-1", null); });
+    expect(strRes).toMatchObject({ listingId: "listing-1", requesterId: "", status: "pending" });
   });
 });
 
@@ -183,21 +199,5 @@ describe("useReceivedRequestsViewModel (ISO/IEC 25010 - Adequação Funcional)",
     fail = false;
     await act(async () => { await hook.current[1].reload(); });
     expect(hook.current[0]).toMatchObject({ error: null, loading: false, items: [] });
-  });
-});
-
-describe("useSentRequestsViewModel (ISO/IEC 25010 - Adequação Funcional)", () => {
-  it("lista os pedidos enviados com status atual", async () => {
-    const { useCases } = setup();
-    const a = await useCases.requestNegotiation("listing-1", "alice");
-    await useCases.respondToRequest(a.id, "accept", "owner");
-    const hook = await renderHook(() => useSentRequestsViewModel("alice", useCases));
-    expect(hook.current[0].items.map((i) => i.request.status)).toEqual(["accepted"]);
-  });
-
-  it("sanitiza erro técnico ao carregar", async () => {
-    const failing = { listSentRequests: async () => { throw new Error("boom"); } } as unknown as IBookRequestUseCases;
-    const hook = await renderHook(() => useSentRequestsViewModel("alice", failing));
-    expect(hook.current[0].error).toBe("Não foi possível carregar os pedidos. Tente novamente.");
   });
 });

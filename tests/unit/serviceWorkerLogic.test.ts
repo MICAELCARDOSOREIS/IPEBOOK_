@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   APP_SHELL_URLS,
   CATALOG_CACHE_NAME,
@@ -14,11 +13,11 @@ import {
 
 describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
   it("expõe nomes corretos para caches ativos e lista canônica do App Shell", () => {
-    expect(STATIC_CACHE_NAME).toBe("ipebook-static-v1");
-    expect(DYNAMIC_CACHE_NAME).toBe("ipebook-dynamic-v1");
-    expect(CATALOG_CACHE_NAME).toBe("ipebook-catalog-v1");
+    expect(STATIC_CACHE_NAME).toBe("ipebook-static-v2");
+    expect(DYNAMIC_CACHE_NAME).toBe("ipebook-dynamic-v2");
+    expect(CATALOG_CACHE_NAME).toBe("ipebook-catalog-v2");
     expect(APP_SHELL_URLS).toContain("/");
-    expect(APP_SHELL_URLS).toContain("/index.html");
+    expect(APP_SHELL_URLS).toContain("/bem-vindo");
     expect(APP_SHELL_URLS).toContain("/manifest.json");
     expect(APP_SHELL_URLS).toContain("/icone-192.png");
     expect(APP_SHELL_URLS).toContain("/icone-512.png");
@@ -66,8 +65,15 @@ describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
 
   describe("isCatalogRequest", () => {
     it("identifica rotas do Supabase direcionadas à tabela de livros", () => {
-      expect(isCatalogRequest(new URL("https://supabase.co/rest/v1/livros?select=*"))).toBe(true);
-      expect(isCatalogRequest(new URL("https://supabase.co/rest/v1/livros_com_metricas"))).toBe(true);
+      const catalog = new URL("https://projeto.supabase.co/rest/v1/v2_books?select=id,title&status=neq.draft");
+      const key = "sb_publishable_teste";
+      expect(isCatalogRequest(catalog, `Bearer ${key}`, key)).toBe(true);
+      expect(isCatalogRequest(catalog, null, key)).toBe(true);
+      expect(isCatalogRequest(catalog, null, "sb_secret_teste")).toBe(false);
+      expect(isCatalogRequest(catalog, "Bearer sessao", key)).toBe(false);
+      expect(isCatalogRequest(new URL(`${catalog}&owner_id=eq.dono`), null, key)).toBe(false);
+      const withoutStatus = new URL("https://projeto.supabase.co/rest/v1/v2_books?select=id,title");
+      expect(isCatalogRequest(withoutStatus, null, key)).toBe(false);
     });
 
     it("retorna false para outras tabelas ou endpoints", () => {
@@ -121,9 +127,19 @@ describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
     it("classifica requisições para o catálogo de livros", () => {
       const result = classifyRequest({
         method: "GET",
-        url: "https://supabase.co/rest/v1/livros?status=eq.ativo",
+        url: "https://projeto.supabase.co/rest/v1/v2_books?select=id,title&status=neq.draft",
+        headers: { get: (name) => name === "apikey" ? "sb_publishable_teste" : null },
       });
       expect(result).toBe("catalog");
+    });
+
+    it("ignora o cache HTTP quando a consulta já tem cópia local gerenciada pelo app", () => {
+      expect(classifyRequest({
+        method: "GET",
+        url: "https://projeto.supabase.co/rest/v1/v2_books?select=id,title&status=neq.draft",
+        cache: "no-store",
+        headers: { get: (name) => name === "apikey" ? "sb_publishable_teste" : null },
+      })).toBe("pass-through");
     });
 
     it("classifica requisições para assets estáticos", () => {
@@ -158,7 +174,7 @@ describe("serviceWorkerLogic (Spec 041, ADR 0035)", () => {
 
     it("createOfflineCatalogResponse gera JSON válido estruturado para catálogo", async () => {
       const response = createOfflineCatalogResponse();
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(503);
       expect(response.headers.get("Content-Type")).toBe("application/json; charset=utf-8");
       expect(response.headers.get("X-Ipebook-Offline")).toBe("true");
 

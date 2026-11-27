@@ -1,10 +1,12 @@
-# Beta na Play Store (teste interno)
+# Beta na Play Store (teste interno / fechado)
 
-Roteiro para publicar o primeiro beta. Itens marcados com **(você)** dependem da conta Google do responsável.
+> **Status em 2026-11-16:** a versão **`0.2.0`** (`com.ipebook.app`) foi publicada na Google Play Store e validada ponta a ponta em aparelho real com duas contas (`docs/estado.md`). O roteiro abaixo permanece como referência operacional para novos envios, troca de faixas (`alpha` / `beta` / `production`) e conferência de credenciais.
+
+Roteiro para publicar versões na Play Store. Itens marcados com **(você)** dependem da conta Google do responsável.
 
 ## Já pronto no projeto
 - Build de produção em App Bundle com versão automática (`eas.json`, perfil `production`).
-- Envio pelo EAS para a faixa **interna** como rascunho (`eas.json` > `submit.production`).
+- Envio configurado em `eas.json` > `submit.production.android` (faixa `alpha`, status `completed`, com chave local fora do Git — ver [publicacao-terminal.md](publicacao-terminal.md)).
 - Política de privacidade pública e fiel ao que o app coleta: https://ipebook.app/termos?aba=privacidade
 - Ficha da loja e respostas do formulário de segurança dos dados: [play-store.md](play-store.md).
 - Supabase com moderação e limites contra abuso aplicados; Sentry e login Google configurados no EAS.

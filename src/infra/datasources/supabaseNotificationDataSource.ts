@@ -2,6 +2,7 @@ import type { INotificationDataSource } from "@/model/datasources/iNotificationD
 import type { AppNotification } from "@/model/entities/notification";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import { subscribePostgresChanges } from "@/infra/supabaseRealtime";
 
 type NotificationRow = {
   id: string;
@@ -15,19 +16,19 @@ type NotificationRow = {
 };
 
 function mapNotification(row: NotificationRow): AppNotification {
+  // Atualiza a redação da dica de boas-vindas gerada pelo banco, inclusive para registros antigos.
+  const onboardingSafetyTip = row.type === "safety_tip" && row.title === "Dica de segurança: Pontos Seguros";
   return {
     id: row.id,
     userId: row.user_id,
-    title: row.title,
-    message: row.message,
+    title: onboardingSafetyTip ? "Dica de segurança: pontos de encontro recomendados" : row.title,
+    message: onboardingSafetyTip ? "Marque as entregas em um dos pontos públicos recomendados em Piripiri." : row.message,
     type: row.type,
     read: row.read,
     createdAt: row.created_at,
     ...(row.action_url ? { actionUrl: row.action_url } : {}),
   };
 }
-
-let channelSeq = 0;
 
 export class SupabaseNotificationDataSource implements INotificationDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
@@ -102,20 +103,13 @@ export class SupabaseNotificationDataSource implements INotificationDataSource {
   }
 
   subscribeToChanges(userId: string, onChange: () => void): () => void {
-    const channel = this.client
-      // Nome único por assinatura: reusar o mesmo tópico depois de `subscribe()` lança erro do Realtime
-      // (Home, Conversas e a tela de notificações assinam ao mesmo tempo).
-      .channel(`notifications:${userId}:${++channelSeq}`)
-      .on(
-        "postgres_changes" as any,
-        { event: "*", schema: "public", table: "v2_notifications", filter: `user_id=eq.${userId}` },
-        () => onChange(),
-      )
-      .subscribe();
-
-    return () => {
-      this.client.removeChannel(channel);
-    };
+    return subscribePostgresChanges(this.client, {
+      channelPrefix: `notifications:${userId}`,
+      event: "*",
+      table: "v2_notifications",
+      filter: `user_id=eq.${userId}`,
+      onPayload: () => onChange(),
+    });
   }
 
   async addNotification(notification: AppNotification): Promise<void> {

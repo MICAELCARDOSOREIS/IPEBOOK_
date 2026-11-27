@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Keyboard, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ImageSource } from "@/model/services/iImagePickerService";
 import type { BookCondition, BookModality } from "@/model/entities/book";
 import {
   BOOK_CATEGORIES,
@@ -10,29 +11,39 @@ import {
 } from "@/model/entities/book";
 import {
   PIRIPIRI_MEETING_POINT_NAMES,
-  PIRIPIRI_NEIGHBORHOODS,
   DEFAULT_PIRIPIRI_LOCATION,
 } from "@/model/entities/location";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
+import { formatPrice } from "@/view/formatPrice";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { AppIcon } from "@/view/components/AppIcon";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { IosGlassBackdrop, useOpaqueIosSurfaces } from "@/view/components/IosGlassBackdrop";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
+import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
+import { hasPhotoPermission } from "@/view/listings/photoPermission";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { ScrollEdgeScrollView, ScrollEdgeScreen } from "@/view/components/ScrollEdgeScreen";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeEditListingViewModel } from "@/di/container";
+import { makeEditListingViewModel, makeListingPhotoViewModel, makeNetworkStatus } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
-const EDIT_WIDE_MAX_WIDTH = 1080;
+const EDIT_WIDE_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type EditListingProps = {
   bookId: string;
@@ -60,22 +71,36 @@ export default function EditListing({
   const guardedCancel = useGuardedPress(onCancel);
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeEditListingViewModel(bookId, sessionUserId);
-  const { colors, resolvedScheme } = useTheme();
+  const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
+  const { isOnline } = makeNetworkStatus();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
+  const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{
+    slot: "cover" | "extra";
+    index?: number;
+    source: ImageSource;
+  } | null>(null);
   // Web larga: foto e identificação de um lado, descrição e venda do outro.
   const wide = useIsWideWeb();
+  const isIos = Platform.OS === "ios";
+  const opaqueIos = useOpaqueIosSurfaces();
+  const iosGlass = isIos && !opaqueIos;
   const isKeyboardVisible = useKeyboardVisible();
   const scrollRef = useRef<any>(null);
+  const focusScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authorInputRef = useRef<any>(null);
   const descInputRef = useRef<any>(null);
   const priceInputRef = useRef<any>(null);
-  const titleY = useRef(140);
-  const authorY = useRef(220);
-  const descY = useRef(320);
-  const priceY = useRef(460);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
+  const parsedPrice = Number(state.price.trim().replace(",", "."));
+  const priceHelperText =
+    state.price.trim().length > 0 && Number.isFinite(parsedPrice) && parsedPrice > 0
+      ? `Será exibido como ${formatPrice(parsedPrice)}`
+      : "Informe o valor em reais (R$)";
+  const sectionFieldBg = colors.m3.surfaceContainerLow;
 
   const displayedCategories = useMemo(() => {
     if (state.category && !(CATEGORIES as readonly string[]).includes(state.category)) {
@@ -84,20 +109,62 @@ export default function EditListing({
     return CATEGORIES;
   }, [state.category]);
 
-  const handleFocusField = (yOffset: number) => {
-    if (wide) return;
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, yOffset - 24),
-        animated: true,
-      });
-    }, 100);
-  };
+  const scrollFocusedFieldIntoView = useCallback(() => {
+    // Na Web o próprio navegador gerencia rolagem e foco sem competir com scrollTo.
+    if (wide || Platform.OS === "web") return;
+    if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+    focusScrollTimerRef.current = setTimeout(() => {
+      const focused = (TextInput as unknown as { State?: { currentlyFocusedInput?: () => unknown } }).State?.currentlyFocusedInput?.();
+      if (focused && scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard) {
+        scrollRef.current.scrollResponderScrollNativeHandleToKeyboard(focused, 96, true);
+      }
+    }, 80);
+  }, [wide]);
+
+  useEffect(() => {
+    if (wide || Platform.OS === "web") return undefined;
+    const subs = [
+      Keyboard.addListener("keyboardDidShow", scrollFocusedFieldIntoView),
+      ...(Platform.OS === "ios" ? [Keyboard.addListener("keyboardWillShow", scrollFocusedFieldIntoView)] : []),
+    ];
+    return () => {
+      if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
+      for (const sub of subs) sub.remove();
+    };
+  }, [wide, scrollFocusedFieldIntoView]);
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
     const result = await actions.submit();
     if (result) guardedSaved();
   };
+
+  const handleRemoveExtraPhoto = (index: number) => {
+    if (actions.setPhotoAt) actions.setPhotoAt(index, "");
+    else actions.removePhoto(index);
+  };
+
+  const handleChoosePhoto = (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => {
+    const side =
+      slot === "cover" ? "cover" : slotIndex === 0 ? "spine" : slotIndex === 1 ? "back" : undefined;
+    void photoActions.choose(source, side).then((url) => {
+      if (!url) return;
+      if (slot === "cover") actions.setPhotoUrl(url);
+      else if (slotIndex !== undefined && actions.setPhotoAt) actions.setPhotoAt(slotIndex, url);
+      else actions.addPhoto(url);
+    });
+  };
+
+  const bookSide =
+    sheetSlot?.slot === "cover"
+      ? "cover"
+      : sheetSlot?.index === 0
+        ? "spine"
+        : sheetSlot?.index === 1
+          ? "back"
+          : undefined;
+  const photoTitle =
+    bookSide === "spine" ? "Foto da lombada" : bookSide === "back" ? "Foto do verso" : "Foto da capa";
 
   if (state.loading) {
     return (
@@ -119,9 +186,11 @@ export default function EditListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
         <View style={styles.statusContainer}>
-          <Text accessibilityRole="alert" style={styles.errorText}>
-            {state.error}
-          </Text>
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.load()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.load()} />
+          )}
           {onCancel && (
             <View style={styles.backButtonContainer}>
               <FilledButton label="Voltar" onPress={guardedCancel} />
@@ -133,9 +202,8 @@ export default function EditListing({
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
-      <ScrollView
+    <ScrollEdgeScreen edges={wide ? ["top", "left", "right", "bottom"] : ["top", "left", "right"]} style={styles.page} header={<TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />}>
+      <ScrollEdgeScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
@@ -143,8 +211,8 @@ export default function EditListing({
             paddingBottom: wide
               ? tokens.spacing[48]
               : isKeyboardVisible
-                ? 300
-                : scrollBottomPadding.withoutBottomBar,
+                ? tokens.spacing[32]
+                : scrollBottomPadding.withBottomBar,
           },
         ]}
         {...standardVerticalScrollProps}
@@ -164,272 +232,405 @@ export default function EditListing({
 
           <View style={[styles.columns, wide && styles.columnsWide]}>
           <View style={[styles.column, wide && styles.columnHalf]}>
-          <View style={styles.photoSection}>
-            <Text style={styles.sectionLabel}>Foto da capa</Text>
-            <View style={styles.photoRow}>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Fotos do livro</Text>
+              <Text style={styles.sectionHint}>Toque para trocar ou no X para remover</Text>
+            </View>
+            <View style={styles.photoGrid}>
               <AddPhotoCard
-                photoUrl={state.photoUrl}
-                onPress={() => setShowPhotoInput(true)}
+                label="Foto da capa"
+                photoUrl={state.photoUrl || undefined}
+                onPress={() => setSheetSlot({ slot: "cover" })}
                 onRemovePhoto={() => {
                   actions.setPhotoUrl("");
                   setShowPhotoInput(false);
                 }}
+                style={styles.coverSlot}
               />
-              {showPhotoInput || state.photoUrl ? (
-                <View style={styles.photoInputContainer}>
-                  <TextField
-                    label="URL da foto da capa"
-                    value={state.photoUrl}
-                    onChangeText={actions.setPhotoUrl}
-                    editable={!state.saving}
-                    placeholder="https://exemplo.com/capa.jpg"
-                    autoCapitalize="none"
+              <View style={styles.sideSlots}>
+                <AddPhotoCard
+                  label="Lombada"
+                  photoUrl={state.photos[0] || undefined}
+                  onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
+                  onRemovePhoto={() => handleRemoveExtraPhoto(0)}
+                  style={styles.sideSlot}
+                />
+                <AddPhotoCard
+                  label="Verso"
+                  photoUrl={state.photos[1] || undefined}
+                  onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
+                  onRemovePhoto={() => handleRemoveExtraPhoto(1)}
+                  style={styles.sideSlot}
+                />
+              </View>
+            </View>
+            {photoState.uploading ? (
+              <View accessibilityLiveRegion="polite" style={styles.uploadingRow}>
+                <ActivityIndicator color={colors.action} accessibilityLabel="Enviando foto" />
+                <Text style={styles.photoHelperText}>Enviando a foto…</Text>
+              </View>
+            ) : null}
+            {photoState.error ? (
+              <View style={styles.photoErrorBlock}>
+                <InlineErrorCard message={photoState.error} />
+                {Platform.OS === "ios" && photoState.permissionDenied ? <OpenAppSettingsButton /> : null}
+              </View>
+            ) : null}
+            {showPhotoInput ? (
+              <View style={styles.photoUrlBlock}>
+                <TextField
+                  label="URL da foto da capa"
+                  labelBackgroundColor={sectionFieldBg}
+                  value={state.photoUrl}
+                  onChangeText={actions.setPhotoUrl}
+                  editable={!state.saving}
+                  placeholder="https://exemplo.com/capa.jpg"
+                  autoCapitalize="none"
+                  onFocus={scrollFocusedFieldIntoView}
+                />
+                <View style={styles.photoLinkToggleRow}>
+                  <TextButton
+                    label="Ocultar link da capa"
+                    disabled={state.saving}
+                    onPress={() => setShowPhotoInput(false)}
                   />
                 </View>
-              ) : (
-                <View style={styles.photoHelper}>
-                  <Text style={styles.photoHelperTitle}>Adicione uma foto real</Text>
-                  <Text style={styles.photoHelperText}>
-                    Anúncios com foto da capa chamam mais atenção na comunidade de Piripiri.
-                  </Text>
-                </View>
-              )}
-            </View>
+              </View>
+            ) : (
+              <View style={styles.photoLinkToggleRow}>
+                <TextButton
+                  label={state.photoUrl ? "Editar link da capa" : "Prefiro colar o link da capa"}
+                  disabled={state.saving}
+                  onPress={() => setShowPhotoInput(true)}
+                />
+              </View>
+            )}
           </View>
 
-          <View
-            onLayout={(event) => {
-              titleY.current = event.nativeEvent.layout.y;
+          <PhotoSourceSheet
+            visible={sheetSlot !== null}
+            title={photoTitle}
+            bookSide={bookSide}
+            onChoose={(source) => {
+              const slot = sheetSlot;
+              setSheetSlot(null);
+              if (!slot) return;
+              void hasPhotoPermission(source).then((granted) => {
+                if (granted) {
+                  handleChoosePhoto(slot.slot, source, slot.index);
+                } else {
+                  setPendingPhoto({ ...slot, source });
+                }
+              });
             }}
-          >
+            onClose={() => setSheetSlot(null)}
+          />
+
+          <PermissionPromptDialog
+            permission="photos"
+            status={pendingPhoto ? "explain" : "idle"}
+            onAllow={() => {
+              const pending = pendingPhoto;
+              setPendingPhoto(null);
+              if (pending) handleChoosePhoto(pending.slot, pending.source, pending.index);
+            }}
+            onLater={() => setPendingPhoto(null)}
+            onDismiss={() => setPendingPhoto(null)}
+          />
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Sobre o livro</Text>
+              <Text style={styles.sectionHint}>Título, autor e estado do exemplar</Text>
+            </View>
+
             <TextField
               label="Título do livro"
+              labelBackgroundColor={sectionFieldBg}
               value={state.title}
               onChangeText={actions.setTitle}
               editable={!state.saving}
               placeholder="Ex: Dom Casmurro"
               returnKeyType="next"
-              onSubmitEditing={() => authorInputRef.current?.focus()}
-              onFocus={() => handleFocusField(titleY.current)}
+              onSubmitEditing={() => authorInputRef.current?.focus?.()}
+              onFocus={scrollFocusedFieldIntoView}
             />
-          </View>
 
-          <View
-            onLayout={(event) => {
-              authorY.current = event.nativeEvent.layout.y;
-            }}
-          >
             <TextField
               inputRef={authorInputRef}
               label="Autor do livro"
+              labelBackgroundColor={sectionFieldBg}
               value={state.author}
               onChangeText={actions.setAuthor}
               editable={!state.saving}
               placeholder="Ex: Machado de Assis"
               returnKeyType="next"
-              onSubmitEditing={() => descInputRef.current?.focus()}
-              onFocus={() => handleFocusField(authorY.current)}
+              onSubmitEditing={() => descInputRef.current?.focus?.()}
+              onFocus={scrollFocusedFieldIntoView}
             />
-          </View>
 
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Categoria</Text>
-            <View style={styles.modalityRow} testID="edit-listing-category-row">
-              {displayedCategories.map((category) => (
-                <Chip
-                  key={category}
-                  label={category}
-                  accessibilityLabel={`Categoria ${category}`}
-                  tone={categoryTone(category, resolvedScheme)}
-                  selected={state.category === category}
-                  onPress={() => actions.setCategory(state.category === category ? "" : category)}
-                  disabled={state.saving}
-                />
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Estado de conservação</Text>
-            <View style={styles.modalityRow}>
-              {BOOK_CONDITIONS.map((condition: BookCondition) => (
-                <Chip
-                  key={condition}
-                  label={BOOK_CONDITION_LABELS[condition]}
-                  accessibilityLabel={`Conservação ${BOOK_CONDITION_LABELS[condition]}`}
-                  selected={state.condition === condition}
-                  onPress={() =>
-                    actions.setCondition(state.condition === condition ? null : condition)
-                  }
-                  disabled={state.saving}
-                />
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Formato do anúncio</Text>
-            <Checkbox
-              label="Box ou coleção de livros"
-              description="Marque se este anúncio reúne mais de um volume"
-              checked={Boolean(state.isBox)}
-              onChange={actions.setIsBox}
-              disabled={state.saving}
-            />
-            {state.isBox ? (
-              <View style={{ marginTop: tokens.spacing[8], paddingLeft: tokens.spacing[32] }}>
-                <TextField
-                  label="Quantidade de volumes (opcional)"
-                  value={state.boxVolumesCount}
-                  onChangeText={actions.setBoxVolumesCount}
-                  editable={!state.saving}
-                  placeholder="Ex: 3, 5, 7"
-                  keyboardType="number-pad"
-                  helperText="De 2 a 100 volumes componentes da coleção"
-                />
+            <View style={styles.field}>
+              <View style={styles.fieldHeaderRow}>
+                <Text style={styles.sectionLabel}>Categoria</Text>
+                <Text style={styles.fieldHint}>{state.category || "Opcional"}</Text>
               </View>
-            ) : null}
+              <View style={styles.categoryRow} testID="edit-listing-category-row">
+                {displayedCategories.map((category) => (
+                  <Chip
+                    key={category}
+                    size="compact"
+                    label={category}
+                    accessibilityLabel={`Categoria ${category}`}
+                    tone={categoryTone(category)}
+                    selected={state.category === category}
+                    onPress={() => actions.setCategory(state.category === category ? "" : category)}
+                    disabled={state.saving}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <View style={styles.fieldHeaderRow}>
+                <Text style={styles.sectionLabel}>Estado de conservação</Text>
+                <Text style={styles.fieldHint}>Opcional</Text>
+              </View>
+              <View style={styles.modalityRow}>
+                {BOOK_CONDITIONS.map((condition: BookCondition) => (
+                  <Chip
+                    key={condition}
+                    size="compact"
+                    label={BOOK_CONDITION_LABELS[condition]}
+                    accessibilityLabel={`Conservação ${BOOK_CONDITION_LABELS[condition]}`}
+                    selected={state.condition === condition}
+                    onPress={() =>
+                      actions.setCondition(state.condition === condition ? null : condition)
+                    }
+                    disabled={state.saving}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.sectionLabel}>Formato do anúncio</Text>
+              <Checkbox
+                label="Box ou coleção de livros"
+                description="Marque se este anúncio reúne mais de um volume"
+                checked={Boolean(state.isBox)}
+                onChange={actions.setIsBox}
+                disabled={state.saving}
+              />
+              {state.isBox ? (
+                <View style={styles.boxVolumesField}>
+                  <TextField
+                    label="Volumes (opcional)"
+                    labelBackgroundColor={sectionFieldBg}
+                    value={state.boxVolumesCount}
+                    onChangeText={actions.setBoxVolumesCount}
+                    editable={!state.saving}
+                    placeholder="Ex: 3, 5, 7"
+                    keyboardType="number-pad"
+                    iosKeyboardDone
+                    returnKeyType="done"
+                    helperText="De 2 a 100 volumes componentes da coleção"
+                    onFocus={scrollFocusedFieldIntoView}
+                  />
+                </View>
+              ) : null}
+            </View>
           </View>
 
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
-          <View
-            onLayout={(event) => {
-              descY.current = event.nativeEvent.layout.y;
-            }}
-          >
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Descrição e detalhes</Text>
+              <Text style={styles.sectionHint}>Conte sobre marcas de uso, edição ou grifos</Text>
+            </View>
             <TextField
               inputRef={descInputRef}
               label="Descrição"
+              labelBackgroundColor={sectionFieldBg}
               value={state.description}
               onChangeText={actions.setDescription}
               editable={!state.saving}
               placeholder="Ex: Marcas leves de uso, páginas completas."
               maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
-              helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
               multiline
-              onFocus={() => handleFocusField(descY.current)}
+              onFocus={scrollFocusedFieldIntoView}
               error={
                 descriptionTooLong
                   ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
                   : undefined
               }
             />
-          </View>
-          <Text style={styles.photoHelperText}>
-            {remainingDescriptionChars >= 0
-              ? `Restam ${remainingDescriptionChars} caracteres`
-              : `Limite excedido em ${Math.abs(remainingDescriptionChars)} caracteres`}
-          </Text>
-
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Modalidade</Text>
-            <View style={styles.modalityRow}>
-              {MODALITIES.map((m) => (
-                <Chip
-                  key={m.value}
-                  label={m.label}
-                  accessibilityLabel={`Modalidade ${m.label}`}
-                  tone={colors.badge[m.value]}
-                  selected={state.modality === m.value}
-                  onPress={() => actions.setModality(m.value)}
-                  disabled={state.saving}
-                />
-              ))}
+            <View style={styles.descriptionFooterRow}>
+              <Text style={[styles.photoHelperText, descriptionTooLong && styles.descriptionCounterError]}>
+                {remainingDescriptionChars >= 0
+                  ? `Restam ${remainingDescriptionChars} caracteres`
+                  : `Limite excedido em ${Math.abs(remainingDescriptionChars)} caracteres`}
+              </Text>
+              <Text style={[styles.photoHelperText, descriptionTooLong && styles.descriptionCounterError]}>
+                {`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
+              </Text>
             </View>
           </View>
 
-          {state.modality === "sale" && (
-            <View
-              onLayout={(event) => {
-                priceY.current = event.nativeEvent.layout.y;
-              }}
-            >
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Negociação e retirada</Text>
+              <Text style={styles.sectionHint}>Como quer circular este livro em Piripiri</Text>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.sectionLabel}>Modalidade</Text>
+              <View style={styles.modalityRow}>
+                {MODALITIES.map((m) => (
+                  <Chip
+                    key={m.value}
+                    label={m.label}
+                    accessibilityLabel={`Modalidade ${m.label}`}
+                    tone={colors.badge[m.value]}
+                    selected={state.modality === m.value}
+                    onPress={() => actions.setModality(m.value)}
+                    disabled={state.saving}
+                  />
+                ))}
+              </View>
+            </View>
+
+            {state.modality === "sale" && (
               <TextField
                 inputRef={priceInputRef}
                 label="Preço do livro"
+                labelBackgroundColor={sectionFieldBg}
                 value={state.price}
                 onChangeText={actions.setPrice}
                 editable={!state.saving}
                 keyboardType="decimal-pad"
+                iosKeyboardDone
                 placeholder="Ex: 29,90"
-                helperText="Informe o valor em reais (R$)"
+                helperText={priceHelperText}
                 returnKeyType="done"
-                onFocus={() => handleFocusField(priceY.current)}
+                onFocus={scrollFocusedFieldIntoView}
               />
-            </View>
-          )}
-
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Localidade da beta</Text>
-            <View style={styles.locationContainer}>
-              <Text style={styles.locationText}>Piripiri, PI (Beta exclusiva)</Text>
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Ponto de encontro / Retirada em Piripiri</Text>
-            <View style={styles.modalityRow}>
-              {["Piripiri (A combinar)", ...PIRIPIRI_MEETING_POINT_NAMES].map((locationName) => {
-                const isSelected =
-                  state.neighborhood === locationName ||
-                  (locationName === "Piripiri (A combinar)" &&
-                    (!state.neighborhood || state.neighborhood === "Piripiri" || state.neighborhood === "Centro"));
-                return (
-                  <Chip
-                    key={locationName}
-                    label={locationName}
-                    accessibilityLabel={`Ponto de encontro ${locationName}`}
-                    selected={isSelected}
-                    onPress={() =>
-                      actions.setNeighborhood(
-                        locationName === "Piripiri (A combinar)" ? DEFAULT_PIRIPIRI_LOCATION : locationName,
-                      )
-                    }
-                    disabled={state.saving}
-                  />
-                );
-              })}
-            </View>
-          </View>
-
-          </View>
-          </View>
-
-          {state.error ? (
-            <Text accessibilityRole="alert" style={styles.errorText}>
-              {state.error}
-            </Text>
-          ) : null}
-
-          {state.success ? (
-            <Text accessibilityRole="alert" style={styles.successText}>
-              Anúncio atualizado com sucesso!
-            </Text>
-          ) : null}
-
-          <View style={styles.actionsContainer}>
-            <FilledButton
-              label="Salvar alterações"
-              loading={state.saving}
-              loadingLabel="Salvando"
-              disabled={state.saving}
-              onPress={() => void handleSubmit()}
-            />
-
-            {onCancel && (
-              <View style={styles.cancelContainer}>
-                <TextButton
-                  label="Cancelar"
-                  disabled={state.saving}
-                  onPress={guardedCancel}
-                />
-              </View>
             )}
+
+            <View style={styles.field}>
+              <View style={styles.fieldHeaderRow}>
+                <Text style={styles.sectionLabel}>Ponto de encontro em Piripiri</Text>
+                <Text style={styles.fieldHint}>Opcional</Text>
+              </View>
+              <View style={styles.modalityRow}>
+                {PIRIPIRI_MEETING_POINT_NAMES.map((locationName) => {
+                  const isSelected = state.neighborhood === locationName;
+                  return (
+                    <Chip
+                      key={locationName}
+                      label={locationName}
+                      accessibilityLabel={`Ponto de encontro ${locationName}`}
+                      selected={isSelected}
+                      onPress={() =>
+                        actions.setNeighborhood(isSelected ? DEFAULT_PIRIPIRI_LOCATION : locationName)
+                      }
+                      disabled={state.saving}
+                    />
+                  );
+                })}
+              </View>
+              <View style={styles.cityInfoRow}>
+                <AppIcon name="place" size={15} color={colors.secondaryText} />
+                <Text style={styles.cityInfoText}>Retirada presencial em Piripiri, PI</Text>
+              </View>
+            </View>
+          </View>
+
+          {wide ? (
+            <>
+              {state.error ? (
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {state.error}
+                </Text>
+              ) : null}
+
+              {state.success ? (
+                <Text accessibilityRole="alert" style={styles.successText}>
+                  Anúncio atualizado com sucesso!
+                </Text>
+              ) : null}
+
+              <View style={styles.actionsContainer}>
+                <FilledButton
+                  label="Salvar alterações"
+                  loading={state.saving}
+                  loadingLabel="Salvando"
+                  disabled={state.saving}
+                  onPress={() => void handleSubmit()}
+                />
+
+                {onCancel && (
+                  <View style={styles.cancelContainer}>
+                    <TextButton
+                      label="Cancelar"
+                      disabled={state.saving}
+                      onPress={guardedCancel}
+                    />
+                  </View>
+                )}
+              </View>
+            </>
+          ) : null}
+          </View>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollEdgeScrollView>
+
+      {!wide && !isKeyboardVisible ? (
+        <SafeAreaView
+          edges={["bottom"]}
+          style={[styles.actionBar, isIos && (iosGlass ? styles.iosActionBarGlass : styles.iosActionBarOpaque)]}
+          testID="edit-listing-action-bar"
+        >
+          {isIos && iosGlass ? <IosGlassBackdrop style={StyleSheet.absoluteFill} /> : null}
+          <View style={styles.actionBarInner}>
+            {state.error ? (
+              <Text accessibilityRole="alert" style={styles.errorText}>
+                {state.error}
+              </Text>
+            ) : null}
+
+            {state.success ? (
+              <Text accessibilityRole="alert" style={styles.successText}>
+                Anúncio atualizado com sucesso!
+              </Text>
+            ) : null}
+
+            <View style={styles.actionBarRow}>
+              {onCancel ? (
+                <View style={styles.actionBarCancel}>
+                  <TextButton
+                    label="Cancelar"
+                    disabled={state.saving}
+                    onPress={guardedCancel}
+                  />
+                </View>
+              ) : null}
+              <View style={styles.actionBarPrimary}>
+                <FilledButton
+                  label="Salvar alterações"
+                  loading={state.saving}
+                  loadingLabel="Salvando"
+                  disabled={state.saving}
+                  onPress={() => void handleSubmit()}
+                />
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      ) : null}
+    </ScrollEdgeScreen>
   );
 }
 
@@ -445,17 +646,113 @@ function createStyles(colors: ColorPalette) {
   },
   content: {
     width: "100%",
-    maxWidth: 480,
+    maxWidth: 520,
     alignSelf: "center",
-    padding: tokens.spacing[24],
-    gap: tokens.spacing[16],
+    paddingHorizontal: tokens.spacing[16],
+    paddingTop: tokens.spacing[12],
+    paddingBottom: tokens.spacing[24],
+    gap: tokens.spacing[14],
   },
   contentWide: { maxWidth: EDIT_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
-  breadcrumb: { marginBottom: tokens.spacing[8] },
-  columns: { gap: tokens.spacing[16] },
+  breadcrumb: { marginBottom: tokens.spacing[4] },
+  columns: { gap: tokens.spacing[14] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
-  column: { gap: tokens.spacing[16] },
+  column: { gap: tokens.spacing[14] },
   columnHalf: { flex: 1 },
+  sectionCard: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[14],
+  },
+  sectionHeader: {
+    gap: tokens.spacing[2],
+  },
+  sectionTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: fontFamily.semiBold,
+    color: colors.text,
+  },
+  sectionHint: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+  },
+  fieldHeaderRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: tokens.spacing[8],
+  },
+  fieldHint: {
+    ...tokens.typography.labelMedium,
+    color: colors.secondaryText,
+  },
+  boxVolumesField: {
+    marginTop: tokens.spacing[8],
+    paddingLeft: tokens.spacing[24],
+  },
+  descriptionFooterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[4],
+    marginTop: -tokens.spacing[6],
+  },
+  descriptionCounterError: {
+    color: colors.error,
+  },
+  cityInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[6],
+    paddingTop: tokens.spacing[4],
+  },
+  cityInfoText: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+  },
+  actionBar: {
+    width: "100%",
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.book.paperEdge,
+    shadowColor: colors.m3.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  iosActionBarGlass: {
+    backgroundColor: "transparent",
+    borderTopColor: tokens.glass.stroke,
+    overflow: "hidden",
+  },
+  iosActionBarOpaque: {
+    backgroundColor: colors.m3.surfaceContainer,
+  },
+  actionBarInner: {
+    width: "100%",
+    maxWidth: 520,
+    alignSelf: "center",
+    paddingHorizontal: tokens.spacing[16],
+    paddingTop: tokens.spacing[12],
+    paddingBottom: tokens.spacing[12],
+    gap: tokens.spacing[8],
+  },
+  actionBarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[10],
+  },
+  actionBarCancel: {
+    flexShrink: 0,
+  },
+  actionBarPrimary: {
+    flex: 1,
+  },
   statusContainer: {
     flex: 1,
     justifyContent: "center",
@@ -474,35 +771,44 @@ function createStyles(colors: ColorPalette) {
     maxWidth: 240,
   },
   subtitle: {
-    ...tokens.typography.bodyLarge,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
-    marginTop: tokens.spacing[4],
-  },
-  photoSection: {
-    gap: tokens.spacing[8],
   },
   sectionLabel: {
-    ...tokens.typography.labelMedium,
-    color: colors.secondaryText,
+    ...tokens.typography.labelLarge,
+    fontFamily: fontFamily.semiBold,
+    color: colors.text,
   },
-  photoRow: {
+  photoGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
     gap: tokens.spacing[12],
   },
-  photoInputContainer: {
-    flex: 1,
+  coverSlot: {
+    flex: 2,
+    aspectRatio: undefined,
+    minWidth: 0,
   },
-  photoHelper: {
+  sideSlots: {
     flex: 1,
-    justifyContent: "center",
+    gap: tokens.spacing[12],
+  },
+  sideSlot: {
+    minWidth: 0,
+  },
+  uploadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+  },
+  photoErrorBlock: {
+    gap: tokens.spacing[8],
+  },
+  photoUrlBlock: {
     gap: tokens.spacing[4],
-    paddingTop: tokens.spacing[4],
+    marginTop: tokens.spacing[4],
   },
-  photoHelperTitle: {
-    ...tokens.typography.bodyMedium,
-    fontWeight: tokens.fontWeight.semiBold,
-    color: colors.text,
+  photoLinkToggleRow: {
+    alignItems: "flex-start",
   },
   photoHelperText: {
     ...tokens.typography.labelMedium,
@@ -511,23 +817,15 @@ function createStyles(colors: ColorPalette) {
   field: {
     gap: tokens.spacing[8],
   },
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: tokens.spacing[6],
+  },
   modalityRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: tokens.spacing[8],
-  },
-  locationContainer: {
-    paddingVertical: tokens.spacing[12],
-    paddingHorizontal: tokens.spacing[16],
-    backgroundColor: colors.m3.surfaceContainerHigh,
-    borderRadius: tokens.radius.small,
-    borderWidth: 1,
-    borderColor: colors.action,
-  },
-  locationText: {
-    ...tokens.typography.bodyMedium,
-    color: colors.actionDeep,
-    fontWeight: tokens.fontWeight.semiBold,
   },
   errorText: {
     ...tokens.typography.bodyMedium,

@@ -1,4 +1,4 @@
-# Tarefas — Spec 135: Adequar PWA no iPhone/Safari ao Apple HIG
+# Tarefas — Spec 136: Adequar PWA no iPhone/Safari ao Apple HIG
 
 - [x] **T001 — Registrar ADR 0108**
   - Criar `docs/adr/0108-pwa-iphone-safari-apple-hig.md` documentando o contexto, decisão e consequências da adequação do PWA ao Apple HIG.
@@ -21,3 +21,9 @@
 - [x] **T005 — Executar verificações e atualizar documentação**
   - Executar `npm run typecheck`, `npm run check:architecture` e `npm run test`.
   - Atualizar `docs/estado.md` e `README.md` com as métricas exatas e conferência com `npm run check:docs`.
+
+## Web Push para a Tela de Início
+
+- [x] Implementar inscrição e remoção com consentimento por dispositivo, persistência com RLS e chave VAPID pública opcional.
+- [x] Emitir avisos genéricos na função existente, respeitar preferências e abrir a central no Service Worker.
+- [ ] Validar RLS, ativação, recusa e saída localmente. Homologar o recebimento em iPhone instalado e o retorno em Safari.

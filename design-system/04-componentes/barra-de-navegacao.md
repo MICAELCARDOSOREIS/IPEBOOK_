@@ -1,13 +1,16 @@
 # Barra de navegação (NavigationBar)
 
-Origem no sistema base: Material 3, Navigation bar. Situação: **Herdado** (estrutura e
-comportamento do M3); os cinco destinos fixos são **Adaptado** — decisão de produto de
-02/10/2026, não uma regra do M3.
+Origem no sistema base: Material 3, Navigation bar. Situação: **Adaptado** — estrutura e
+comportamento do M3; a barra inferior móvel implementa **3 destinos** (`Início`, `Explorar`,
+`Estante`, conforme [ADR 0011](../../docs/adr/0011-navegacao-tres-destinos.md) e
+[`src/view/components/NavigationBar.tsx`](../../src/view/components/NavigationBar.tsx)),
+enquanto `Conversas` e `Perfil` são acessados pelos atalhos do cabeçalho, botão flutuante e hub
+de navegação (`WebHeader` na Web larga).
 
 ## Quando usar
 
-- Navegação principal, fixa no rodapé, em toda tela de nível superior do app: Início, Explorar,
-  Estante, Conversas, Perfil.
+- Navegação principal, fixa no rodapé em telas móveis e janelas estreitas, entre os três destinos
+  de nível superior da barra inferior: Início, Explorar e Estante.
 
 ## Quando não usar
 

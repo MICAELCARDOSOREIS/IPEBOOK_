@@ -6,6 +6,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { withPress } from "@/view/pressFeedback";
@@ -92,8 +93,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       justifyContent: wideWeb ? "flex-start" : "space-between",
     },
     card: {
-      width: wideWeb ? 180 : "48%",
-      maxWidth: wideWeb ? 220 : "48.5%",
+      width: wideWeb ? 210 : "48%",
+      maxWidth: wideWeb ? 240 : "48.5%",
       flexGrow: 0,
       flexShrink: 0,
       gap: tokens.spacing[6],
@@ -101,7 +102,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.card,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
       elevation: 1,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },
@@ -141,7 +143,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[4],
       paddingTop: tokens.spacing[6],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
       marginTop: tokens.spacing[4],
     },
     price: {

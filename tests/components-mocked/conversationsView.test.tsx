@@ -1,29 +1,34 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AccessibilityInfo, Platform, StyleSheet } from "react-native";
+import * as container from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
-import { Conversations } from "@/view/conversations/conversations";
+import ConversationsScreen, { Conversations } from "@/view/conversations/conversations";
+import { colors } from "@/view/tokens";
 
-vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
-  useConversationsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useConversationsViewModel", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
+  useConversationsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn(() => ({ isOnline: true })) }));
 
 import { useConversationsViewModel } from "@/viewmodel/useConversationsViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-const listing = (id: string, title: string): Book => ({
-  id, title, author: "A", ownerId: "x", modality: "trade", status: "available",
+const listing = (id: string, title: string, status: Book["status"] = "available"): Book => ({
+  id, title, author: "A", ownerId: "x", modality: "trade", status,
 });
 
-const deleteConversation = vi.fn().mockResolvedValue(true);
-const cancelRequest = vi.fn().mockResolvedValue(true);
+const deleteConversation = jest.fn().mockResolvedValue(true);
+const cancelRequest = jest.fn().mockResolvedValue(true);
 
 function setup(state: Partial<ConversationsState>) {
-  vi.mocked(useConversationsViewModel).mockReturnValue([
+  const reload = jest.fn().mockResolvedValue(undefined);
+  jest.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation, cancelRequest },
+    { reload, deleteConversation, cancelRequest },
   ]);
+  return { reload };
 }
 
 async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = {}) {
@@ -37,11 +42,13 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 describe("Conversations (Spec 076)", () => {
   // O horário é calculado na tela (Spec 089); fixa só o relógio para o resultado ser previsível.
   beforeEach(() => {
-    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
-    vi.setSystemTime(new Date("2026-10-26T15:00:00"));
+    jest.useFakeTimers({
+      doNotFake: ["nextTick", "setImmediate", "clearImmediate", "setTimeout", "clearTimeout", "queueMicrotask", "performance", "hrtime"],
+    });
+    jest.setSystemTime(new Date("2026-10-26T15:00:00"));
   });
   afterEach(() => {
-    vi.useRealTimers();
+    jest.useRealTimers();
   });
 
   const items: ConversationItem[] = [
@@ -52,16 +59,16 @@ describe("Conversations (Spec 076)", () => {
 
   it("lista pessoa, prévia, horário e livro; aceita abre a conversa (Spec 076 CA4, Spec 082 CA5)", async () => {
     setup({ items });
-    const onOpenChat = vi.fn();
-    const onOpenReceivedRequests = vi.fn();
-    const onOpenListing = vi.fn();
+    const onOpenChat = jest.fn();
+    const onOpenReceivedRequests = jest.fn();
+    const onOpenListing = jest.fn();
     const screen = await renderView({ onOpenChat, onOpenReceivedRequests, onOpenListing });
 
     expect(screen.getByRole("header").props.children).toBe("Conversas");
     expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("Pode ser sábado na praça?")).toBeDefined();
     expect(screen.getByText("9h")).toBeDefined();
-    expect(screen.getByText("Sobre Dom Casmurro")).toBeDefined();
+    expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getAllByText("Troca").length).toBeGreaterThan(0);
 
     await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
@@ -75,8 +82,8 @@ describe("Conversations (Spec 076)", () => {
   });
 
   it("recarrega a lista quando a tela volta ao foco (regressão: selo Nova proposta ficava após aceitar)", async () => {
-    const reload = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversationsViewModel).mockReturnValue([
+    const reload = jest.fn().mockResolvedValue(undefined);
+    jest.mocked(useConversationsViewModel).mockReturnValue([
       { items, loading: false, error: null },
       { reload, deleteConversation, cancelRequest },
     ]);
@@ -91,7 +98,7 @@ describe("Conversations (Spec 076)", () => {
 
   it("mostra o estado vazio do 06.09 com Encontrar um livro (Spec 082)", async () => {
     setup({ items: [] });
-    const onExplore = vi.fn();
+    const onExplore = jest.fn();
     const screen = await renderView({ onExplore });
     expect(screen.getByText("Nenhuma conversa ainda")).toBeDefined();
     expect(screen.getByText("Encontre um livro e converse com a pessoa para combinar os detalhes.")).toBeDefined();
@@ -120,7 +127,7 @@ describe("Conversations (Spec 076)", () => {
     setup({ items });
     const screen = await renderView();
     expect(screen.getByText("9h")).toBeDefined();
-    await act(async () => { vi.setSystemTime(new Date("2026-10-26T16:10:00")); vi.advanceTimersByTime(60_000); });
+    await act(async () => { jest.setSystemTime(new Date("2026-10-26T16:10:00")); jest.advanceTimersByTime(60_000); });
     expect(screen.getByText("10h")).toBeDefined();
   });
 
@@ -161,13 +168,169 @@ describe("Conversations (Spec 076)", () => {
     expect(screen.getByText("Não foi possível cancelar o pedido. Tente novamente.")).toBeDefined();
   });
 
+  it("usa Liquid Glass no botão de cancelar pedido no iOS (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe("transparent");
+      expect(screen.getByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeDefined();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
+  });
+
+  it("mantém o fundo sólido do botão de cancelar pedido no Android (ADR 0123)", async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    try {
+      setup({ items });
+      const screen = await renderView();
+      const style = StyleSheet.flatten(screen.getByLabelText("Cancelar pedido de Iracema").props.style);
+      expect(style.backgroundColor).toBe(colors.errorContainer);
+      expect(screen.queryByTestId("conversations-cancel-request-glass", { includeHiddenElements: true })).toBeNull();
+    } finally {
+      Object.defineProperty(Platform, "OS", { value: originalOS, configurable: true });
+    }
+  });
+
   it("renderiza botão Voltar no cabeçalho mobile quando onBack é informado", async () => {
     setup({ items });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderView({ onBack });
     const backBtn = screen.getByLabelText("Voltar");
     expect(backBtn).toBeDefined();
     await act(async () => { fireEvent.press(backBtn); });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém o cabeçalho de Conversas e desfoca a lista ao rolar no iOS", async () => {
+    const originalPlatform = Platform.OS;
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    const transparency = jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+    try {
+      setup({ items });
+      const onBack = jest.fn();
+      const screen = await renderView({ onBack });
+      const list = screen.getByTestId("conversation-list");
+      const blur = () => screen.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true });
+      const scroll = (y: number) => ({ nativeEvent: { contentOffset: { x: 0, y } } });
+
+      expect(blur()).toBeNull();
+      await fireEvent.scroll(list, scroll(80));
+      expect(blur()).not.toBeNull();
+      expect(screen.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await fireEvent.press(screen.getByRole("button", { name: "Voltar" }));
+      expect(onBack).toHaveBeenCalledTimes(1);
+
+      await fireEvent.scroll(list, scroll(0));
+      expect(blur()).toBeNull();
+      await screen.unmount();
+
+      transparency.mockResolvedValue(true);
+      const opaque = await renderView({ onBack });
+      await fireEvent.scroll(opaque.getByTestId("conversation-list"), scroll(80));
+      expect(opaque.queryByTestId("top-app-bar-scroll-blur", { includeHiddenElements: true })).toBeNull();
+      expect(opaque.getByRole("header", { name: "Conversas" })).toBeDefined();
+      await opaque.unmount();
+    } finally {
+      transparency.mockRestore();
+      Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+    }
+  });
+
+  it("aciona reload ao tentar novamente no estado de erro online e offline", async () => {
+    const { reload } = setup({ error: "Falha ao carregar." });
+    const onlineScreen = await renderView();
+    await act(async () => { fireEvent.press(onlineScreen.getByLabelText("Tentar novamente")); });
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    try {
+      const offlineScreen = await renderView();
+      await act(async () => { fireEvent.press(offlineScreen.getByLabelText("Tentar novamente")); });
+      expect(reload).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    }
+  });
+
+  it("alterna filtros Ativas/Concluídas e aciona Ver concluídas quando só há entregas finalizadas", async () => {
+    const completedOnly: ConversationItem[] = [
+      {
+        requestId: "r4",
+        listing: listing("b4", "Memórias Póstumas", "delivered"),
+        otherName: "Carlos",
+        otherPhotoUrl: null,
+        preview: "Entrega confirmada",
+        lastMessageAt: null,
+        kind: "accepted",
+      },
+    ];
+    setup({ items: completedOnly });
+    const screen = await renderView();
+
+    expect(screen.getByText("Nenhuma conversa ativa no momento")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver concluídas")); });
+    expect(screen.getByText("Carlos")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByText("Ativas (0)")); });
+    expect(screen.getByText("Nenhuma conversa ativa no momento")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByText("Concluídas (1)")); });
+    expect(screen.getByText("Carlos")).toBeDefined();
+  });
+
+  it("permite manter conversa ou pedido ao cancelar os diálogos de confirmação", async () => {
+    setup({ items });
+    deleteConversation.mockClear();
+    cancelRequest.mockClear();
+    const screen = await renderView();
+
+    await act(async () => { fireEvent(screen.getByText("Ana Paula"), "longPress"); });
+    expect(screen.getByText("Apagar conversa?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Manter")); });
+    expect(screen.queryByText("Apagar conversa?")).toBeNull();
+    expect(deleteConversation).not.toHaveBeenCalled();
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar pedido de Iracema")); });
+    expect(screen.getByText("Cancelar pedido?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Manter pedido")); });
+    expect(screen.queryByText("Cancelar pedido?")).toBeNull();
+    expect(cancelRequest).not.toHaveBeenCalled();
+  });
+
+  it("ConversationsScreen exige login quando não autenticado e renderiza quando há sessão", async () => {
+    setup({ items });
+    const onRequireSignIn = jest.fn();
+    const authActions = {
+      signUp: jest.fn(),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      requestPasswordReset: jest.fn(),
+    };
+    const spy = jest.spyOn(container, "makeAuthViewModel");
+    try {
+      spy.mockReturnValue([{ user: null, loading: false, error: null }, authActions]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ConversationsScreen onRequireSignIn={onRequireSignIn} />);
+      });
+      expect(onRequireSignIn).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText("Ana Paula")).toBeNull();
+
+      spy.mockReturnValue([
+        { user: { id: "me", email: "me@example.com", name: "Eu" }, loading: false, error: null },
+        authActions,
+      ]);
+      await act(async () => {
+        screen.rerender(<ConversationsScreen onRequireSignIn={onRequireSignIn} />);
+      });
+      expect(screen.getByText("Ana Paula")).toBeDefined();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
